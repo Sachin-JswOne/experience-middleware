@@ -1,0 +1,8 @@
+spring:
+  application:
+    name: experience-middleware
+
+server:
+  servlet:
+    context-path: /${spring.application.name}
+  port: 8081
