@@ -8,6 +8,7 @@ class ExperienceMiddlewareApplicationTests {
 
     @Test
     void contextLoads() {
+        // do nothing
     }
 
 }
