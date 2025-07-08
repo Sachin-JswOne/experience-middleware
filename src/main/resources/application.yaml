@@ -1,8 +1,8 @@
 spring:
   application:
     name: experience-middleware
+  webflux:
+    base-path: /ex-mw
 
 server:
-  servlet:
-    context-path: /${spring.application.name}
   port: 8081

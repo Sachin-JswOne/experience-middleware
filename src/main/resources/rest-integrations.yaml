@@ -1,0 +1,24 @@
+endpoints:
+  - path: /app/cms/home-page
+    method: GET
+    type: pass-through
+    httpClient: app-cms-home-page
+
+  - path: /api/products
+    method: GET
+    type: cached
+    targetUrl: https://product-service.com/products
+    cacheTTL: 300
+
+  - path: /api/orders
+    method: GET
+    type: transformed
+    targetUrl: https://order-service.com/orders
+    transformBean:
+  - path: /api/dashboard
+    method: GET
+    type: aggregated
+    sources:
+      - https://service1.com/info
+      - https://service2.com/metrics
+    aggregationBean:
