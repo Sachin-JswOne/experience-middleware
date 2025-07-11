@@ -1,8 +1,10 @@
 // src/model/TransformedRequest.ts
 
+import { IncomingHttpHeaders } from 'http';
+
 export interface BaseRequest {
   url: URL;
-  headers: Record<string, string>;
+  headers: IncomingHttpHeaders;
   body?: any;
   sourceQueryString?: string;
 }

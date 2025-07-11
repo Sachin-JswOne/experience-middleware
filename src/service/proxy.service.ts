@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
@@ -17,6 +16,7 @@ import { Request } from 'express';
 import { RouteHandler } from 'src/enum/route-handler.enum';
 import { AggregatorType } from 'src/enum/aggregation-type.enum';
 import { AggregatedResponse } from 'src/models/aggregated-response.model';
+import { IncomingHttpHeaders } from 'http';
 
 @Injectable()
 export class ProxyService {
@@ -58,8 +58,9 @@ export class ProxyService {
           try {
             const baseRequest: BaseRequest = await this.buildRequestFromSource(
               req,
-              target.targetUrl,
-              target.requestTransform,
+              target.url,
+              target.reqTransform,
+              target.headersToPass,
             );
             const client = createHttpClient(
               target.timeout?.request || 5000,
@@ -67,19 +68,22 @@ export class ProxyService {
             );
             const response = await client.request({
               url: baseRequest.url.href,
-              method: target.targetMethod,
+              method: target.method,
               data: baseRequest.body,
+              headers: baseRequest.headers,
             });
             return {
-              target: target.name || target.targetUrl,
+              target: target.name || target.url,
               success: true,
               data: response.data,
             };
           } catch (err) {
             return {
-              target: target.name || target.targetUrl,
+              target: target.name || target.url,
               success: false,
               error: err?.message || err,
+              httpStatus: err?.status || 500,
+              downstreamResponse: err?.response?.data || null,
             };
           }
         },
@@ -95,8 +99,8 @@ export class ProxyService {
           },
     );
 
-    return route.transform
-      ? await applyTransform(route.transform, normalizedResults)
+    return route.resTransform
+      ? await applyTransform(route.resTransform, normalizedResults)
       : normalizedResults;
   }
 
@@ -107,23 +111,25 @@ export class ProxyService {
     const transformedRequestBody: BaseRequest =
       await this.buildRequestFromSource(
         req,
-        route.targetUrl,
-        route.requestTransform,
+        route.target.url,
+        route.target.reqTransform,
+        route.target.headersToPass,
       );
 
     const client = createHttpClient(
-      route.timeout?.request || 5000,
-      route.timeout?.socket || 1000,
+      route.target.timeout?.request || 5000,
+      route.target.timeout?.socket || 1000,
     );
 
     const response = await client.request({
       url: transformedRequestBody.url.href,
-      method: route.targetMethod,
+      method: route.target.method,
       data: transformedRequestBody.body,
+      headers: transformedRequestBody.headers,
     });
 
-    return route.transform
-      ? await applyTransform(route.transform, response.data)
+    return route.resTransform
+      ? await applyTransform(route.resTransform, response.data)
       : response.data;
   }
 
@@ -131,11 +137,12 @@ export class ProxyService {
     req: Request,
     targetUrl: string,
     requestTransform?: string,
+    headersToPass?: string[],
   ) {
     let transformedRequestBody: BaseRequest = {
       url: new URL(targetUrl),
       body: req.body,
-      headers: {},
+      headers: this.getHeadersToPass(req.headers, headersToPass),
       sourceQueryString: req.query
         ? new URLSearchParams(req.query as any).toString()
         : '',
@@ -147,5 +154,21 @@ export class ProxyService {
       );
     }
     return transformedRequestBody;
+  }
+
+  private getHeadersToPass(
+    reqHeaders: IncomingHttpHeaders,
+    headersToPass?: string[],
+  ): IncomingHttpHeaders {
+    if (!headersToPass || headersToPass.length === 0) {
+      return {};
+    }
+    const headers: IncomingHttpHeaders = {};
+    for (const header of headersToPass) {
+      if (reqHeaders[header]) {
+        headers[header] = reqHeaders[header];
+      }
+    }
+    return headers;
   }
 }

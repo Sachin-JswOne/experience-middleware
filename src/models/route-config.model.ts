@@ -3,32 +3,27 @@ import { RouteHandler } from 'src/enum/route-handler.enum';
 
 export interface TargetConfig {
   name?: string;
-  targetUrl: string;
-  targetMethod: string;
-  requestTransform?: string;
+  url: string;
+  method: string;
+  reqTransform?: string;
   timeout: {
     request: number;
     socket: number;
   };
   rank?: number;
+  headersToPass: string[];
 }
 
 export interface BaseRouteConfig {
   path: string;
   method: string;
   routeHandler: RouteHandler;
-  requestTransform?: string;
-  transform?: string;
+  resTransform?: string;
 }
 
 export interface TransformRouteConfig extends BaseRouteConfig {
   routeHandler: RouteHandler.TRANSFORM;
-  targetUrl: string;
-  targetMethod: string;
-  timeout: {
-    request: number;
-    socket: number;
-  };
+  target: TargetConfig;
 }
 
 export interface AggregateRouteConfig extends BaseRouteConfig {
