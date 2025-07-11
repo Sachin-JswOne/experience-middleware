@@ -11,12 +11,7 @@ export class ProxyController {
   @All('*')
   async handle(@Req() req: Request, @Res() res: Response) {
     try {
-      const data = await this.proxyService.handleRequest(
-        req.path,
-        req.method,
-        req.body,
-        req.query,
-      );
+      const data = await this.proxyService.handleRequest(req);
       res.status(HttpStatus.OK).json(data);
     } catch (err: unknown) {
       console.error(err);

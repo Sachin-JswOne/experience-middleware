@@ -1,0 +1,45 @@
+[
+  {
+    "path": "/cms/v1/app-home-page",
+    "method": "GET",
+    "targetUrl": "https://cms-msme-ext.qa.jswone.in/api/app-home-page",
+    "targetMethod": "GET",
+    "timeout": { "request": 5000, "socket": 1000 },
+    "routeHandler": "TRANSFORM",
+    "requestTransform": "cmsTransformer.transformAppHomePageGetRequest",
+    "transform": "cmsTransformer.transformAppHomePageResponse"
+  },
+  {
+    "path": "/cms/v2/app-home-page",
+    "method": "POST",
+    "targetUrl": "https://cms-msme-ext.qa.jswone.in/api/app-home-page",
+    "targetMethod": "GET",
+    "timeout": { "request": 3000, "socket": 1000 },
+    "routeHandler": "TRANSFORM",
+    "requestTransform": "cmsTransformer.transformAppHomePageRequest",
+    "transform": "cmsTransformer.transformAppHomePageResponse"
+  },
+  {
+    "path": "/cms/v3/app-home-page",
+    "method": "POST",
+    "routeHandler": "AGGREGATE",
+    "aggregationType": "PARALLEL",
+    "targets": [
+      {
+        "targetUrl": "https://cms-msme-ext.qa.jswone.in/api/app-home-page",
+        "targetMethod": "GET",
+        "timeout": { "request": 5000, "socket": 1000 },
+        "requestTransform": "cmsTransformer.transformAppHomePageRequest"
+      },
+      {
+        "name": "topProducts",
+        "targetUrl": "https://jswoneconstruct.in/jswretail/v3/seller/top-product",
+        "targetMethod": "GET",
+        "timeout": { "request": 3000, "socket": 1000 },
+        "requestTransform": "cmsTransformer.transformGetRequest"
+      }
+    ],
+    "requestTransform": "cmsTransformer.transformAppHomePageRequest",
+    "transform": "cmsTransformer.transformAppHomePageResponse"
+  }
+]
