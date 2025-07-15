@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 // do not convert to default import
 import * as qs from 'qs';
 import { BaseRequest } from 'src/models/base-request.model';
@@ -8,23 +9,18 @@ export function moveBodyToQueryParams(request: BaseRequest): BaseRequest {
     body: null,
   };
 
-  const queryString = qs.stringify(request.body);
-  transformedRequest.url.search = queryString;
+  // Parse existing query params (if any)
+  const existingParams = qs.parse(request.url.search?.replace(/^\?/, '') || '');
+
+  // Merge with body params
+  const bodyParams = request.body || {};
+  const mergedParams = { ...existingParams, ...bodyParams };
+
+  // Stringify and set
+  transformedRequest.url.search = qs.stringify(mergedParams);
+
   return transformedRequest;
 }
-
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
-export function copySourceQueryToUrlSearch(request: BaseRequest): BaseRequest {
-  const transformedRequest: BaseRequest = {
-    ...request,
-  };
-
-  transformedRequest.url.search = request.sourceQuery
-    ? new URLSearchParams(request.sourceQuery).toString()
-    : '';
-  return transformedRequest;
-}
-/* eslint-enable @typescript-eslint/no-unsafe-argument */
 
 export function convertToGetRequest(request: BaseRequest): BaseRequest {
   const transformedRequest: BaseRequest = {

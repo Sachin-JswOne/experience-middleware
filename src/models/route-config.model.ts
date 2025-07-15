@@ -12,13 +12,14 @@ export interface TargetConfig {
   };
   rank?: number;
   headersToPass: string[];
+  requiredParams?: string[];
+  resTransform?: string;
 }
 
 export interface BaseRouteConfig {
   path: string;
   method: string;
   routeHandler: RouteHandler;
-  resTransform?: string;
 }
 
 export interface TransformRouteConfig extends BaseRouteConfig {
@@ -31,6 +32,7 @@ export interface AggregateRouteConfig extends BaseRouteConfig {
   aggregationType: AggregatorType;
   aggregator?: string;
   targets: TargetConfig[];
+  resTransform?: string;
 }
 
 export type RouteConfig = TransformRouteConfig | AggregateRouteConfig;

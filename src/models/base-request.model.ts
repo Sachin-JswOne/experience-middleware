@@ -6,5 +6,4 @@ export interface BaseRequest {
   url: URL;
   headers: IncomingHttpHeaders;
   body?: any;
-  sourceQuery?: any;
 }

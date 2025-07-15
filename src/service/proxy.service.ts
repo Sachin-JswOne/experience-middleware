@@ -10,7 +10,6 @@ import { BaseRequest } from '../models/base-request.model';
 import {
   AggregateRouteConfig,
   TargetConfig,
-  TransformRouteConfig,
 } from 'src/models/route-config.model';
 import { Request } from 'express';
 import { RouteHandler } from 'src/enum/route-handler.enum';
@@ -28,7 +27,7 @@ export class ProxyService {
 
     switch (route.routeHandler) {
       case RouteHandler.TRANSFORM:
-        return await this.handleTransformRequest(route, req);
+        return await this.handleTransformRequest(route.target, req);
       case RouteHandler.AGGREGATE:
         return await this.handleAggregateRequest(route, req);
       default:
@@ -56,26 +55,11 @@ export class ProxyService {
       route.targets.map(
         async (target: TargetConfig): Promise<AggregatedResponse> => {
           try {
-            const baseRequest: BaseRequest = await this.buildRequestFromSource(
-              req,
-              target.url,
-              target.reqTransform,
-              target.headersToPass,
-            );
-            const client = createHttpClient(
-              target.timeout?.request || 5000,
-              target.timeout?.socket || 1000,
-            );
-            const response = await client.request({
-              url: baseRequest.url.href,
-              method: target.method,
-              data: baseRequest.body,
-              headers: baseRequest.headers,
-            });
+            const responseData = await this.handleTransformRequest(target, req);
             return {
               target: target.name || target.url,
               success: true,
-              data: response.data,
+              data: responseData,
             };
           } catch (err) {
             return {
@@ -104,32 +88,30 @@ export class ProxyService {
       : normalizedResults;
   }
 
-  private async handleTransformRequest(
-    route: TransformRouteConfig,
-    req: Request,
-  ) {
+  private async handleTransformRequest(target: TargetConfig, req: Request) {
     const transformedRequestBody: BaseRequest =
       await this.buildRequestFromSource(
         req,
-        route.target.url,
-        route.target.reqTransform,
-        route.target.headersToPass,
+        target.url,
+        target.reqTransform,
+        target.headersToPass,
+        target.requiredParams,
       );
 
     const client = createHttpClient(
-      route.target.timeout?.request || 5000,
-      route.target.timeout?.socket || 1000,
+      target.timeout?.request || 5000,
+      target.timeout?.socket || 1000,
     );
 
     const response = await client.request({
       url: transformedRequestBody.url.href,
-      method: route.target.method,
+      method: target.method,
       data: transformedRequestBody.body,
       headers: transformedRequestBody.headers,
     });
 
-    return route.resTransform
-      ? await applyTransform(route.resTransform, response.data)
+    return target.resTransform
+      ? await applyTransform(target.resTransform, response.data)
       : response.data;
   }
 
@@ -138,12 +120,14 @@ export class ProxyService {
     targetUrl: string,
     requestTransform?: string,
     headersToPass?: string[],
+    requiredParams?: string[],
   ) {
+    const url: URL = new URL(targetUrl);
+    url.search = this.requiredQuery(req.query, requiredParams);
     let transformedRequestBody: BaseRequest = {
-      url: new URL(targetUrl),
+      url: url,
       body: req.body,
       headers: this.getHeadersToPass(req.headers, headersToPass),
-      sourceQuery: req.query,
     };
     if (requestTransform) {
       transformedRequestBody = await applyTransform(
@@ -152,6 +136,27 @@ export class ProxyService {
       );
     }
     return transformedRequestBody;
+  }
+  private requiredQuery(
+    query: any,
+    requiredParams: string[] | undefined,
+  ): string {
+    if (!requiredParams || requiredParams.length === 0) {
+      return '';
+    }
+    if (requiredParams[0] === '*') {
+      return new URLSearchParams(query).toString();
+    }
+    const allParams = new URLSearchParams(query);
+    const filteredParams = new URLSearchParams();
+
+    requiredParams.forEach((key) => {
+      allParams.getAll(key).forEach((val) => {
+        filteredParams.append(key, val);
+      });
+    });
+
+    return filteredParams.toString();
   }
 
   private getHeadersToPass(

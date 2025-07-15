@@ -8,9 +8,8 @@
       "url": "https://cms-msme-ext.qa.jswone.in/api/app-home-page",
       "method": "GET",
       "timeout": { "request": 5000, "socket": 1000 },
-      "reqTransform": "cmsTransformer.transformAppHomePageResponse"
-    },
-    "resTransform": "cmsTransformer.transformAppHomePageResponse"
+      "requiredParams": ["*"]
+    }
   },
   {
     "path": "/xp-mi/public/app-home-page",
@@ -21,12 +20,12 @@
       "url": "https://cms-msme-ext.qa.jswone.in/api/app-home-page",
       "method": "GET",
       "timeout": { "request": 5000, "socket": 1000 },
-      "reqTransform": "cmsTransformer.transformAppHomePageRequest"
-    },
-    "resTransform": "cmsTransformer.transformAppHomePageResponse"
+      "reqTransform": "general.transformers.moveBodyToQueryParams",
+      "resTransform": "cms.transformers.replaceUriPrefix"
+    }
   },
   {
-    "path": "/cms/v3/app-home-page",
+    "path": "/xp-mi/public/v1/app-home-page",
     "method": "POST",
     "routeHandler": "AGGREGATE",
     "aggregationType": "PARALLEL",
@@ -35,17 +34,18 @@
         "url": "https://cms-msme-ext.qa.jswone.in/api/app-home-page",
         "method": "GET",
         "timeout": { "request": 5000, "socket": 1000 },
-        "reqTransform": "cmsTransformer.transformAppHomePageRequest"
+        "reqTransform": "general.transformers.moveBodyToQueryParams",
+        "resTransform": "cms.transformers.replaceUriPrefix"
       },
       {
         "name": "topProducts",
         "url": "https://jswoneconstruct.in/jswretail/v3/seller/top-product",
         "method": "GET",
         "timeout": { "request": 3000, "socket": 1000 },
-        "reqTransform": "cmsTransformer.transformGetRequest",
-        "headersToPass": ["authorization"]
+        "reqTransform": "general.transformers.convertToGetRequest",
+        "headersToPass": ["authorization"],
+        "requiredParams": ["pincode"]
       }
-    ],
-    "resTransform": "cmsTransformer.transformAppHomePageResponse"
+    ]
   }
 ]

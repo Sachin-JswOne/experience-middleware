@@ -6,11 +6,11 @@ import * as path from 'path';
 import { AggregatorType } from 'src/enum/aggregation-type.enum';
 import { RouteHandler } from 'src/enum/route-handler.enum';
 import { RouteConfig } from 'src/models/route-config.model';
+import { APP_ENV } from './app.config';
 
-const appEnv = process.env.APP_ENV || 'dev';
 const configFilePath = path.resolve(
   __dirname,
-  `../../config/${appEnv}/route-config.json`,
+  `../assets/${APP_ENV}/route-config.json`,
 );
 let ROUTE_CONFIG: RouteConfig[] = [];
 const enumFieldsMap: Record<string, any> = {
