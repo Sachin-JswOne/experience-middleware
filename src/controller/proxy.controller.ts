@@ -8,7 +8,7 @@ import { Request, Response } from 'express';
 export class ProxyController {
   constructor(private readonly proxyService: ProxyService) {}
 
-  @All('*')
+  @All('public/*')
   async handle(@Req() req: Request, @Res() res: Response) {
     try {
       const data = await this.proxyService.handleRequest(req);

@@ -1,6 +1,6 @@
 [
   {
-    "path": "/cms/v1/app-home-page",
+    "path": "/xp-mi/public/app-home-page",
     "method": "GET",
     "routeHandler": "TRANSFORM",
     "target": {
@@ -13,7 +13,7 @@
     "resTransform": "cmsTransformer.transformAppHomePageResponse"
   },
   {
-    "path": "/cms/v2/app-home-page",
+    "path": "/xp-mi/public/app-home-page",
     "method": "POST",
     "routeHandler": "TRANSFORM",
      "target": {

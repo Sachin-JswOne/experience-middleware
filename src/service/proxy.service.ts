@@ -143,9 +143,7 @@ export class ProxyService {
       url: new URL(targetUrl),
       body: req.body,
       headers: this.getHeadersToPass(req.headers, headersToPass),
-      sourceQueryString: req.query
-        ? new URLSearchParams(req.query as any).toString()
-        : '',
+      sourceQuery: req.query,
     };
     if (requestTransform) {
       transformedRequestBody = await applyTransform(
