@@ -31,6 +31,7 @@
     "aggregationType": "PARALLEL",
     "targets": [
       {
+        "name": "app-home-page",
         "url": "https://cms-msme-ext.qa.jswone.in/api/app-home-page",
         "method": "GET",
         "timeout": { "request": 5000, "socket": 1000 },
@@ -38,14 +39,24 @@
         "resTransform": "cms.transformers.replaceUriPrefix"
       },
       {
-        "name": "topProducts",
+        "name": "app-top-items",
         "url": "https://jswoneconstruct.in/jswretail/v3/seller/top-product",
         "method": "GET",
         "timeout": { "request": 3000, "socket": 1000 },
         "reqTransform": "general.transformers.convertToGetRequest",
         "headersToPass": ["authorization"],
         "requiredParams": ["pincode"]
+      },
+      {
+        "name": "app-buy-again",
+        "url": "https://jswoneconstruct.in/jswretail/v1/seller/buy-again",
+        "method": "GET",
+        "timeout": { "request": 3000, "socket": 1000 },
+        "reqTransform": "general.transformers.convertToGetRequest",
+        "headersToPass": ["authorization"],
+        "requiredParams": ["pincode"]
       }
-    ]
+    ],
+    "resTransform": "app.transformers.mergeHomePageResponses"
   }
 ]
