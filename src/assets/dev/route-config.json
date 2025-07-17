@@ -67,5 +67,18 @@
       }
     ],
     "resTransform": "app.transformers.mergeHomePageResponses"
+  },
+  {
+    "path": "/xp-mi/public/v1/app-global",
+    "method": "POST",
+    "routeHandler": "TRANSFORM",
+      "target": {
+      "name": "appGlobalPage",
+      "url": "https://cms-msme-ext.qa.jswone.in/api/app-global",
+      "method": "GET",
+      "timeout": { "request": 5000, "socket": 1000 },
+      "reqTransform": "general.transformers.moveBodyToQueryParams",
+      "resTransform": "cms.transformers.replaceUriPrefix"
+    }
   }
 ]
