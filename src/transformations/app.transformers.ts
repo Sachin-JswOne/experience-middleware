@@ -15,6 +15,7 @@ export function mergeHomePageResponses(
   const strapiResponse = responses['app-home-page'];
   const topItemsResponse = responses['app-top-items'];
   const buyAgainResponse = responses['app-buy-again'];
+  const categoriesResponse = responses['app-categories'];
 
   if (
     !strapiResponse ||
@@ -64,6 +65,24 @@ export function mergeHomePageResponses(
     if (topItemsBlock) {
       topItemsBlock.topProducts = topProducts;
     }
+  }
+
+  const categories: any[] | undefined = (
+    categoriesResponse?.data as { categories?: any[] }
+  )?.categories;
+  const categoriesBlock = blocks.find(
+    (block) => block.__component === 'app-components.app-category-component',
+  );
+  if (categoriesBlock && categoriesBlock.product_categories) {
+    let filteredCategories: any[] = [];
+    if (categories) {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+      filteredCategories = categoriesBlock.product_categories.filter(
+        (category) =>
+          categories.some((c: any) => c.categoryId === category.categoryId),
+      );
+    }
+    categoriesBlock.product_categories = filteredCategories;
   }
 
   mergedData.blocks = blocks;

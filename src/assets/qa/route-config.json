@@ -55,6 +55,15 @@
         "reqTransform": "general.transformers.convertToGetRequest",
         "headersToPass": ["authorization"],
         "requiredParams": ["pincode"]
+      },
+      {
+        "name": "app-categories",
+        "url": "https://jswoneconstruct.in/jswretail/v2/seller/category",
+        "method": "GET",
+        "timeout": { "request": 3000, "socket": 1000 },
+        "reqTransform": "general.transformers.convertToGetRequest",
+        "headersToPass": ["authorization"],
+        "requiredParams": ["pincode"]
       }
     ],
     "resTransform": "app.transformers.mergeHomePageResponses"
