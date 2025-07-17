@@ -1,29 +1,79 @@
 <p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
+  <img src="https://nodejs.org/static/images/logo.svg" width="60" alt="Node.js Logo" />
+  <img src="https://nestjs.com/img/logo-small.svg" width="60" alt="NestJS Logo" />
+  <img src="https://raw.githubusercontent.com/remojansen/logo.ts/master/ts.png" width="60" alt="TypeScript Logo" />
 </p>
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+<h1 align="center">JSWONE Experience Middleware</h1>
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
+<p align="center">
+  <b>A robust, extensible Backend-for-Frontend (BFF) and API Gateway layer for JSWONE, built with Node.js, NestJS, and TypeScript.</b>
 </p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
 
-## Description
+<p align="center">
+  <a href="https://nodejs.org/" target="_blank"><img src="https://img.shields.io/badge/Node.js-339933?logo=node.js&logoColor=white" alt="Node.js" /></a>
+  <a href="https://nestjs.com/" target="_blank"><img src="https://img.shields.io/badge/NestJS-E0234E?logo=nestjs&logoColor=white" alt="NestJS" /></a>
+  <a href="https://www.typescriptlang.org/" target="_blank"><img src="https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white" alt="TypeScript" /></a>
+</p>
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+---
+
+# Experience Middleware
+
+## About This Project
+
+**Experience Middleware** is a Node.js/NestJS-based Backend-for-Frontend (BFF) and API Gateway layer designed to aggregate, transform, and proxy requests between frontend clients and multiple backend services (such as CMS and retail APIs). It enables seamless orchestration of data from various microservices, applying custom transformations and aggregations to deliver optimized, frontend-ready responses.
+
+### Key Capabilities
+- **API Proxying:** Forwards requests from the frontend to backend services, handling authentication, headers, and error management.
+- **Data Aggregation:** Combines responses from multiple backend APIs into a single, unified response (e.g., home page data from CMS, top products, and buy-again recommendations).
+- **Custom Transformations:** Applies request and response transformations (via pluggable transformers) to shape data as needed by the frontend.
+- **Config-Driven Routing:** Uses a JSON-based route configuration to define which endpoints are proxied, aggregated, or transformed, and how.
+- **Extensible:** Easily add new routes, targets, and transformation logic without changing core code.
+
+### Example Use Cases
+- Aggregating home page data from a CMS and product APIs into a single response for the frontend.
+- Transforming request payloads or response formats to match frontend requirements.
+- Acting as a secure gateway between frontend apps and internal/external APIs.
+
+## How It Works
+- All routes are prefixed with `/xp-mi` (e.g., `/xp-mi/public/app-home-page`).
+- Route behavior (proxy, transform, aggregate) is defined in `src/assets/dev/route-config.json` (or the appropriate environment folder).
+- Each route specifies its handler type (`TRANSFORM`, `AGGREGATE`), target APIs, and optional transformation functions.
+- Aggregated responses can be merged and shaped using custom logic (see `src/transformations/`).
+
+### Example Route Config
+```json
+{
+  "path": "/xp-mi/public/v1/app-home-page",
+  "method": "POST",
+  "routeHandler": "AGGREGATE",
+  "aggregationType": "PARALLEL",
+  "targets": [
+    { "name": "app-home-page", "url": "https://cms-msme-ext.qa.jswone.in/api/app-home-page", ... },
+    { "name": "app-top-items", "url": "https://jswoneconstruct.in/jswretail/v3/seller/top-product", ... },
+    { "name": "app-buy-again", "url": "https://jswoneconstruct.in/jswretail/v1/seller/buy-again", ... }
+  ],
+  "resTransform": "app.transformers.mergeHomePageResponses"
+}
+```
+
+## How to Use
+1. **Install dependencies:**
+   ```bash
+   pnpm install
+   ```
+2. **Configure routes:**
+   - Edit `src/assets/dev/route-config.json` to define which endpoints to proxy/aggregate and how.
+3. **Run the server:**
+   ```bash
+   pnpm run start:dev
+   ```
+   The server will start on the port defined in your environment (default: 3000).
+4. **Send requests:**
+   - Example: `POST /xp-mi/public/v1/app-home-page` will aggregate and return home page data from multiple sources.
+
+---
 
 ## Project setup
 
@@ -59,40 +109,15 @@ $ pnpm run test:cov
 
 ## Deployment
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+*Deployment instructions placeholder*
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
-
-```bash
-$ pnpm install -g @nestjs/mau
-$ mau deploy
-```
-
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
-
-## Resources
-
-Check out a few resources that may come in handy when working with NestJS:
-
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+---
 
 ## Support
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+JSWONE Experience Middleware is maintained by CCP Team.
 
-## Stay in touch
+## Contact For Support
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+- Name: Sachin Sharma
+- Email: sachin.sharma@jsw.in

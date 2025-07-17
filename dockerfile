@@ -28,6 +28,7 @@ RUN corepack enable && corepack prepare pnpm@latest --activate
 
 # Copy only needed files from builder
 COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/public ./public
 COPY --from=builder /app/node_modules ./node_modules
 COPY package*.json ./
 

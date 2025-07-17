@@ -6,7 +6,10 @@ export async function applyTransform(
   fnPath: string,
   request: any,
 ): Promise<any> {
-  const [moduleName, fnName] = fnPath.split('.');
+  const [moduleName, fnName] = [
+    fnPath.slice(0, fnPath.lastIndexOf('.')),
+    fnPath.slice(fnPath.lastIndexOf('.') + 1),
+  ];
   const module = await import(`../transformations/${moduleName}`);
   return module[fnName](request);
 }
