@@ -1,0 +1,59 @@
+[
+    {
+        "path": "/xp-mi/public/v1/app-home-page",
+        "method": "POST",
+        "routeHandler": "AGGREGATE",
+        "aggregationType": "PARALLEL",
+        "targets": [
+          {
+            "name": "app-home-page",
+            "url": "https://internal-cms-ext.jswonemsme.com/api/app-home-page",
+            "method": "GET",
+            "timeout": { "request": 5000, "socket": 1000 },
+            "reqTransform": "general.transformers.moveBodyToQueryParams",
+            "resTransform": "cms.transformers.replaceUriPrefix"
+          },
+          {
+            "name": "app-top-items",
+            "url": "https://jswoneconstruct.com/jswretail/v3/seller/top-product",
+            "method": "GET",
+            "timeout": { "request": 5000, "socket": 1000 },
+            "reqTransform": "general.transformers.convertToGetRequest",
+            "headersToPass": ["authorization"],
+            "requiredParams": ["pincode"]
+          },
+          {
+            "name": "app-buy-again",
+            "url": "https://jswoneconstruct.com/jswretail/v1/seller/buy-again",
+            "method": "GET",
+            "timeout": { "request": 5000, "socket": 1000 },
+            "reqTransform": "general.transformers.convertToGetRequest",
+            "headersToPass": ["authorization"],
+            "requiredParams": ["pincode"]
+          },
+          {
+            "name": "app-categories",
+            "url": "https://jswoneconstruct.com/jswretail/v2/seller/category",
+            "method": "GET",
+            "timeout": { "request": 5000, "socket": 1000 },
+            "reqTransform": "general.transformers.convertToGetRequest",
+            "headersToPass": ["authorization"],
+            "requiredParams": ["pincode"]
+          }
+        ],
+        "resTransform": "app.transformers.mergeHomePageResponses"
+      },
+      {
+        "path": "/xp-mi/public/v1/app-global",
+        "method": "POST",
+        "routeHandler": "TRANSFORM",
+          "target": {
+          "name": "appGlobalPage",
+          "url": "https://internal-cms-ext.jswonemsme.com/api/app-global",
+          "method": "GET",
+          "timeout": { "request": 5000, "socket": 1000 },
+          "reqTransform": "general.transformers.moveBodyToQueryParams",
+          "resTransform": "cms.transformers.replaceUriPrefix"
+        }
+      }
+  ]
