@@ -64,6 +64,15 @@
         "reqTransform": "general.transformers.convertToGetRequest",
         "headersToPass": ["authorization"],
         "requiredParams": ["pincode"]
+      },
+      {
+        "name": "app-slc-cart-details",
+        "url": "https://one.qa.jswone.in/v2/cart/get",
+        "method": "GET",
+        "timeout": { "request": 3000, "socket": 1000 },
+        "reqTransform": "general.transformers.convertAuthorizationToAccessTokenInHeader",
+        "resTransform": "slc.transformers.convertSlcResponse",
+        "headersToPass": ["authorization"]
       }
     ],
     "resTransform": "app.transformers.mergeHomePageResponses"
