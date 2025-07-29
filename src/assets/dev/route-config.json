@@ -15,7 +15,7 @@
     "path": "/xp-mi/public/app-home-page",
     "method": "POST",
     "routeHandler": "TRANSFORM",
-     "target": {
+    "target": {
       "name": "appHomePage",
       "url": "https://cms-msme-ext.qa.jswone.in/api/app-home-page",
       "method": "GET",
@@ -64,24 +64,29 @@
         "reqTransform": "general.transformers.convertToGetRequest",
         "headersToPass": ["authorization"],
         "requiredParams": ["pincode"]
-      },
-      {
-        "name": "app-slc-cart-details",
-        "url": "https://one.qa.jswone.in/v2/cart/get",
-        "method": "GET",
-        "timeout": { "request": 3000, "socket": 1000 },
-        "reqTransform": "general.transformers.convertAuthorizationToAccessTokenInHeader",
-        "resTransform": "slc.transformers.convertSlcResponse",
-        "headersToPass": ["authorization"]
       }
     ],
     "resTransform": "app.transformers.mergeHomePageResponses"
   },
   {
+    "path": "/xp-mi/public/v1/app-slc-cart-details",
+    "method": "GET",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "app-slc-cart-details",
+      "url": "https://one.qa.jswone.in/v2/cart/get",
+      "method": "GET",
+      "timeout": { "request": 3000, "socket": 1000 },
+      "reqTransform": "general.transformers.convertAuthorizationToAccessTokenInHeader",
+      "resTransform": "slc.transformers.convertSlcResponse",
+      "headersToPass": ["authorization"]
+    }
+  },
+  {
     "path": "/xp-mi/public/v1/app-global",
     "method": "POST",
     "routeHandler": "TRANSFORM",
-      "target": {
+    "target": {
       "name": "appGlobalPage",
       "url": "https://cms-msme-ext.qa.jswone.in/api/app-global",
       "method": "GET",
