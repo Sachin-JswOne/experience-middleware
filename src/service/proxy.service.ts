@@ -109,7 +109,6 @@ export class ProxyService {
       data: transformedRequestBody.body,
       headers: transformedRequestBody.headers,
     });
-
     return target.resTransform
       ? await applyTransform(target.resTransform, response.data)
       : response.data;
