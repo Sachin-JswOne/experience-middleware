@@ -1,13 +1,15 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { PRODUCT_TYPE_KEYS } from 'src/config/app.config';
 import { BaseRequest } from 'src/models/base-request.model';
 import { convertAuthorizationToAccessTokenInHeader } from './general.transformers';
+import { priceRequest, priceResponse } from 'src/models/price.model';
 
 export function transformLineItemPriceRequest(
   request: BaseRequest,
 ): BaseRequest {
   const transformedRequest = convertAuthorizationToAccessTokenInHeader(request);
 
-  const requestBody = request.body;
+  const requestBody: priceRequest = request?.body;
   const variantMMID = getVariantMMID(
     requestBody?.category,
     requestBody?.productMMID,
@@ -28,8 +30,8 @@ export function transformLineItemPriceRequest(
     productVariantKey: productVariantKey,
     customAttributes: customAttributes,
     variantMMID: variantMMID,
-    productAttributes: request?.body?.productAttributes,
-    productTypeKey: PRODUCT_TYPE_KEYS[request?.body?.subCategory] || '',
+    productAttributes: requestBody.productAttributes,
+    productTypeKey: PRODUCT_TYPE_KEYS[requestBody.subCategory] || '',
   };
   const finalTransformedRequest: BaseRequest = {
     ...transformedRequest,
@@ -86,10 +88,10 @@ export function getVariantMMID(category: string, productMMID: string): string {
   return variantMMID;
 }
 
-export function transformLineItemPriceResponse(response) {
-  if (response.success && response.data) {
+export function transformLineItemPriceResponse(response: priceResponse) {
+  if (response.success && response?.price) {
     return {
-      price: response?.data?.price?.displayVariantLineItemPrice || 0,
+      price: response?.price?.displayVariantLineItemPrice || 0,
     };
   }
   return {
