@@ -14,12 +14,16 @@ export function convertSlcResponse(response: any): any {
       totalPrice: 0,
     };
     if (newResponse.data) {
-      if (newResponse.data.identifier.journeyType === 'SALES_LEAD_CART') {
+      if (newResponse.data.identifier?.journeyType === 'SALES_LEAD_CART') {
         slcCart.numberOfItems = newResponse.data.lineItemList.length;
         slcCart.totalPrice = newResponse.data.totalOrderAmount.displayAmount;
       }
       delete newResponse.slcCartDetails;
-      return slcCart;
+      if (slcCart.totalPrice && slcCart.numberOfItems > 0) {
+        return slcCart;
+      } else {
+        return {};
+      }
     } else {
       return {};
     }

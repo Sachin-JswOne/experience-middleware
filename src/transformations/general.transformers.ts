@@ -45,10 +45,10 @@ export function convertAuthorizationToAccessTokenInHeader(
         ...request.headers,
         access_token: authorization,
       };
+      // Remove the authorization header
+      delete transformedRequest.headers.authorization;
     }
-    // Remove the authorization header
-    delete transformedRequest.headers.authorization;
-
+    console.log('transformedRequest', transformedRequest);
     return transformedRequest;
   } catch (error) {
     console.error('Error in convertAuthorizationToAccessTokenInHeader:', error);
