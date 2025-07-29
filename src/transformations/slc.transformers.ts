@@ -12,13 +12,11 @@ export function convertSlcResponse(response: any): any {
     const slcCart: SlcResponse = {
       numberOfItems: 0,
       totalPrice: 0,
-      expiryDate: '',
     };
     if (newResponse.data) {
       if (newResponse.data.identifier.journeyType === 'SALES_LEAD_CART') {
         slcCart.numberOfItems = newResponse.data.lineItemList.length;
         slcCart.totalPrice = newResponse.data.totalOrderAmount.displayAmount;
-        // slcCart.expiryDate =  // need to check the field
       }
       delete newResponse.slcCartDetails;
       return slcCart;
