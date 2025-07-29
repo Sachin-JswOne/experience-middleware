@@ -94,5 +94,43 @@
       "reqTransform": "general.transformers.moveBodyToQueryParams",
       "resTransform": "cms.transformers.replaceUriPrefix"
     }
+  },
+  {
+    "path": "/xp-mi/public/v1/line-item-price",
+    "method": "POST",
+    "routeHandler": "TRANSFORM",
+     "target": {
+      "name": "appPdp",
+      "url": "https://one.qa.jswone.in/catalog/price/forreguser/line-item-price/v2",
+      "method": "POST",
+      "timeout": { "request": 5000, "socket": 1000 },
+      "headersToPass": [ { "source": "authorization", "destination": "access_token" } ],
+      "reqTransform": "price.transformers.transformLineItemPriceRequest",
+      "resTransform": "price.transformers.transformLineItemPriceResponse"
+    }
+  },
+  {
+    "path": "/xp-mi/public/v1/buy-again-with-prices",
+    "method": "GET",
+    "routeHandler": "AGGREGATE",
+    "aggregationType": "PARALLEL",
+    "targets": [
+      {
+        "name": "ccp-buy-again-with-prices",
+        "url": "https://qa.msme.jswone.in/buy-again/prices-list",
+        "method": "GET",
+        "timeout": { "request": 5000, "socket": 1000 },
+        "headersToPass": [ { "source": "authorization", "destination": "access_token" } ]
+      },
+      {
+        "name": "app-buy-again",
+        "url": "https://jswoneconstruct.in/jswretail/v1/seller/buy-again",
+        "method": "GET",
+        "timeout": { "request": 3000, "socket": 1000 },
+        "headersToPass": [ { "source": "authorization", "destination": "authorization" } ],
+        "requiredParams": ["pincode"]
+      }
+    ],
+    "resTransform": "app.transformers.mergeBuyAgainResponses"
   }
 ]

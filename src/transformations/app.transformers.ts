@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { AggregatedResponse } from 'src/models/aggregated-response.model';
@@ -87,4 +88,56 @@ export function mergeHomePageResponses(
   return {
     data: mergedData,
   };
+}
+
+export function mergeBuyAgainResponses(
+  aggregatedResponses: AggregatedResponse[],
+): any {
+  const responses = aggregatedResponses.reduce(
+    (acc, response) => {
+      acc[response.target] = response;
+      return acc;
+    },
+    {} as Record<string, AggregatedResponse>,
+  );
+
+  const buyAgainPriceApiResponse = responses['ccp-buy-again-with-prices'];
+  const buyAgainRetailApiResponse = responses['app-buy-again'];
+
+  if (buyAgainRetailApiResponse.success) {
+    if (buyAgainPriceApiResponse.data && buyAgainRetailApiResponse.data) {
+      if (buyAgainPriceApiResponse.data.length === 0) {
+        if (buyAgainRetailApiResponse.data.listOfBuyAgainProducts) {
+          buyAgainRetailApiResponse.data.listOfBuyAgainProducts.forEach(
+            (product: any) => {
+              product.price = '';
+            },
+          );
+        }
+        return buyAgainRetailApiResponse.data;
+      }
+      if (
+        Array.isArray(buyAgainPriceApiResponse.data) &&
+        Array.isArray(buyAgainRetailApiResponse.data.listOfBuyAgainProducts)
+      ) {
+        buyAgainRetailApiResponse.data.listOfBuyAgainProducts.forEach(
+          (product: any) => {
+            const priceProduct = buyAgainPriceApiResponse.data.find(
+              (p: any) => p.variantKey === product.variantKey,
+            );
+            if (priceProduct) {
+              product.price = priceProduct.displayVariantLineItemPrice || '';
+            } else {
+              product.price = '';
+            }
+          },
+        );
+      }
+      return buyAgainRetailApiResponse.data;
+    }
+  } else {
+    return {
+      listOfBuyAgainProducts: [],
+    };
+  }
 }
