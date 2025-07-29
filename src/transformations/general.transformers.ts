@@ -48,7 +48,6 @@ export function convertAuthorizationToAccessTokenInHeader(
       // Remove the authorization header
       delete transformedRequest.headers.authorization;
     }
-    console.log('transformedRequest', transformedRequest);
     return transformedRequest;
   } catch (error) {
     console.error('Error in convertAuthorizationToAccessTokenInHeader:', error);
