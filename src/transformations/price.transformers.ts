@@ -1,5 +1,8 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-import { PRODUCT_TYPE_KEYS } from 'src/config/app.config';
+import {
+  CCP_PRICE_API_ATTRIBUTES_MAPPING,
+  PRODUCT_TYPE_KEYS,
+} from 'src/config/app.config';
 import { BaseRequest } from 'src/models/base-request.model';
 import { convertAuthorizationToAccessTokenInHeader } from './general.transformers';
 import { priceRequest, priceResponse } from 'src/models/price.model';
@@ -25,12 +28,17 @@ export function transformLineItemPriceRequest(
     requestBody?.quantity,
   );
 
+  const productAttributes = getProductAttributes(
+    requestBody?.productAttributes,
+    requestBody?.subCategory,
+  );
+
   const reqBody = {
     pincode: requestBody?.pincode,
     productVariantKey: productVariantKey,
     customAttributes: customAttributes,
     variantMMID: variantMMID,
-    productAttributes: requestBody.productAttributes,
+    productAttributes: productAttributes,
     productTypeKey: PRODUCT_TYPE_KEYS[requestBody.subCategory] || '',
   };
   const finalTransformedRequest: BaseRequest = {
@@ -97,4 +105,36 @@ export function transformLineItemPriceResponse(response: priceResponse) {
   return {
     price: 0,
   };
+}
+
+export function getProductAttributes(
+  productAttributes: { key: string; value: string }[],
+  subCategory: string,
+): { key: string; value: string }[] {
+  if (!productAttributes || productAttributes.length === 0) {
+    return [];
+  }
+
+  return productAttributes.map((attr) => {
+    let attributeKey = attr.key;
+
+    if (
+      ['GL Coils', 'GL Sheets', 'PPGL Coils', 'PPGL Sheets'].includes(
+        subCategory,
+      ) &&
+      attr.key === 'coating_grade_gsm'
+    ) {
+      attributeKey = 'coating_grade_gsm_gl_ppgl';
+    } else if (
+      ['GI Coils', 'GI Sheets'].includes(subCategory) &&
+      attr.key === 'coating_grade_gsm'
+    ) {
+      attributeKey = 'coating_grade_gsm_gi';
+    }
+
+    return {
+      key: CCP_PRICE_API_ATTRIBUTES_MAPPING[attributeKey],
+      value: attr.value,
+    };
+  });
 }

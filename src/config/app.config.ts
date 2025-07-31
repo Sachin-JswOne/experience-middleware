@@ -10,7 +10,7 @@ export const CMS_ASSETS_URLS = {
 };
 
 export const PRODUCT_TYPE_KEYS = {
-  TMT: 'tmt',
+  TMT: 'steel_TMT',
   Cement: 'cement',
   'MS Hot Rolled Sheets': 'steel_hr_sheets',
   'MS Hot Rolled Coils': 'steel_hr_coil',
@@ -34,4 +34,21 @@ export const PRODUCT_TYPE_KEYS = {
   'Beams and Columns': 'steel_beams',
   'Bituminous Emulsion': 'bulk_bitumen',
   'Viscosity Grade Bitumen': 'bitumen',
+};
+
+export const CCP_PRICE_API_ATTRIBUTES_MAPPING = {
+  thickness: 'THICKNESS_MM',
+  length: 'LENGTH_MM',
+  width: 'WIDTH_MM',
+  coating_grade_gsm_gi: 'S_ZN_COATING_GSM_MIN',
+  coating_grade_gsm_gl_ppgl: 'S_AL_ZN_COATING_GSM_MIN',
+  spangle_type: 'SPANGLE_TYPE',
+  colour: 'S_COLOUR_CODE_TOP',
+  diameter: 'DIAMETER_MM',
+  leg: 'LEG1_MM',
+  flange_width: 'FLANGE_WIDTH_MM',
+  web_depth: 'WEB_DEPTH_MM',
+  sectional_weight: 'SECTIONAL_WEIGHT_KG_PER_M',
+  DIAMETER_MM: 'DIAMETER_MM',
+  FORM: 'TMT_FORM',
 };
