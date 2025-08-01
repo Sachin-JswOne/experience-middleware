@@ -44,7 +44,7 @@
         "method": "GET",
         "timeout": { "request": 3000, "socket": 1000 },
         "reqTransform": "general.transformers.convertToGetRequest",
-        "headersToPass": ["authorization"],
+        "headersToPass": [ { "source": "authorization", "destination": "authorization" } ],
         "requiredParams": ["pincode"]
       },
       {
@@ -53,7 +53,7 @@
         "method": "GET",
         "timeout": { "request": 3000, "socket": 1000 },
         "reqTransform": "general.transformers.convertToGetRequest",
-        "headersToPass": ["authorization"],
+        "headersToPass": [ { "source": "authorization", "destination": "authorization" } ],
         "requiredParams": ["pincode"]
       },
       {
@@ -62,7 +62,7 @@
         "method": "GET",
         "timeout": { "request": 3000, "socket": 1000 },
         "reqTransform": "general.transformers.convertToGetRequest",
-        "headersToPass": ["authorization"],
+        "headersToPass": [ { "source": "authorization", "destination": "authorization" } ],
         "requiredParams": ["pincode"]
       }
     ],
@@ -104,7 +104,7 @@
       "url": "https://one.qa.jswone.in/catalog/price/forreguser/line-item-price/v2",
       "method": "POST",
       "timeout": { "request": 5000, "socket": 1000 },
-      "headersToPass": ["authorization"],
+      "headersToPass": [ { "source": "authorization", "destination": "access_token" } ],
       "reqTransform": "price.transformers.transformLineItemPriceRequest",
       "resTransform": "price.transformers.transformLineItemPriceResponse"
     }

@@ -4,14 +4,11 @@ import {
   PRODUCT_TYPE_KEYS,
 } from 'src/config/app.config';
 import { BaseRequest } from 'src/models/base-request.model';
-import { convertAuthorizationToAccessTokenInHeader } from './general.transformers';
 import { priceRequest, priceResponse } from 'src/models/price.model';
 
 export function transformLineItemPriceRequest(
   request: BaseRequest,
 ): BaseRequest {
-  const transformedRequest = convertAuthorizationToAccessTokenInHeader(request);
-
   const requestBody: priceRequest = request?.body;
   const variantMMID = getVariantMMID(
     requestBody?.category,
@@ -42,7 +39,7 @@ export function transformLineItemPriceRequest(
     productTypeKey: PRODUCT_TYPE_KEYS[requestBody.subCategory] || '',
   };
   const finalTransformedRequest: BaseRequest = {
-    ...transformedRequest,
+    ...request,
     body: reqBody,
   };
 
