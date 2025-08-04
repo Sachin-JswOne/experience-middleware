@@ -16,7 +16,6 @@ export function mergeHomePageResponses(
   const topItemsResponse = responses['app-top-items'];
   const buyAgainResponse = responses['app-buy-again'];
   const categoriesResponse = responses['app-categories'];
-
   if (
     !strapiResponse ||
     typeof strapiResponse.data !== 'object' ||
@@ -41,8 +40,6 @@ export function mergeHomePageResponses(
     ];
   }
   const blocks: any[] = originalBlocks;
-
-  // Prepare buy again block if available
   const buyAgainProducts = (
     buyAgainResponse?.data as { listOfBuyAgainProducts?: unknown }
   )?.listOfBuyAgainProducts;
