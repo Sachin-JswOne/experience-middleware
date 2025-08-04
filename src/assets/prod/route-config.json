@@ -49,7 +49,7 @@
     "routeHandler": "TRANSFORM",
     "target": {
       "name": "app-slc-cart-details",
-      "url": "https://one.qa.jswone.in/v2/cart/get",
+      "url": "https://www.jswonemsme.com/v2/cart/get",
       "method": "GET",
       "timeout": { "request": 3000, "socket": 1000 },
       "reqTransform": "general.transformers.convertAuthorizationToAccessTokenInHeader",
