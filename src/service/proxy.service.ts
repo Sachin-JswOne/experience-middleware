@@ -109,7 +109,6 @@ export class ProxyService {
       data: transformedRequestBody.body,
       headers: transformedRequestBody.headers,
     });
-
     return target.resTransform
       ? await applyTransform(target.resTransform, response.data)
       : response.data;
@@ -119,7 +118,7 @@ export class ProxyService {
     req: Request,
     targetUrl: string,
     requestTransform?: string,
-    headersToPass?: string[],
+    headersToPass?: { source: string; destination: string }[],
     requiredParams?: string[],
   ) {
     const url: URL = new URL(targetUrl);
@@ -161,15 +160,15 @@ export class ProxyService {
 
   private getHeadersToPass(
     reqHeaders: IncomingHttpHeaders,
-    headersToPass?: string[],
+    headersToPass?: { source: string; destination: string }[],
   ): IncomingHttpHeaders {
     if (!headersToPass || headersToPass.length === 0) {
       return {};
     }
     const headers: IncomingHttpHeaders = {};
     for (const header of headersToPass) {
-      if (reqHeaders[header]) {
-        headers[header] = reqHeaders[header];
+      if (reqHeaders[header.source]) {
+        headers[header.destination] = reqHeaders[header.source];
       }
     }
     return headers;
