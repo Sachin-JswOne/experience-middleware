@@ -79,7 +79,7 @@
       "timeout": { "request": 3000, "socket": 1000 },
       "reqTransform": "general.transformers.convertAuthorizationToAccessTokenInHeader",
       "resTransform": "slc.transformers.convertSlcResponse",
-      "headersToPass": ["authorization"]
+      "headersToPass": [ { "source": "authorization", "destination": "authorization" } ]
     }
   },
   {
