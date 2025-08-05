@@ -19,7 +19,7 @@
         "method": "GET",
         "timeout": { "request": 5000, "socket": 1000 },
         "reqTransform": "general.transformers.convertToGetRequest",
-        "headersToPass": ["authorization"],
+        "headersToPass": [ { "source": "authorization", "destination": "authorization" } ],
         "requiredParams": ["pincode"]
       },
       {
@@ -28,7 +28,7 @@
         "method": "GET",
         "timeout": { "request": 5000, "socket": 1000 },
         "reqTransform": "general.transformers.convertToGetRequest",
-        "headersToPass": ["authorization"],
+        "headersToPass": [ { "source": "authorization", "destination": "authorization" } ],
         "requiredParams": ["pincode"]
       },
       {
@@ -37,7 +37,7 @@
         "method": "GET",
         "timeout": { "request": 5000, "socket": 1000 },
         "reqTransform": "general.transformers.convertToGetRequest",
-        "headersToPass": ["authorization"],
+        "headersToPass": [ { "source": "authorization", "destination": "authorization" } ],
         "requiredParams": ["pincode"]
       }
     ],
@@ -54,7 +54,7 @@
       "timeout": { "request": 3000, "socket": 1000 },
       "reqTransform": "general.transformers.convertAuthorizationToAccessTokenInHeader",
       "resTransform": "slc.transformers.convertSlcResponse",
-      "headersToPass": ["authorization"]
+      "headersToPass": [ { "source": "authorization", "destination": "authorization" } ]
     }
   },
   {
@@ -69,5 +69,43 @@
       "reqTransform": "general.transformers.moveBodyToQueryParams",
       "resTransform": "cms.transformers.replaceUriPrefix"
     }
+  },
+   {
+    "path": "/xp-mi/public/v1/line-item-price",
+    "method": "POST",
+    "routeHandler": "TRANSFORM",
+     "target": {
+      "name": "appPdp",
+      "url": "https://www.jswonemsme.com/catalog/price/forreguser/line-item-price/v2",
+      "method": "POST",
+      "timeout": { "request": 5000, "socket": 1000 },
+      "headersToPass": [ { "source": "authorization", "destination": "access_token" } ],
+      "reqTransform": "price.transformers.transformLineItemPriceRequest",
+      "resTransform": "price.transformers.transformLineItemPriceResponse"
+    }
+  },
+  {
+    "path": "/xp-mi/public/v1/buy-again-with-prices",
+    "method": "GET",
+    "routeHandler": "AGGREGATE",
+    "aggregationType": "PARALLEL",
+    "targets": [
+      {
+        "name": "ccp-buy-again-with-prices",
+        "url": "https://www.jswonemsme.com/buy-again/prices-list",
+        "method": "GET",
+        "timeout": { "request": 5000, "socket": 1000 },
+        "headersToPass": [ { "source": "authorization", "destination": "access_token" } ]
+      },
+      {
+        "name": "app-buy-again",
+        "url": "https://jswoneconstruct.com/jswretail/v1/seller/buy-again",
+        "method": "GET",
+        "timeout": { "request": 3000, "socket": 1000 },
+        "headersToPass": [ { "source": "authorization", "destination": "authorization" } ],
+        "requiredParams": ["pincode"]
+      }
+    ],
+    "resTransform": "app.transformers.mergeBuyAgainResponses"
   }
 ]

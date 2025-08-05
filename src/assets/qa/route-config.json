@@ -44,7 +44,7 @@
         "method": "GET",
         "timeout": { "request": 3000, "socket": 1000 },
         "reqTransform": "general.transformers.convertToGetRequest",
-        "headersToPass": ["authorization"],
+        "headersToPass": [ { "source": "authorization", "destination": "authorization" } ],
         "requiredParams": ["pincode"]
       },
       {
@@ -53,7 +53,7 @@
         "method": "GET",
         "timeout": { "request": 3000, "socket": 1000 },
         "reqTransform": "general.transformers.convertToGetRequest",
-        "headersToPass": ["authorization"],
+        "headersToPass": [ { "source": "authorization", "destination": "authorization" } ],
         "requiredParams": ["pincode"]
       },
       {
@@ -62,7 +62,7 @@
         "method": "GET",
         "timeout": { "request": 3000, "socket": 1000 },
         "reqTransform": "general.transformers.convertToGetRequest",
-        "headersToPass": ["authorization"],
+        "headersToPass": [ { "source": "authorization", "destination": "authorization" } ],
         "requiredParams": ["pincode"]
       }
     ],
@@ -79,7 +79,7 @@
       "timeout": { "request": 3000, "socket": 1000 },
       "reqTransform": "general.transformers.convertAuthorizationToAccessTokenInHeader",
       "resTransform": "slc.transformers.convertSlcResponse",
-      "headersToPass": ["authorization"]
+      "headersToPass": [ { "source": "authorization", "destination": "authorization" } ]
     }
   },
   {
