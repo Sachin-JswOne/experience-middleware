@@ -132,5 +132,18 @@
       }
     ],
     "resTransform": "app.transformers.mergeBuyAgainResponses"
+  },
+    {
+    "path": "/xp-mi/public/v1/app-pdp-pages",
+    "method": "POST",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "appPdpPageChanges",
+      "url": "https://cms-msme-ext.qa.jswone.in/api/app-pdp-pages",
+      "method": "GET",
+      "timeout": { "request": 5000, "socket": 1000 },
+      "reqTransform": "general.transformers.moveBodyToQueryParams",
+      "resTransform": "cms.transformers.replaceUriPrefix"
+    }
   }
 ]
