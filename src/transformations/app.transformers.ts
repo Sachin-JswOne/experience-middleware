@@ -17,6 +17,7 @@ export function mergeHomePageResponses(
   const topItemsResponse = responses['app-top-items'];
   const buyAgainResponse = responses['app-buy-again'];
   const categoriesResponse = responses['app-categories'];
+
   if (
     !strapiResponse ||
     typeof strapiResponse.data !== 'object' ||
@@ -81,6 +82,43 @@ export function mergeHomePageResponses(
       );
     }
     categoriesBlock.product_categories = filteredCategories;
+  }
+
+  const topBrands: any[] | undefined = (
+    categoriesResponse?.data as { brands?: any[] }
+  )?.brands;
+
+  if (Array.isArray(topBrands)) {
+    const topBrandsBlockIndex = blocks.findIndex(
+      (block) => block.__component === 'app-components.app-top-brands',
+    );
+
+    if (topBrandsBlockIndex !== -1) {
+      const topBrandsBlock = blocks[topBrandsBlockIndex];
+
+      const brands: any[] = [];
+      if (topBrandsBlock.product_brands) {
+        topBrandsBlock.product_brands.forEach((brand: any) => {
+          const brandData = {
+            image: brand.image?.url || '',
+            name: brand.name || '',
+          };
+          brands.push(brandData);
+        });
+      }
+
+      const productBrands = brands.filter((brand) =>
+        topBrands.includes(brand.name),
+      );
+
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { product_brands, ...restOfBlock } = topBrandsBlock;
+
+      blocks[topBrandsBlockIndex] = {
+        ...restOfBlock,
+        productBrands,
+      };
+    }
   }
 
   mergedData.blocks = blocks;
