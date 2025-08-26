@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-return */
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
@@ -75,7 +76,6 @@ export function mergeHomePageResponses(
   if (categoriesBlock && categoriesBlock.product_categories) {
     let filteredCategories: any[] = [];
     if (categories) {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-call
       filteredCategories = categoriesBlock.product_categories.filter(
         (category) =>
           categories.some((c: any) => c.categoryId === category.categoryId),
@@ -177,5 +177,75 @@ export function mergeBuyAgainResponses(
     return {
       listOfBuyAgainProducts: [],
     };
+  }
+}
+
+export function mergeTopBrandsResponses(aggregatedResponses) {
+  const responses = aggregatedResponses.reduce(
+    (acc, response) => {
+      acc[response.target] = response;
+      return acc;
+    },
+    {} as Record<string, AggregatedResponse>,
+  );
+
+  const strapiTopBrandsData = responses['app-top-brands-page'];
+  const topBrandsApiData = responses['app-top-brands'];
+
+  const defaultResponse = {
+    productBrands: [],
+  };
+
+  if (strapiTopBrandsData.success && topBrandsApiData.success) {
+    const strapiBrandsResponse = strapiTopBrandsData.data.data;
+
+    if (
+      strapiBrandsResponse.branding_sections &&
+      Array.isArray(strapiBrandsResponse.branding_sections) &&
+      strapiBrandsResponse.branding_sections.length > 0
+    ) {
+      const topBrandsStrapiResponse = strapiBrandsResponse.branding_sections[0];
+
+      if (!topBrandsStrapiResponse) {
+        return defaultResponse;
+      }
+      const brands: any[] = [];
+      if (topBrandsStrapiResponse.product_brands) {
+        topBrandsStrapiResponse.product_brands.forEach((brand: any) => {
+          const brandData = {
+            image: brand.image?.url || '',
+            name: brand.name || '',
+          };
+          brands.push(brandData);
+        });
+      }
+
+      const topBrandsApiResponse = topBrandsApiData.data?.brands;
+
+      if (topBrandsApiResponse && topBrandsApiResponse.length > 0) {
+        const topBrands: string[] = topBrandsApiResponse;
+
+        const productBrands = brands.filter((brand) =>
+          topBrands.includes(brand.name),
+        );
+        const response = {
+          __component: topBrandsStrapiResponse.__component,
+          id: topBrandsStrapiResponse.id,
+          title: topBrandsStrapiResponse.title,
+          productBrands: productBrands,
+        };
+        return response;
+      } else {
+        return {
+          __component: topBrandsStrapiResponse.__component,
+          id: topBrandsStrapiResponse.id,
+          title: topBrandsStrapiResponse.title,
+          productBrands: [],
+        };
+      }
+    }
+    return defaultResponse;
+  } else {
+    return defaultResponse;
   }
 }
