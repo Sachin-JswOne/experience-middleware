@@ -145,5 +145,31 @@
       "reqTransform": "general.transformers.moveBodyToQueryParams",
       "resTransform": "cms.transformers.replaceUriPrefix"
     }
+  },
+  {
+    "path": "/xp-mi/public/v1/app-top-brands",
+    "method": "POST",
+    "routeHandler": "AGGREGATE",
+    "aggregationType": "PARALLEL",
+    "targets": [
+      {
+      "name": "app-top-brands-page",
+      "url": "https://cms-msme-ext.qa.jswone.in/api/app-branding-listing-page",
+      "method": "GET",
+      "timeout": { "request": 5000, "socket": 1000 },
+      "reqTransform": "general.transformers.moveBodyToQueryParams",
+      "resTransform": "cms.transformers.replaceUriPrefix"
+    },
+      {
+        "name": "app-top-brands",
+        "url": "https://jswoneconstruct.in/jswretail/v2/seller/category",
+        "method": "GET",
+        "timeout": { "request": 3000, "socket": 1000 },
+        "reqTransform": "general.transformers.convertToGetRequest",
+        "headersToPass": [ { "source": "authorization", "destination": "authorization" } ],
+        "requiredParams": ["pincode"]
+      }
+    ],
+    "resTransform": "app.transformers.mergeTopBrandsResponses"
   }
 ]
