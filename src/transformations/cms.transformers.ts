@@ -2,6 +2,8 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 
 import { CMS_ASSETS_URLS } from 'src/config/app.config';
+import * as qs from 'qs';
+import { BaseRequest } from 'src/models/base-request.model';
 
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 export function replaceUriPrefix(response: any): any {
@@ -26,4 +28,29 @@ export function replaceUriPrefix(response: any): any {
     return newResponse;
   }
   return response;
+}
+
+export function homeBlogs(request: BaseRequest): BaseRequest {
+  const transformedRequest: BaseRequest = {
+    ...request,
+    body: null,
+  };
+
+  const blogParams = {
+  sort: ['customDate:desc', 'updatedAt:desc'],
+  populate: {
+    fields: ['title', 'categoryName', 'linkUrl'],
+    thumbnail: {
+      fields: ['url', 'alternativeText', 'name']
+    }
+  },
+  pagination: {
+    pageSize: 5,
+    page: 1
+  }
+};
+
+  transformedRequest.url.search = qs.stringify(blogParams);
+
+  return transformedRequest;
 }
