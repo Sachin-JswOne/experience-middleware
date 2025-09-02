@@ -160,5 +160,55 @@
       }
     ],
     "resTransform": "app.transformers.mergeTopBrandsResponses"
+  },
+  {
+    "path": "/xp-mi/public/v2/app-home-page-v2",
+    "method": "POST",
+    "routeHandler": "AGGREGATE",
+    "aggregationType": "PARALLEL",
+    "targets": [
+      {
+        "name": "app-home-page",
+        "url": "https://internal-cms-ext.jswonemsme.com/api/app-home-page-v2",
+        "method": "GET",
+        "timeout": { "request": 5000, "socket": 1000 },
+        "reqTransform": "general.transformers.moveBodyToQueryParams",
+        "resTransform": "cms.transformers.replaceUriPrefix"
+      },
+      {
+        "name": "app-top-items",
+        "url": "https://jswoneconstruct.com/jswretail/v3/seller/top-product",
+        "method": "GET",
+        "timeout": { "request": 5000, "socket": 1000 },
+        "reqTransform": "general.transformers.convertToGetRequest",
+        "headersToPass": [
+          { "source": "authorization", "destination": "authorization" }
+        ],
+        "requiredParams": ["pincode"]
+      },
+      {
+        "name": "app-buy-again",
+        "url": "https://jswoneconstruct.com/jswretail/v1/seller/buy-again",
+        "method": "GET",
+        "timeout": { "request": 5000, "socket": 1000 },
+        "reqTransform": "general.transformers.convertToGetRequest",
+        "headersToPass": [
+          { "source": "authorization", "destination": "authorization" }
+        ],
+        "requiredParams": ["pincode"]
+      },
+      {
+        "name": "app-categories",
+        "url": "https://jswoneconstruct.com/jswretail/v2/seller/category",
+        "method": "GET",
+        "timeout": { "request": 5000, "socket": 1000 },
+        "reqTransform": "general.transformers.convertToGetRequest",
+        "headersToPass": [
+          { "source": "authorization", "destination": "authorization" }
+        ],
+        "requiredParams": ["pincode"]
+      }
+    ],
+    "resTransform": "app.transformers.mergeHomePageResponses"
   }
 ]
