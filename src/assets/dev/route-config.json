@@ -64,15 +64,7 @@
         "reqTransform": "general.transformers.convertToGetRequest",
         "headersToPass": [ { "source": "authorization", "destination": "authorization" } ],
         "requiredParams": ["pincode"]
-      },
-      {
-        "name": "app-blogs",
-        "url": "https://cms-msme-ext.qa.jswone.in/api/jsw-blogs-articless",
-        "method": "GET",
-        "timeout": { "request": 5000, "socket": 1000 },
-        "reqTransform": "cms.transformers.homeBlogs",
-        "resTransform": "cms.transformers.replaceUriPrefix"
-    }
+      }
     ],
     "resTransform": "app.transformers.mergeHomePageResponses"
   },
@@ -220,7 +212,15 @@
         "reqTransform": "general.transformers.convertToGetRequest",
         "headersToPass": [ { "source": "authorization", "destination": "authorization" } ],
         "requiredParams": ["pincode"]
-      }
+      },
+      {
+        "name": "app-blogs",
+        "url": "https://cms-msme-ext.qa.jswone.in/api/jsw-blogs-articless",
+        "method": "GET",
+        "timeout": { "request": 5000, "socket": 1000 },
+        "reqTransform": "cms.transformers.homeBlogs",
+        "resTransform": "cms.transformers.replaceUriPrefix"
+    }
     ],
     "resTransform": "app.transformers.mergeHomePageResponses"
   }
