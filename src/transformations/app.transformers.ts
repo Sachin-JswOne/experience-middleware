@@ -18,6 +18,7 @@ export function mergeHomePageResponses(
   const topItemsResponse = responses['app-top-items'];
   const buyAgainResponse = responses['app-buy-again'];
   const categoriesResponse = responses['app-categories'];
+  const blogResponse = responses['app-blogs'];
 
   if (
     !strapiResponse ||
@@ -118,6 +119,17 @@ export function mergeHomePageResponses(
         ...restOfBlock,
         productBrands,
       };
+    }
+  }
+
+      const blogs = (blogResponse?.data as {data?: unknown })
+    ?.data;
+  if (Array.isArray(blogs)) {
+    const blogBlock = blocks.find(
+      (block) => block.__component === 'app-components.app-blog-list-component',
+    );
+    if (blogBlock) {
+      blogBlock.blogs = blogs;
     }
   }
 
