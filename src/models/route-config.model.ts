@@ -11,7 +11,10 @@ export interface TargetConfig {
     socket: number;
   };
   rank?: number;
-  headersToPass: string[];
+  headersToPass: {
+    source: string;
+    destination: string;
+  }[];
   requiredParams?: string[];
   resTransform?: string;
 }

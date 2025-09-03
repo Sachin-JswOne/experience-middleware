@@ -29,3 +29,28 @@ export function convertToGetRequest(request: BaseRequest): BaseRequest {
   };
   return transformedRequest;
 }
+
+export function convertAuthorizationToAccessTokenInHeader(
+  request: BaseRequest,
+): BaseRequest {
+  try {
+    const transformedRequest: BaseRequest = {
+      ...request,
+      body: null,
+    };
+
+    const authorization = request.headers?.authorization;
+    if (authorization) {
+      transformedRequest.headers = {
+        ...request.headers,
+        access_token: authorization,
+      };
+      // Remove the authorization header
+      delete transformedRequest.headers.authorization;
+    }
+    return transformedRequest;
+  } catch (error) {
+    console.error('Error in convertAuthorizationToAccessTokenInHeader:', error);
+    return request;
+  }
+}
