@@ -252,7 +252,7 @@
           "Authorization": "Zoho.Connector.Yrt664kT",
           "client_id": "CLIEX3"
       },
-      "resTransform": "order.transformers.transformInvoiceAndDocuments"
+      "resTransform": "invoiceAndDocuments.transformers.transformInvoiceAndDocuments"
     }
   }
 ]

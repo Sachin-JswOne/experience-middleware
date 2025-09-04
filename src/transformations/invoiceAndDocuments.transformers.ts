@@ -1,20 +1,23 @@
+/* eslint-disable @typescript-eslint/no-unsafe-return */
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
-
 import { ERP_DOCUMENTS_MAPPING } from 'src/config/app.config';
 import { formatDate } from './general.transformers';
+import {
+  Document,
+  InvoiceAndDocuments,
+} from 'src/models/invoice-and-documents.model';
 
-export function transformInvoiceAndDocuments(response: any): any {
+export function transformInvoiceAndDocuments(
+  response: any,
+): InvoiceAndDocuments | { listOfDocuments: [] } {
   try {
-    console.log('response = ', response);
-
     if (!response || typeof response !== 'object') {
       return { listOfDocuments: [] };
     }
     const invoiceDocumentsResponse = response?.data?.data;
-    console.log('invoiceDocumentsResponse = ', invoiceDocumentsResponse);
 
     if (
       invoiceDocumentsResponse &&
@@ -39,11 +42,11 @@ export function transformInvoiceAndDocuments(response: any): any {
     }
   } catch (error) {
     console.error('Error in transformInvoiceAndDocuments:', error);
-    return {};
+    return { listOfDocuments: [] };
   }
 }
 
-export function transformDocuments(orderShipment) {
+export function transformDocuments(orderShipment): Document[] {
   const documentTypes = ['invoice', 'testCertificate', 'other'];
 
   return documentTypes.map((type) =>
@@ -51,7 +54,7 @@ export function transformDocuments(orderShipment) {
   );
 }
 
-export function transformDocumentType(orderShipment, type: string) {
+export function transformDocumentType(orderShipment, type: string): Document {
   const name = ERP_DOCUMENTS_MAPPING[type];
   let fileName = '';
   let signedUrl = '';

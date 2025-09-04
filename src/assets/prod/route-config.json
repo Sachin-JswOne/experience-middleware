@@ -225,7 +225,7 @@
     "routeHandler": "TRANSFORM",
     "target": {
       "name": "appInvoiceAndDocuments",
-      "url": "https://next.qa.jswone.in/external-connector-inbound/api/internal/v1/retail/fetch-order-invoice-docs",
+      "url": "https://oms.jswonemsme.com/external-connector-inbound/api/internal/v1/retail/fetch-order-invoice-docs",
       "method": "GET",
       "timeout": { "request": 5000, "socket": 1000 },
       "requiredParams": ["orderNumber"],
@@ -233,7 +233,7 @@
           "Authorization": "Zoho.Connector.Yrt664kT",
           "client_id": "CLIEX3"
       },
-      "resTransform": "order.transformers.transformInvoiceAndDocuments"
+      "resTransform": "invoiceAndDocuments.transformers.transformInvoiceAndDocuments"
     }
   }
 ]
