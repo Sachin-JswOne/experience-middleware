@@ -95,6 +95,7 @@ export class ProxyService {
         target.url,
         target.reqTransform,
         target.headersToPass,
+        target.staticHeaders,
         target.requiredParams,
       );
 
@@ -109,6 +110,7 @@ export class ProxyService {
       data: transformedRequestBody.body,
       headers: transformedRequestBody.headers,
     });
+
     return target.resTransform
       ? await applyTransform(target.resTransform, response.data)
       : response.data;
@@ -119,6 +121,7 @@ export class ProxyService {
     targetUrl: string,
     requestTransform?: string,
     headersToPass?: { source: string; destination: string }[],
+    staticHeaders?: { [key: string]: string },
     requiredParams?: string[],
   ) {
     const url: URL = new URL(targetUrl);
@@ -126,8 +129,9 @@ export class ProxyService {
     let transformedRequestBody: BaseRequest = {
       url: url,
       body: req.body,
-      headers: this.getHeadersToPass(req.headers, headersToPass),
+      headers: this.getHeadersToPass(req.headers, headersToPass, staticHeaders),
     };
+
     if (requestTransform) {
       transformedRequestBody = await applyTransform(
         requestTransform,
@@ -161,16 +165,20 @@ export class ProxyService {
   private getHeadersToPass(
     reqHeaders: IncomingHttpHeaders,
     headersToPass?: { source: string; destination: string }[],
+    staticHeaders?: { [key: string]: string },
   ): IncomingHttpHeaders {
-    if (!headersToPass || headersToPass.length === 0) {
-      return {};
-    }
     const headers: IncomingHttpHeaders = {};
-    for (const header of headersToPass) {
-      if (reqHeaders[header.source]) {
-        headers[header.destination] = reqHeaders[header.source];
+    if (headersToPass && headersToPass.length > 0) {
+      for (const header of headersToPass) {
+        if (reqHeaders[header.source]) {
+          headers[header.destination] = reqHeaders[header.source];
+        }
       }
     }
+    if (staticHeaders) {
+      Object.assign(headers, staticHeaders);
+    }
+
     return headers;
   }
 }

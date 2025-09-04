@@ -52,3 +52,9 @@ export const CCP_PRICE_API_ATTRIBUTES_MAPPING = {
   DIAMETER_MM: 'DIAMETER_MM',
   FORM: 'TMT_FORM',
 };
+
+export const ERP_DOCUMENTS_MAPPING = {
+  invoice: 'Invoice',
+  testCertificate: 'Test Certificate',
+  other: 'Others',
+};
