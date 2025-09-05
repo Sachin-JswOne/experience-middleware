@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 
-import { formatDate } from '../general.transformers';
+import { formatDate } from '../../../src/utils/common-functions.util';
 import {
   transformDocuments,
   transformDocumentType,
@@ -15,7 +15,7 @@ jest.mock('../../../src/config/app.config', () => ({
   },
 }));
 
-jest.mock('../general.transformers', () => ({
+jest.mock('../../../src/utils/common-functions.util', () => ({
   formatDate: jest.fn((date) => `formatted_${date}`),
 }));
 

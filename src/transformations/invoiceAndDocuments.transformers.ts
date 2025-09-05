@@ -4,11 +4,11 @@
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { ERP_DOCUMENTS_MAPPING } from 'src/config/app.config';
-import { formatDate } from './general.transformers';
 import {
   Document,
   InvoiceAndDocuments,
 } from 'src/models/invoice-and-documents.model';
+import { formatDate } from 'src/utils/common-functions.util';
 
 export function transformInvoiceAndDocuments(
   response: any,
@@ -59,7 +59,7 @@ export function transformDocumentType(orderShipment, type: string): Document {
   let fileName = '';
   let signedUrl = '';
 
-  if (orderShipment[type] && orderShipment[type].length > 0) {
+  if (orderShipment[type]?.length) {
     fileName = orderShipment[type][0].fileName; //Erp team currently sending random file name, hence we are doing [0] instead of finding by filename.
     signedUrl = orderShipment[type][0].signedUrl;
   }
