@@ -158,14 +158,16 @@ describe('invoiceAndDocuments.transformers', () => {
         { name: 'Other Document', fileName: '', signedUrl: '' },
       ];
 
-      expect(result).toEqual([
-        {
-          shipmentNumber: 'SHIP123',
-          dispatchedOn: 'formatted_2023-10-27T10:00:00Z',
-          documents: expectedTransformedDocuments,
-          pbOrder: 'PB123',
-        },
-      ]);
+      expect(result).toEqual({
+        listOfDocuments: [
+          {
+            shipmentNumber: 'SHIP123',
+            dispatchedOn: 'formatted_2023-10-27T10:00:00Z',
+            documents: expectedTransformedDocuments,
+            pbOrder: 'PB123',
+          },
+        ],
+      });
       expect(formatDate).toHaveBeenCalledWith('2023-10-27T10:00:00Z');
     });
 
@@ -204,9 +206,11 @@ describe('invoiceAndDocuments.transformers', () => {
       };
 
       const result = transformInvoiceAndDocuments(apiResponse);
-      expect(result[0].shipmentNumber).toBe('');
-      expect(result[0].pbOrder).toBeUndefined();
-      expect(result[0].dispatchedOn).toBe('formatted_2023-10-28T10:00:00Z');
+      expect(result.listOfDocuments[0].shipmentNumber).toBe('');
+      expect(result.listOfDocuments[0].pbOrder).toBeUndefined();
+      expect(result.listOfDocuments[0].dispatchedOn).toBe(
+        'formatted_2023-10-28T10:00:00Z',
+      );
     });
 
     it('should return an empty list and log an error if an exception occurs', () => {
