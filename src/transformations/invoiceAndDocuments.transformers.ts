@@ -10,9 +10,9 @@ import {
 } from 'src/models/invoice-and-documents.model';
 import { formatDate } from 'src/utils/common-functions.util';
 
-export function transformInvoiceAndDocuments(
-  response: any,
-): InvoiceAndDocuments | { listOfDocuments: [] } {
+export function transformInvoiceAndDocuments(response: any): {
+  listOfDocuments: InvoiceAndDocuments[] | [];
+} {
   try {
     if (!response || typeof response !== 'object') {
       return { listOfDocuments: [] };
@@ -25,18 +25,20 @@ export function transformInvoiceAndDocuments(
       Array.isArray(invoiceDocumentsResponse?.orderShipmentSummaryList) &&
       invoiceDocumentsResponse?.orderShipmentSummaryList.length > 0
     ) {
-      return invoiceDocumentsResponse.orderShipmentSummaryList.map(
-        (orderShipment) => {
-          const documents = transformDocuments(orderShipment);
+      const listOfDocuments =
+        invoiceDocumentsResponse.orderShipmentSummaryList.map(
+          (orderShipment) => {
+            const documents = transformDocuments(orderShipment);
 
-          return {
-            shipmentNumber: orderShipment.shipmentNumber || '',
-            dispatchedOn: formatDate(orderShipment.dispatchedOn) || '',
-            documents: documents,
-            pbOrder: orderShipment.pbOrder,
-          };
-        },
-      );
+            return {
+              shipmentNumber: orderShipment.shipmentNumber || '',
+              dispatchedOn: formatDate(orderShipment.dispatchedOn) || '',
+              documents: documents,
+              pbOrder: orderShipment.pbOrder,
+            };
+          },
+        );
+      return { listOfDocuments: listOfDocuments };
     } else {
       return { listOfDocuments: [] };
     }
