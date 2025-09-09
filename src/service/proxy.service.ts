@@ -167,7 +167,7 @@ export class ProxyService {
     headersToPass?: { source: string; destination: string }[],
     staticHeaders?: { [key: string]: string },
   ): IncomingHttpHeaders {
-    const headers: IncomingHttpHeaders = {};
+    let headers: IncomingHttpHeaders = {};
     if (headersToPass && headersToPass.length > 0) {
       for (const header of headersToPass) {
         if (reqHeaders[header.source]) {
@@ -176,7 +176,7 @@ export class ProxyService {
       }
     }
     if (staticHeaders) {
-      Object.assign(headers, { ...staticHeaders });
+      headers = { ...headers, ...staticHeaders };
     }
 
     return headers;
