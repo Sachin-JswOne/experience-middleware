@@ -122,8 +122,7 @@ export function mergeHomePageResponses(
     }
   }
 
-      const blogs = (blogResponse?.data as {data?: unknown })
-    ?.data;
+  const blogs = (blogResponse?.data as { data?: unknown })?.data;
   if (Array.isArray(blogs)) {
     const blogBlock = blocks.find(
       (block) => block.__component === 'app-components.app-blog-list-component',
