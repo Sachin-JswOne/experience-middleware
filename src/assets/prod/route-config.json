@@ -218,5 +218,22 @@
     }
     ],
     "resTransform": "app.transformers.mergeHomePageResponses"
+  },
+    {
+    "path": "/xp-mi/public/v1/app-invoice-and-documents",
+    "method": "GET",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "appInvoiceAndDocuments",
+      "url": "https://oms.jswonemsme.com/external-connector-inbound/api/internal/v1/retail/fetch-order-invoice-docs",
+      "method": "GET",
+      "timeout": { "request": 5000, "socket": 1000 },
+      "requiredParams": ["orderNumber"],
+      "staticHeaders": {
+          "Authorization": "Zoho.Connector.$2b$12$YKh3.VKgH1ulHA6DQbAxzOhqsq0khKIkEjJZUqk513VoHvXu.C6b",
+          "client_id": "CLIEX3"
+      },
+      "resTransform": "invoiceAndDocuments.transformers.transformInvoiceAndDocuments"
+    }
   }
 ]

@@ -223,5 +223,22 @@
     }
     ],
     "resTransform": "app.transformers.mergeHomePageResponses"
+  },
+    {
+    "path": "/xp-mi/public/v1/app-invoice-and-documents",
+    "method": "GET",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "appInvoiceAndDocuments",
+      "url": "https://next.qa.jswone.in/external-connector-inbound/api/internal/v1/retail/fetch-order-invoice-docs",
+      "method": "GET",
+      "timeout": { "request": 5000, "socket": 1000 },
+      "requiredParams": ["orderNumber"],
+      "staticHeaders": {
+          "Authorization": "Zoho.Connector.Yrt664kT",
+          "client_id": "CLIEX3"
+      },
+      "resTransform": "invoiceAndDocuments.transformers.transformInvoiceAndDocuments"
+    }
   }
 ]

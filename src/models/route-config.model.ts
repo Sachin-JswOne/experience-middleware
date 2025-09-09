@@ -15,6 +15,7 @@ export interface TargetConfig {
     source: string;
     destination: string;
   }[];
+  staticHeaders?: { [key: string]: string };
   requiredParams?: string[];
   resTransform?: string;
 }
