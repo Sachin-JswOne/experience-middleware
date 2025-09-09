@@ -9,3 +9,12 @@ export function formatDate(opportunityCreatedDate: string) {
 
   return formattedDate;
 }
+
+export function toTitleCase(str: string): string {
+  const withSpaces = str.replace(/([a-z])([A-Z])/g, '$1 $2');
+
+  return withSpaces
+    .split(/[\s_]+/)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+}

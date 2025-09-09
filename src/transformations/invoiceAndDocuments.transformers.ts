@@ -3,15 +3,10 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
-import { ERP_DOCUMENTS_MAPPING } from 'src/config/app.config';
-import {
-  Document,
-  InvoiceAndDocuments,
-} from 'src/models/invoice-and-documents.model';
-import { formatDate } from 'src/utils/common-functions.util';
+import { formatDate, toTitleCase } from 'src/utils/common-functions.util';
 
 export function transformInvoiceAndDocuments(response: any): {
-  listOfDocuments: InvoiceAndDocuments[] | [];
+  listOfDocuments;
 } {
   try {
     if (!response || typeof response !== 'object') {
@@ -48,7 +43,7 @@ export function transformInvoiceAndDocuments(response: any): {
   }
 }
 
-export function transformDocuments(orderShipment): Document[] {
+export function transformDocuments(orderShipment) {
   const documentTypes = ['invoice', 'testCertificate', 'other'];
 
   return documentTypes.map((type) =>
@@ -56,8 +51,8 @@ export function transformDocuments(orderShipment): Document[] {
   );
 }
 
-export function transformDocumentType(orderShipment, type: string): Document {
-  const name = ERP_DOCUMENTS_MAPPING[type];
+export function transformDocumentType(orderShipment, type: string) {
+  const name = toTitleCase(type);
   let fileName = '';
   let signedUrl = '';
 

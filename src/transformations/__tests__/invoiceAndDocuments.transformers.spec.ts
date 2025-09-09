@@ -7,16 +7,14 @@ import {
   transformInvoiceAndDocuments,
 } from '../invoiceAndDocuments.transformers';
 
-jest.mock('../../../src/config/app.config', () => ({
-  ERP_DOCUMENTS_MAPPING: {
-    invoice: 'Invoice',
-    testCertificate: 'Test Certificate',
-    other: 'Other Document',
-  },
-}));
-
 jest.mock('../../../src/utils/common-functions.util', () => ({
   formatDate: jest.fn((date) => `formatted_${date}`),
+  toTitleCase: jest.fn((str: string) => {
+    if (str === 'invoice') return 'Invoice';
+    if (str === 'testCertificate') return 'Test Certificate';
+    if (str === 'other') return 'Other Document';
+    return str;
+  }),
 }));
 
 describe('invoiceAndDocuments.transformers', () => {

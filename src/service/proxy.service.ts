@@ -176,7 +176,7 @@ export class ProxyService {
       }
     }
     if (staticHeaders) {
-      Object.assign(headers, staticHeaders);
+      Object.assign(headers, { ...staticHeaders });
     }
 
     return headers;
