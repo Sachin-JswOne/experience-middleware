@@ -235,5 +235,50 @@
       },
       "resTransform": "invoiceAndDocuments.transformers.transformInvoiceAndDocuments"
     }
+  },
+    {
+    "path": "/xp-mi/public/v1/create-address",
+    "method": "POST",
+    "routeHandler": "AGGREGATE",
+    "aggregationType": "PARALLEL",
+    "targets": [
+      {
+        "name": "get-sf-tokens",
+        "url": "https://jswoneplatforms--uat.sandbox.my.salesforce.com/services/oauth2/token",
+        "method": "POST",
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
+        "staticHeaders": {
+          "Content-Type": "application/x-www-form-urlencoded"
+        },
+        "requiredParams": [
+          "*"
+        ],
+        "reqTransform": "general.transformers.createQueryParams",
+        "resTransform": ""
+      },
+      {
+        "name": "create-address",
+        "url": "https://jswoneplatforms--uat.sandbox.my.salesforce.com/services/apexrest/v1/SiteAddress",
+        "method": "POST",
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
+        "reqTransform": "address.transformers.createAddress",
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "authorization"
+          }
+        ],
+        "requiredParams": [
+          "*"
+        ]
+      }
+    ],
+    "resTransform": ""
   }
 ]

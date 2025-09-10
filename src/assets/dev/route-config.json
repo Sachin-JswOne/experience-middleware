@@ -7,8 +7,13 @@
       "name": "appHomePage",
       "url": "https://cms-msme-ext.qa.jswone.in/api/app-home-page",
       "method": "GET",
-      "timeout": { "request": 5000, "socket": 1000 },
-      "requiredParams": ["*"]
+      "timeout": {
+        "request": 5000,
+        "socket": 1000
+      },
+      "requiredParams": [
+        "*"
+      ]
     }
   },
   {
@@ -19,7 +24,10 @@
       "name": "appHomePage",
       "url": "https://cms-msme-ext.qa.jswone.in/api/app-home-page",
       "method": "GET",
-      "timeout": { "request": 5000, "socket": 1000 },
+      "timeout": {
+        "request": 5000,
+        "socket": 1000
+      },
       "reqTransform": "general.transformers.moveBodyToQueryParams",
       "resTransform": "cms.transformers.replaceUriPrefix"
     }
@@ -34,7 +42,10 @@
         "name": "app-home-page",
         "url": "https://cms-msme-ext.qa.jswone.in/api/app-home-page",
         "method": "GET",
-        "timeout": { "request": 5000, "socket": 1000 },
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
         "reqTransform": "general.transformers.moveBodyToQueryParams",
         "resTransform": "cms.transformers.replaceUriPrefix"
       },
@@ -42,28 +53,58 @@
         "name": "app-top-items",
         "url": "https://jswoneconstruct.in/jswretail/v3/seller/top-product",
         "method": "GET",
-        "timeout": { "request": 3000, "socket": 1000 },
+        "timeout": {
+          "request": 3000,
+          "socket": 1000
+        },
         "reqTransform": "general.transformers.convertToGetRequest",
-        "headersToPass": [ { "source": "authorization", "destination": "authorization" } ],
-        "requiredParams": ["pincode"]
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "authorization"
+          }
+        ],
+        "requiredParams": [
+          "pincode"
+        ]
       },
       {
         "name": "app-buy-again",
         "url": "https://jswoneconstruct.in/jswretail/v1/seller/buy-again",
         "method": "GET",
-        "timeout": { "request": 3000, "socket": 1000 },
+        "timeout": {
+          "request": 3000,
+          "socket": 1000
+        },
         "reqTransform": "general.transformers.convertToGetRequest",
-        "headersToPass": [ { "source": "authorization", "destination": "authorization" } ],
-        "requiredParams": ["pincode"]
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "authorization"
+          }
+        ],
+        "requiredParams": [
+          "pincode"
+        ]
       },
       {
         "name": "app-categories",
         "url": "https://jswoneconstruct.in/jswretail/v2/seller/category",
         "method": "GET",
-        "timeout": { "request": 3000, "socket": 1000 },
+        "timeout": {
+          "request": 3000,
+          "socket": 1000
+        },
         "reqTransform": "general.transformers.convertToGetRequest",
-        "headersToPass": [ { "source": "authorization", "destination": "authorization" } ],
-        "requiredParams": ["pincode"]
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "authorization"
+          }
+        ],
+        "requiredParams": [
+          "pincode"
+        ]
       }
     ],
     "resTransform": "app.transformers.mergeHomePageResponses"
@@ -76,10 +117,18 @@
       "name": "app-slc-cart-details",
       "url": "https://one.qa.jswone.in/v2/cart/get?onlySlc=true",
       "method": "GET",
-      "timeout": { "request": 3000, "socket": 1000 },
+      "timeout": {
+        "request": 3000,
+        "socket": 1000
+      },
       "reqTransform": "general.transformers.convertAuthorizationToAccessTokenInHeader",
       "resTransform": "slc.transformers.convertSlcResponse",
-      "headersToPass": [ { "source": "authorization", "destination": "authorization" } ]
+      "headersToPass": [
+        {
+          "source": "authorization",
+          "destination": "authorization"
+        }
+      ]
     }
   },
   {
@@ -90,21 +139,32 @@
       "name": "appGlobalPage",
       "url": "https://cms-msme-ext.qa.jswone.in/api/app-global",
       "method": "GET",
-      "timeout": { "request": 5000, "socket": 1000 },
+      "timeout": {
+        "request": 5000,
+        "socket": 1000
+      },
       "reqTransform": "general.transformers.moveBodyToQueryParams",
       "resTransform": "cms.transformers.replaceUriPrefix"
     }
   },
-   {
+  {
     "path": "/xp-mi/public/v1/line-item-price",
     "method": "POST",
     "routeHandler": "TRANSFORM",
-     "target": {
+    "target": {
       "name": "appPdp",
       "url": "https://one.qa.jswone.in/catalog/price/forreguser/line-item-price/v2",
       "method": "POST",
-      "timeout": { "request": 5000, "socket": 1000 },
-      "headersToPass": [ { "source": "authorization", "destination": "access_token" } ],
+      "timeout": {
+        "request": 5000,
+        "socket": 1000
+      },
+      "headersToPass": [
+        {
+          "source": "authorization",
+          "destination": "access_token"
+        }
+      ],
       "reqTransform": "price.transformers.transformLineItemPriceRequest",
       "resTransform": "price.transformers.transformLineItemPriceResponse"
     }
@@ -119,21 +179,39 @@
         "name": "ccp-buy-again-with-prices",
         "url": "https://qa.msme.jswone.in/buy-again/prices-list",
         "method": "GET",
-        "timeout": { "request": 5000, "socket": 1000 },
-        "headersToPass": [ { "source": "authorization", "destination": "access_token" } ]
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "access_token"
+          }
+        ]
       },
       {
         "name": "app-buy-again",
         "url": "https://jswoneconstruct.in/jswretail/v1/seller/buy-again",
         "method": "GET",
-        "timeout": { "request": 3000, "socket": 1000 },
-        "headersToPass": [ { "source": "authorization", "destination": "authorization" } ],
-        "requiredParams": ["pincode"]
+        "timeout": {
+          "request": 3000,
+          "socket": 1000
+        },
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "authorization"
+          }
+        ],
+        "requiredParams": [
+          "pincode"
+        ]
       }
     ],
     "resTransform": "app.transformers.mergeBuyAgainResponses"
   },
-    {
+  {
     "path": "/xp-mi/public/v1/app-pdp-pages",
     "method": "POST",
     "routeHandler": "TRANSFORM",
@@ -141,7 +219,10 @@
       "name": "appPdpPageChanges",
       "url": "https://cms-msme-ext.qa.jswone.in/api/app-pdp-pages",
       "method": "GET",
-      "timeout": { "request": 5000, "socket": 1000 },
+      "timeout": {
+        "request": 5000,
+        "socket": 1000
+      },
       "reqTransform": "general.transformers.moveBodyToQueryParams",
       "resTransform": "cms.transformers.replaceUriPrefix"
     }
@@ -153,26 +234,39 @@
     "aggregationType": "PARALLEL",
     "targets": [
       {
-      "name": "app-top-brands-page",
-      "url": "https://cms-msme-ext.qa.jswone.in/api/app-branding-listing-page",
-      "method": "GET",
-      "timeout": { "request": 5000, "socket": 1000 },
-      "reqTransform": "general.transformers.moveBodyToQueryParams",
-      "resTransform": "cms.transformers.replaceUriPrefix"
-    },
+        "name": "app-top-brands-page",
+        "url": "https://cms-msme-ext.qa.jswone.in/api/app-branding-listing-page",
+        "method": "GET",
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
+        "reqTransform": "general.transformers.moveBodyToQueryParams",
+        "resTransform": "cms.transformers.replaceUriPrefix"
+      },
       {
         "name": "app-top-brands",
         "url": "https://jswoneconstruct.in/jswretail/v2/seller/category",
         "method": "GET",
-        "timeout": { "request": 3000, "socket": 1000 },
+        "timeout": {
+          "request": 3000,
+          "socket": 1000
+        },
         "reqTransform": "general.transformers.convertToGetRequest",
-        "headersToPass": [ { "source": "authorization", "destination": "authorization" } ],
-        "requiredParams": ["pincode"]
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "authorization"
+          }
+        ],
+        "requiredParams": [
+          "pincode"
+        ]
       }
     ],
     "resTransform": "app.transformers.mergeTopBrandsResponses"
   },
-   {
+  {
     "path": "/xp-mi/public/v2/app-home-page-v2",
     "method": "POST",
     "routeHandler": "AGGREGATE",
@@ -182,7 +276,10 @@
         "name": "app-home-page",
         "url": "https://cms-msme-ext.qa.jswone.in/api/app-home-page-v2",
         "method": "GET",
-        "timeout": { "request": 5000, "socket": 1000 },
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
         "reqTransform": "general.transformers.moveBodyToQueryParams",
         "resTransform": "cms.transformers.replaceUriPrefix"
       },
@@ -190,41 +287,74 @@
         "name": "app-top-items",
         "url": "https://jswoneconstruct.in/jswretail/v3/seller/top-product",
         "method": "GET",
-        "timeout": { "request": 3000, "socket": 1000 },
+        "timeout": {
+          "request": 3000,
+          "socket": 1000
+        },
         "reqTransform": "general.transformers.convertToGetRequest",
-        "headersToPass": [ { "source": "authorization", "destination": "authorization" } ],
-        "requiredParams": ["pincode"]
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "authorization"
+          }
+        ],
+        "requiredParams": [
+          "pincode"
+        ]
       },
       {
         "name": "app-buy-again",
         "url": "https://jswoneconstruct.in/jswretail/v1/seller/buy-again",
         "method": "GET",
-        "timeout": { "request": 3000, "socket": 1000 },
+        "timeout": {
+          "request": 3000,
+          "socket": 1000
+        },
         "reqTransform": "general.transformers.convertToGetRequest",
-        "headersToPass": [ { "source": "authorization", "destination": "authorization" } ],
-        "requiredParams": ["pincode"]
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "authorization"
+          }
+        ],
+        "requiredParams": [
+          "pincode"
+        ]
       },
       {
         "name": "app-categories",
         "url": "https://jswoneconstruct.in/jswretail/v2/seller/category",
         "method": "GET",
-        "timeout": { "request": 3000, "socket": 1000 },
+        "timeout": {
+          "request": 3000,
+          "socket": 1000
+        },
         "reqTransform": "general.transformers.convertToGetRequest",
-        "headersToPass": [ { "source": "authorization", "destination": "authorization" } ],
-        "requiredParams": ["pincode"]
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "authorization"
+          }
+        ],
+        "requiredParams": [
+          "pincode"
+        ]
       },
       {
         "name": "app-blogs",
         "url": "https://cms-msme-ext.qa.jswone.in/api/jsw-blogs-articless",
         "method": "GET",
-        "timeout": { "request": 5000, "socket": 1000 },
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
         "reqTransform": "cms.transformers.homeBlogs",
         "resTransform": "cms.transformers.replaceUriPrefix"
-    }
+      }
     ],
     "resTransform": "app.transformers.mergeHomePageResponses"
   },
-    {
+  {
     "path": "/xp-mi/public/v1/app-invoice-and-documents",
     "method": "GET",
     "routeHandler": "TRANSFORM",
@@ -240,5 +370,50 @@
       },
       "resTransform": "invoiceAndDocuments.transformers.transformInvoiceAndDocuments"
     }
+  },  
+  {
+    "path": "/xp-mi/public/v1/create-address",
+    "method": "POST",
+    "routeHandler": "AGGREGATE",
+    "aggregationType": "PARALLEL",
+    "targets": [
+      {
+        "name": "get-sf-tokens",
+        "url": "https://jswoneplatforms--uat.sandbox.my.salesforce.com/services/oauth2/token",
+        "method": "POST",
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
+        "staticHeaders": {
+          "Content-Type": "application/x-www-form-urlencoded"
+        },
+        "requiredParams": [
+          "*"
+        ],
+        "reqTransform": "general.transformers.createQueryParams",
+        "resTransform": ""
+      },
+      {
+        "name": "create-address",
+        "url": "https://jswoneplatforms--uat.sandbox.my.salesforce.com/services/apexrest/v1/SiteAddress",
+        "method": "POST",
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
+        "reqTransform": "address.transformers.createAddress",
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "authorization"
+          }
+        ],
+        "requiredParams": [
+          "*"
+        ]
+      }
+    ],
+    "resTransform": ""
   }
 ]
