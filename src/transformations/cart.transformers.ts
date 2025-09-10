@@ -12,6 +12,7 @@ export function mergeCartPageResponses(
     },
     {} as Record<string, AggregatedResponse>,
   );
+
   const strapiCartPageResponse = responses['app-cart-page'];
   const buyAgainApiResponse = responses['app-buy-again'];
   const cartSummaryApiResponse = responses['app-cart-summary'];
@@ -71,4 +72,5 @@ export function mergeCartPageResponses(
       data: mergedData,
     };
   }
+  return { data: {}, meta: {} };
 }
