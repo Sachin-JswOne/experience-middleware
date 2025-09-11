@@ -24,7 +24,6 @@ describe('verifyGstin transformer', () => {
     it('should return final result with address when no error', () => {
       const mockResponse = {
         data: {
-          data: {
             companyName: 'ABC Ltd',
             streetLine1: '123 Street',
             streetLine2: 'Suite 456',
@@ -33,7 +32,6 @@ describe('verifyGstin transformer', () => {
             state: 'Karnataka',
             pinCode: '560001',
             country: 'India',
-          },
         },
       };
 
