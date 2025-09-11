@@ -1,5 +1,5 @@
 import { BaseRequest } from 'src/models/base-request.model';
-import { BadRequestException, HttpStatus } from '@nestjs/common';
+import { BadRequestException } from '@nestjs/common';
 
 export function verifyGstin(
     request: BaseRequest,
