@@ -242,11 +242,11 @@
     "routeHandler": "TRANSFORM",
     "target": {
       "name": "verify-gstin",
-      "url": "https://oms.jswonemsme.com/internal/construct/v1/gstin/validate",
+      "url": "https://www.jswonemsme.com/internal/construct/v1/gstin/validate",
       "method": "POST",
       "staticHeaders":{
         "content-type": "application/json",
-        "X-API-KEY": "CustomerService-v1-4iy665w9f64u0h87wpoevhi5zflxy8cwa7y09rjvhu24sinjlcmlq8bdfmdz5hh6"
+        "X-API-KEY": "CustomerService-v1-8mmaqdoz1iobqbx89jdrdw2xr0xuw49fv87upa0b6hfe69433ex44fopxw822tjw"
       },
       "timeout": { "request": 5000, "socket": 1000 },
       "reqTransform": "verifyGstin.transformers.verifyGstin",
