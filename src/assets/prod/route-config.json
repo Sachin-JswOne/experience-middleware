@@ -270,5 +270,36 @@
       }
     ],
     "resTransform": "cart.transformers.mergeCartPageResponses"
+  },
+     {
+    "path": "/xp-mi/public/v1/app-shipments",
+    "method": "GET",
+    "routeHandler": "AGGREGATE",
+    "aggregationType": "PARALLEL",
+    "targets": [
+        {
+      "name": "app-shipment",
+      "url": "https://oms.jswonemsme.com/external-connector-inbound/api/internal/v1/retail/track-order-shipments",
+      "method": "GET",
+      "timeout": { "request": 5000, "socket": 1000 },
+      "requiredParams": ["orderNumber"],
+      "staticHeaders": {
+           "Authorization": "Zoho.Connector.$2b$12$YKh3.VKgH1ulHA6DQbAxzOhqsq0khKIkEjJZUqk513VoHvXu.C6b",
+          "client_id": "CLIEX3"
+      }
+    },
+      {
+      "name": "app-invoice-and-documents",
+      "url": "https://oms.jswonemsme.com/external-connector-inbound/api/internal/v1/retail/fetch-order-invoice-docs",
+      "method": "GET",
+      "timeout": { "request": 5000, "socket": 1000 },
+      "requiredParams": ["orderNumber"],
+      "staticHeaders": {
+          "Authorization": "Zoho.Connector.$2b$12$YKh3.VKgH1ulHA6DQbAxzOhqsq0khKIkEjJZUqk513VoHvXu.C6b",
+          "client_id": "CLIEX3"
+      }
+    }
+    ],
+    "resTransform": "shipments.transformers.mergeInvoiceAndShipmentsResponse"
   }
 ]
