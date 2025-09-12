@@ -3,6 +3,7 @@
 import { Controller, All, Req, Res, HttpStatus } from '@nestjs/common';
 import { ProxyService } from '../service/proxy.service';
 import { Request, Response } from 'express';
+import { CustomError } from 'src/utils/CustomError';
 
 @Controller()
 export class ProxyController {
@@ -15,11 +16,14 @@ export class ProxyController {
       res.status(HttpStatus.OK).json(data);
     } catch (err: unknown) {
       console.error(err);
+      const statusCode =
+        err instanceof CustomError
+          ? err.httpStatusCode
+          : HttpStatus.INTERNAL_SERVER_ERROR;
+
       const errorMessage =
         err instanceof Error ? err.message : 'Internal server error';
-      res
-        .status(HttpStatus.INTERNAL_SERVER_ERROR)
-        .json({ error: errorMessage });
+      res.status(statusCode).json({ error: errorMessage });
     }
   }
 }

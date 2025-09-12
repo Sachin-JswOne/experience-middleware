@@ -10,6 +10,8 @@ import {
   SHIPMENT_STATUS,
 } from 'src/config/app.config';
 import { formatDate } from 'src/utils/common-functions.util';
+import { CustomError } from 'src/utils/CustomError';
+import { HttpStatus } from '@nestjs/common';
 
 export function mergeInvoiceAndShipmentsResponse(
   aggregatedResponses: AggregatedResponse[],
@@ -31,7 +33,7 @@ export function mergeInvoiceAndShipmentsResponse(
       data?.data?.orderShipmentDetailsSRO?.orderShipmentDetailsList;
 
     if (!data || !orderShipmentDetailsSRO) {
-      throw new Error('No shipment found');
+      throw new CustomError('No shipment found', HttpStatus.NOT_FOUND);
     }
 
     const invoiceDocumentsResponse =
