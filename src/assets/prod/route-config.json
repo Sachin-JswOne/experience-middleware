@@ -271,7 +271,7 @@
     ],
     "resTransform": "cart.transformers.mergeCartPageResponses"
   },
-     {
+  {
     "path": "/xp-mi/public/v1/app-shipments",
     "method": "GET",
     "routeHandler": "AGGREGATE",
@@ -301,5 +301,22 @@
     }
     ],
     "resTransform": "shipments.transformers.mergeInvoiceAndShipmentsResponse"
-  }
+  },
+  {
+    "path": "/xp-mi/public/v1/verify-gst",
+    "method": "POST",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "verify-gstin",
+      "url": "https://www.jswonemsme.com/internal/construct/v1/gstin/validate",
+      "method": "POST",
+      "staticHeaders":{
+        "content-type": "application/json",
+        "X-API-KEY": "CustomerService-v1-8mmaqdoz1iobqbx89jdrdw2xr0xuw49fv87upa0b6hfe69433ex44fopxw822tjw"
+      },
+      "timeout": { "request": 5000, "socket": 1000 },
+      "reqTransform": "verifyGstin.transformers.verifyGstin",
+      "resTransform": "verifyGstin.transformers.verifyGstinResponse"
+    }
+  } 
 ]
