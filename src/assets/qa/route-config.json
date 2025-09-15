@@ -320,5 +320,22 @@
     }
     ],
     "resTransform": "shipments.transformers.mergeInvoiceAndShipmentsResponse"
+  },
+  {
+    "path": "/xp-mi/public/v1/verify-gst",
+    "method": "POST",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "verify-gstin",
+      "url": "https://one.qa.jswone.in/internal/construct/v1/gstin/validate",
+      "method": "POST",
+      "staticHeaders":{
+        "content-type": "application/json",
+        "X-API-KEY": "CustomerService-v1-4iy665w9f64u0h87wpoevhi5zflxy8cwa7y09rjvhu24sinjlcmlq8bdfmdz5hh6"
+      },
+      "timeout": { "request": 5000, "socket": 1000 },
+      "reqTransform": "verifyGstin.transformers.verifyGstin",
+      "resTransform": "verifyGstin.transformers.verifyGstinResponse"
+    }
   }
 ]
