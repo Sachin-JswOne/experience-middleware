@@ -369,5 +369,21 @@
         "headersToPass": [ { "source": "authorization", "destination": "Authorization" } ],
         "requiredParams": ["project_id"]
       }
+  },
+  {
+    "path": "/xp-mi/public/v1/reset-password",
+    "method": "POST",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "app-reset-password",
+      "url": "https://www.jswonemsme.com/internal/construct/v1/customer/reset/password",
+      "method": "POST",
+      "timeout": { "request": 5000, "socket": 1000 },
+      "staticHeaders": {
+         "X-API-KEY": "CustomerService-v1-8mmaqdoz1iobqbx89jdrdw2xr0xuw49fv87upa0b6hfe69433ex44fopxw822tjw"
+      },
+      "reqTransform": "login.transformers.transformResetPasswordRequest",
+      "resTransform": "login.transformers.transformResetPasswordResponse"
+    }
   }
 ]
