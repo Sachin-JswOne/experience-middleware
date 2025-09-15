@@ -20,19 +20,7 @@ export function transformInvoiceAndDocuments(response: any): {
       Array.isArray(invoiceDocumentsResponse?.orderShipmentSummaryList) &&
       invoiceDocumentsResponse?.orderShipmentSummaryList.length > 0
     ) {
-      const listOfDocuments =
-        invoiceDocumentsResponse.orderShipmentSummaryList.map(
-          (orderShipment) => {
-            const documents = transformDocuments(orderShipment);
-
-            return {
-              shipmentNumber: orderShipment.shipmentNumber || '',
-              dispatchedOn: formatDate(orderShipment.dispatchedOn) || '',
-              documents: documents,
-              pbOrder: orderShipment.pbOrder,
-            };
-          },
-        );
+      const listOfDocuments = getListOfDocuments(invoiceDocumentsResponse);
       return { listOfDocuments: listOfDocuments };
     } else {
       return { listOfDocuments: [] };
@@ -41,6 +29,22 @@ export function transformInvoiceAndDocuments(response: any): {
     console.error('Error in transformInvoiceAndDocuments:', error);
     return { listOfDocuments: [] };
   }
+}
+
+export function getListOfDocuments(invoiceDocumentsResponse) {
+  const listOfDocuments = invoiceDocumentsResponse.orderShipmentSummaryList.map(
+    (orderShipment) => {
+      const documents = transformDocuments(orderShipment);
+
+      return {
+        shipmentNumber: orderShipment.shipmentNumber || '',
+        dispatchedOn: formatDate(orderShipment.dispatchedOn) || '',
+        documents: documents,
+        pbOrder: orderShipment.pbOrder,
+      };
+    },
+  );
+  return listOfDocuments;
 }
 
 export function transformDocuments(orderShipment) {

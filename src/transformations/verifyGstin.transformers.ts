@@ -1,5 +1,6 @@
 import { BaseRequest } from 'src/models/base-request.model';
-import { BadRequestException } from '@nestjs/common';
+import { CustomError } from 'src/utils/CustomError';
+import { HttpStatus } from '@nestjs/common';
 
 export function verifyGstin(
     request: BaseRequest,
@@ -29,7 +30,7 @@ export function verifyGstinResponse(response: any) {
             finalResult.gstDetails = "";
             finalResult.userAlreadyExists = true;
         } else if(error.message?.includes("Please enter valid")){
-             throw new BadRequestException(error.message)
+             throw new CustomError(error.message, HttpStatus.BAD_REQUEST);
         }
     } else {
         finalResult.gstVerified = true;

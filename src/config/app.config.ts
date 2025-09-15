@@ -53,8 +53,13 @@ export const CCP_PRICE_API_ATTRIBUTES_MAPPING = {
   FORM: 'TMT_FORM',
 };
 
-export const ERP_DOCUMENTS_MAPPING = {
-  invoice: 'Invoice',
-  testCertificate: 'Test Certificate',
-  other: 'Others',
+export const SHIPMENT_STATUS = {
+  Invoiced: 'Delivered',
+  Completed: 'Delivered',
+  Dispatched: 'Dispatched',
+  Delivered: 'Delivered',
 };
+
+export const ORDER_TAG = 'Fulfilled by JSW One';
+
+export const DEFAULT_CURRENCY_CODE = 'INR';
