@@ -42,6 +42,8 @@ export class ProxyService {
     switch (route?.aggregationType) {
       case AggregatorType.PARALLEL:
         return await this.handleParallelAggregation(route, req);
+      case AggregatorType.SEQUENTIAL:
+        return await this.handleSequentialAggregation(route, req);
       default:
         throw new Error('Unsupported aggregation type');
     }
@@ -88,7 +90,40 @@ export class ProxyService {
       : normalizedResults;
   }
 
-  private async handleTransformRequest(target: TargetConfig, req: Request) {
+  private async handleSequentialAggregation(
+  route: AggregateRouteConfig,
+  req: Request,
+) {
+  const results: AggregatedResponse[] = [];
+
+  for (const target of route.targets) {
+    try {
+      // Pass along previous responses to transformer
+      const responseData = await this.handleTransformRequest(target, req, results);
+
+      results.push({
+        target: target.name || target.url,
+        success: true,
+        data: responseData,
+      });
+    } catch (err) {
+      results.push({
+        target: target.name || target.url,
+        success: false,
+        error: err?.message || err,
+        httpStatus: err?.status || 500,
+        downstreamResponse: err?.response?.data || null,
+      });
+
+      break;
+    }
+  }
+    return route.resTransform
+    ? await applyTransform(route.resTransform, results)
+    : results;
+}
+
+  private async handleTransformRequest(target: TargetConfig, req: Request, prevResponses?: AggregatedResponse[]) {
     const transformedRequestBody: BaseRequest =
       await this.buildRequestFromSource(
         req,
@@ -97,6 +132,7 @@ export class ProxyService {
         target.headersToPass,
         target.staticHeaders,
         target.requiredParams,
+        prevResponses,
       );
 
     const client = createHttpClient(
@@ -123,6 +159,7 @@ export class ProxyService {
     headersToPass?: { source: string; destination: string }[],
     staticHeaders?: { [key: string]: string },
     requiredParams?: string[],
+    prevResponses?: AggregatedResponse[], 
   ) {
     const url: URL = new URL(targetUrl);
     url.search = this.requiredQuery(req.query, requiredParams);
@@ -136,6 +173,7 @@ export class ProxyService {
       transformedRequestBody = await applyTransform(
         requestTransform,
         transformedRequestBody,
+        prevResponses,
       );
     }
     return transformedRequestBody;

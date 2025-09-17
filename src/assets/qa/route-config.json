@@ -337,5 +337,41 @@
       "reqTransform": "verifyGstin.transformers.verifyGstin",
       "resTransform": "verifyGstin.transformers.verifyGstinResponse"
     }
+  },
+  {
+  "path": "${PATH_URL}/v1/create-address",
+  "method": "POST",
+  "routeHandler": "AGGREGATE",
+  "aggregationType": "SEQUENTIAL",
+  "targets": [
+    {
+      "name": "get-sf-tokens",
+      "url": "${SF_AUTH_TOKEN_URI}",
+      "method": "POST",
+      "timeout": {
+        "request": "${TIMEOUTS.REQUEST}",
+        "socket": "${TIMEOUTS.SOCKET}"
+      },
+      "staticHeaders": {
+        "Content-Type": "application/x-www-form-urlencoded"
+      },
+      "requiredParams": ["*"],
+      "reqTransform": "general.transformers.createQueryParams",
+      "resTransform": ""
+    },
+    {
+      "name": "create-address",
+      "url": "${SF_OPPORTUNITY_URI}/v1/SiteAddress",
+      "method": "POST",
+      "timeout": {
+        "request": "${TIMEOUTS.REQUEST}",
+        "socket": "${TIMEOUTS.SOCKET}"
+      },
+      "reqTransform": "address.transformers.createAddress",
+      "headersToPass": [],
+      "requiredParams": ["*"]
+    }
+  ],
+  "resTransform": ""
   }
 ]

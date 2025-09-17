@@ -1,32 +1,45 @@
 import { BaseRequest } from 'src/models/base-request.model';
-import { AddressRequestBody, AddressPayload } from 'src/models/address.model';
+import { AggregatedResponse } from 'src/models/aggregated-response.model';
+import { CustomError } from 'src/utils/CustomError';
+import { HttpStatus } from '@nestjs/common';
 
 export function createAddress(
-    request: BaseRequest,
+  request: BaseRequest,
+  prevResponses?: AggregatedResponse[],   // new param for sequential
 ): BaseRequest {
-    const requestBody: AddressRequestBody = request?.body;
-    const headers = {
-        Authorization: `Bearer 00DIk000000LG4V!AQEAQM7jXSXgAWoAWpQ_1uhpRTYU_0JOgR3iVCOp0s_cgEVhWgMld1TYLFuqWVMNGE2mBEH5AEuLZWnHH1yIBo1r4WFm7T9a`,
-    };
+  const requestBody: any = request?.body;
 
-    const reqBody = {
-        accountId: requestBody?.accountId,
-        projectName: requestBody?.projectName,
-        addressLine1: requestBody?.addressLine1,
-        addressLine2: requestBody?.addressLine2,
-        city: requestBody?.city,
-        district: requestBody?.district,
-        state: requestBody?.state,
-        pincode: requestBody?.pincode
-    }
-    const Body: AddressPayload = { SiteAddressDataList: [reqBody] };
+  // Get Salesforce token from first target response
+  const tokenResponse = prevResponses?.find(r => r.target === 'get-sf-tokens');
+  const accessToken = tokenResponse?.data?.access_token;
 
+  if (!accessToken) {
+    throw new CustomError('Access token not found in previous responses', HttpStatus.NOT_FOUND);
 
-    const finalTransformedRequest: BaseRequest = {
-        ...request,
-        headers,
-        body: Body,
-    };
-    
-    return finalTransformedRequest
-} 
+  }
+
+  const headers = {
+    Authorization: `Bearer ${accessToken}`,
+  };
+
+  const reqBody = {
+    accountId: requestBody?.accountId,
+    projectName: requestBody?.projectName,
+    addressLine1: requestBody?.addressLine1,
+    addressLine2: requestBody?.addressLine2,
+    city: requestBody?.city,
+    district: requestBody?.district,
+    state: requestBody?.state,
+    pincode: requestBody?.pincode,
+  }
+
+  const Body: any = { SiteAddressDataList: [reqBody] };
+
+  const finalTransformedRequest: BaseRequest = {
+    ...request,
+    headers,
+    body: Body,
+  };
+
+  return finalTransformedRequest
+}

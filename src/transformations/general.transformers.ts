@@ -2,6 +2,7 @@
 // do not convert to default import
 import * as qs from 'qs';
 import { BaseRequest } from 'src/models/base-request.model';
+import { SF_QUERY_PARAMS } from 'src/config/app.config';
 
 export function moveBodyToQueryParams(request: BaseRequest): BaseRequest {
   const transformedRequest: BaseRequest = {
@@ -60,20 +61,11 @@ export function createQueryParams(request: BaseRequest): BaseRequest {
     ...request,
   };
 
-  // Hardcoded query parameters
-  const hardcodedParams = {
-    grant_type: 'password',
-    client_id: '3MVG9ZUGg10Hh224GhhTm_qyu2_U9Xs2YK_31FhfHv7csgYVsNYdGKfme3sdrOHBzmkxPi7rbaoix9EQEemfr',
-    client_secret: 'D612EF37A28B2CFEAEA2D9A9241C84188174EFBCF09565FFCA4DA2CF479A5058',
-    username: 'integration.user@stetig.in.jsw.uat',
-    password: 'JSW1@123V5zyNsAkVePDrsIbUw08v10E'
-  };
-
   // Parse existing query params (if any)
   const existingParams = qs.parse(request.url.search?.replace(/^\?/, '') || '');
 
   // Merge existing params with hardcoded params (hardcoded params will override existing ones)
-  const mergedParams = { ...existingParams, ...hardcodedParams };
+  const mergedParams = { ...existingParams, ...SF_QUERY_PARAMS };
 
   // Stringify and set
   transformedRequest.url.search = qs.stringify(mergedParams);
