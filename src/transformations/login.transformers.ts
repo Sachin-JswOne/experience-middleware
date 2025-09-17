@@ -3,6 +3,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { HttpStatus } from '@nestjs/common';
+import { MSME, MSME_ERRORS_MAPPING } from 'src/config/app.config';
 import { BaseRequest } from 'src/models/base-request.model';
 import { CustomError } from 'src/utils/CustomError';
 
@@ -46,5 +47,54 @@ export function transformResetPasswordResponse(response: any) {
   }
   return {
     success: true,
+  };
+}
+
+export function transformVerifyMobileNumberRequest(
+  request: BaseRequest,
+): BaseRequest {
+  const { phoneNumber } = request.body;
+
+  if (!phoneNumber || phoneNumber === '') {
+    throw new CustomError('PhoneNumber is required', HttpStatus.BAD_REQUEST);
+  }
+  const transformedRequest: BaseRequest = {
+    ...request,
+    body: {
+      phoneNumber: phoneNumber,
+      storeKey: MSME,
+    },
+  };
+
+  return transformedRequest;
+}
+
+export function transformVerifyMobileNumberResponse(response: any) {
+  const responseData = response;
+
+  if (!responseData) {
+    throw new CustomError(
+      'CCP Verify Mobile Number API is failing',
+      HttpStatus.INTERNAL_SERVER_ERROR,
+    );
+  }
+  if (!responseData.success && responseData.error) {
+    throw new CustomError(
+      responseData.error?.message,
+      responseData.error?.code || HttpStatus.INTERNAL_SERVER_ERROR,
+    );
+  }
+  const verifyMobileNumberResponse = responseData?.data;
+
+  if (!verifyMobileNumberResponse.success) {
+    throw new CustomError(
+      MSME_ERRORS_MAPPING[verifyMobileNumberResponse.message] ||
+        verifyMobileNumberResponse.message,
+      HttpStatus.BAD_REQUEST,
+    );
+  }
+
+  return {
+    requestId: verifyMobileNumberResponse.requestId,
   };
 }

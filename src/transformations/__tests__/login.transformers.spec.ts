@@ -2,9 +2,12 @@ import { HttpStatus } from '@nestjs/common';
 import {
   transformResetPasswordRequest,
   transformResetPasswordResponse,
+  transformVerifyMobileNumberRequest,
+  transformVerifyMobileNumberResponse,
 } from '../login.transformers';
 import { BaseRequest } from 'src/models/base-request.model';
 import { CustomError } from 'src/utils/CustomError';
+import { MSME } from 'src/config/app.config';
 
 describe('login.transformers', () => {
   describe('transformResetPasswordRequest', () => {
@@ -104,6 +107,108 @@ describe('login.transformers', () => {
       expect(() =>
         transformResetPasswordResponse(responseWithNullData),
       ).toThrow();
+    });
+  });
+
+  describe('transformVerifyMobileNumberRequest', () => {
+    it('should transform the request correctly with a valid phoneNumber', () => {
+      const request: BaseRequest = {
+        body: { phoneNumber: '1234567890' },
+        url: new URL('http://localhost/api'),
+        headers: {},
+      };
+      const transformedRequest = transformVerifyMobileNumberRequest(request);
+      expect(transformedRequest.body).toEqual({
+        phoneNumber: '1234567890',
+        storeKey: MSME,
+      });
+    });
+
+    it('should throw a CustomError if phoneNumber is missing', () => {
+      const request: BaseRequest = {
+        body: {},
+        url: new URL('http://localhost/api'),
+        headers: {},
+      };
+      expect(() => transformVerifyMobileNumberRequest(request)).toThrow(
+        new CustomError('PhoneNumber is required', HttpStatus.BAD_REQUEST),
+      );
+    });
+
+    it('should throw a CustomError if phoneNumber is an empty string', () => {
+      const request: BaseRequest = {
+        body: { phoneNumber: '' },
+        url: new URL('http://localhost/api'),
+        headers: {},
+      };
+      expect(() => transformVerifyMobileNumberRequest(request)).toThrow(
+        new CustomError('PhoneNumber is required', HttpStatus.BAD_REQUEST),
+      );
+    });
+  });
+
+  describe('transformVerifyMobileNumberResponse', () => {
+    it('should return the requestId for a successful response', () => {
+      const response = {
+        success: true,
+        data: {
+          success: true,
+          requestId: 'test-request-id',
+        },
+      };
+      const result = transformVerifyMobileNumberResponse(response);
+      expect(result).toEqual({ requestId: 'test-request-id' });
+    });
+
+    it('should throw a CustomError if CCP Verify Mobile Number API is failing', () => {
+      expect(() => transformVerifyMobileNumberResponse(null)).toThrow(
+        new CustomError(
+          'CCP Verify Mobile Number API is failing',
+          HttpStatus.INTERNAL_SERVER_ERROR,
+        ),
+      );
+    });
+
+    it('should throw a CustomError for a failure response with an error object', () => {
+      const response = {
+        success: false,
+        error: {
+          message: 'External service error',
+          code: 503,
+        },
+      };
+      expect(() => transformVerifyMobileNumberResponse(response)).toThrow(
+        new CustomError('External service error', 503),
+      );
+    });
+
+    it('should throw a CustomError if the nested data indicates failure', () => {
+      const response = {
+        success: true,
+        data: {
+          success: false,
+          message: 'Invalid phone number',
+        },
+      };
+      expect(() => transformVerifyMobileNumberResponse(response)).toThrow(
+        new CustomError('Invalid phone number', HttpStatus.BAD_REQUEST),
+      );
+    });
+
+    it('should use MSME_ERRORS_MAPPING for specific error messages', () => {
+      const response = {
+        success: true,
+        data: {
+          success: false,
+          message: 'Incorrect OTP. Please enter correct OTP',
+        },
+      };
+      expect(() => transformVerifyMobileNumberResponse(response)).toThrow(
+        new CustomError(
+          'Incorrect OTP. Please enter a valid OTP',
+          HttpStatus.BAD_REQUEST,
+        ),
+      );
     });
   });
 });
