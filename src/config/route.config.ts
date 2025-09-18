@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
@@ -26,7 +27,6 @@ const enumFieldsMap: Record<string, any> = {
   aggregationType: AggregatorType,
 };
 
-
 export function replaceEnvPlaceholders(obj: any): any {
   const PLACEHOLDER_RE = /\$\{([^}]+)\}/g;
 
@@ -49,9 +49,7 @@ export function replaceEnvPlaceholders(obj: any): any {
     throw new Error(`Missing config for: ${key}`);
   }
 
-
   if (typeof obj === 'string') {
-
     const exactMatch = obj.match(/^\$\{([^}]+)\}$/);
     if (exactMatch) {
       const resolved = resolveKey(exactMatch[1]);
@@ -79,7 +77,6 @@ export function replaceEnvPlaceholders(obj: any): any {
 
   return obj;
 }
-
 
 export function normalizeEnums<T extends Record<string, any>>(
   raw: T,

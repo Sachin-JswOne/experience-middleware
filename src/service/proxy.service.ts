@@ -91,39 +91,47 @@ export class ProxyService {
   }
 
   private async handleSequentialAggregation(
-  route: AggregateRouteConfig,
-  req: Request,
-) {
-  const results: AggregatedResponse[] = [];
+    route: AggregateRouteConfig,
+    req: Request,
+  ) {
+    const results: AggregatedResponse[] = [];
 
-  for (const target of route.targets) {
-    try {
-      // Pass along previous responses to transformer
-      const responseData = await this.handleTransformRequest(target, req, results);
+    for (const target of route.targets) {
+      try {
+        // Pass along previous responses to transformer
+        const responseData = await this.handleTransformRequest(
+          target,
+          req,
+          results,
+        );
 
-      results.push({
-        target: target.name || target.url,
-        success: true,
-        data: responseData,
-      });
-    } catch (err) {
-      results.push({
-        target: target.name || target.url,
-        success: false,
-        error: err?.message || err,
-        httpStatus: err?.status || 500,
-        downstreamResponse: err?.response?.data || null,
-      });
+        results.push({
+          target: target.name || target.url,
+          success: true,
+          data: responseData,
+        });
+      } catch (err) {
+        results.push({
+          target: target.name || target.url,
+          success: false,
+          error: err?.message || err,
+          httpStatus: err?.status || 500,
+          downstreamResponse: err?.response?.data || null,
+        });
 
-      break;
+        break;
+      }
     }
-  }
     return route.resTransform
-    ? await applyTransform(route.resTransform, results)
-    : results;
-}
+      ? await applyTransform(route.resTransform, results)
+      : results;
+  }
 
-  private async handleTransformRequest(target: TargetConfig, req: Request, prevResponses?: AggregatedResponse[]) {
+  private async handleTransformRequest(
+    target: TargetConfig,
+    req: Request,
+    prevResponses?: AggregatedResponse[],
+  ) {
     const transformedRequestBody: BaseRequest =
       await this.buildRequestFromSource(
         req,
@@ -159,7 +167,7 @@ export class ProxyService {
     headersToPass?: { source: string; destination: string }[],
     staticHeaders?: { [key: string]: string },
     requiredParams?: string[],
-    prevResponses?: AggregatedResponse[], 
+    prevResponses?: AggregatedResponse[],
   ) {
     const url: URL = new URL(targetUrl);
     url.search = this.requiredQuery(req.query, requiredParams);

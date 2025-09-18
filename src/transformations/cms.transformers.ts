@@ -37,18 +37,18 @@ export function homeBlogs(request: BaseRequest): BaseRequest {
   };
 
   const blogParams = {
-  sort: ['customDate:desc', 'updatedAt:desc'],
-  populate: {
-    fields: ['title', 'categoryName', 'linkUrl'],
-    thumbnail: {
-      fields: ['url', 'alternativeText', 'name']
-    }
-  },
-  pagination: {
-    pageSize: 5,
-    page: 1
-  }
-};
+    sort: ['customDate:desc', 'updatedAt:desc'],
+    populate: {
+      fields: ['title', 'categoryName', 'linkUrl'],
+      thumbnail: {
+        fields: ['url', 'alternativeText', 'name'],
+      },
+    },
+    pagination: {
+      pageSize: 5,
+      page: 1,
+    },
+  };
 
   transformedRequest.url.search = qs.stringify(blogParams);
 
