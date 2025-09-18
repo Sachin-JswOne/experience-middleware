@@ -2,6 +2,8 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { BaseRequest } from 'src/models/base-request.model';
 import { AggregatedResponse } from 'src/models/aggregated-response.model';
+import { CustomError } from 'src/utils/CustomError';
+import { HttpStatus } from '@nestjs/common';
 
 export function createAddress(
   request: BaseRequest,
@@ -14,6 +16,10 @@ export function createAddress(
     (r) => r.target === 'get-sf-tokens',
   );
   const accessToken = tokenResponse?.data?.access_token;
+
+   if (!accessToken) {
+    throw new CustomError('Access token not found from Salesforce token API', HttpStatus.BAD_REQUEST);
+  }
 
   const headers = {
     Authorization: `Bearer ${accessToken}`,

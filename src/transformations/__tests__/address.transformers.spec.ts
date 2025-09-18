@@ -44,4 +44,16 @@ describe('address.transformer', () => {
     });
   });
 
+  it('should throw CustomError if no access token found', () => {
+  try {
+    createAddress(mockRequest, []);
+    // If no error is thrown, fail the test
+    fail('Expected CustomError to be thrown');
+  } catch (e: any) {
+    expect(e).toBeInstanceOf(CustomError);
+    expect(e.message).toBe('Access token not found from Salesforce token API');
+    expect(e.httpStatusCode).toBe(HttpStatus.BAD_REQUEST);
+  }
+});
+
 });
