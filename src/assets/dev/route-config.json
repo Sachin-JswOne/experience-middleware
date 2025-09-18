@@ -1,6 +1,6 @@
 [
   {
-    "path": "${PATH_URL}/app-home-page",
+    "path": "${PATH_URL}/v1/app-home-page",
     "method": "GET",
     "routeHandler": "TRANSFORM",
     "target": {
@@ -17,7 +17,7 @@
     }
   },
   {
-    "path": "${PATH_URL}/app-home-page",
+    "path": "${PATH_URL}/v1/app-home-page",
     "method": "POST",
     "routeHandler": "TRANSFORM",
     "target": {

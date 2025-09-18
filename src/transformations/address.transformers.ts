@@ -13,11 +13,6 @@ export function createAddress(
   const tokenResponse = prevResponses?.find(r => r.target === 'get-sf-tokens');
   const accessToken = tokenResponse?.data?.access_token;
 
-  if (!accessToken) {
-    throw new CustomError('Access token not found in previous responses', HttpStatus.NOT_FOUND);
-
-  }
-
   const headers = {
     Authorization: `Bearer ${accessToken}`,
   };
