@@ -207,8 +207,116 @@
           { "source": "authorization", "destination": "authorization" }
         ],
         "requiredParams": ["pincode"]
-      }
+      },
+      {
+        "name": "app-blogs",
+        "url": "https://internal-cms-ext.jswonemsme.com/api/jsw-blogs-articless",
+        "method": "GET",
+        "timeout": { "request": 5000, "socket": 1000 },
+        "reqTransform": "cms.transformers.homeBlogs",
+        "resTransform": "cms.transformers.replaceUriPrefix"
+    }
     ],
     "resTransform": "app.transformers.mergeHomePageResponses"
-  }
+  },
+    {
+    "path": "/xp-mi/public/v1/app-invoice-and-documents",
+    "method": "GET",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "appInvoiceAndDocuments",
+      "url": "https://oms.jswonemsme.com/external-connector-inbound/api/internal/v1/retail/fetch-order-invoice-docs",
+      "method": "GET",
+      "timeout": { "request": 5000, "socket": 1000 },
+      "requiredParams": ["orderNumber"],
+      "staticHeaders": {
+          "Authorization": "Zoho.Connector.$2b$12$YKh3.VKgH1ulHA6DQbAxzOhqsq0khKIkEjJZUqk513VoHvXu.C6b",
+          "client_id": "CLIEX3"
+      },
+      "resTransform": "invoiceAndDocuments.transformers.transformInvoiceAndDocuments"
+    }
+  },
+  {
+    "path": "/xp-mi/public/v1/app-cart-page",
+    "method": "POST",
+    "routeHandler": "AGGREGATE",
+    "aggregationType": "PARALLEL",
+    "targets": [
+      {
+        "name": "app-cart-page",
+        "url": "https://internal-cms-ext.jswonemsme.com/api/app-cart-page",
+        "method": "GET",
+        "timeout": { "request": 5000, "socket": 1000 },
+        "reqTransform": "general.transformers.moveBodyToQueryParams",
+        "resTransform": "cms.transformers.replaceUriPrefix"
+      },
+      {
+        "name": "app-buy-again",
+        "url": "https://jswoneconstruct.com/jswretail/v1/seller/buy-again",
+        "method": "GET",
+        "timeout": { "request": 3000, "socket": 1000 },
+        "reqTransform": "general.transformers.convertToGetRequest",
+        "headersToPass": [ { "source": "authorization", "destination": "authorization" } ],
+        "requiredParams": ["pincode"]
+      },
+        {
+        "name": "app-cart-summary",
+        "url": "https://jswoneconstruct.com/jswretail/v3/seller/cart",
+        "method": "GET",
+        "timeout": { "request": 3000, "socket": 1000 },
+        "reqTransform": "general.transformers.convertToGetRequest",
+        "headersToPass": [ { "source": "authorization", "destination": "authorization" } ],
+        "requiredParams": ["pincode"]
+      }
+    ],
+    "resTransform": "cart.transformers.mergeCartPageResponses"
+  },
+  {
+    "path": "/xp-mi/public/v1/app-shipments",
+    "method": "GET",
+    "routeHandler": "AGGREGATE",
+    "aggregationType": "PARALLEL",
+    "targets": [
+        {
+      "name": "app-shipment",
+      "url": "https://oms.jswonemsme.com/external-connector-inbound/api/internal/v1/retail/track-order-shipments",
+      "method": "GET",
+      "timeout": { "request": 5000, "socket": 1000 },
+      "requiredParams": ["orderNumber"],
+      "staticHeaders": {
+           "Authorization": "Zoho.Connector.$2b$12$YKh3.VKgH1ulHA6DQbAxzOhqsq0khKIkEjJZUqk513VoHvXu.C6b",
+          "client_id": "CLIEX3"
+      }
+    },
+      {
+      "name": "app-invoice-and-documents",
+      "url": "https://oms.jswonemsme.com/external-connector-inbound/api/internal/v1/retail/fetch-order-invoice-docs",
+      "method": "GET",
+      "timeout": { "request": 5000, "socket": 1000 },
+      "requiredParams": ["orderNumber"],
+      "staticHeaders": {
+          "Authorization": "Zoho.Connector.$2b$12$YKh3.VKgH1ulHA6DQbAxzOhqsq0khKIkEjJZUqk513VoHvXu.C6b",
+          "client_id": "CLIEX3"
+      }
+    }
+    ],
+    "resTransform": "shipments.transformers.mergeInvoiceAndShipmentsResponse"
+  },
+  {
+    "path": "/xp-mi/public/v1/verify-gst",
+    "method": "POST",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "verify-gstin",
+      "url": "https://www.jswonemsme.com/internal/construct/v1/gstin/validate",
+      "method": "POST",
+      "staticHeaders":{
+        "content-type": "application/json",
+        "X-API-KEY": "CustomerService-v1-8mmaqdoz1iobqbx89jdrdw2xr0xuw49fv87upa0b6hfe69433ex44fopxw822tjw"
+      },
+      "timeout": { "request": 5000, "socket": 1000 },
+      "reqTransform": "verifyGstin.transformers.verifyGstin",
+      "resTransform": "verifyGstin.transformers.verifyGstinResponse"
+    }
+  } 
 ]

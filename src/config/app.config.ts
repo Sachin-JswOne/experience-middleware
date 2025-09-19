@@ -52,3 +52,14 @@ export const CCP_PRICE_API_ATTRIBUTES_MAPPING = {
   DIAMETER_MM: 'DIAMETER_MM',
   FORM: 'TMT_FORM',
 };
+
+export const SHIPMENT_STATUS = {
+  Invoiced: 'Delivered',
+  Completed: 'Delivered',
+  Dispatched: 'Dispatched',
+  Delivered: 'Delivered',
+};
+
+export const ORDER_TAG = 'Fulfilled by JSW One';
+
+export const DEFAULT_CURRENCY_CODE = 'INR';
