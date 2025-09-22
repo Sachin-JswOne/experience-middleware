@@ -273,7 +273,7 @@
         "url": "http://34.100.206.209//homes-service/v1/project/project-details",
         "method": "GET",
         "timeout": { "request": 5000, "socket": 1000 },
-        "headersToPass": [ { "source": "Authorization", "destination": "Authorization" } ],
+        "headersToPass": [ { "source": "authorization", "destination": "Authorization" } ],
         "reqTransform": "general.transformers.convertToGetRequest",
         "requiredParams": ["project_id"]
       }
@@ -298,7 +298,7 @@
         "url": "http://34.100.206.209//homes-service/v1/user/details",
         "method": "GET",
         "timeout": { "request": 5000, "socket": 1000 },
-        "headersToPass": [ { "source": "Authorization", "destination": "Authorization" } ],
+        "headersToPass": [ { "source": "authorization", "destination": "Authorization" } ],
         "reqTransform": "general.transformers.convertToGetRequest"
       }
     ],
@@ -314,7 +314,7 @@
         "url": "http://34.100.206.209/homes-service/v1/project/progress-reports",
         "method": "GET",
         "timeout": { "request": 5000, "socket": 1000 },
-        "headersToPass": [ { "source": "Authorization", "destination": "Authorization" } ],
+        "headersToPass": [ { "source": "authorization", "destination": "Authorization" } ],
         "requiredParams": ["project_id"]
       }
   }

@@ -23,7 +23,7 @@ export function mergePageDetailsResponses(
   const homesData = homesDashboardResponse.data;
 
   const projectItems = 
-  strapiData?.projectDetails?.projectItems?.map((item: any) => {
+  strapiData?.data?.projectDetails?.projectItems?.map((item: any) => {
         return {
             ...item,
             value : homesData[item.key]
