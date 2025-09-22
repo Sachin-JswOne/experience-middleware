@@ -19,9 +19,7 @@
         "method": "GET",
         "timeout": { "request": 5000, "socket": 1000 },
         "reqTransform": "general.transformers.convertToGetRequest",
-        "headersToPass": [
-          { "source": "authorization", "destination": "authorization" }
-        ],
+       "headersToPass": [ { "source": "authorization", "destination": "authorization" },{"source": "x-user-state", "destination": "x-user-state"} ],
         "requiredParams": ["pincode"]
       },
       {
@@ -30,9 +28,7 @@
         "method": "GET",
         "timeout": { "request": 5000, "socket": 1000 },
         "reqTransform": "general.transformers.convertToGetRequest",
-        "headersToPass": [
-          { "source": "authorization", "destination": "authorization" }
-        ],
+       "headersToPass": [ { "source": "authorization", "destination": "authorization" },{"source": "x-user-state", "destination": "x-user-state"} ],
         "requiredParams": ["pincode"]
       },
       {
@@ -41,9 +37,7 @@
         "method": "GET",
         "timeout": { "request": 5000, "socket": 1000 },
         "reqTransform": "general.transformers.convertToGetRequest",
-        "headersToPass": [
-          { "source": "authorization", "destination": "authorization" }
-        ],
+       "headersToPass": [ { "source": "authorization", "destination": "authorization" },{"source": "x-user-state", "destination": "x-user-state"} ],
         "requiredParams": ["pincode"]
       }
     ],
@@ -155,7 +149,7 @@
         "method": "GET",
         "timeout": { "request": 3000, "socket": 1000 },
         "reqTransform": "general.transformers.convertToGetRequest",
-        "headersToPass": [ { "source": "authorization", "destination": "authorization" } ],
+        "headersToPass": [ { "source": "authorization", "destination": "authorization" },{"source": "x-user-state", "destination": "x-user-state"} ],
         "requiredParams": ["pincode"]
       }
     ],
@@ -181,9 +175,7 @@
         "method": "GET",
         "timeout": { "request": 5000, "socket": 1000 },
         "reqTransform": "general.transformers.convertToGetRequest",
-        "headersToPass": [
-          { "source": "authorization", "destination": "authorization" }
-        ],
+        "headersToPass": [ { "source": "authorization", "destination": "authorization" },{"source": "x-user-state", "destination": "x-user-state"} ],
         "requiredParams": ["pincode"]
       },
       {
@@ -192,9 +184,7 @@
         "method": "GET",
         "timeout": { "request": 5000, "socket": 1000 },
         "reqTransform": "general.transformers.convertToGetRequest",
-        "headersToPass": [
-          { "source": "authorization", "destination": "authorization" }
-        ],
+        "headersToPass": [ { "source": "authorization", "destination": "authorization" },{"source": "x-user-state", "destination": "x-user-state"} ],
         "requiredParams": ["pincode"]
       },
       {
@@ -203,9 +193,7 @@
         "method": "GET",
         "timeout": { "request": 5000, "socket": 1000 },
         "reqTransform": "general.transformers.convertToGetRequest",
-        "headersToPass": [
-          { "source": "authorization", "destination": "authorization" }
-        ],
+        "headersToPass": [ { "source": "authorization", "destination": "authorization" },{"source": "x-user-state", "destination": "x-user-state"} ],
         "requiredParams": ["pincode"]
       },
       {
