@@ -230,7 +230,7 @@
     "routeHandler": "TRANSFORM",
     "target": {
       "name": "appInvoiceAndDocuments",
-      "url": "https://next.qa.jswone.in/external-connector-inbound/api/internal/v1/retail/fetch-order-invoice-docs",
+      "url": "https://qa-oms.msme.jswone.in/external-connector-inbound/api/internal/v1/retail/fetch-order-invoice-docs",
       "method": "GET",
       "timeout": { "request": 5000, "socket": 1000 },
       "requiredParams": ["orderNumber"],
@@ -284,7 +284,7 @@
     "targets": [
         {
       "name": "app-shipment",
-      "url": "https://next.qa.jswone.in/external-connector-inbound/api/internal/v1/retail/track-order-shipments",
+      "url": "https://qa-oms.msme.jswone.in/external-connector-inbound/api/internal/v1/retail/track-order-shipments",
       "method": "GET",
       "timeout": { "request": 5000, "socket": 1000 },
       "requiredParams": ["orderNumber"],
@@ -295,7 +295,7 @@
     },
       {
       "name": "app-invoice-and-documents",
-      "url": "https://next.qa.jswone.in/external-connector-inbound/api/internal/v1/retail/fetch-order-invoice-docs",
+      "url": "https://qa-oms.msme.jswone.in/external-connector-inbound/api/internal/v1/retail/fetch-order-invoice-docs",
       "method": "GET",
       "timeout": { "request": 5000, "socket": 1000 },
       "requiredParams": ["orderNumber"],
