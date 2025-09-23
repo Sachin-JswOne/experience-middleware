@@ -347,7 +347,7 @@
       },
             {
         "name": "homes-project-details",
-        "url": "http://34.100.206.209//homes-service/v1/project/project-details",
+        "url": "http://34.100.206.209/homes-service/v1/project/project-details",
         "method": "GET",
         "timeout": { "request": 5000, "socket": 1000 },
         "headersToPass": [ { "source": "authorization", "destination": "Authorization" } ],
@@ -365,14 +365,14 @@
     "targets": [
       {
         "name": "strapi-user-detail",
-        "url": "'http://cms-qa.onejswhomes.in/api/user-info",
+        "url": "http://cms-qa.onejswhomes.in/api/user-info",
         "method": "GET",
         "timeout": { "request": 5000, "socket": 1000 },
         "reqTransform": "general.transformers.moveBodyToQueryParams"
       },
       {
         "name": "homes-user-details",
-        "url": "http://34.100.206.209//homes-service/v1/user/details",
+        "url": "http://34.100.206.209/homes-service/v1/user/details",
         "method": "GET",
         "timeout": { "request": 5000, "socket": 1000 },
         "headersToPass": [ { "source": "authorization", "destination": "Authorization" } ],
