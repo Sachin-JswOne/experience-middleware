@@ -94,6 +94,7 @@ export function mergeUserDetailsResponses(aggregatedResponses: AggregatedRespons
         name: homesData?.name ?? "",
         phoneNumber: homesData?.phoneNumber ?? "",
         email: homesData?.email ?? "",
+        projectIds : homesData?.projectIds ?? []
       },
     },
   };
