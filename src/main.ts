@@ -4,6 +4,15 @@ import { AppModule } from './app.module';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.setGlobalPrefix('xp-mi'); // Set a global prefix for all routes
+  app.enableCors({
+  origin: ["https://jswonehomes.com","*localhost*","*.onejswhomes.in","34.49.59.50"],
+  methods: 'GET,POST,DELETE,OPTIONS,PUT',
+  allowedHeaders: '*',
+  preflightContinue : true,
+  credentials: true,
+  optionsSuccessStatus: 204
+});
+
   await app.listen(process.env.PORT ?? 3000);
 }
 
