@@ -6,7 +6,7 @@ async function bootstrap() {
   app.setGlobalPrefix('xp-mi'); // Set a global prefix for all routes
   const allowedOrigins = process.env.ALLOWED_ORIGINS
     ? process.env.ALLOWED_ORIGINS.split(',')
-    : "*";
+    : ["*.onejswhomes.in","*jswonehomes.com","34.49.59.50","https://jswonehomes.com","*localhost*","*.onejswhomes.in"];
 
   app.enableCors({
   origin: allowedOrigins,
