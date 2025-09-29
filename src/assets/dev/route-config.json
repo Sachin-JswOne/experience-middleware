@@ -387,7 +387,7 @@
         "requiredParams": ["project_id"]
       }
   },
-      {
+  {
     "path": "/xp-mi/public/v1/reset-password",
     "method": "POST",
     "routeHandler": "TRANSFORM",
@@ -402,5 +402,21 @@
       "reqTransform": "login.transformers.transformResetPasswordRequest",
       "resTransform": "login.transformers.transformResetPasswordResponse"
     }
-  }
+  },
+  {
+    "path": "/xp-mi/public/v1/verify-mobile-number",
+    "method": "POST",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "app-verify-mobile-number",
+      "url": "https://qa.msme.jswone.in/auth/api/v1/construct/otp/send",
+      "method": "POST",
+      "staticHeaders":{
+        "X-API-KEY": "AuthService-v1-53zgm5wrxbb6q74p04ilw8tql3jx4p4ci7301l0ua9pv1q5ddg3o0r84mnesog1f"
+      },
+      "timeout": { "request": 5000, "socket": 1000 },
+      "reqTransform": "login.transformers.transformVerifyMobileNumberRequest",
+      "resTransform": "login.transformers.transformVerifyMobileNumberResponse"
+    }
+  }  
 ]

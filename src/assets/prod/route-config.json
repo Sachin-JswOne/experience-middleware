@@ -385,5 +385,21 @@
       "reqTransform": "login.transformers.transformResetPasswordRequest",
       "resTransform": "login.transformers.transformResetPasswordResponse"
     }
-  }
+  },
+   {
+    "path": "/xp-mi/public/v1/verify-mobile-number",
+    "method": "POST",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "app-verify-mobile-number",
+      "url": "https://www.jswonemsme.com/auth/api/v1/construct/otp/send",
+      "method": "POST",
+      "staticHeaders":{
+        "X-API-KEY": "AuthService-v1-psh6w4rh9rth86571bm51l8e3e9a8v7xt1t7d39kbawno1ij0n8clrwfkts5c1nx"
+      },
+      "timeout": { "request": 5000, "socket": 1000 },
+      "reqTransform": "login.transformers.transformVerifyMobileNumberRequest",
+      "resTransform": "login.transformers.transformVerifyMobileNumberResponse"
+    }
+  } 
 ]
