@@ -393,7 +393,7 @@
     "routeHandler": "TRANSFORM",
     "target": {
       "name": "app-reset-password",
-      "url": "https://qa.msme.jswone.in/internal/construct/v1/customer/reset/password",
+      "url": "https://one.qa.jswone.in/internal/construct/v1/customer/reset/password",
       "method": "POST",
       "timeout": { "request": 5000, "socket": 1000 },
       "staticHeaders": {
