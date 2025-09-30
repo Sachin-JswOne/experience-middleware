@@ -393,7 +393,7 @@
     "routeHandler": "TRANSFORM",
     "target": {
       "name": "app-reset-password",
-      "url": "https://qa.msme.jswone.in/internal/construct/v1/customer/reset/password",
+      "url": "https://one.qa.jswone.in/internal/construct/v1/customer/reset/password",
       "method": "POST",
       "timeout": { "request": 5000, "socket": 1000 },
       "staticHeaders": {
@@ -418,5 +418,18 @@
       "reqTransform": "login.transformers.transformVerifyMobileNumberRequest",
       "resTransform": "login.transformers.transformVerifyMobileNumberResponse"
     }
-  }  
+  },
+  {
+    "path": "/xp-mi/public/v1/app-login-page",
+    "method": "POST",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "appLoginPage",
+      "url": "https://cms-msme-ext.qa.jswone.in/api/app-login-page",
+      "method": "GET",
+      "timeout": { "request": 5000, "socket": 1000 },
+      "reqTransform": "general.transformers.moveBodyToQueryParams",
+      "resTransform": "cms.transformers.replaceUriPrefix"
+    }
+  }
 ]
