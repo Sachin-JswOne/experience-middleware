@@ -1,13 +1,18 @@
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { HttpStatus } from '@nestjs/common';
 import {
   transformResetPasswordRequest,
   transformResetPasswordResponse,
+  transformVerifyMobileNumberOtpResponse,
   transformVerifyMobileNumberRequest,
   transformVerifyMobileNumberResponse,
+  transformVerifyMobileNumberWithOtpRequest,
+  validateVerifyMobileNumberWithOtpData,
 } from '../login.transformers';
 import { BaseRequest } from 'src/models/base-request.model';
 import { CustomError } from 'src/utils/CustomError';
-import { MSME } from 'src/config/app.config';
+import { MSME, MSME_ERRORS_MAPPING } from 'src/config/app.config';
 
 describe('login.transformers', () => {
   describe('transformResetPasswordRequest', () => {
@@ -208,6 +213,181 @@ describe('login.transformers', () => {
           'Incorrect OTP. Please enter a valid OTP',
           HttpStatus.BAD_REQUEST,
         ),
+      );
+    });
+  });
+
+  describe('validateVerifyMobileNumberWithOtpData', () => {
+    it('should return isValid: true for valid data', () => {
+      const data = {
+        requestId: '12345',
+        otp: '67890',
+        phoneNumber: '9876543210',
+      };
+      const result = validateVerifyMobileNumberWithOtpData(data);
+      expect(result).toEqual({ isValid: true });
+    });
+
+    it('should return isValid: false if requestId is missing', () => {
+      const data = { otp: '67890', phoneNumber: '9876543210' };
+      const result = validateVerifyMobileNumberWithOtpData(data);
+      expect(result).toEqual({
+        isValid: false,
+        errorMessage: 'Field requestId is missing or empty.',
+      });
+    });
+
+    it('should return isValid: false if otp is an empty string', () => {
+      const data = {
+        requestId: '12345',
+        otp: '',
+        phoneNumber: '9876543210',
+      };
+      const result = validateVerifyMobileNumberWithOtpData(data);
+      expect(result).toEqual({
+        isValid: false,
+        errorMessage: 'Field otp is missing or empty.',
+      });
+    });
+
+    it('should return isValid: false if phoneNumber is null', () => {
+      const data = { requestId: '12345', otp: '67890', phoneNumber: null };
+      const result = validateVerifyMobileNumberWithOtpData(data);
+      expect(result).toEqual({
+        isValid: false,
+        errorMessage: 'Field phoneNumber is missing or empty.',
+      });
+    });
+
+    it('should return isValid: false if a required field is undefined', () => {
+      const data = {
+        requestId: '12345',
+        otp: undefined,
+        phoneNumber: '9876543210',
+      };
+      const result = validateVerifyMobileNumberWithOtpData(data);
+      expect(result).toEqual({
+        isValid: false,
+        errorMessage: 'Field otp is missing or empty.',
+      });
+    });
+  });
+
+  describe('transformVerifyMobileNumberWithOtpRequest', () => {
+    const mockBaseRequest: BaseRequest = {
+      body: {
+        requestId: 'req-123',
+        otp: '123456',
+        phoneNumber: '9998887776',
+      },
+      url: new URL('http://localhost/verify'),
+      headers: {},
+    };
+
+    it('should transform the request correctly with valid data', () => {
+      const transformed =
+        transformVerifyMobileNumberWithOtpRequest(mockBaseRequest);
+      expect(transformed.body).toEqual({
+        ...mockBaseRequest.body,
+        storeKey: MSME,
+      });
+      expect(transformed.url).toBe(mockBaseRequest.url);
+    });
+
+    it('should throw a CustomError for invalid data', () => {
+      const invalidRequest: BaseRequest = {
+        ...mockBaseRequest,
+        body: {
+          otp: '123456',
+          phoneNumber: '9998887776',
+        },
+      };
+
+      expect(() =>
+        transformVerifyMobileNumberWithOtpRequest(invalidRequest),
+      ).toThrow(
+        new CustomError(
+          'Field requestId is missing or empty.',
+          HttpStatus.BAD_REQUEST,
+        ),
+      );
+    });
+  });
+
+  describe('transformVerifyMobileNumberOtpResponse', () => {
+    it('should return { success: true } for a successful API response', () => {
+      const apiResponse = {
+        success: true,
+        data: {
+          success: true,
+        },
+      };
+      const result = transformVerifyMobileNumberOtpResponse(apiResponse);
+      expect(result).toEqual({ success: true });
+    });
+
+    it('should throw a CustomError if the response is null or undefined', () => {
+      expect(() => transformVerifyMobileNumberOtpResponse(null)).toThrow(
+        new CustomError(
+          'CCP Verify Mobile Number With OTP API is failing',
+          HttpStatus.INTERNAL_SERVER_ERROR,
+        ),
+      );
+    });
+
+    it('should throw a CustomError if the top-level response indicates failure', () => {
+      const apiResponse = {
+        success: false,
+        error: {
+          message: 'Gateway Timeout',
+          code: HttpStatus.GATEWAY_TIMEOUT,
+        },
+      };
+      expect(() => transformVerifyMobileNumberOtpResponse(apiResponse)).toThrow(
+        new CustomError('Gateway Timeout', HttpStatus.GATEWAY_TIMEOUT),
+      );
+    });
+
+    it('should use INTERNAL_SERVER_ERROR if error code is missing', () => {
+      const apiResponse = {
+        success: false,
+        error: {
+          message: 'An unknown error occurred',
+        },
+      };
+      expect(() => transformVerifyMobileNumberOtpResponse(apiResponse)).toThrow(
+        new CustomError(
+          'An unknown error occurred',
+          HttpStatus.INTERNAL_SERVER_ERROR,
+        ),
+      );
+    });
+
+    it('should throw a CustomError if the nested data response indicates failure', () => {
+      const apiResponse = {
+        success: true,
+        data: {
+          success: false,
+          message: 'Some API specific error',
+        },
+      };
+      expect(() => transformVerifyMobileNumberOtpResponse(apiResponse)).toThrow(
+        new CustomError('Some API specific error', HttpStatus.BAD_REQUEST),
+      );
+    });
+
+    it('should use the mapped error message if available', () => {
+      const apiResponse = {
+        success: true,
+        data: {
+          success: false,
+          message: 'Invalid OTP.',
+        },
+      };
+      const expectedMessage =
+        MSME_ERRORS_MAPPING['Invalid OTP.'] || 'Invalid OTP.';
+      expect(() => transformVerifyMobileNumberOtpResponse(apiResponse)).toThrow(
+        new CustomError(expectedMessage, HttpStatus.BAD_REQUEST),
       );
     });
   });
