@@ -8,17 +8,22 @@ async function bootstrap() {
   origin: (origin, callback) => {
     const allowedOrigins = process.env.ALLOWED_ORIGINS
     ? process.env.ALLOWED_ORIGINS.split(',')
-    : [
-        '*.onejswhomes.in',
-        '*jswonehomes.com',
-        '34.49.59.50',
-        'https://jswonehomes.com',
-        '*localhost*',
-        '*.onejswhomes.in',
+    : [ /^https?:\/\/.*\.onejswhomes\.in$/, 
+        /^https?:\/\/.*jswonehomes\.com$/, 
+        /^https?:\/\/34\.49\.59\.50$/, 
+        /^https?:\/\/localhost(?::\d+)?$/,
+        /^https?:\/\/jswonehomes\.com$/,
       ];
 
-  app.enableCors({
-    origin: allowedOrigins,
+    if (!origin) return callback(null, true); // Allow server-to-server or curl requests
+
+    const isAllowed = allowedOrigins.some((regex) => regex.test(origin));
+    if (isAllowed) {
+      callback(null, true);
+    } else {
+      callback(new Error(`Origin ${origin} not allowed by CORS`));
+    }
+  },
     methods: 'GET,POST,DELETE,OPTIONS,PUT',
     allowedHeaders: '*',
     preflightContinue: true,
