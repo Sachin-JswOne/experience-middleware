@@ -44,7 +44,7 @@
         "method": "GET",
         "timeout": { "request": 3000, "socket": 1000 },
         "reqTransform": "general.transformers.convertToGetRequest",
-        "headersToPass": [ { "source": "authorization", "destination": "authorization" } ],
+        "headersToPass": [ { "source": "authorization", "destination": "authorization" },{"source": "x-user-state", "destination": "x-user-state"} ],
         "requiredParams": ["pincode"]
       },
       {
@@ -53,7 +53,7 @@
         "method": "GET",
         "timeout": { "request": 3000, "socket": 1000 },
         "reqTransform": "general.transformers.convertToGetRequest",
-        "headersToPass": [ { "source": "authorization", "destination": "authorization" } ],
+        "headersToPass": [ { "source": "authorization", "destination": "authorization" },{"source": "x-user-state", "destination": "x-user-state"} ],
         "requiredParams": ["pincode"]
       },
       {
@@ -62,7 +62,7 @@
         "method": "GET",
         "timeout": { "request": 3000, "socket": 1000 },
         "reqTransform": "general.transformers.convertToGetRequest",
-        "headersToPass": [ { "source": "authorization", "destination": "authorization" } ],
+        "headersToPass": [ { "source": "authorization", "destination": "authorization" },{"source": "x-user-state", "destination": "x-user-state"} ],
         "requiredParams": ["pincode"]
       }
     ],
@@ -166,7 +166,7 @@
         "method": "GET",
         "timeout": { "request": 3000, "socket": 1000 },
         "reqTransform": "general.transformers.convertToGetRequest",
-        "headersToPass": [ { "source": "authorization", "destination": "authorization" } ],
+        "headersToPass": [ { "source": "authorization", "destination": "authorization" },{"source": "x-user-state", "destination": "x-user-state"} ],
         "requiredParams": ["pincode"]
       }
     ],
@@ -192,7 +192,7 @@
         "method": "GET",
         "timeout": { "request": 3000, "socket": 1000 },
         "reqTransform": "general.transformers.convertToGetRequest",
-        "headersToPass": [ { "source": "authorization", "destination": "authorization" } ],
+         "headersToPass": [ { "source": "authorization", "destination": "authorization" },{"source": "x-user-state", "destination": "x-user-state"} ],
         "requiredParams": ["pincode"]
       },
       {
@@ -201,7 +201,7 @@
         "method": "GET",
         "timeout": { "request": 3000, "socket": 1000 },
         "reqTransform": "general.transformers.convertToGetRequest",
-        "headersToPass": [ { "source": "authorization", "destination": "authorization" } ],
+         "headersToPass": [ { "source": "authorization", "destination": "authorization" },{"source": "x-user-state", "destination": "x-user-state"} ],
         "requiredParams": ["pincode"]
       },
       {
@@ -210,7 +210,7 @@
         "method": "GET",
         "timeout": { "request": 3000, "socket": 1000 },
         "reqTransform": "general.transformers.convertToGetRequest",
-        "headersToPass": [ { "source": "authorization", "destination": "authorization" } ],
+         "headersToPass": [ { "source": "authorization", "destination": "authorization" },{"source": "x-user-state", "destination": "x-user-state"} ],
         "requiredParams": ["pincode"]
       },
       {
@@ -230,7 +230,7 @@
     "routeHandler": "TRANSFORM",
     "target": {
       "name": "appInvoiceAndDocuments",
-      "url": "https://next.qa.jswone.in/external-connector-inbound/api/internal/v1/retail/fetch-order-invoice-docs",
+      "url": "https://qa-oms.msme.jswone.in/external-connector-inbound/api/internal/v1/retail/fetch-order-invoice-docs",
       "method": "GET",
       "timeout": { "request": 5000, "socket": 1000 },
       "requiredParams": ["orderNumber"],
@@ -284,7 +284,7 @@
     "targets": [
         {
       "name": "app-shipment",
-      "url": "https://next.qa.jswone.in/external-connector-inbound/api/internal/v1/retail/track-order-shipments",
+      "url": "https://qa-oms.msme.jswone.in/external-connector-inbound/api/internal/v1/retail/track-order-shipments",
       "method": "GET",
       "timeout": { "request": 5000, "socket": 1000 },
       "requiredParams": ["orderNumber"],
@@ -295,7 +295,7 @@
     },
       {
       "name": "app-invoice-and-documents",
-      "url": "https://next.qa.jswone.in/external-connector-inbound/api/internal/v1/retail/fetch-order-invoice-docs",
+      "url": "https://qa-oms.msme.jswone.in/external-connector-inbound/api/internal/v1/retail/fetch-order-invoice-docs",
       "method": "GET",
       "timeout": { "request": 5000, "socket": 1000 },
       "requiredParams": ["orderNumber"],
@@ -386,5 +386,66 @@
         "headersToPass": [ { "source": "authorization", "destination": "Authorization" } ],
         "requiredParams": ["project_id"]
       }
+  },
+  {
+    "path": "/xp-mi/public/v1/reset-password",
+    "method": "POST",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "app-reset-password",
+      "url": "https://one.qa.jswone.in/internal/construct/v1/customer/reset/password",
+      "method": "POST",
+      "timeout": { "request": 5000, "socket": 1000 },
+      "staticHeaders": {
+         "X-API-KEY": "CustomerService-v1-4iy665w9f64u0h87wpoevhi5zflxy8cwa7y09rjvhu24sinjlcmlq8bdfmdz5hh6"
+      },
+      "reqTransform": "login.transformers.transformResetPasswordRequest",
+      "resTransform": "login.transformers.transformResetPasswordResponse"
+    }
+  },
+  {
+    "path": "/xp-mi/public/v1/verify-mobile-number",
+    "method": "POST",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "app-verify-mobile-number",
+      "url": "https://qa.msme.jswone.in/auth/api/v1/construct/otp/send",
+      "method": "POST",
+      "staticHeaders":{
+        "X-API-KEY": "AuthService-v1-53zgm5wrxbb6q74p04ilw8tql3jx4p4ci7301l0ua9pv1q5ddg3o0r84mnesog1f"
+      },
+      "timeout": { "request": 5000, "socket": 1000 },
+      "reqTransform": "login.transformers.transformVerifyMobileNumberRequest",
+      "resTransform": "login.transformers.transformVerifyMobileNumberResponse"
+    }
+  },
+  {
+    "path": "/xp-mi/public/v1/app-login-page",
+    "method": "POST",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "appLoginPage",
+      "url": "https://cms-msme-ext.qa.jswone.in/api/app-login-page",
+      "method": "GET",
+      "timeout": { "request": 5000, "socket": 1000 },
+      "reqTransform": "general.transformers.moveBodyToQueryParams",
+      "resTransform": "cms.transformers.replaceUriPrefix"
+    }
+  },
+   {
+    "path": "/xp-mi/public/v1/verify-mobile-number-with-otp",
+    "method": "POST",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "app-verify-mobile-number-with-otp",
+      "url": "https://qa.msme.jswone.in/auth/api/v1/construct/otp/verify",
+      "method": "POST",
+      "staticHeaders":{
+        "X-API-KEY": "AuthService-v1-53zgm5wrxbb6q74p04ilw8tql3jx4p4ci7301l0ua9pv1q5ddg3o0r84mnesog1f"
+      },
+      "timeout": { "request": 5000, "socket": 1000 },
+      "reqTransform": "login.transformers.transformVerifyMobileNumberWithOtpRequest",
+      "resTransform": "login.transformers.transformVerifyMobileNumberOtpResponse"
+    }
   }
 ]
