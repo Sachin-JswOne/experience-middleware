@@ -7,7 +7,7 @@ async function bootstrap() {
   app.enableCors({
   origin: (origin, callback) => {
     const allowedOrigins = process.env.ALLOWED_ORIGINS
-    ? process.env.ALLOWED_ORIGINS.split(',')
+    ? process.env.ALLOWED_ORIGINS.split(',').map(origin => new RegExp(origin))
     : [ /^https?:\/\/.*\.onejswhomes\.in$/, 
         /^https?:\/\/.*jswonehomes\.com$/, 
         /^https?:\/\/34\.49\.59\.50$/, 
@@ -26,8 +26,8 @@ async function bootstrap() {
   },
     methods: 'GET,POST,DELETE,OPTIONS,PUT',
     allowedHeaders: '*',
-    preflightContinue: true,
-    credentials: true,
+    preflightContinue: false,
+    credentials: false,
     optionsSuccessStatus: 204,
   });
 
