@@ -15,9 +15,13 @@ export function mergePageDetailsResponses(
   const strapiResponse = responses['strapi-project-detail'];
   const homesDashboardResponse = responses['homes-project-details'];
 
-  if (!strapiResponse?.success || !homesDashboardResponse?.success) {
-    throw new Error('One of the required responses is missing or failed');
+  if (!strapiResponse?.success) {
+    throw new Error('Strapi project details responses is missing or failed');
   }
+
+  if(!homesDashboardResponse?.success){
+      throw new Error('Homes project details responses is missing or failed');
+    }
 
   const strapiData = { ...strapiResponse.data };
   const homesData = homesDashboardResponse.data;
@@ -80,8 +84,12 @@ export function mergeUserDetailsResponses(aggregatedResponses: AggregatedRespons
     const strapiUserResponse = responses['strapi-user-detail'];
     const homesUserResponse = responses['homes-user-details'];
 
-    if (!strapiUserResponse?.success || !homesUserResponse?.success) {
-        throw new Error('One of the required responses is missing or failed');
+    if (!strapiUserResponse?.success) {
+        throw new Error('Strapi user details responses is missing or failed');
+    }
+
+    if ( !homesUserResponse?.success) {
+        throw new Error('Homes user details responses is missing or failed');
     }
     const strapiData = strapiUserResponse.data;
     const homesData = homesUserResponse.data;
