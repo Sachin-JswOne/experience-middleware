@@ -19,9 +19,7 @@
         "method": "GET",
         "timeout": { "request": "${TIMEOUTS.REQUEST}", "socket": "${TIMEOUTS.SOCKET}" },
         "reqTransform": "general.transformers.convertToGetRequest",
-        "headersToPass": [
-          { "source": "authorization", "destination": "authorization" }
-        ],
+       "headersToPass": [ { "source": "authorization", "destination": "authorization" },{"source": "x-user-state", "destination": "x-user-state"} ],
         "requiredParams": ["pincode"]
       },
       {
@@ -30,9 +28,7 @@
         "method": "GET",
         "timeout": { "request": "${TIMEOUTS.REQUEST}", "socket": "${TIMEOUTS.SOCKET}" },
         "reqTransform": "general.transformers.convertToGetRequest",
-        "headersToPass": [
-          { "source": "authorization", "destination": "authorization" }
-        ],
+       "headersToPass": [ { "source": "authorization", "destination": "authorization" },{"source": "x-user-state", "destination": "x-user-state"} ],
         "requiredParams": ["pincode"]
       },
       {
@@ -41,9 +37,7 @@
         "method": "GET",
         "timeout": { "request": "${TIMEOUTS.REQUEST}", "socket": "${TIMEOUTS.SOCKET}" },
         "reqTransform": "general.transformers.convertToGetRequest",
-        "headersToPass": [
-          { "source": "authorization", "destination": "authorization" }
-        ],
+       "headersToPass": [ { "source": "authorization", "destination": "authorization" },{"source": "x-user-state", "destination": "x-user-state"} ],
         "requiredParams": ["pincode"]
       }
     ],
@@ -155,7 +149,7 @@
         "method": "GET",
         "timeout": { "request": "${TIMEOUTS.REQUEST_MIN}", "socket": "${TIMEOUTS.SOCKET}" },
         "reqTransform": "general.transformers.convertToGetRequest",
-        "headersToPass": [ { "source": "authorization", "destination": "authorization" } ],
+        "headersToPass": [ { "source": "authorization", "destination": "authorization" },{"source": "x-user-state", "destination": "x-user-state"} ],
         "requiredParams": ["pincode"]
       }
     ],
@@ -181,9 +175,7 @@
         "method": "GET",
         "timeout": { "request": "${TIMEOUTS.REQUEST}", "socket": "${TIMEOUTS.SOCKET}" },
         "reqTransform": "general.transformers.convertToGetRequest",
-        "headersToPass": [
-          { "source": "authorization", "destination": "authorization" }
-        ],
+        "headersToPass": [ { "source": "authorization", "destination": "authorization" },{"source": "x-user-state", "destination": "x-user-state"} ],
         "requiredParams": ["pincode"]
       },
       {
@@ -192,9 +184,7 @@
         "method": "GET",
         "timeout": { "request": "${TIMEOUTS.REQUEST}", "socket": "${TIMEOUTS.SOCKET}" },
         "reqTransform": "general.transformers.convertToGetRequest",
-        "headersToPass": [
-          { "source": "authorization", "destination": "authorization" }
-        ],
+        "headersToPass": [ { "source": "authorization", "destination": "authorization" },{"source": "x-user-state", "destination": "x-user-state"} ],
         "requiredParams": ["pincode"]
       },
       {
@@ -203,9 +193,7 @@
         "method": "GET",
         "timeout": { "request": "${TIMEOUTS.REQUEST}", "socket": "${TIMEOUTS.SOCKET}" },
         "reqTransform": "general.transformers.convertToGetRequest",
-        "headersToPass": [
-          { "source": "authorization", "destination": "authorization" }
-        ],
+        "headersToPass": [ { "source": "authorization", "destination": "authorization" },{"source": "x-user-state", "destination": "x-user-state"} ],
         "requiredParams": ["pincode"]
       },
       {
@@ -318,6 +306,130 @@
       "reqTransform": "verifyGstin.transformers.verifyGstin",
       "resTransform": "verifyGstin.transformers.verifyGstinResponse"
     }
+  },
+  {
+    "path": "/xp-mi/public/v1/homes/project/project-detail",
+    "method": "POST",
+    "routeHandler": "AGGREGATE",
+    "aggregationType": "PARALLEL",
+    "targets": [
+      {
+        "name": "strapi-project-detail",
+        "url": "https://cms.jswonehomes.com/api/project-page",
+        "method": "GET",
+        "timeout": { "request": 5000, "socket": 1000 },
+        "reqTransform": "general.transformers.moveBodyToQueryParams"
+      },
+            {
+        "name": "homes-project-details",
+        "url": "https://service.jswonehomes.com/homes-service/v1/project/project-details",
+        "method": "GET",
+        "timeout": { "request": 5000, "socket": 1000 },
+        "headersToPass": [ { "source": "authorization", "destination": "Authorization" } ],
+        "reqTransform": "general.transformers.convertToGetRequest",
+        "requiredParams": ["project_id"]
+      }
+    ],
+    "resTransform": "home.details.transformers.mergePageDetailsResponses"
+  },
+  {
+    "path": "/xp-mi/public/v1/homes/user/user-detail",
+    "method": "POST",
+    "routeHandler": "AGGREGATE",
+    "aggregationType": "PARALLEL",
+    "targets": [
+      {
+        "name": "strapi-user-detail",
+        "url": "https://cms.jswonehomes.com/api/user-info",
+        "method": "GET",
+        "timeout": { "request": 5000, "socket": 1000 },
+        "reqTransform": "general.transformers.moveBodyToQueryParams"
+      },
+            {
+        "name": "homes-user-details",
+        "url": "https://service.jswonehomes.com/homes-service/v1/user/details",
+        "method": "GET",
+        "timeout": { "request": 5000, "socket": 1000 },
+        "headersToPass": [ { "source": "authorization", "destination": "Authorization" } ],
+        "reqTransform": "general.transformers.convertToGetRequest"
+      }
+    ],
+    "resTransform": "home.details.transformers.mergeUserDetailsResponses"
+  },
+  {
+    "path": "/xp-mi/public/v1/homes/project/progress-report",
+    "method": "POST",
+    "routeHandler": "TRANSFORM",
+    "target": 
+      {
+        "name": "homes-progress-report",
+        "url": "https://service.jswonehomes.com/homes-service/v1/project/progress-reports",
+        "method": "GET",
+        "timeout": { "request": 5000, "socket": 1000 },
+        "headersToPass": [ { "source": "authorization", "destination": "Authorization" } ],
+        "requiredParams": ["project_id"]
+      }
+  },
+  {
+    "path": "/xp-mi/public/v1/reset-password",
+    "method": "POST",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "app-reset-password",
+      "url": "https://www.jswonemsme.com/internal/construct/v1/customer/reset/password",
+      "method": "POST",
+      "timeout": { "request": 5000, "socket": 1000 },
+      "staticHeaders": {
+         "X-API-KEY": "CustomerService-v1-8mmaqdoz1iobqbx89jdrdw2xr0xuw49fv87upa0b6hfe69433ex44fopxw822tjw"
+      },
+      "reqTransform": "login.transformers.transformResetPasswordRequest",
+      "resTransform": "login.transformers.transformResetPasswordResponse"
+    }
+  },
+   {
+    "path": "/xp-mi/public/v1/verify-mobile-number",
+    "method": "POST",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "app-verify-mobile-number",
+      "url": "https://www.jswonemsme.com/auth/api/v1/construct/otp/send",
+      "method": "POST",
+      "staticHeaders":{
+        "X-API-KEY": "AuthService-v1-psh6w4rh9rth86571bm51l8e3e9a8v7xt1t7d39kbawno1ij0n8clrwfkts5c1nx"
+      },
+      "timeout": { "request": 5000, "socket": 1000 },
+      "reqTransform": "login.transformers.transformVerifyMobileNumberRequest",
+      "resTransform": "login.transformers.transformVerifyMobileNumberResponse"
+    }
+  },
+  {
+    "path": "/xp-mi/public/v1/app-login-page",
+    "method": "POST",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "appLoginPage",
+      "url": "https://internal-cms-ext.jswonemsme.com/api/app-login-page",
+      "method": "GET",
+      "timeout": { "request": 5000, "socket": 1000 },
+      "reqTransform": "general.transformers.moveBodyToQueryParams",
+      "resTransform": "cms.transformers.replaceUriPrefix"
+    }
+  },
+  {
+    "path": "/xp-mi/public/v1/verify-mobile-number-with-otp",
+    "method": "POST",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "app-verify-mobile-number-with-otp",
+      "url": "https://www.jswonemsme.com/auth/api/v1/construct/otp/verify",
+      "method": "POST",
+      "staticHeaders":{
+        "X-API-KEY": "AuthService-v1-psh6w4rh9rth86571bm51l8e3e9a8v7xt1t7d39kbawno1ij0n8clrwfkts5c1nx"
+      },
+      "timeout": { "request": 5000, "socket": 1000 },
+      "reqTransform": "login.transformers.transformVerifyMobileNumberWithOtpRequest",
+      "resTransform": "login.transformers.transformVerifyMobileNumberOtpResponse"
+    }
   },  
   {
   "path": "${PATH_URL}/v1/create-address",
@@ -354,5 +466,5 @@
     }
   ],
   "resTransform": ""
-  } 
+  }
 ]
