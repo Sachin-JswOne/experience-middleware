@@ -528,8 +528,7 @@
       "reqTransform": "login.transformers.transformVerifyMobileNumberWithOtpRequest",
       "resTransform": "login.transformers.transformVerifyMobileNumberOtpResponse"
     }
-  }
-  },  
+  }, 
   {
   "path": "${PATH_URL}/v1/create-address",
   "method": "POST",
@@ -564,7 +563,7 @@
       "requiredParams": ["*"]
     }
   ],
-  "resTransform": ""
+  "resTransform": "general.transformers.successOnly"
   }
 
 ]
