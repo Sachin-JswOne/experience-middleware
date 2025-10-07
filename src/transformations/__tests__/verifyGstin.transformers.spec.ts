@@ -1,4 +1,4 @@
-import { BadRequestException } from '@nestjs/common';
+import { CustomError } from 'src/utils/CustomError';
 import {
   verifyGstin,
   verifyGstinResponse,
@@ -60,7 +60,7 @@ describe('verifyGstin transformer', () => {
         error: { message: 'Please enter valid GSTIN for account registration on JSW ONE MSME' },
       };
 
-      expect(() => verifyGstinResponse(mockResponse)).toThrow(BadRequestException);
+      expect(() => verifyGstinResponse(mockResponse)).toThrow(CustomError);
     });
   });
 

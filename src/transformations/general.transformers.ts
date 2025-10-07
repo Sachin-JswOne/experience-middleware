@@ -2,6 +2,7 @@
 // do not convert to default import
 import * as qs from 'qs';
 import { BaseRequest } from 'src/models/base-request.model';
+import { SF_QUERY_PARAMS } from 'src/config/app.config';
 
 export function moveBodyToQueryParams(request: BaseRequest): BaseRequest {
   const transformedRequest: BaseRequest = {
@@ -53,4 +54,21 @@ export function convertAuthorizationToAccessTokenInHeader(
     console.error('Error in convertAuthorizationToAccessTokenInHeader:', error);
     return request;
   }
+}
+
+export function createQueryParams(request: BaseRequest): BaseRequest {
+  const transformedRequest: BaseRequest = {
+    ...request,
+  };
+
+  // Parse existing query params (if any)
+  const existingParams = qs.parse(request.url.search?.replace(/^\?/, '') || '');
+
+  // Merge existing params with hardcoded params (hardcoded params will override existing ones)
+  const mergedParams = { ...existingParams, ...SF_QUERY_PARAMS };
+
+  // Stringify and set
+  transformedRequest.url.search = qs.stringify(mergedParams);
+
+  return transformedRequest;
 }
