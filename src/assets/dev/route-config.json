@@ -564,6 +564,44 @@
     }
   ],
   "resTransform": "general.transformers.successOnly"
+  },
+  {
+  "path": "${PATH_URL}/v1/get-address",
+  "method": "POST",
+  "routeHandler": "AGGREGATE",
+  "aggregationType": "SEQUENTIAL",
+  "targets": [
+    {
+      "name": "get-sf-tokens",
+      "url": "${SF_AUTH_TOKEN_URI}",
+      "method": "POST",
+      "timeout": {
+        "request": "${TIMEOUTS.REQUEST}",
+        "socket": "${TIMEOUTS.SOCKET}"
+      },
+      "staticHeaders": {
+        "Content-Type": "application/x-www-form-urlencoded"
+      },
+      "requiredParams": ["*"],
+      "reqTransform": "general.transformers.createQueryParams"
+    },
+    {
+      "name": "get-address",
+      "url": "${SF_OPPORTUNITY_URI}/retailAddressData",
+      "method": "GET",
+      "timeout": {
+        "request": "${TIMEOUTS.REQUEST}",
+        "socket": "${TIMEOUTS.SOCKET}"
+      },
+        "headersToPass": [
+        {
+          "source": "authorization",
+          "destination": "authorization"
+        }
+      ],
+      "reqTransform": "address.transformers.getAddressRequest"
+    }
+  ],
+  "resTransform": "address.transformers.getAddressResponse"
   }
-
 ]
