@@ -42,8 +42,10 @@ export function mergePageDetailsResponses(
 
   const projectID = {
     ...strapiData.data.projectID,
-    projectID: homesData.jswone_project_id,
+    projectID: homesData.projectId,
   };
+
+  strapiData.data.imageUrl = homesData?.imageUrl;
 
   const homesTeam = {
     ...strapiData.data.homesTeam,
