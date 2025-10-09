@@ -575,7 +575,7 @@
       "requiredParams": ["*"]
     }
   ],
-  "resTransform": ""
+  "resTransform": "general.transformers.successOnly"
   },
    {
   "path": "${PATH_URL}/v1/get-address",
