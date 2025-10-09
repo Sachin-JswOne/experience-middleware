@@ -103,8 +103,10 @@ export function getSfIdFromHeaders(headers) {
       : authHeader;
 
     const decoded = jwt.decode(token);
-
-    return decoded ? (decoded as any).sfCustomerId : null;
+    if (!decoded) {
+      return null;
+    }
+    return (decoded as any).sfCustomerId ?? null;
   } catch (err) {
     console.error('Error decoding JWT:', err);
     return null;
