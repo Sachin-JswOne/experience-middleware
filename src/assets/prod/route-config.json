@@ -371,66 +371,78 @@
       }
   },
   {
-    "path": "/xp-mi/public/v1/reset-password",
+    "path": "${PATH_URL}/v1/reset-password",
     "method": "POST",
     "routeHandler": "TRANSFORM",
     "target": {
       "name": "app-reset-password",
-      "url": "https://www.jswonemsme.com/internal/construct/v1/customer/reset/password",
+      "url": "${MSME_BASE_URI_REGISTRATION}/customer/reset/password",
       "method": "POST",
-      "timeout": { "request": 5000, "socket": 1000 },
+        "timeout": {
+        "request": "${TIMEOUTS.REQUEST}",
+        "socket": "${TIMEOUTS.SOCKET}"
+      },
       "staticHeaders": {
-         "X-API-KEY": "CustomerService-v1-8mmaqdoz1iobqbx89jdrdw2xr0xuw49fv87upa0b6hfe69433ex44fopxw822tjw"
+         "X-API-KEY": "${X_API_KEY_FOR_REGISTRATION}"
       },
       "reqTransform": "login.transformers.transformResetPasswordRequest",
       "resTransform": "login.transformers.transformResetPasswordResponse"
     }
   },
-   {
-    "path": "/xp-mi/public/v1/verify-mobile-number",
+  {
+    "path": "${PATH_URL}/v1/verify-mobile-number",
     "method": "POST",
     "routeHandler": "TRANSFORM",
     "target": {
       "name": "app-verify-mobile-number",
-      "url": "https://www.jswonemsme.com/auth/api/v1/construct/otp/send",
+      "url": "${MSME_BASE_URI}/otp/send",
       "method": "POST",
       "staticHeaders":{
-        "X-API-KEY": "AuthService-v1-psh6w4rh9rth86571bm51l8e3e9a8v7xt1t7d39kbawno1ij0n8clrwfkts5c1nx"
+        "X-API-KEY": "${X_API_KEY_FOR_LOGIN}"
       },
-      "timeout": { "request": 5000, "socket": 1000 },
+         "timeout": {
+        "request": "${TIMEOUTS.REQUEST}",
+        "socket": "${TIMEOUTS.SOCKET}"
+      },
       "reqTransform": "login.transformers.transformVerifyMobileNumberRequest",
       "resTransform": "login.transformers.transformVerifyMobileNumberResponse"
     }
   },
   {
-    "path": "/xp-mi/public/v1/app-login-page",
+    "path": "${PATH_URL}/v1/app-login-page",
     "method": "POST",
     "routeHandler": "TRANSFORM",
     "target": {
       "name": "appLoginPage",
-      "url": "https://internal-cms-ext.jswonemsme.com/api/app-login-page",
+      "url": "${CMS_MSME_URL}/app-login-page",
       "method": "GET",
-      "timeout": { "request": 5000, "socket": 1000 },
+         "timeout": {
+        "request": "${TIMEOUTS.REQUEST}",
+        "socket": "${TIMEOUTS.SOCKET}"
+      },
       "reqTransform": "general.transformers.moveBodyToQueryParams",
       "resTransform": "cms.transformers.replaceUriPrefix"
     }
   },
-  {
-    "path": "/xp-mi/public/v1/verify-mobile-number-with-otp",
+   {
+    "path": "${PATH_URL}/v1/verify-mobile-number-with-otp",
     "method": "POST",
     "routeHandler": "TRANSFORM",
     "target": {
       "name": "app-verify-mobile-number-with-otp",
-      "url": "https://www.jswonemsme.com/auth/api/v1/construct/otp/verify",
+      "url": "${MSME_BASE_URI}/otp/verify",
       "method": "POST",
       "staticHeaders":{
-        "X-API-KEY": "AuthService-v1-psh6w4rh9rth86571bm51l8e3e9a8v7xt1t7d39kbawno1ij0n8clrwfkts5c1nx"
+        "X-API-KEY": "${X_API_KEY_FOR_LOGIN}"
       },
-      "timeout": { "request": 5000, "socket": 1000 },
+         "timeout": {
+        "request": "${TIMEOUTS.REQUEST}",
+        "socket": "${TIMEOUTS.SOCKET}"
+      },
       "reqTransform": "login.transformers.transformVerifyMobileNumberWithOtpRequest",
       "resTransform": "login.transformers.transformVerifyMobileNumberOtpResponse"
     }
-  },  
+  },
   {
   "path": "${PATH_URL}/v1/create-address",
   "method": "POST",
@@ -465,6 +477,45 @@
       "requiredParams": ["*"]
     }
   ],
-  "resTransform": ""
+  "resTransform": "general.transformers.successOnly"
+  },
+   {
+  "path": "${PATH_URL}/v1/get-address",
+  "method": "POST",
+  "routeHandler": "AGGREGATE",
+  "aggregationType": "SEQUENTIAL",
+  "targets": [
+    {
+      "name": "get-sf-tokens",
+      "url": "${SF_AUTH_TOKEN_URI}",
+      "method": "POST",
+      "timeout": {
+        "request": "${TIMEOUTS.REQUEST}",
+        "socket": "${TIMEOUTS.SOCKET}"
+      },
+      "staticHeaders": {
+        "Content-Type": "application/x-www-form-urlencoded"
+      },
+      "requiredParams": ["*"],
+      "reqTransform": "general.transformers.createQueryParams"
+    },
+    {
+      "name": "get-address",
+      "url": "${SF_OPPORTUNITY_URI}/retailAddressData",
+      "method": "GET",
+      "timeout": {
+        "request": "${TIMEOUTS.REQUEST}",
+        "socket": "${TIMEOUTS.SOCKET}"
+      },
+        "headersToPass": [
+        {
+          "source": "authorization",
+          "destination": "authorization"
+        }
+      ],
+      "reqTransform": "address.transformers.getAddressRequest"
+    }
+  ],
+  "resTransform": "address.transformers.getAddressResponse"
   }
 ]

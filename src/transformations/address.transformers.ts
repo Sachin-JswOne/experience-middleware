@@ -1,9 +1,14 @@
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-unsafe-return */
+/* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { BaseRequest } from 'src/models/base-request.model';
 import { AggregatedResponse } from 'src/models/aggregated-response.model';
 import { CustomError } from 'src/utils/CustomError';
 import { HttpStatus } from '@nestjs/common';
+import * as jwt from 'jsonwebtoken';
 
 export function createAddress(
   request: BaseRequest,
@@ -17,8 +22,11 @@ export function createAddress(
   );
   const accessToken = tokenResponse?.data?.access_token;
 
-   if (!accessToken) {
-    throw new CustomError('Access token not found from Salesforce token API', HttpStatus.BAD_REQUEST);
+  if (!accessToken) {
+    throw new CustomError(
+      'Access token not found from Salesforce token API',
+      HttpStatus.BAD_REQUEST,
+    );
   }
 
   const headers = {
@@ -45,4 +53,125 @@ export function createAddress(
   };
 
   return finalTransformedRequest;
+}
+
+export function getAddressRequest(
+  request: BaseRequest,
+  prevResponses?: AggregatedResponse[],
+): BaseRequest {
+  const tokenResponse = prevResponses?.find(
+    (r) => r.target === 'get-sf-tokens',
+  );
+  const accessToken = tokenResponse?.data?.access_token;
+
+  if (!accessToken) {
+    throw new CustomError(
+      'Access token not found from Salesforce token API',
+      HttpStatus.BAD_REQUEST,
+    );
+  }
+
+  const headers = {
+    Authorization: `Bearer ${accessToken}`,
+  };
+
+  const finalTransformedRequest: BaseRequest = {
+    ...request,
+    headers,
+    body: null,
+  };
+  const sfId = getSfIdFromHeaders(request.headers);
+  if (!sfId) {
+    throw new CustomError(
+      'SF ID not found in the token',
+      HttpStatus.BAD_REQUEST,
+    );
+  }
+
+  finalTransformedRequest.url.search = `?accountId=${sfId}`;
+
+  return finalTransformedRequest;
+}
+
+export function getSfIdFromHeaders(headers) {
+  const authHeader = headers.authorization;
+
+  if (!authHeader) return null;
+  try {
+    const token = authHeader.startsWith('Bearer ')
+      ? authHeader.substring(7)
+      : authHeader;
+
+    const decoded = jwt.decode(token);
+    if (!decoded) {
+      return null;
+    }
+    return (decoded as any).sfCustomerId ?? null;
+  } catch (err) {
+    console.error('Error decoding JWT:', err);
+    return null;
+  }
+}
+
+export function getAddressResponse(response) {
+  if (response && response.length > 0) {
+    const failedRequest = response.find((item) => item.success === false);
+
+    if (failedRequest) {
+      throw new CustomError(failedRequest.error, failedRequest.httpStatus);
+    }
+
+    const addressResponse = response.find(
+      (item) => item.target === 'get-address' && item.success,
+    );
+
+    if (
+      addressResponse &&
+      addressResponse.data &&
+      addressResponse.data.addressData
+    ) {
+      const addressList = JSON.parse(addressResponse.data.addressData);
+
+      const transformedAddress = transformAddress(addressList.AddressList);
+      return { AddressList: transformedAddress };
+    }
+    return { AddressList: [] };
+  }
+  return { AddressList: [] };
+}
+
+export function transformAddress(addressList) {
+  const filteredAddressList = addressList.filter(
+    (address) => address.approvalStatus !== 'Rejected',
+  );
+
+  return filteredAddressList.map((address) => {
+    let isUnderApproval = false;
+    if (address.approvalStatus === 'Awaiting Approval') {
+      isUnderApproval = true;
+    }
+
+    if (
+      address.approvalStatus === 'Approved' ||
+      address.approvalStatus === ''
+    ) {
+      isUnderApproval = false;
+    }
+    return {
+      state: address.state,
+      siteId: address.siteId,
+      shiptoAddressTag: address.shiptoAddressTag,
+      sfAddressId: address.sfAddressId,
+      pincode: address.pincode,
+      isShippingAddress: address.isShippingAddress,
+      isBillingAddress: address.isBillingAddress,
+      district: address.district,
+      companyName: address.companyName,
+      city: address.city,
+      underApproval: isUnderApproval,
+      addressLine2: address.addressLine2,
+      addressLine1: address.addressLine1,
+      contactNumber: address.contactNumber,
+    };
+  });
 }

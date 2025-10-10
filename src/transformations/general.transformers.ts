@@ -74,16 +74,14 @@ export function createQueryParams(request: BaseRequest): BaseRequest {
   return transformedRequest;
 }
 
-
 export function successOnly(results: AggregatedResponse[]): any {
-
   const failed = results.find((r) => !r.success);
 
   if (failed) {
     return {
       error: failed.error ?? 'Something went wrong',
     };
-  }  
+  }
 
   // If all targets succeeded
   return { success: true };

@@ -81,12 +81,12 @@ export const MSME_ERRORS_MAPPING = {
     'Something went wrong. Please try again later.',
 };
 export const SF_QUERY_PARAMS = {
-    grant_type: process.env.SF_GRANT_TYPE,
-    client_id: process.env.SF_CLIENT_ID,
-    client_secret: process.env.SF_CLIENT_SECRET,
-    username: process.env.SF_USERNAME,
-    password: process.env.SF_PASSWORD
-}
+  grant_type: process.env.SF_GRANT_TYPE,
+  client_id: process.env.SF_CLIENT_ID,
+  client_secret: process.env.SF_CLIENT_SECRET,
+  username: process.env.SF_USERNAME,
+  password: process.env.SF_PASSWORD,
+};
 
 export const TIMEOUTS = {
   REQUEST: Number(process.env.REQUEST_TIMEOUT) || 5000,
