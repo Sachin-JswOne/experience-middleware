@@ -579,7 +579,7 @@
   },
   {
   "path": "${PATH_URL}/v1/get-address",
-  "method": "POST",
+  "method": "GET",
   "routeHandler": "AGGREGATE",
   "aggregationType": "SEQUENTIAL",
   "targets": [
