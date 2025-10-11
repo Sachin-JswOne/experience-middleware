@@ -80,3 +80,16 @@ export const MSME_ERRORS_MAPPING = {
   'Otp is not for this customer':
     'Something went wrong. Please try again later.',
 };
+export const SF_QUERY_PARAMS = {
+  grant_type: process.env.SF_GRANT_TYPE,
+  client_id: process.env.SF_CLIENT_ID,
+  client_secret: process.env.SF_CLIENT_SECRET,
+  username: process.env.SF_USERNAME,
+  password: process.env.SF_PASSWORD,
+};
+
+export const TIMEOUTS = {
+  REQUEST: Number(process.env.REQUEST_TIMEOUT) || 5000,
+  REQUEST_MIN: Number(process.env.REQUEST_TIMEOUT_MIN) || 3000,
+  SOCKET: Number(process.env.SOCKET_TIMEOUT) || 1000,
+};
