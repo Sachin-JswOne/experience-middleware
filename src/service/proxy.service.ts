@@ -32,6 +32,7 @@ export class ProxyService {
   // private readonly redisClient = new Redis({ host: 'localhost', port: 6379 });
   public result: any = '';
   async handleRequest(req: Request) {
+    console.log(`Incoming ${req.method} request: ${req.url}`)
     const route = ROUTE_CONFIG.find(
       (r) => r.path === req.path && r.method === req.method,
     );
@@ -47,6 +48,11 @@ export class ProxyService {
       this.logger.error(
         `Handling request for route: ${req.method} ${req.path} trace_id: ${inspect(this.result.traceId)} span_id: ${inspect(this.result.spanId)} `,
       );
+      this.result = JSON.stringify(activeSpan);
+      console.log('result', activeSpan);
+      this.logger.error(
+        `Handling request for route: ${req.method} ${req.path} trace_id: ${inspect(this.result.traceId)} span_id: ${inspect(this.result.spanId)} `,
+      );
       throw new Error('Route config not found');
     }
 
@@ -54,6 +60,14 @@ export class ProxyService {
     if (activeSpan) {
       activeSpan.setAttribute('proxy.route', route.path);
       activeSpan.setAttribute('proxy.method', route.method);
+      activeSpan.setAttribute(
+        'proxy.handler',
+        RouteHandler[route.routeHandler],
+      );
+      this.result = activeSpan.spanContext();
+      this.logger.log(
+        `Handling request for route: ${req.method} ${req.path} trace_id: ${inspect(this.result.traceId)} span_id: ${inspect(this.result.spanId)} `,
+      );
       activeSpan.setAttribute(
         'proxy.handler',
         RouteHandler[route.routeHandler],
