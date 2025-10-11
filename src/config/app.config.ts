@@ -93,3 +93,6 @@ export const TIMEOUTS = {
   REQUEST_MIN: Number(process.env.REQUEST_TIMEOUT_MIN) || 3000,
   SOCKET: Number(process.env.SOCKET_TIMEOUT) || 1000,
 };
+
+export const GUEST = 'guest';
+export const GUEST_USER_STATE = 'G';
