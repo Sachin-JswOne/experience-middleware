@@ -444,6 +444,29 @@
     }
   },
   {
+    "path": "/xp-mi/public/v1/homes/project/project-tracker",
+    "method": "POST",
+    "routeHandler": "AGGREGATE",
+    "aggregationType": "PARALLEL",
+    "targets": [
+      {
+        "name": "strapi-project-detail",
+        "url": "https://internal-cms-ext.jswonemsme.com/api/project-page",
+        "method": "GET",
+        "timeout": { "request": 5000, "socket": 1000 },
+        "reqTransform": "general.transformers.moveBodyToQueryParams"
+      },
+      {
+        "name": "homes-project-details",
+        "url": "https://service.jswonehomes.com/homes-service/v1/project/progress-tracker",
+        "method": "GET",
+        "timeout": { "request": 5000, "socket": 1000 },
+        "headersToPass": [ { "source": "authorization", "destination": "Authorization" } ],
+        "reqTransform": "general.transformers.convertToGetRequest",
+        "requiredParams": ["project_id"]
+      }
+    ],
+    "resTransform": "home.details.transformers.mergePageTrackerResponse"
   "path": "${PATH_URL}/v1/create-address",
   "method": "POST",
   "routeHandler": "AGGREGATE",
