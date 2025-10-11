@@ -18,6 +18,7 @@ export interface TargetConfig {
   staticHeaders?: { [key: string]: string };
   requiredParams?: string[];
   resTransform?: string;
+  interceptors?: string[];
 }
 
 export interface BaseRouteConfig {
