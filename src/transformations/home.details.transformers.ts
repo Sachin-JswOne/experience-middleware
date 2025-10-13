@@ -79,6 +79,7 @@ export function mergeProjectDetailsAndTrackerResponses(
         designation: member.projectRoleName,
         email: member.email,
         mobile: member.phoneNumber,
+        level : member.level
       })) ?? [],
   };
   var currentprojectStage = "";
