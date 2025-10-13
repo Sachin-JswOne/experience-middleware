@@ -68,6 +68,7 @@ export function mergeProjectDetailsAndTrackerResponses(
   const projectID = {
     ...strapiData.data.projectID,
     projectID: homesData.projectId,
+    address : homesData?.addressLine1 ?? ""
   };
 
   const homesTeam = {
