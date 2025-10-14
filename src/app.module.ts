@@ -1,22 +1,29 @@
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
 import { Module } from '@nestjs/common';
+import { PrometheusModule } from '@willsoto/nestjs-prometheus';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { ConfigModule } from '@nestjs/config';
 import { ProxyService } from './service/proxy.service';
 import { ProxyController } from './controller/proxy.controller';
 import { join } from 'path';
+import { RedisProvider } from './redis.provider';
+import { AppService } from './app.service';
+
 
 @Module({
   imports: [
+    PrometheusModule.register({
+      path: '/metrics',
+    }),
     ServeStaticModule.forRoot({
       rootPath: join(__dirname, '..', 'public'),
+      exclude: ['/metrics'],
     }),
     ConfigModule.forRoot({
       isGlobal: true,
     }),
   ],
   controllers: [ProxyController],
-  providers: [ProxyService],
+  providers: [RedisProvider, AppService, ProxyService],
+  exports: [RedisProvider, AppService]
 })
 export class AppModule {}
