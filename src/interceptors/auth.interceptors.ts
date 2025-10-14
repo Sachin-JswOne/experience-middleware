@@ -45,6 +45,7 @@ export function decryptAndAddUserDetails(
   if (userState && userState === GUEST_USER_STATE) {
     config.headers['SF-ID'] = GUEST;
     config.headers['CT-ID'] = GUEST;
+    delete config.headers['x-user-state'];
   }
 
   return config;
