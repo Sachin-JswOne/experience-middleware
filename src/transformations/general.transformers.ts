@@ -4,6 +4,8 @@ import * as qs from 'qs';
 import { BaseRequest } from 'src/models/base-request.model';
 import { SF_QUERY_PARAMS } from 'src/config/app.config';
 import { AggregatedResponse } from 'src/models/aggregated-response.model';
+import { Logger } from '@nestjs/common';
+import { getFormattedTracingContext } from 'src/utils/tracing.util';
 
 export function moveBodyToQueryParams(request: BaseRequest): BaseRequest {
   const transformedRequest: BaseRequest = {
@@ -52,7 +54,7 @@ export function convertAuthorizationToAccessTokenInHeader(
     }
     return transformedRequest;
   } catch (error) {
-    console.error('Error in convertAuthorizationToAccessTokenInHeader:', error);
+    Logger.error(`Error for ${request.url} method: convertAuthorizationToAccessTokenInHeader ${getFormattedTracingContext()} ${error}`);
     return request;
   }
 }
@@ -78,6 +80,7 @@ export function successOnly(results: AggregatedResponse[]): any {
   const failed = results.find((r) => !r.success);
 
   if (failed) {
+    Logger.error(`Error for Aggregated Response method: successOnly ${getFormattedTracingContext()} ${failed.error ?? 'Something went wrong'}`);
     return {
       error: failed.error ?? 'Something went wrong',
     };

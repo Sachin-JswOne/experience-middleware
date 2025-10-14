@@ -8,6 +8,8 @@ import { BaseRequest } from 'src/models/base-request.model';
 import { AggregatedResponse } from 'src/models/aggregated-response.model';
 import { CustomError } from 'src/utils/CustomError';
 import { HttpStatus } from '@nestjs/common';
+import { Logger } from '@nestjs/common';
+import { getFormattedTracingContext } from 'src/utils/tracing.util';
 import * as jwt from 'jsonwebtoken';
 
 export function createAddress(
@@ -23,6 +25,7 @@ export function createAddress(
   const accessToken = tokenResponse?.data?.access_token;
 
   if (!accessToken) {
+    Logger.error(`Error for ${request.url} method: createAddress ${getFormattedTracingContext()} Access token not found from Salesforce token API'`);
     throw new CustomError(
       'Access token not found from Salesforce token API',
       HttpStatus.BAD_REQUEST,
@@ -65,6 +68,7 @@ export function getAddressRequest(
   const accessToken = tokenResponse?.data?.access_token;
 
   if (!accessToken) {
+    Logger.error(`Error for ${request.url} method: getAddressRequest ${getFormattedTracingContext()} Access token not found from Salesforce token API'`);
     throw new CustomError(
       'Access token not found from Salesforce token API',
       HttpStatus.BAD_REQUEST,
@@ -80,8 +84,9 @@ export function getAddressRequest(
     headers,
     body: null,
   };
-  const sfId = getSfIdFromHeaders(request.headers);
+  const sfId = getSfIdFromHeaders(request);
   if (!sfId) {
+    Logger.error(`Error for ${request.url} method: getAddressRequest ${getFormattedTracingContext()} SF ID not found in the token'`);
     throw new CustomError(
       'SF ID not found in the token',
       HttpStatus.BAD_REQUEST,
@@ -93,8 +98,8 @@ export function getAddressRequest(
   return finalTransformedRequest;
 }
 
-export function getSfIdFromHeaders(headers) {
-  const authHeader = headers.authorization;
+export function getSfIdFromHeaders(request) {
+  const authHeader = request.headers.authorization;
 
   if (!authHeader) return null;
   try {
@@ -108,6 +113,7 @@ export function getSfIdFromHeaders(headers) {
     }
     return (decoded as any).sfCustomerId ?? null;
   } catch (err) {
+    Logger.error(`Error for ${request.url} method: getSfIdFromHeaders ${getFormattedTracingContext()} Error decoding JWT: ${err}`);
     console.error('Error decoding JWT:', err);
     return null;
   }
@@ -118,6 +124,7 @@ export function getAddressResponse(response) {
     const failedRequest = response.find((item) => item.success === false);
 
     if (failedRequest) {
+      Logger.error(`Error for GET Address API method: getAddressResponse ${getFormattedTracingContext()} ${failedRequest.error}`);
       throw new CustomError(failedRequest.error, failedRequest.httpStatus);
     }
 

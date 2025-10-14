@@ -4,6 +4,8 @@
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { formatDate, toTitleCase } from 'src/utils/common-functions.util';
+import { Logger } from '@nestjs/common';
+import { getFormattedTracingContext } from 'src/utils/tracing.util';
 
 export function transformInvoiceAndDocuments(response: any): {
   listOfDocuments;
@@ -26,7 +28,7 @@ export function transformInvoiceAndDocuments(response: any): {
       return { listOfDocuments: [] };
     }
   } catch (error) {
-    console.error('Error in transformInvoiceAndDocuments:', error);
+    Logger.error(`Error for Invoice and Documents API method: transformInvoiceAndDocuments ${getFormattedTracingContext()} ${error}`);
     return { listOfDocuments: [] };
   }
 }
