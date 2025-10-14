@@ -32,7 +32,6 @@ export class ProxyService {
   // private readonly redisClient = new Redis({ host: 'localhost', port: 6379 });
   public result: any = '';
   async handleRequest(req: Request) {
-    console.log(`Incoming ${req.method} request: ${req.url}`);
     const route = ROUTE_CONFIG.find(
       (r) => r.path === req.path && r.method === req.method,
     );

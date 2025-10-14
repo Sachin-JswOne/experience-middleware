@@ -56,20 +56,20 @@
       - coroot-data:/data
 
   # Redis for caching
-  #redis:
-  #  image: redis:7-alpine
-  #  container_name: redis
-  #  restart: unless-stopped
-  #  ports:
-  #    - "6379:6379"
-  #  command: redis-server --appendonly yes
-  #  volumes:
-  #    - redis-data:/data
-  #  healthcheck:
-  #    test: ["CMD", "redis-cli", "ping"]
-  #    interval: 5s
-  #    timeout: 3s
-  #    retries: 5
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
 
   # REAL OTel Collector (receives OTLP on 4317/4318, writes to ClickHouse)
   otel-collector:
