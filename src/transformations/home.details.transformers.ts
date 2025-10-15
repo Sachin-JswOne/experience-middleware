@@ -1,3 +1,4 @@
+import { report } from 'process';
 import { AggregatedResponse } from 'src/models/aggregated-response.model';
 
 export function mergeUserDetailsResponses(aggregatedResponses: AggregatedResponse[]): any {
@@ -111,6 +112,31 @@ export function mergeProjectDetailsAndTrackerResponses(
         };
       },
     ) ?? [];
+
+  if(homesData?.projectStepperResponse?.activeStage == 'Construction'){
+    const constructionStageStepper = strapiData?.projectTracker?.constructionStage;
+    const constructionMileStone = homesData?.projectStepperResponse?.constructionStageMilestone;
+    constructionStageStepper.completion.daysLeft = constructionMileStone?.daysLeft;
+    constructionStageStepper.completion.progress = constructionMileStone?.percentageCompletion;
+    constructionStageStepper.endDate = constructionMileStone.endDate; 
+    constructionStageStepper.startDate = constructionMileStone?.startDate; 
+    constructionStageStepper.recentReports = constructionMileStone.recentProgressReportDetails
+      .map((report: any) => {
+        return {
+          ...constructionStageStepper.recentReports,
+          fileName : report?.reportFileName ?? '',
+          url : report?.reportFileUrl ?? ''
+        }
+      }) ?? [];
+    constructionStageStepper.stageDetails = homesData?.projectStepperResponse?.constructionStageMilestone?.activeMilestones
+      .map((milestone : any) => {
+        return {
+          ...constructionStageStepper.stageDetails,
+          milestoneName : milestone?.name ?? '',
+          progress : milestone?.percentageCompletion ?? 0
+        }
+      });
+  }
 
   const projectTracker = {
     ...strapiData.data.projectTracker,
