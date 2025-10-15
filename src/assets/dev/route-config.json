@@ -615,5 +615,19 @@
     }
   ],
   "resTransform": "address.transformers.getAddressResponse"
+  },
+  {
+    "path": "/xp-mi/public/v1/homes/project/design-documents",
+    "method": "POST",
+    "routeHandler": "TRANSFORM",
+    "target": 
+      {
+        "name": "homes-design-documents",
+        "url": "http://34.100.206.209/homes-service/v1/project/design-documents",
+        "method": "GET",
+        "timeout": { "request": 5000, "socket": 1000 },
+        "headersToPass": [ { "source": "authorization", "destination": "Authorization" } ],
+        "requiredParams": ["project_id"]
+      }
   }
 ]
