@@ -7,6 +7,8 @@ import { HttpStatus } from '@nestjs/common';
 import { MSME, MSME_ERRORS_MAPPING } from 'src/config/app.config';
 import { BaseRequest } from 'src/models/base-request.model';
 import { CustomError } from 'src/utils/CustomError';
+import { Logger } from '@nestjs/common';
+import { getFormattedTracingContext } from 'src/utils/tracing.util';
 
 export function transformResetPasswordRequest(
   request: BaseRequest,
@@ -18,9 +20,11 @@ export function transformResetPasswordRequest(
 
   const { emailId } = request.body;
   if (!emailId || emailId === '') {
+    Logger.error(`Error for ${request.url} method: transformResetPasswordRequest ${getFormattedTracingContext()} Email ID is required`);
     throw new CustomError('emailId is required', HttpStatus.BAD_REQUEST);
   }
   transformedRequest.url.search = `?email=${emailId.toLowerCase()}`;
+  Logger.log(`Transforming Reset Password Request ${getFormattedTracingContext()}`);
   return transformedRequest;
 }
 
@@ -28,12 +32,14 @@ export function transformResetPasswordResponse(response: any) {
   const responseData = response?.data;
 
   if (!responseData) {
+    Logger.error(`Error for Reset Password API method: transformResetPasswordResponse ${getFormattedTracingContext()} CCP Reset Password API is failing`);
     throw new CustomError(
       'CCP Reset Password API is failing',
       HttpStatus.INTERNAL_SERVER_ERROR,
     );
   }
   if (!responseData.success && responseData.error) {
+    Logger.error(`Error for Reset Password API method: transformResetPasswordResponse ${getFormattedTracingContext()} ${responseData.error?.message || 'CCP Reset Password API is failing'}`);
     throw new CustomError(
       responseData.error?.message,
       responseData.error?.code,
@@ -57,6 +63,7 @@ export function transformVerifyMobileNumberRequest(
   const { phoneNumber } = request.body;
 
   if (!phoneNumber || phoneNumber === '') {
+    Logger.error(`Error for ${request.url} method: transformVerifyMobileNumberRequest ${getFormattedTracingContext()} PhoneNumber is required`);
     throw new CustomError('PhoneNumber is required', HttpStatus.BAD_REQUEST);
   }
   const transformedRequest: BaseRequest = {
@@ -74,12 +81,14 @@ export function transformVerifyMobileNumberResponse(response: any) {
   const responseData = response;
 
   if (!responseData) {
+    Logger.error(`Error for Verify Mobile Number API method: transformVerifyMobileNumberResponse ${getFormattedTracingContext()} CCP Verify Mobile Number API is failing`);
     throw new CustomError(
       'CCP Verify Mobile Number API is failing',
       HttpStatus.INTERNAL_SERVER_ERROR,
     );
   }
   if (!responseData.success && responseData.error) {
+    Logger.error(`Error for Verify Mobile Number API method: transformVerifyMobileNumberResponse ${getFormattedTracingContext()} ${responseData.error?.message || 'CCP Verify Mobile Number API is failing'}`);
     throw new CustomError(
       responseData.error?.message,
       responseData.error?.code || HttpStatus.INTERNAL_SERVER_ERROR,
@@ -88,9 +97,10 @@ export function transformVerifyMobileNumberResponse(response: any) {
   const verifyMobileNumberResponse = responseData?.data;
 
   if (!verifyMobileNumberResponse.success) {
+    const errorMessage = MSME_ERRORS_MAPPING[verifyMobileNumberResponse.message] || verifyMobileNumberResponse.message;
+    Logger.error(`Error for Verify Mobile Number API method: transformVerifyMobileNumberResponse ${getFormattedTracingContext()} ${errorMessage}`);
     throw new CustomError(
-      MSME_ERRORS_MAPPING[verifyMobileNumberResponse.message] ||
-        verifyMobileNumberResponse.message,
+      errorMessage,
       HttpStatus.BAD_REQUEST,
     );
   }
@@ -106,6 +116,7 @@ export function transformVerifyMobileNumberWithOtpRequest(
   const validationResult = validateVerifyMobileNumberWithOtpData(request.body);
 
   if (!validationResult.isValid) {
+    Logger.error(`Error for ${request.url} method: transformVerifyMobileNumberWithOtpRequest ${getFormattedTracingContext()} ${validationResult.errorMessage || 'Validation failed'}`);
     throw new CustomError(
       validationResult.errorMessage || '',
       HttpStatus.BAD_REQUEST,
@@ -145,12 +156,14 @@ export function transformVerifyMobileNumberOtpResponse(response: any) {
   const responseData = response;
 
   if (!responseData) {
+    Logger.error(`Error for Verify Mobile Number With OTP API method: transformVerifyMobileNumberOtpResponse ${getFormattedTracingContext()} CCP Verify Mobile Number With OTP API is failing`);
     throw new CustomError(
       'CCP Verify Mobile Number With OTP API is failing',
       HttpStatus.INTERNAL_SERVER_ERROR,
     );
   }
   if (!responseData.success && responseData.error) {
+    Logger.error(`Error for Verify Mobile Number With OTP API method: transformVerifyMobileNumberOtpResponse ${getFormattedTracingContext()} ${responseData.error?.message || 'CCP Verify Mobile Number With OTP API is failing'}`);
     throw new CustomError(
       responseData.error?.message,
       responseData.error?.code || HttpStatus.INTERNAL_SERVER_ERROR,
@@ -159,9 +172,10 @@ export function transformVerifyMobileNumberOtpResponse(response: any) {
   const verifyMobileNumberWithOtpResponse = responseData?.data;
 
   if (!verifyMobileNumberWithOtpResponse.success) {
+    const errorMessage = MSME_ERRORS_MAPPING[verifyMobileNumberWithOtpResponse.message] || verifyMobileNumberWithOtpResponse.message;
+    Logger.error(`Error for Verify Mobile Number With OTP API method: transformVerifyMobileNumberOtpResponse ${getFormattedTracingContext()} ${errorMessage}`);
     throw new CustomError(
-      MSME_ERRORS_MAPPING[verifyMobileNumberWithOtpResponse.message] ||
-        verifyMobileNumberWithOtpResponse.message,
+      errorMessage,
       HttpStatus.BAD_REQUEST,
     );
   }

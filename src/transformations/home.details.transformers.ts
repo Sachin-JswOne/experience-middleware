@@ -1,5 +1,83 @@
 import { report } from 'process';
 import { AggregatedResponse } from 'src/models/aggregated-response.model';
+import { Logger } from '@nestjs/common';
+import { getFormattedTracingContext } from 'src/utils/tracing.util';
+
+
+export function mergePageDetailsResponses(
+  aggregatedResponses: AggregatedResponse[],
+): any {
+  const responses = aggregatedResponses.reduce(
+    (acc, response) => {
+      acc[response.target] = response;
+      return acc;
+    },
+    {} as Record<string, AggregatedResponse>,
+  );
+
+  const strapiResponse = responses['strapi-project-detail'];
+  const homesDashboardResponse = responses['homes-project-details'];
+
+  if (!strapiResponse?.success) {
+    Logger.error(`Error for Page Details API method: mergePageDetailsResponses ${getFormattedTracingContext()} Strapi project details responses is missing or failed`);
+    throw new Error('Strapi project details responses is missing or failed');
+  }
+
+  if(!homesDashboardResponse?.success){
+    Logger.error(`Error for Page Details API method: mergePageDetailsResponses ${getFormattedTracingContext()} Homes project details responses is missing or failed`);
+    throw new Error('Homes project details responses is missing or failed');
+  }
+
+  const strapiData = { ...strapiResponse.data };
+  const homesData = homesDashboardResponse.data;
+
+  const projectItems = 
+  strapiData?.data?.projectDetails?.projectItems?.map((item: any) => {
+        return {
+            ...item,
+            value : homesData[item.key]
+        };
+    });
+
+  const title = {
+    ...strapiData.data.title,
+    salutation: `${strapiData.data.title.salutation}${homesData.clientName ?? ''}`,
+    stage: `${strapiData.data.title.stage}${homesData.stage ?? ''}`,
+  };
+
+  const projectID = {
+    ...strapiData.data.projectID,
+    projectID: homesData.projectId,
+  };
+
+  strapiData.data.imageUrl = homesData?.imageUrl;
+
+  const homesTeam = {
+    ...strapiData.data.homesTeam,
+    userCard : homesData.userDetails.map((member : any) => {
+         return {
+          name: member.userName,
+          designation: member.projectRoleName,
+          email: member.email,
+          mobile: member.phoneNumber,
+        };
+    })
+  };
+
+  return {
+    ...strapiData,
+    data: {
+      ...strapiData.data,
+      projectDetails: {
+        ...strapiData.data.projectDetails,
+        projectItems,
+      },
+      title,
+      projectID,
+      homesTeam,
+    },
+  };
+}
 
 export function mergeUserDetailsResponses(aggregatedResponses: AggregatedResponse[]): any {
 
@@ -14,10 +92,12 @@ export function mergeUserDetailsResponses(aggregatedResponses: AggregatedRespons
     const homesUserResponse = responses['homes-user-details'];
 
     if (!strapiUserResponse?.success) {
+        Logger.error(`Error for User Details API method: mergeUserDetailsResponses ${getFormattedTracingContext()} Strapi user details responses is missing or failed`);
         throw new Error('Strapi user details responses is missing or failed');
     }
 
     if ( !homesUserResponse?.success) {
+        Logger.error(`Error for User Details API method: mergeUserDetailsResponses ${getFormattedTracingContext()} Homes user details responses is missing or failed`);
         throw new Error('Homes user details responses is missing or failed');
     }
     const strapiData = strapiUserResponse.data;

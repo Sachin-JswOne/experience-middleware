@@ -1,11 +1,13 @@
-/* eslint-disable @typescript-eslint/no-unsafe-return */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
+﻿import './instrumentation';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
+import { AppService } from './app.service';
+import { TraceContextInterceptor } from './common/trace-context.interceptor';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  app.setGlobalPrefix('xp-mi'); // Set a global prefix for all routes
+  app.useGlobalInterceptors(new TraceContextInterceptor());
+  app.setGlobalPrefix('xp-mi');
   app.enableCors({
     origin: (origin, callback) => {
       const allowedOrigins = process.env.ALLOWED_ORIGINS
@@ -36,8 +38,11 @@ async function bootstrap() {
     optionsSuccessStatus: 204,
   });
 
+  const appService = app.get(AppService);
+  await appService.testRedisConnection();
+  await appService.subscribeToCacheEvents();
+  
   await app.listen(process.env.PORT ?? 3000);
 }
 
-// eslint-disable-next-line @typescript-eslint/no-floating-promises
-bootstrap();
+void bootstrap();

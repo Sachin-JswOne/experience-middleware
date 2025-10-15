@@ -3,6 +3,8 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { AggregatedResponse } from 'src/models/aggregated-response.model';
+import { Logger } from '@nestjs/common';
+import { getFormattedTracingContext } from 'src/utils/tracing.util';
 
 export function mergeHomePageResponses(
   aggregatedResponses: AggregatedResponse[],
@@ -25,6 +27,7 @@ export function mergeHomePageResponses(
     typeof strapiResponse.data !== 'object' ||
     strapiResponse.data === null
   ) {
+    Logger.error(`Error for Home Page API method: mergeHomePageResponses ${getFormattedTracingContext()} Strapi response is missing or invalid`);
     return { data: {}, meta: {} };
   }
 
@@ -185,6 +188,7 @@ export function mergeBuyAgainResponses(
       return buyAgainRetailApiResponse.data;
     }
   } else {
+    Logger.error(`Error for Buy Again API method: mergeBuyAgainResponses ${getFormattedTracingContext()} Buy again retail API response failed`);
     return {
       listOfBuyAgainProducts: [],
     };
@@ -218,6 +222,7 @@ export function mergeTopBrandsResponses(aggregatedResponses) {
       const topBrandsStrapiResponse = strapiBrandsResponse.branding_sections[0];
 
       if (!topBrandsStrapiResponse) {
+        Logger.error(`Error for Top Brands API method: mergeTopBrandsResponses ${getFormattedTracingContext()} Top brands Strapi response is missing`);
         return defaultResponse;
       }
       const brands: any[] = [];
@@ -255,8 +260,10 @@ export function mergeTopBrandsResponses(aggregatedResponses) {
         };
       }
     }
+    Logger.error(`Error for Top Brands API method: mergeTopBrandsResponses ${getFormattedTracingContext()} Strapi branding sections not found or invalid`);
     return defaultResponse;
   } else {
+    Logger.error(`Error for Top Brands API method: mergeTopBrandsResponses ${getFormattedTracingContext()} Strapi or API data response failed`);
     return defaultResponse;
   }
 }
