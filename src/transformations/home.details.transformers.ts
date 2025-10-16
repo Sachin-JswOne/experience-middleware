@@ -114,7 +114,7 @@ export function mergeProjectDetailsAndTrackerResponses(
     ) ?? [];
 
   if(homesData?.projectStepperResponse?.activeStage == 'Construction'){
-    const constructionStageStepper = strapiData?.projectTracker?.constructionStage;
+    const constructionStageStepper = strapiData?.data?.projectTracker?.constructionStage;
     const constructionMileStone = homesData?.projectStepperResponse?.constructionStageMilestone;
     constructionStageStepper.completion.daysLeft = constructionMileStone?.daysLeft;
     constructionStageStepper.completion.progress = constructionMileStone?.percentageCompletion;
@@ -136,8 +136,13 @@ export function mergeProjectDetailsAndTrackerResponses(
           progress : milestone?.percentageCompletion ?? 0
         }
       });
-  }
 
+     strapiData.data.projectDetailsConstruction =
+        strapiData?.data?.projectDetailsConstruction?.projectItems?.map((item: any) => ({
+            ...item,
+            value: homesData[item.key],
+        })) ?? [];
+  }
   const projectTracker = {
     ...strapiData.data.projectTracker,
     designStage: {
