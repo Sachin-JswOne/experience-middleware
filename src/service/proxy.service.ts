@@ -22,13 +22,13 @@ import { AggregatorType } from 'src/enum/aggregation-type.enum';
 import { AggregatedResponse } from 'src/models/aggregated-response.model';
 import { IncomingHttpHeaders } from 'http';
 import { inspect } from 'util';
-import Redis from 'ioredis';
+// import Redis from 'ioredis';
 
 @Injectable()
 export class ProxyService {
   private readonly tracer = trace.getTracer('experience-middleware');
   private readonly logger = new Logger(ProxyService.name);
-  private readonly redisClient = new Redis({ host: 'localhost', port: 6379 });
+  // private readonly redisClient = new Redis({ host: 'localhost', port: 6379 });
   public result: any = '';
   async handleRequest(req: Request) {
     console.log(`Incoming ${req.method} request: ${req.url}`);
@@ -109,30 +109,30 @@ export class ProxyService {
         try {
           console.log(`Processing PARALLEL request for ${req.url}`);
           // Check for cached data first
-          try {
-            const cached = await this.redisClient.get(`${req.url}`);
-            if (cached) {
-              console.log(`Returning Cached Response for ${req.url}`);
+          // try {
+          //   // const cached = await this.redisClient.get(`${req.url}`);
+          //   // if (cached) {
+          //   //   console.log(`Returning Cached Response for ${req.url}`);
 
-              // Create span for cached response to maintain visibility in Coroot
-              return await this.tracer.startActiveSpan(
-                `aggregate.parallel.cached ${route.path}`,
-                async (span) => {
-                  span.setAttribute('proxy.route', route.path);
-                  span.setAttribute('proxy.aggregation_type', 'PARALLEL');
-                  span.setAttribute('http.method', req.method);
-                  span.setAttribute('cache.hit', true);
-                  span.setAttribute('api.response.data', cached);
-                  span.setAttribute('api.response.size', cached.length);
-                  span.setAttribute('http.status_code', 200); // Cached responses are treated as successful
+          //     // Create span for cached response to maintain visibility in Coroot
+          //     return await this.tracer.startActiveSpan(
+          //       `aggregate.parallel.cached ${route.path}`,
+          //       async (span) => {
+          //         span.setAttribute('proxy.route', route.path);
+          //         span.setAttribute('proxy.aggregation_type', 'PARALLEL');
+          //         span.setAttribute('http.method', req.method);
+          //         span.setAttribute('cache.hit', true);
+          //         span.setAttribute('api.response.data', cached);
+          //         span.setAttribute('api.response.size', cached.length);
+          //         span.setAttribute('http.status_code', 200); // Cached responses are treated as successful
 
-                  return JSON.parse(cached);
-                },
-              );
-            }
-          } catch (cacheGetError) {
-            console.error('Cache Get Error:', cacheGetError);
-          }
+          //         return JSON.parse(cached);
+          //       },
+          //     );
+          //   }
+          // } catch (cacheGetError) {
+          //   console.error('Cache Get Error:', cacheGetError);
+          // }
           const results = await Promise.allSettled<AggregatedResponse>(
             route.targets.map(
               async (target: TargetConfig): Promise<AggregatedResponse> => {
@@ -174,18 +174,18 @@ export class ProxyService {
             : normalizedResults;
 
           // Cache the final result using direct Redis
-          try {
-            await this.redisClient.setex(
-              `${req.url}`,
-              process.env.REDIS_TTL_SECONDS
-                ? parseInt(process.env.REDIS_TTL_SECONDS)
-                : 300,
-              JSON.stringify(finalResult),
-            );
-            console.log(`Caching Data for ${req.url}`);
-          } catch (cacheError) {
-            console.error('Cache Storage Error:', cacheError);
-          }
+          // try {
+          //   await this.redisClient.setex(
+          //     `${req.url}`,
+          //     process.env.REDIS_TTL_SECONDS
+          //       ? parseInt(process.env.REDIS_TTL_SECONDS)
+          //       : 300,
+          //     JSON.stringify(finalResult),
+          //   );
+          //   console.log(`Caching Data for ${req.url}`);
+          // } catch (cacheError) {
+          //   console.error('Cache Storage Error:', cacheError);
+          // }
 
           return finalResult;
         } catch (err) {
@@ -217,30 +217,30 @@ export class ProxyService {
         try {
           console.log(`Processing SEQUENTIAL request for ${req.url}`);
           // Check for cached data first
-          try {
-            const cached = await this.redisClient.get(`${req.url}`);
-            if (cached) {
-              console.log(`Returning Cached Response for ${req.url}`);
+          // try {
+          //   const cached = await this.redisClient.get(`${req.url}`);
+          //   if (cached) {
+          //     console.log(`Returning Cached Response for ${req.url}`);
 
-              // Create span for cached response to maintain visibility in Coroot
-              return await this.tracer.startActiveSpan(
-                `aggregate.sequential.cached ${route.path}`,
-                async (span) => {
-                  span.setAttribute('proxy.route', route.path);
-                  span.setAttribute('proxy.aggregation_type', 'SEQUENTIAL');
-                  span.setAttribute('http.method', req.method);
-                  span.setAttribute('cache.hit', true);
-                  span.setAttribute('api.response.data', cached);
-                  span.setAttribute('api.response.size', cached.length);
-                  span.setAttribute('http.status_code', 200); // Cached responses are treated as successful
+          //     // Create span for cached response to maintain visibility in Coroot
+          //     return await this.tracer.startActiveSpan(
+          //       `aggregate.sequential.cached ${route.path}`,
+          //       async (span) => {
+          //         span.setAttribute('proxy.route', route.path);
+          //         span.setAttribute('proxy.aggregation_type', 'SEQUENTIAL');
+          //         span.setAttribute('http.method', req.method);
+          //         span.setAttribute('cache.hit', true);
+          //         span.setAttribute('api.response.data', cached);
+          //         span.setAttribute('api.response.size', cached.length);
+          //         span.setAttribute('http.status_code', 200); // Cached responses are treated as successful
 
-                  return JSON.parse(cached);
-                },
-              );
-            }
-          } catch (cacheGetError) {
-            console.error('Cache Get Error:', cacheGetError);
-          }
+          //         return JSON.parse(cached);
+          //       },
+          //     );
+          //   }
+          // } catch (cacheGetError) {
+          //   console.error('Cache Get Error:', cacheGetError);
+          // }
 
           for (const target of route.targets) {
             try {
@@ -276,18 +276,18 @@ export class ProxyService {
             : results;
 
           // Cache the final result using direct Redis
-          try {
-            await this.redisClient.setex(
-              `${req.url}`,
-              process.env.REDIS_TTL_SECONDS
-                ? parseInt(process.env.REDIS_TTL_SECONDS)
-                : 300,
-              JSON.stringify(finalResult),
-            );
-            console.log(`Caching Data for ${req.url}`);
-          } catch (cacheError) {
-            console.error('Cache Storage Error:', cacheError);
-          }
+          // try {
+          //   await this.redisClient.setex(
+          //     `${req.url}`,
+          //     process.env.REDIS_TTL_SECONDS
+          //       ? parseInt(process.env.REDIS_TTL_SECONDS)
+          //       : 300,
+          //     JSON.stringify(finalResult),
+          //   );
+          //   console.log(`Caching Data for ${req.url}`);
+          // } catch (cacheError) {
+          //   console.error('Cache Storage Error:', cacheError);
+          // }
 
           return finalResult;
         } catch (err) {
@@ -308,30 +308,30 @@ export class ProxyService {
     prevResponses?: AggregatedResponse[],
   ) {
     // Check for cached data first
-    try {
-      const cached = await this.redisClient.get(`${req.url}`);
-      if (cached) {
-        console.log(`Returning Cached Response for ${req.url}`);
+    // try {
+    //   const cached = await this.redisClient.get(`${req.url}`);
+    //   if (cached) {
+    //     console.log(`Returning Cached Response for ${req.url}`);
 
-        // Create span for cached response to maintain visibility in Coroot
-        return await this.tracer.startActiveSpan(
-          `proxy.transform.cached ${target.name || target.url}`,
-          async (span) => {
-            span.setAttribute('proxy.route', req.path);
-            span.setAttribute('proxy.target', target.name || target.url);
-            span.setAttribute('http.method', target.method);
-            span.setAttribute('cache.hit', true);
-            span.setAttribute('api.response.data', cached);
-            span.setAttribute('api.response.size', cached.length);
-            span.setAttribute('http.status_code', 200); // Cached responses are treated as successful
+    //     // Create span for cached response to maintain visibility in Coroot
+    //     return await this.tracer.startActiveSpan(
+    //       `proxy.transform.cached ${target.name || target.url}`,
+    //       async (span) => {
+    //         span.setAttribute('proxy.route', req.path);
+    //         span.setAttribute('proxy.target', target.name || target.url);
+    //         span.setAttribute('http.method', target.method);
+    //         span.setAttribute('cache.hit', true);
+    //         span.setAttribute('api.response.data', cached);
+    //         span.setAttribute('api.response.size', cached.length);
+    //         span.setAttribute('http.status_code', 200); // Cached responses are treated as successful
 
-            return JSON.parse(cached);
-          },
-        );
-      }
-    } catch (cacheGetError) {
-      console.error('Cache Get Error:', cacheGetError);
-    }
+    //         return JSON.parse(cached);
+    //       },
+    //     );
+    //   }
+    // } catch (cacheGetError) {
+    //   console.error('Cache Get Error:', cacheGetError);
+    // }
 
     return await this.tracer.startActiveSpan(
       `proxy.transform ${target.name || target.url}`,
@@ -404,18 +404,18 @@ export class ProxyService {
             );
           }
           // Cache the response data using direct Redis
-          try {
-            await this.redisClient.setex(
-              `${req.url}`,
-              process.env.REDIS_TTL_SECONDS
-                ? parseInt(process.env.REDIS_TTL_SECONDS)
-                : 300,
-              JSON.stringify(responseData),
-            );
-            console.log(`Caching Data for ${req.url}`);
-          } catch (cacheError) {
-            console.error('Cache Storage Error:', cacheError);
-          }
+          // try {
+          //   await this.redisClient.setex(
+          //     `${req.url}`,
+          //     process.env.REDIS_TTL_SECONDS
+          //       ? parseInt(process.env.REDIS_TTL_SECONDS)
+          //       : 300,
+          //     JSON.stringify(responseData),
+          //   );
+          //   console.log(`Caching Data for ${req.url}`);
+          // } catch (cacheError) {
+          //   console.error('Cache Storage Error:', cacheError);
+          // }
 
           return responseData;
         } catch (err) {
