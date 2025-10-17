@@ -39,8 +39,8 @@ async function bootstrap() {
   });
 
   const appService = app.get(AppService);
-  await appService.testRedisConnection();
-  await appService.subscribeToCacheEvents();
+  // await appService.testRedisConnection();
+  // await appService.subscribeToCacheEvents();
   
   await app.listen(process.env.PORT ?? 3000);
 }
