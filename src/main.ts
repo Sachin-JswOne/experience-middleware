@@ -8,6 +8,7 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.useGlobalInterceptors(new TraceContextInterceptor());
   app.setGlobalPrefix('xp-mi');
+  app.enableShutdownHooks();
   app.enableCors({
     origin: (origin, callback) => {
       const allowedOrigins = process.env.ALLOWED_ORIGINS
@@ -41,7 +42,7 @@ async function bootstrap() {
   const appService = app.get(AppService);
   // await appService.testRedisConnection();
   // await appService.subscribeToCacheEvents();
-  
+
   await app.listen(process.env.PORT ?? 3000);
 }
 

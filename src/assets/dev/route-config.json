@@ -677,6 +677,27 @@
         "requiredParams": ["project_id"]
       }
   },
+   {
+    "path": "${PATH_URL}/v1/order-listing",
+    "method": "GET",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "appOrderListing",
+      "url": "${CONNECTOR_BASE_URI}/opportunity/retail/fetch-order-list",
+      "method": "GET",
+        "staticHeaders":{
+        "Authorization": "Bearer ${ORDER_LISTING_TOKEN}",
+        "Content-Type": "application/json"
+      },
+      "timeout": {
+        "request": "${TIMEOUTS.REQUEST}",
+        "socket": "${TIMEOUTS.SOCKET}"
+      },
+      "reqTransform": "orderListing.transformers.transformOrderListingRequest",
+      "resTransform": "orderListing.transformers.transformOrderListingResponse",
+      "requiredParams": ["gstin","customerType"]
+    }
+  },
   {
     "path": "/xp-mi/public/v1/homes/project/construction-documents",
     "method": "POST",
