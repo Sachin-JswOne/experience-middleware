@@ -5,7 +5,7 @@ import { ConfigModule } from '@nestjs/config';
 import { ProxyService } from './service/proxy.service';
 import { ProxyController } from './controller/proxy.controller';
 import { join } from 'path';
-import { RedisProvider } from './redis.provider';
+// import { RedisProvider } from './redis.provider';
 import { AppService } from './app.service';
 
 
@@ -23,7 +23,9 @@ import { AppService } from './app.service';
     }),
   ],
   controllers: [ProxyController],
-  providers: [RedisProvider, AppService, ProxyService],
-  exports: [RedisProvider, AppService]
+  // providers: [RedisProvider, AppService, ProxyService],
+  providers: [AppService, ProxyService],
+  // exports: [RedisProvider, AppService]
+  exports: [AppService],
 })
 export class AppModule {}
