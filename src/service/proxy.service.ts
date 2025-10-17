@@ -127,6 +127,10 @@ export class ProxyService {
           //   // const cached = await this.redisClient.get(`${req.url}`);
           //   // if (cached) {
           //   //   console.log(`Returning Cached Response for ${req.url}`);
+          // try {
+          //   // const cached = await this.redisClient.get(`${req.url}`);
+          //   // if (cached) {
+          //   //   console.log(`Returning Cached Response for ${req.url}`);
 
           //     // Create span for cached response to maintain visibility in Coroot
           //     return await this.tracer.startActiveSpan(
@@ -139,7 +143,25 @@ export class ProxyService {
           //         span.setAttribute('api.response.data', cached);
           //         span.setAttribute('api.response.size', cached.length);
           //         span.setAttribute('http.status_code', 200); // Cached responses are treated as successful
+          //     // Create span for cached response to maintain visibility in Coroot
+          //     return await this.tracer.startActiveSpan(
+          //       `aggregate.parallel.cached ${route.path}`,
+          //       async (span) => {
+          //         span.setAttribute('proxy.route', route.path);
+          //         span.setAttribute('proxy.aggregation_type', 'PARALLEL');
+          //         span.setAttribute('http.method', req.method);
+          //         span.setAttribute('cache.hit', true);
+          //         span.setAttribute('api.response.data', cached);
+          //         span.setAttribute('api.response.size', cached.length);
+          //         span.setAttribute('http.status_code', 200); // Cached responses are treated as successful
 
+          //         return JSON.parse(cached);
+          //       },
+          //     );
+          //   }
+          // } catch (cacheGetError) {
+          //   console.error('Cache Get Error:', cacheGetError);
+          // }
           //         return JSON.parse(cached);
           //       },
           //     );
@@ -218,6 +240,18 @@ export class ProxyService {
           // } catch (cacheError) {
           //   console.error('Cache Storage Error:', cacheError);
           // }
+          // try {
+          //   await this.redisClient.setex(
+          //     `${req.url}`,
+          //     process.env.REDIS_TTL_SECONDS
+          //       ? parseInt(process.env.REDIS_TTL_SECONDS)
+          //       : 300,
+          //     JSON.stringify(finalResult),
+          //   );
+          //   console.log(`Caching Data for ${req.url}`);
+          // } catch (cacheError) {
+          //   console.error('Cache Storage Error:', cacheError);
+          // }
 
           return finalResult;
         } catch (err) {
@@ -253,6 +287,10 @@ export class ProxyService {
           //   const cached = await this.redisClient.get(`${req.url}`);
           //   if (cached) {
           //     console.log(`Returning Cached Response for ${req.url}`);
+          // try {
+          //   const cached = await this.redisClient.get(`${req.url}`);
+          //   if (cached) {
+          //     console.log(`Returning Cached Response for ${req.url}`);
 
           //     // Create span for cached response to maintain visibility in Coroot
           //     return await this.tracer.startActiveSpan(
@@ -265,7 +303,25 @@ export class ProxyService {
           //         span.setAttribute('api.response.data', cached);
           //         span.setAttribute('api.response.size', cached.length);
           //         span.setAttribute('http.status_code', 200); // Cached responses are treated as successful
+          //     // Create span for cached response to maintain visibility in Coroot
+          //     return await this.tracer.startActiveSpan(
+          //       `aggregate.sequential.cached ${route.path}`,
+          //       async (span) => {
+          //         span.setAttribute('proxy.route', route.path);
+          //         span.setAttribute('proxy.aggregation_type', 'SEQUENTIAL');
+          //         span.setAttribute('http.method', req.method);
+          //         span.setAttribute('cache.hit', true);
+          //         span.setAttribute('api.response.data', cached);
+          //         span.setAttribute('api.response.size', cached.length);
+          //         span.setAttribute('http.status_code', 200); // Cached responses are treated as successful
 
+          //         return JSON.parse(cached);
+          //       },
+          //     );
+          //   }
+          // } catch (cacheGetError) {
+          //   console.error('Cache Get Error:', cacheGetError);
+          // }
           //         return JSON.parse(cached);
           //       },
           //     );
@@ -320,6 +376,18 @@ export class ProxyService {
           // } catch (cacheError) {
           //   console.error('Cache Storage Error:', cacheError);
           // }
+          // try {
+          //   await this.redisClient.setex(
+          //     `${req.url}`,
+          //     process.env.REDIS_TTL_SECONDS
+          //       ? parseInt(process.env.REDIS_TTL_SECONDS)
+          //       : 300,
+          //     JSON.stringify(finalResult),
+          //   );
+          //   console.log(`Caching Data for ${req.url}`);
+          // } catch (cacheError) {
+          //   console.error('Cache Storage Error:', cacheError);
+          // }
 
           return finalResult;
         } catch (err) {
@@ -344,6 +412,10 @@ export class ProxyService {
     //   const cached = await this.redisClient.get(`${req.url}`);
     //   if (cached) {
     //     console.log(`Returning Cached Response for ${req.url}`);
+    // try {
+    //   const cached = await this.redisClient.get(`${req.url}`);
+    //   if (cached) {
+    //     console.log(`Returning Cached Response for ${req.url}`);
 
     //     // Create span for cached response to maintain visibility in Coroot
     //     return await this.tracer.startActiveSpan(
@@ -356,7 +428,25 @@ export class ProxyService {
     //         span.setAttribute('api.response.data', cached);
     //         span.setAttribute('api.response.size', cached.length);
     //         span.setAttribute('http.status_code', 200); // Cached responses are treated as successful
+    //     // Create span for cached response to maintain visibility in Coroot
+    //     return await this.tracer.startActiveSpan(
+    //       `proxy.transform.cached ${target.name || target.url}`,
+    //       async (span) => {
+    //         span.setAttribute('proxy.route', req.path);
+    //         span.setAttribute('proxy.target', target.name || target.url);
+    //         span.setAttribute('http.method', target.method);
+    //         span.setAttribute('cache.hit', true);
+    //         span.setAttribute('api.response.data', cached);
+    //         span.setAttribute('api.response.size', cached.length);
+    //         span.setAttribute('http.status_code', 200); // Cached responses are treated as successful
 
+    //         return JSON.parse(cached);
+    //       },
+    //     );
+    //   }
+    // } catch (cacheGetError) {
+    //   console.error('Cache Get Error:', cacheGetError);
+    // }
     //         return JSON.parse(cached);
     //       },
     //     );
@@ -444,6 +534,18 @@ export class ProxyService {
             );
           }
           // Cache the response data using direct Redis
+          // try {
+          //   await this.redisClient.setex(
+          //     `${req.url}`,
+          //     process.env.REDIS_TTL_SECONDS
+          //       ? parseInt(process.env.REDIS_TTL_SECONDS)
+          //       : 300,
+          //     JSON.stringify(responseData),
+          //   );
+          //   console.log(`Caching Data for ${req.url}`);
+          // } catch (cacheError) {
+          //   console.error('Cache Storage Error:', cacheError);
+          // }
           // try {
           //   await this.redisClient.setex(
           //     `${req.url}`,
