@@ -66,6 +66,8 @@ export function mergeProjectDetailsAndTrackerResponses(
       value: homesData[item.key],
     })) ?? [];
 
+  strapiData.data.imageUrl = homesData?.imageUrl ?? "";
+
   const projectID = {
     ...strapiData.data.projectID,
     projectID: homesData.projectId,
@@ -74,6 +76,12 @@ export function mergeProjectDetailsAndTrackerResponses(
 
   const homesTeam = {
     ...strapiData.data.homesTeam,
+    note: homesData.userDetails && homesData.userDetails.length > 0
+      ? homesData.userDetails
+          .map((m: any) => m.level)
+          .sort((a: string, b: string) => a.localeCompare(b))
+          .join(" → ")
+      : "",
     userCard:
       homesData.userDetails?.map((member: any) => ({
         name: member.userName,
@@ -87,6 +95,9 @@ export function mergeProjectDetailsAndTrackerResponses(
   const homesDesignStage = homesData?.projectStepperResponse?.stages.find((stage) => stage.stageName === 'designStage');
   const homesPreConstructionStage = homesData?.projectStepperResponse?.stages?.find((stage) => stage.stageName === 'preConstructionStage');
   strapiData.data.projectTracker.activeStage = homesData?.projectStepperResponse?.activeStage;
+
+  strapiData.data.projectTracker.designStage.active = homesDesignStage?.active;
+  strapiData.data.projectTracker.designStage.completed = homesDesignStage?.completed;
   const designStage =
     strapiData?.data?.projectTracker?.designStage?.subSteps?.map((member: any) => {
       const milestoneName = member.fieldName;
@@ -99,6 +110,9 @@ export function mergeProjectDetailsAndTrackerResponses(
         date: homesDesignStage?.milestones?.[milestoneName]?.date ?? '',
       };
     }) ?? [];
+
+  strapiData.data.projectTracker.preConstructionStage.active = homesDesignStage?.active;
+  strapiData.data.projectTracker.preConstructionStage.completed = homesDesignStage?.completed;
 
   const preConstructionStage =
     strapiData?.data?.projectTracker?.preConstructionStage?.subSteps?.map(
