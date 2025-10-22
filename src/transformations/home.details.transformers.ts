@@ -118,6 +118,9 @@ export function mergeProjectDetailsAndTrackerResponses(
     strapiData?.data?.projectTracker?.preConstructionStage?.subSteps?.map(
       (member: any) => {
         const milestoneName = member.fieldName;
+        if (homesPreConstructionStage?.milestones?.[milestoneName]?.status?.toLowerCase().includes('progress')) {
+          currentprojectStage = member?.title 
+        }
         return {
           ...member,
           currentStatus:
