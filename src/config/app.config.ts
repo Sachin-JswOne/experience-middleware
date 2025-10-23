@@ -179,3 +179,11 @@ export const PB_ORDER_TAGS = {
   'JSW One': 'Fulfilled by JSW One',
   Warehouse: 'Fulfilled by JSW One Distributor',
 };
+
+export const PAYMENT_STATUS_MAPPING = {
+  Full: 'Paid',
+  Pending: 'Pending',
+  Partial: 'Partial',
+};
+
+export const DEFAULT_VALUE = 0.0;

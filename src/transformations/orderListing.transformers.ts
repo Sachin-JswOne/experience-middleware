@@ -20,22 +20,27 @@ import {
   UOM,
 } from 'src/config/app.config';
 import { formatDate } from 'src/utils/common-functions.util';
+import { transformSingleProduct } from './shipments.transformers';
 
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 export function transformOrderListingRequest(request) {
   if (request.url.searchParams) {
     const customerType = request.url.searchParams.get('customerType');
-
-    let developerName = 'MSME';
-    if (customerType === 'Retailer PB' || customerType === 'Influencer') {
-      developerName = 'PrivateBrand';
-    }
+    const developerName = getDeveloperName(customerType);
 
     request.url.searchParams.set('developerName', developerName);
     request.url.searchParams.delete('customerType');
 
     return request;
   }
+}
+
+export function getDeveloperName(customerType) {
+  let developerName = 'MSME';
+  if (customerType === 'Retailer PB' || customerType === 'Influencer') {
+    developerName = 'PrivateBrand';
+  }
+  return developerName;
 }
 
 export function transformOrderListingResponse(response) {
@@ -112,85 +117,6 @@ export function transformV2OrderListResponse(ordersArray) {
 
 export function transformOrderListProducts(order) {
   return order.itemDetails.map(transformSingleProduct);
-}
-
-export function transformSingleProduct(item) {
-  const attributes = createAttributes(item);
-  const { quantity, uomLabel } = parseQuantity(item.quantity);
-  return {
-    displayName: item.productName,
-    uomLabel,
-    quantity,
-    attributes,
-  };
-}
-
-export function createAttributes(item) {
-  let attributes: any[] = [];
-  attributes = transformAttributes(item.attributes);
-
-  return attributes;
-}
-
-export function parseQuantity(quantity: string | null): {
-  quantity: string;
-  uomLabel: string;
-} {
-  if (quantity !== null) {
-    const [value, uomLabel] = quantity.split(' ');
-    return { quantity: value, uomLabel };
-  }
-  return { quantity: '', uomLabel: '' };
-}
-
-export function transformAttributes(attributesObj) {
-  const attributes = Object.entries(attributesObj).map(([key, rawValue]) => {
-    const raw = typeof rawValue === 'string' ? rawValue : '';
-    const [description] = key.split(' (');
-
-    const [value, uom] = raw.split(' ');
-    return {
-      description,
-      value,
-      uom,
-      colourCode: '',
-    };
-  });
-  const dimensionKeys = ['Thickness', 'Width', 'Length'];
-  const dimensions = {};
-  const output: any[] = [];
-
-  for (const attr of attributes) {
-    if (dimensionKeys.includes(attr.description)) {
-      dimensions[attr.description] = attr.value;
-    } else {
-      if (attr.description === 'Colour') {
-        const [value, code] = attr.value.split('-');
-        attr.value = value?.replace('_', ' ');
-        attr.colourCode = code;
-        attr.uom = '';
-      }
-      output.push(attr);
-    }
-  }
-
-  if (Object.entries(dimensions).length > 0) {
-    let expression = '';
-    let des = '';
-    dimensionKeys.forEach((key) => {
-      if (dimensions[key] !== undefined) {
-        des = des.concat(key, ' x ');
-        expression = expression.concat(`${dimensions[key]} X `);
-      }
-    });
-    output.push({
-      description: des.substring(0, des.length - 3),
-      value: expression.substring(0, expression.length - 3),
-      uom: 'mm',
-      colourCode: '',
-    });
-  }
-  return output;
 }
 
 export function transformOpportunityListProducts(order) {

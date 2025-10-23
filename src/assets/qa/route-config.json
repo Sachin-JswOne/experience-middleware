@@ -724,4 +724,39 @@
       "resTransform": "cms.transformers.replaceUriPrefix"
     }
   }
+      }
+  },
+  {
+    "path": "${PATH_URL}/v1/order-detail/:id",
+    "method": "GET",
+    "routeHandler": "CONDITIONAL",
+    "conditionTransform": "orderDetails.transformers.selectOrderDetailTarget",
+    "targets": [
+      {
+        "name": "order-detail",
+        "url": "${ERP_BASE_URI}/fetch-order-details",
+        "method": "GET",
+        "timeout": { "request": "${TIMEOUTS.REQUEST}", "socket": "${TIMEOUTS.SOCKET}" },
+         "staticHeaders": {
+          "Authorization": "${X_API_KEY_FOR_ORDER_LISTING}",
+          "client_id": "${ERP_CLIENT_ID}"
+      },
+      "reqTransform": "orderDetails.transformers.transformOrderDetailsRequest",
+      "resTransform": "orderDetails.transformers.transformOrderDetailsResponse"
+    },
+      {
+        "name": "opportunity-detail",
+        "url": "${CONNECTOR_BASE_URI}/jswone/retail/fetch-opportunity-details",
+        "method": "GET",
+        "staticHeaders":{
+          "Authorization": "Bearer ${OPPORTUNITY_DETAIL_TOKEN}",
+          "Content-Type": "application/json"
+        },
+        "timeout": { "request": "${TIMEOUTS.REQUEST}", "socket": "${TIMEOUTS.SOCKET}" },
+        "reqTransform": "orderDetails.transformers.transformOpportunityDetailsRequest",
+        "resTransform": "orderDetails.transformers.transformOpportunityDetailsResponse",
+        "requiredParams": ["customerType"]
+      }
+    ]
+  }
 ]
