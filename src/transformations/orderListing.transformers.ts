@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-call */
@@ -21,12 +22,18 @@ import {
 } from 'src/config/app.config';
 import { formatDate } from 'src/utils/common-functions.util';
 import { transformSingleProduct } from './shipments.transformers';
+import { HttpStatusCode } from 'axios';
+import { CustomError } from 'src/utils/CustomError';
 
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 export function transformOrderListingRequest(request) {
   if (request.url.searchParams) {
     const customerType = request.url.searchParams.get('customerType');
     const developerName = getDeveloperName(customerType);
+    const gstin = request.url.searchParams.get('gstin');
+    if (!gstin) {
+      throw new CustomError('Gstin not found', HttpStatusCode.BadRequest);
+    }
 
     request.url.searchParams.set('developerName', developerName);
     request.url.searchParams.delete('customerType');
@@ -45,11 +52,14 @@ export function getDeveloperName(customerType) {
 
 export function transformOrderListingResponse(response) {
   const orderListingResult = response?.data?.data;
-  const OrderListResponse =
-    sortProductsArrayBasedOnCreatedDate(orderListingResult);
-  const orderList = transformV2OrderListResponse(OrderListResponse);
+  if (orderListingResult) {
+    const OrderListResponse =
+      sortProductsArrayBasedOnCreatedDate(orderListingResult);
+    const orderList = transformV2OrderListResponse(OrderListResponse);
 
-  return { orderList: orderList };
+    return { orderList: orderList };
+  }
+  return { orderList: [] };
 }
 
 export function sortProductsArrayBasedOnCreatedDate(products) {
