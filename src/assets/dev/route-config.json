@@ -318,6 +318,17 @@
         },
         "reqTransform": "cms.transformers.homeBlogs",
         "resTransform": "cms.transformers.replaceUriPrefix"
+      },
+       {
+        "name": "app-in-transit",
+        "url": "https://qa-ssr.msme.jswone.in/order-service/order/v1/material-tracking/dispatched-shipments",
+        "method": "GET",
+        "timeout": {
+          "request": "${TIMEOUTS.REQUEST_MIN}",
+          "socket": "${TIMEOUTS.SOCKET}"
+        },
+         "headersToPass": [ { "source": "authorization", "destination": "access_token" } ],
+         "reqTransform": "app.transformers.transformInTransitRequest"
       }
     ],
     "resTransform": "app.transformers.mergeHomePageResponses"
@@ -677,26 +688,40 @@
         "requiredParams": ["project_id"]
       }
   },
-   {
-    "path": "${PATH_URL}/v1/order-listing",
+    {
+    "path": "${PATH_URL}/v1/app-orders",
     "method": "GET",
-    "routeHandler": "TRANSFORM",
-    "target": {
-      "name": "appOrderListing",
-      "url": "${CONNECTOR_BASE_URI}/opportunity/retail/fetch-order-list",
-      "method": "GET",
+    "routeHandler": "AGGREGATE",
+    "aggregationType": "PARALLEL",
+    "targets": [
+      {
+        "name": "app-material-tracking",
+        "url": "${CMS_MSME_URL}/app-global",
+        "method": "GET",
+        "timeout": {
+          "request": "${TIMEOUTS.REQUEST}",
+          "socket": "${TIMEOUTS.SOCKET}"
+        },
+        "reqTransform": "general.transformers.moveBodyToQueryParams"
+      },
+      {
+        "name": "app-order-listing",
+        "url": "${CONNECTOR_BASE_URI}/opportunity/retail/fetch-order-list",
+        "method": "GET",
         "staticHeaders":{
-        "Authorization": "Bearer ${ORDER_LISTING_TOKEN}",
-        "Content-Type": "application/json"
-      },
-      "timeout": {
-        "request": "${TIMEOUTS.REQUEST}",
-        "socket": "${TIMEOUTS.SOCKET}"
-      },
-      "reqTransform": "orderListing.transformers.transformOrderListingRequest",
-      "resTransform": "orderListing.transformers.transformOrderListingResponse",
-      "requiredParams": ["gstin","customerType"]
-    }
+          "Authorization": "Bearer ${ORDER_LISTING_TOKEN}",
+         "Content-Type": "application/json"
+        },
+        "timeout": {
+          "request": "${TIMEOUTS.REQUEST}",
+          "socket": "${TIMEOUTS.SOCKET}"
+        },
+        "reqTransform": "orderListing.transformers.transformOrderListingRequest",
+        "resTransform": "orderListing.transformers.transformOrderListingResponse",
+        "requiredParams": ["gstin","customerType"]
+      }
+    ],
+    "resTransform": "orderListing.transformers.mergeMaterialTrackingAndOrderListingResponses"
   },
     {
     "path": "${PATH_URL}/v1/order-detail/:id",

@@ -24,6 +24,9 @@ import { formatDate } from 'src/utils/common-functions.util';
 import { transformSingleProduct } from './shipments.transformers';
 import { HttpStatusCode } from 'axios';
 import { CustomError } from 'src/utils/CustomError';
+import { AggregatedResponse } from 'src/models/aggregated-response.model';
+import { Logger } from '@nestjs/common';
+import { getFormattedTracingContext } from 'src/utils/tracing.util';
 
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 export function transformOrderListingRequest(request) {
@@ -426,4 +429,51 @@ export function getOrderType(pbOrderType) {
     orderType = pbOrderType;
   }
   return orderType;
+}
+
+export function mergeMaterialTrackingAndOrderListingResponses(
+  aggregatedResponses: AggregatedResponse[],
+) {
+  try {
+    const responses = aggregatedResponses.reduce(
+      (acc, response) => {
+        acc[response.target] = response;
+        return acc;
+      },
+      {} as Record<string, AggregatedResponse>,
+    );
+
+    const materialTrackingResponse = responses['app-material-tracking'];
+    const orderListingResponse = responses['app-order-listing'];
+    let response;
+    if (
+      materialTrackingResponse.success &&
+      materialTrackingResponse.data.data
+    ) {
+      response = {
+        ...materialTrackingResponse.data.data,
+      };
+
+      if (orderListingResponse.success && orderListingResponse.data.orderList) {
+        response.orderList = orderListingResponse.data.orderList;
+      } else {
+        response.orderList = [];
+      }
+    } else {
+      if (orderListingResponse.success && orderListingResponse.data.orderList) {
+        response.orderList = orderListingResponse.data.orderList;
+      }
+      response.orderList = [];
+    }
+    return response;
+  } catch (error) {
+    Logger.log(
+      `Transforming Shipment Request  method: mergeMaterialTrackingAndOrderListingResponses ${getFormattedTracingContext()}`,
+    );
+    console.error(
+      'Error in mergeMaterialTrackingAndOrderListingResponses:',
+      error,
+    );
+    throw error;
+  }
 }
