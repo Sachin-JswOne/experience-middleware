@@ -643,5 +643,21 @@
         "headersToPass": [ { "source": "authorization", "destination": "Authorization" } ],
         "requiredParams": ["project_id"]
       }
+  },
+   {
+    "path": "${PATH_URL}/v1/feature-flags",
+    "method": "POST",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "appGlobalPage",
+      "url": "${CMS_CCP_URL}/ccp-feature-flags",
+      "method": "GET",
+      "timeout": {
+        "request": "${TIMEOUTS.REQUEST}",
+        "socket": "${TIMEOUTS.SOCKET}"
+      },
+      "reqTransform": "general.transformers.moveBodyToQueryParams",
+      "resTransform": "cms.transformers.replaceUriPrefix"
+    }
   }
 ]
