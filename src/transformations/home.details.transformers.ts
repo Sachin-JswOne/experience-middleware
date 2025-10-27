@@ -74,14 +74,17 @@ export function mergeProjectDetailsAndTrackerResponses(
     address : homesData?.addressLine1 ?? ""
   };
 
+  const note =  strapiData.data.homesTeam?.note ?? `Please raise the escalation call in the following order : `;
+
   const homesTeam = {
     ...strapiData.data.homesTeam,
-    note: homesData.userDetails && homesData.userDetails.length > 0
-      ? homesData.userDetails
-          .map((m: any) => m.level)
-          .sort((a: string, b: string) => a.localeCompare(b))
-          .join(" → ")
-      : "",
+    note : note && homesData.userDetails.length > 0
+        ? `${note} ${homesData.userDetails
+            .map((m: any) => m.level)
+            .sort((a: string, b: string) => a.localeCompare(b))
+           .join(" → ")}`
+        : "",
+
     userCard:
       homesData.userDetails?.map((member: any) => ({
         name: member.userName,
