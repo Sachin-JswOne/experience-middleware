@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
@@ -7,6 +8,14 @@ import { AggregatorType } from 'src/enum/aggregation-type.enum';
 import { RouteHandler } from 'src/enum/route-handler.enum';
 import { RouteConfig } from 'src/models/route-config.model';
 import { APP_ENV } from './app.config';
+import * as dotenv from 'dotenv';
+import { TIMEOUTS } from './app.config';
+
+dotenv.config();
+
+const CONSTANTS_MAP: Record<string, any> = {
+  TIMEOUTS,
+};
 
 const configFilePath = path.resolve(
   __dirname,
@@ -17,6 +26,57 @@ const enumFieldsMap: Record<string, any> = {
   routeHandler: RouteHandler,
   aggregationType: AggregatorType,
 };
+
+export function replaceEnvPlaceholders(obj: any): any {
+  const PLACEHOLDER_RE = /\$\{([^}]+)\}/g;
+
+  function resolveKey(key: string): any {
+    //supports dot-notation like TIMEOUTS.REQUEST
+    const parts = key.split('.');
+    let value: any = CONSTANTS_MAP;
+    for (const p of parts) {
+      value = value?.[p];
+    }
+    if (value !== undefined) return value;
+
+    // fallback to env var
+    const envVal = process.env[key];
+    if (envVal !== undefined) {
+      // env values are strings, conversion handled later if needed
+      return envVal;
+    }
+
+    throw new Error(`Missing config for: ${key}`);
+  }
+
+  if (typeof obj === 'string') {
+    const exactMatch = obj.match(/^\$\{([^}]+)\}$/);
+    if (exactMatch) {
+      const resolved = resolveKey(exactMatch[1]);
+      return resolved;
+    }
+    // replace all placeholders inside the string with their string form
+    return obj.replace(PLACEHOLDER_RE, (_, key) => {
+      const resolved = resolveKey(key);
+      // convert non-string resolved values to string when embedded inside a larger string
+      return typeof resolved === 'string' ? resolved : String(resolved);
+    });
+  }
+
+  if (Array.isArray(obj)) {
+    return obj.map(replaceEnvPlaceholders);
+  }
+
+  if (typeof obj === 'object' && obj !== null) {
+    const newObj: Record<string, any> = {};
+    for (const [k, v] of Object.entries(obj)) {
+      newObj[k] = replaceEnvPlaceholders(v);
+    }
+    return newObj;
+  }
+
+  return obj;
+}
 
 export function normalizeEnums<T extends Record<string, any>>(
   raw: T,
@@ -37,7 +97,9 @@ export function normalizeEnums<T extends Record<string, any>>(
 try {
   const raw = fs.readFileSync(configFilePath, 'utf-8');
   const rawConfigs: any[] = JSON.parse(raw);
-  ROUTE_CONFIG = rawConfigs.map((raw: any) =>
+
+  const envReplacedConfigs = replaceEnvPlaceholders(rawConfigs);
+  ROUTE_CONFIG = envReplacedConfigs.map((raw: any) =>
     normalizeEnums<RouteConfig>(raw, enumFieldsMap),
   );
 } catch (e) {

@@ -12,6 +12,8 @@ import {
 import { formatDate } from 'src/utils/common-functions.util';
 import { CustomError } from 'src/utils/CustomError';
 import { HttpStatus } from '@nestjs/common';
+import { Logger } from '@nestjs/common';
+import { getFormattedTracingContext } from 'src/utils/tracing.util';
 
 export function mergeInvoiceAndShipmentsResponse(
   aggregatedResponses: AggregatedResponse[],
@@ -51,6 +53,9 @@ export function mergeInvoiceAndShipmentsResponse(
     );
     return { listOfShipments: shipments };
   } catch (error) {
+    Logger.log(
+      `Transforming Shipment Request  method: mergeInvoiceAndShipmentResponse ${getFormattedTracingContext()}`,
+    );
     console.error('Error in mergeInvoiceAndShipmentsResponse:', error);
     throw error;
   }
@@ -87,7 +92,9 @@ export function transformShipmentDetails(
           downloadInvoiceAndDocumentDetails,
           pbOrder: val.pbOrder,
           orderTag: ORDER_TAG,
-          trackingUrl: val.trackingUrl || '',
+          trackingUrl: preProcessTrackingUrl(
+            val.trackingUrl as string | null | undefined,
+          ),
         };
       }
       return null;
@@ -182,4 +189,16 @@ export function transformAttributes(attributesObj) {
     });
   }
   return output;
+}
+function preProcessTrackingUrl(trackingUrl: string | null | undefined): string {
+  if (!trackingUrl) {
+    return '';
+  }
+
+  // Convert http to https
+  if (trackingUrl.startsWith('http://')) {
+    return trackingUrl.replace('http://', 'https://');
+  }
+
+  return trackingUrl;
 }

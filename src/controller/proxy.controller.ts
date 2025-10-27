@@ -9,7 +9,7 @@ import { CustomError } from 'src/utils/CustomError';
 export class ProxyController {
   constructor(private readonly proxyService: ProxyService) {}
 
-  @All('public/*')
+  @All('public/*path')
   async handle(@Req() req: Request, @Res() res: Response) {
     try {
       const data = await this.proxyService.handleRequest(req);
