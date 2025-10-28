@@ -562,22 +562,5 @@
         "headersToPass": [ { "source": "authorization", "destination": "access_token"} ],
         "requiredParams": ["entityName"]
       }
-  },
-  {
-    "path": "${PATH_URL}/v1/paymentsdue",
-    "method": "GET",
-    "routeHandler": "TRANSFORM",
-    "target": 
-      {
-        "name": "payments-due",
-        "url": "https://www.jswonemsme.com/customer/payment/v2/totalDueAmount",
-        "method": "GET",
-        "timeout": {        
-          "request": "${TIMEOUTS.REQUEST}",
-          "socket": "${TIMEOUTS.SOCKET}"
-        },
-        "headersToPass": [ { "source": "authorization", "destination": "access_token"} ],
-        "requiredParams": ["entityName"]
-      }
   }
 ]
