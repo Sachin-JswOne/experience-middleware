@@ -146,14 +146,25 @@ export function mergeProjectDetailsAndTrackerResponses(
       value: homesData[item.key],
     })) ?? [];
 
+  strapiData.data.imageUrl = homesData?.imageUrl ?? "";
+
   const projectID = {
     ...strapiData.data.projectID,
     projectID: homesData.projectId,
     address : homesData?.addressLine1 ?? ""
   };
 
+  const note =  strapiData?.data?.homesTeam?.note ?? `Please raise the escalation call in the following order : `;
+
   const homesTeam = {
     ...strapiData.data.homesTeam,
+    note : homesData.userDetails.length > 0
+        ? `${note} ${homesData.userDetails
+            .map((m: any) => m.level)
+            .sort((a: string, b: string) => a.localeCompare(b))
+           .join(" → ")}`
+        : "",
+
     userCard:
       homesData.userDetails?.map((member: any) => ({
         name: member.userName,
@@ -167,6 +178,9 @@ export function mergeProjectDetailsAndTrackerResponses(
   const homesDesignStage = homesData?.projectStepperResponse?.stages.find((stage) => stage.stageName === 'designStage');
   const homesPreConstructionStage = homesData?.projectStepperResponse?.stages?.find((stage) => stage.stageName === 'preConstructionStage');
   strapiData.data.projectTracker.activeStage = homesData?.projectStepperResponse?.activeStage;
+
+  strapiData.data.projectTracker.designStage.active = homesDesignStage?.active;
+  strapiData.data.projectTracker.designStage.completed = homesDesignStage?.completed;
   const designStage =
     strapiData?.data?.projectTracker?.designStage?.subSteps?.map((member: any) => {
       const milestoneName = member.fieldName;
@@ -180,10 +194,16 @@ export function mergeProjectDetailsAndTrackerResponses(
       };
     }) ?? [];
 
+  strapiData.data.projectTracker.preConstructionStage.active = homesDesignStage?.active;
+  strapiData.data.projectTracker.preConstructionStage.completed = homesDesignStage?.completed;
+
   const preConstructionStage =
     strapiData?.data?.projectTracker?.preConstructionStage?.subSteps?.map(
       (member: any) => {
         const milestoneName = member.fieldName;
+        if (homesPreConstructionStage?.milestones?.[milestoneName]?.status?.toLowerCase().includes('progress')) {
+          currentprojectStage = member?.title 
+        }
         return {
           ...member,
           currentStatus:

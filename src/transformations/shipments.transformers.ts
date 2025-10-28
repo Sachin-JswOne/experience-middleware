@@ -53,7 +53,9 @@ export function mergeInvoiceAndShipmentsResponse(
     );
     return { listOfShipments: shipments };
   } catch (error) {
-    Logger.log(`Transforming Shipment Request  method: mergeInvoiceAndShipmentResponse ${getFormattedTracingContext()}`);
+    Logger.log(
+      `Transforming Shipment Request  method: mergeInvoiceAndShipmentResponse ${getFormattedTracingContext()}`,
+    );
     console.error('Error in mergeInvoiceAndShipmentsResponse:', error);
     throw error;
   }
@@ -90,7 +92,9 @@ export function transformShipmentDetails(
           downloadInvoiceAndDocumentDetails,
           pbOrder: val.pbOrder,
           orderTag: ORDER_TAG,
-          trackingUrl: val.trackingUrl || '',
+          trackingUrl: preProcessTrackingUrl(
+            val.trackingUrl as string | null | undefined,
+          ),
         };
       }
       return null;
@@ -185,4 +189,16 @@ export function transformAttributes(attributesObj) {
     });
   }
   return output;
+}
+function preProcessTrackingUrl(trackingUrl: string | null | undefined): string {
+  if (!trackingUrl) {
+    return '';
+  }
+
+  // Convert http to https
+  if (trackingUrl.startsWith('http://')) {
+    return trackingUrl.replace('http://', 'https://');
+  }
+
+  return trackingUrl;
 }
