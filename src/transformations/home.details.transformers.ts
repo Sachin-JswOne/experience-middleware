@@ -3,82 +3,6 @@ import { AggregatedResponse } from 'src/models/aggregated-response.model';
 import { Logger } from '@nestjs/common';
 import { getFormattedTracingContext } from 'src/utils/tracing.util';
 
-
-export function mergePageDetailsResponses(
-  aggregatedResponses: AggregatedResponse[],
-): any {
-  const responses = aggregatedResponses.reduce(
-    (acc, response) => {
-      acc[response.target] = response;
-      return acc;
-    },
-    {} as Record<string, AggregatedResponse>,
-  );
-
-  const strapiResponse = responses['strapi-project-detail'];
-  const homesDashboardResponse = responses['homes-project-details'];
-
-  if (!strapiResponse?.success) {
-    Logger.error(`Error for Page Details API method: mergePageDetailsResponses ${getFormattedTracingContext()} Strapi project details responses is missing or failed`);
-    throw new Error('Strapi project details responses is missing or failed');
-  }
-
-  if(!homesDashboardResponse?.success){
-    Logger.error(`Error for Page Details API method: mergePageDetailsResponses ${getFormattedTracingContext()} Homes project details responses is missing or failed`);
-    throw new Error('Homes project details responses is missing or failed');
-  }
-
-  const strapiData = { ...strapiResponse.data };
-  const homesData = homesDashboardResponse.data;
-
-  const projectItems = 
-  strapiData?.data?.projectDetails?.projectItems?.map((item: any) => {
-        return {
-            ...item,
-            value : homesData[item.key]
-        };
-    });
-
-  const title = {
-    ...strapiData.data.title,
-    salutation: `${strapiData.data.title.salutation}${homesData.clientName ?? ''}`,
-    stage: `${strapiData.data.title.stage}${homesData.stage ?? ''}`,
-  };
-
-  const projectID = {
-    ...strapiData.data.projectID,
-    projectID: homesData.projectId,
-  };
-
-  strapiData.data.imageUrl = homesData?.imageUrl;
-
-  const homesTeam = {
-    ...strapiData.data.homesTeam,
-    userCard : homesData.userDetails.map((member : any) => {
-         return {
-          name: member.userName,
-          designation: member.projectRoleName,
-          email: member.email,
-          mobile: member.phoneNumber,
-        };
-    })
-  };
-
-  return {
-    ...strapiData,
-    data: {
-      ...strapiData.data,
-      projectDetails: {
-        ...strapiData.data.projectDetails,
-        projectItems,
-      },
-      title,
-      projectID,
-      homesTeam,
-    },
-  };
-}
-
 export function mergeUserDetailsResponses(aggregatedResponses: AggregatedResponse[]): any {
 
     const responses = aggregatedResponses.reduce(
@@ -174,7 +98,7 @@ export function mergeProjectDetailsAndTrackerResponses(
         level : member.level
       })) ?? [],
   };
-  var currentprojectStage = "";
+  let currentprojectStage: string[] = [];
   const homesDesignStage = homesData?.projectStepperResponse?.stages.find((stage) => stage.stageName === 'designStage');
   const homesPreConstructionStage = homesData?.projectStepperResponse?.stages?.find((stage) => stage.stageName === 'preConstructionStage');
   strapiData.data.projectTracker.activeStage = homesData?.projectStepperResponse?.activeStage;
@@ -185,7 +109,7 @@ export function mergeProjectDetailsAndTrackerResponses(
     strapiData?.data?.projectTracker?.designStage?.subSteps?.map((member: any) => {
       const milestoneName = member.fieldName;
       if (homesDesignStage?.milestones?.[milestoneName]?.status?.toLowerCase().includes('progress')) {
-       currentprojectStage = member?.title 
+       currentprojectStage = [member?.title] 
       }
       return {
         ...member,
@@ -202,7 +126,7 @@ export function mergeProjectDetailsAndTrackerResponses(
       (member: any) => {
         const milestoneName = member.fieldName;
         if (homesPreConstructionStage?.milestones?.[milestoneName]?.status?.toLowerCase().includes('progress')) {
-          currentprojectStage = member?.title 
+          currentprojectStage = [member?.title] 
         }
         return {
           ...member,
@@ -237,6 +161,11 @@ export function mergeProjectDetailsAndTrackerResponses(
         }
       });
 
+     currentprojectStage = homesData?.projectStepperResponse?.constructionStageMilestone?.activeMilestones
+     .map((milestone :any) => {
+      return milestone?.name
+    }) ?? [];
+
      strapiData.data.projectDetailsConstruction =
         strapiData?.data?.projectDetailsConstruction?.projectItems?.map((item: any) => ({
             ...item,
@@ -258,7 +187,8 @@ export function mergeProjectDetailsAndTrackerResponses(
   const title = {
     ...strapiData.data.title,
     salutation: `${strapiData.data.title.salutation}${homesData.clientName ?? ''}`,
-    stage: `${strapiData.data.title.stage}${currentprojectStage ?? ''}`,
+    stage: strapiData.data.title.stage,
+    currentStage : currentprojectStage,
   };
 
   return {
@@ -275,4 +205,5 @@ export function mergeProjectDetailsAndTrackerResponses(
       projectTracker,
     },
   };
+
 }
