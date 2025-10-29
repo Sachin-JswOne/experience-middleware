@@ -22,6 +22,7 @@ import { AggregatorType } from 'src/enum/aggregation-type.enum';
 import { AggregatedResponse } from 'src/models/aggregated-response.model';
 import { IncomingHttpHeaders } from 'http';
 import { inspect } from 'util';
+import { CustomError } from 'src/utils/CustomError';
 // import Redis from 'ioredis';
 
 @Injectable()
@@ -167,6 +168,24 @@ export class ProxyService {
                   error: 'Unexpected failure',
                 },
           );
+                  const isAggregatedResponse = (
+          r: any,
+        ): r is AggregatedResponse => 'target' in r && 'success' in r;
+
+        const unauthorized = normalizedResults.find(
+          (r): r is AggregatedResponse =>
+            isAggregatedResponse(r) &&
+            (r.httpStatus === 401 || r.httpStatus === 403),
+        );
+
+        if (unauthorized) {
+          const error: any = new CustomError(
+            `Authorization error from target: ${unauthorized.target}`,500
+          );
+          error.httpStatusCode = unauthorized.httpStatus;
+          error.downstreamResponse = unauthorized.downstreamResponse;
+          throw error;
+        }
 
           span.setAttribute('proxy.parallel.results', normalizedResults.length);
           const finalResult = route.resTransform
@@ -388,6 +407,14 @@ export class ProxyService {
               span.setAttribute('api.response.data', responseStr);
             }
           }
+          if (response.status === 401 || response.status === 403) {
+            const error = new CustomError(
+              `Downstream service (${target.name || target.url}) returned ${response.status}`,
+            500)   as any;
+            error.status = response.status;
+            error.response = response;
+            throw error;
+          }
 
           // Handle error status codes (4xx, 5xx) but still return the response data
           if (response.status >= 400) {
@@ -455,6 +482,14 @@ export class ProxyService {
                   span.setAttribute('api.error.response.data', errorDataStr);
                 }
               }
+              if (errorResponse.status === 401 || errorResponse.status === 403) {
+              const authError = new CustomError(
+                `Authorization error from target: ${target.name || target.url}`,500
+              ) as any;
+              authError.httpStatusCode = errorResponse.status;
+              authError.response = errorResponse;
+              throw authError;
+            }
             }
           }
 
