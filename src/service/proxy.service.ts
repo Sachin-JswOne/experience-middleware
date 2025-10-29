@@ -16,7 +16,7 @@ import { RouteHandler } from 'src/enum/route-handler.enum';
 import { AggregatorType } from 'src/enum/aggregation-type.enum';
 import { AggregatedResponse } from 'src/models/aggregated-response.model';
 import { IncomingHttpHeaders } from 'http';
-
+import { CustomError } from 'src/utils/CustomError';
 @Injectable()
 export class ProxyService {
   async handleRequest(req: Request) {
@@ -75,20 +75,24 @@ export class ProxyService {
         },
       ),
     );
+  const responses = results.map((res) =>
+    res.status === 'fulfilled' ? res.value : (res.reason as AggregatedResponse),
+  );
 
-    const normalizedResults = results.map((res) =>
-      res.status === 'fulfilled'
-        ? res.value
-        : {
-            success: false,
-            error: 'Unexpected failure',
-          },
+  const unauthorized = responses.find(
+    (r) => r.httpStatus === 401 || r.httpStatus === 403,
+  );
+  if (unauthorized) {
+    // throw error so controller sends 401/403
+    const error: any = new CustomError(
+      `Authorization error from target: ${unauthorized.target}`,500
     );
-
-    return route.resTransform
-      ? await applyTransform(route.resTransform, normalizedResults)
-      : normalizedResults;
+    error.httpStatusCode = unauthorized.httpStatus;
+    error.downstreamResponse = unauthorized.downstreamResponse;
+    throw error;
   }
+  return responses;
+}
 
   private async handleSequentialAggregation(
     route: AggregateRouteConfig,
@@ -132,8 +136,8 @@ export class ProxyService {
     req: Request,
     prevResponses?: AggregatedResponse[],
   ) {
-    const transformedRequestBody: BaseRequest =
-      await this.buildRequestFromSource(
+    try{
+        const transformedRequestBody: BaseRequest = await this.buildRequestFromSource(
         req,
         target.url,
         target.reqTransform,
@@ -158,7 +162,26 @@ export class ProxyService {
     return target.resTransform
       ? await applyTransform(target.resTransform, response.data)
       : response.data;
+   } 
+   catch (err: any) {
+    const statusCode = err?.response?.status || 500;
+    const downstreamResponse = err?.response?.data || null;
+    if (statusCode === 401 || statusCode === 403) {
+      const error: any = new CustomError(
+        `Downstream service (${target.name || target.url}) returned ${statusCode}`,500
+      );
+      error.httpStatusCode = statusCode;
+      error.downstreamResponse = downstreamResponse;
+      throw error;
+    }
+    const genericError: any = new CustomError(
+      `Error calling ${target.name || target.url}: ${err.message || 'Unknown error'}`,500
+    );
+    genericError.httpStatusCode = statusCode;
+    genericError.downstreamResponse = downstreamResponse;
+    throw genericError;
   }
+}
 
   private async buildRequestFromSource(
     req: Request,
@@ -227,4 +250,5 @@ export class ProxyService {
 
     return headers;
   }
+
 }
