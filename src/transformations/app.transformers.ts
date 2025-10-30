@@ -50,17 +50,7 @@ export function mergeHomePageResponses(
         .blocks as unknown[]),
     ];
   }
-  // const blocks: any[] = originalBlocks;
-  const blocks: any[] = [
-    ...originalBlocks,
-    {
-      __component: 'app-components.app-in-transit-component',
-      id: 541,
-      title: 'In Transit',
-      imageUrl: 'imageUrl',
-      description: 'Items are in transit',
-    },
-  ];
+  const blocks: any[] = originalBlocks;
 
   const buyAgainProducts = (
     buyAgainResponse?.data as { listOfBuyAgainProducts?: unknown }
@@ -164,7 +154,7 @@ export function mergeHomePageResponses(
   }
 
   const inTransitBlock = blocks.find(
-    (block) => block.__component === 'app-components.app-in-transit-component',
+    (block) => block.__component === 'app-components.app-link-banner',
   );
   if (inTransitBlock) {
     inTransitBlock.inTransit = inTransit;

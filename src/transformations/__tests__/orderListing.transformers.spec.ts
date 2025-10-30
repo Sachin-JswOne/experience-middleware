@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/unbound-method */
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 /* eslint-disable @typescript-eslint/no-unsafe-call */
@@ -18,10 +19,13 @@ import {
   getAppStatusFromOpportunities,
   getOrderTag,
   getOrderType,
+  mergeMaterialTrackingAndOrderListingResponses,
 } from '../orderListing.transformers';
 import { CustomError } from 'src/utils/CustomError';
 import { HttpStatusCode } from 'axios';
 import * as appConfig from 'src/config/app.config';
+import { AggregatedResponse } from 'src/models/aggregated-response.model';
+import { Logger } from '@nestjs/common';
 
 jest.mock('src/utils/CustomError');
 jest.mock('src/config/app.config');
@@ -31,6 +35,18 @@ jest.mock('../shipments.transformers', () => ({
     mocked: true,
     ...item,
   })),
+}));
+
+jest.mock('@nestjs/common', () => ({
+  ...jest.requireActual('@nestjs/common'),
+  Logger: {
+    error: jest.fn(),
+    log: jest.fn(),
+  },
+}));
+
+jest.mock('src/utils/tracing.util', () => ({
+  getFormattedTracingContext: jest.fn(() => 'traceId: 123'),
 }));
 
 describe('orderListing.transformers', () => {
@@ -360,6 +376,157 @@ describe('orderListing.transformers', () => {
 
     it('should return other order types as is', () => {
       expect(getOrderType('MSME')).toBe('MSME');
+    });
+  });
+
+  describe('mergeMaterialTrackingAndOrderListingResponses', () => {
+    afterEach(() => {
+      jest.clearAllMocks();
+    });
+
+    const mockMaterialTrackingResponse = {
+      target: 'app-material-tracking',
+      success: true,
+      data: {
+        data: {
+          blocks: [
+            {
+              __component: 'app-components.app-hero-banner',
+              title: 'My Orders',
+            },
+            {
+              __component: 'app-components.app-cart-product',
+              title: 'Track your material',
+            },
+          ],
+        },
+      },
+    };
+
+    const mockOrderListingResponse = {
+      target: 'app-order-listing',
+      success: true,
+      data: {
+        orderList: [
+          {
+            orderId: '123',
+            orderStatus: 'Delivered',
+          },
+        ],
+      },
+    };
+
+    it('should merge order list into the material tracking response successfully', () => {
+      const aggregatedResponses: AggregatedResponse[] = [
+        mockMaterialTrackingResponse,
+        mockOrderListingResponse,
+      ];
+
+      const result =
+        mergeMaterialTrackingAndOrderListingResponses(aggregatedResponses);
+
+      const expectedBlocks = [
+        {
+          __component: 'app-components.app-hero-banner',
+          title: 'My Orders',
+        },
+        {
+          __component: 'app-components.app-cart-product',
+          title: 'Track your material',
+          orderList: [
+            {
+              orderId: '123',
+              orderStatus: 'Delivered',
+            },
+          ],
+        },
+      ];
+
+      expect(result.data.blocks).toEqual(expectedBlocks);
+      expect(Logger.error).not.toHaveBeenCalled();
+    });
+
+    it('should set orderList to an empty array if order listing response is not successful', () => {
+      const failedOrderListingResponse = {
+        ...mockOrderListingResponse,
+        success: false,
+      };
+      const aggregatedResponses: AggregatedResponse[] = [
+        mockMaterialTrackingResponse,
+        failedOrderListingResponse,
+      ];
+
+      const result =
+        mergeMaterialTrackingAndOrderListingResponses(aggregatedResponses);
+      const materialTrackingBlock = result.data.blocks.find(
+        (b) => b.__component === 'app-components.app-cart-product',
+      );
+
+      expect(materialTrackingBlock.orderList).toEqual([]);
+    });
+
+    it('should set orderList to an empty array if orderList is empty', () => {
+      const emptyOrderListingResponse = {
+        ...mockOrderListingResponse,
+        data: {
+          orderList: [],
+        },
+      };
+      const aggregatedResponses: AggregatedResponse[] = [
+        mockMaterialTrackingResponse,
+        emptyOrderListingResponse,
+      ];
+
+      const result =
+        mergeMaterialTrackingAndOrderListingResponses(aggregatedResponses);
+      const materialTrackingBlock = result.data.blocks.find(
+        (b) => b.__component === 'app-components.app-cart-product',
+      );
+
+      expect(materialTrackingBlock.orderList).toEqual([]);
+    });
+
+    it('should handle missing material tracking block gracefully', () => {
+      const noCartProductBlockResponse = {
+        ...mockMaterialTrackingResponse,
+        data: {
+          data: {
+            blocks: [
+              {
+                __component: 'app-components.app-hero-banner',
+                title: 'My Orders',
+              },
+            ],
+          },
+        },
+      };
+      const aggregatedResponses: AggregatedResponse[] = [
+        noCartProductBlockResponse,
+        mockOrderListingResponse,
+      ];
+
+      const result =
+        mergeMaterialTrackingAndOrderListingResponses(aggregatedResponses);
+      const materialTrackingBlock = result.data.blocks.find(
+        (b) => b.__component === 'app-components.app-cart-product',
+      );
+
+      expect(materialTrackingBlock).toBeUndefined();
+      expect(result.data.blocks).toHaveLength(1);
+    });
+
+    it('should return empty data and log an error if material tracking response is missing', () => {
+      const aggregatedResponses: AggregatedResponse[] = [
+        mockOrderListingResponse,
+      ];
+
+      const result =
+        mergeMaterialTrackingAndOrderListingResponses(aggregatedResponses);
+
+      expect(result).toEqual({ data: {}, meta: {} });
+      expect(Logger.error).toHaveBeenCalledWith(
+        'Error for Orders Page API method: mergeMaterialTrackingAndOrderListingResponses traceId: 123 Strapi response is missing or invalid',
+      );
     });
   });
 });

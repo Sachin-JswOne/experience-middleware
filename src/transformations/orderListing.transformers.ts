@@ -40,7 +40,7 @@ export function transformOrderListingRequest(request) {
 
     request.url.searchParams.set('developerName', developerName);
     request.url.searchParams.delete('customerType');
-
+    request.body = null;
     return request;
   }
 }
@@ -445,27 +445,55 @@ export function mergeMaterialTrackingAndOrderListingResponses(
 
     const materialTrackingResponse = responses['app-material-tracking'];
     const orderListingResponse = responses['app-order-listing'];
-    let response;
-    if (
-      materialTrackingResponse.success &&
-      materialTrackingResponse.data.data
-    ) {
-      response = {
-        ...materialTrackingResponse.data.data,
-      };
 
-      if (orderListingResponse.success && orderListingResponse.data.orderList) {
-        response.orderList = orderListingResponse.data.orderList;
-      } else {
-        response.orderList = [];
-      }
-    } else {
-      if (orderListingResponse.success && orderListingResponse.data.orderList) {
-        response.orderList = orderListingResponse.data.orderList;
-      }
-      response.orderList = [];
+    if (
+      !materialTrackingResponse ||
+      typeof materialTrackingResponse.data !== 'object' ||
+      materialTrackingResponse.data === null
+    ) {
+      Logger.error(
+        `Error for Orders Page API method: mergeMaterialTrackingAndOrderListingResponses ${getFormattedTracingContext()} Strapi response is missing or invalid`,
+      );
+      return { data: {}, meta: {} };
     }
-    return response;
+
+    const materialTrackingResponseData = {
+      ...materialTrackingResponse.data.data,
+    };
+
+    let originalBlocks: unknown[] = [];
+    if (
+      typeof materialTrackingResponse.data === 'object' &&
+      materialTrackingResponse.data.data !== null &&
+      Array.isArray(
+        (materialTrackingResponse.data.data as { blocks?: unknown[] }).blocks,
+      )
+    ) {
+      originalBlocks = [
+        ...((materialTrackingResponse.data.data as { blocks?: unknown[] })
+          .blocks as unknown[]),
+      ];
+    }
+    const blocks: any[] = originalBlocks;
+    const materialTrackingBlock = blocks.find(
+      (block) => block.__component === 'app-components.app-cart-product',
+    );
+    if (materialTrackingBlock) {
+      if (
+        orderListingResponse.success &&
+        orderListingResponse.data.orderList &&
+        orderListingResponse.data.orderList.length > 0
+      ) {
+        materialTrackingBlock.orderList = orderListingResponse.data.orderList;
+      } else {
+        materialTrackingBlock.orderList = [];
+      }
+    }
+    materialTrackingResponseData.blocks = blocks;
+
+    return {
+      data: materialTrackingResponseData,
+    };
   } catch (error) {
     Logger.log(
       `Transforming Shipment Request  method: mergeMaterialTrackingAndOrderListingResponses ${getFormattedTracingContext()}`,
