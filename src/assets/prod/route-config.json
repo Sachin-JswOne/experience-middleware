@@ -553,7 +553,7 @@
     "target": 
       {
         "name": "payments-due",
-        "url": "${PAYMENTS_DUE_URI}",
+        "url": "https://www.jswonemsme.com/customer/payment/v2/totalDueAmount",
         "method": "GET",
         "timeout": {        
           "request": "${TIMEOUTS.REQUEST}",
@@ -562,5 +562,21 @@
         "headersToPass": [ { "source": "authorization", "destination": "access_token"} ],
         "requiredParams": ["entityName"]
       }
+  },
+    {
+    "path": "${PATH_URL}/v1/feature-flags",
+    "method": "POST",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "cmsFeatureFlag",
+      "url": "${CMS_MSME_URL}/ccp-feature-flags",
+      "method": "GET",
+      "timeout": {
+        "request": "${TIMEOUTS.REQUEST}",
+        "socket": "${TIMEOUTS.SOCKET}"
+      },
+      "reqTransform": "general.transformers.moveBodyToQueryParams",
+      "resTransform": "cms.transformers.replaceUriPrefix"
+    }
   }
 ]
