@@ -22,6 +22,7 @@ import { AggregatorType } from 'src/enum/aggregation-type.enum';
 import { AggregatedResponse } from 'src/models/aggregated-response.model';
 import { IncomingHttpHeaders } from 'http';
 import { inspect } from 'util';
+import { CustomError } from 'src/utils/CustomError';
 // import Redis from 'ioredis';
 
 @Injectable()
@@ -31,7 +32,7 @@ export class ProxyService {
   // private readonly redisClient = new Redis({ host: 'localhost', port: 6379 });
   public result: any = '';
   async handleRequest(req: Request) {
-    console.log(`Incoming ${req.method} request: ${req.url}`);
+    console.log(`Incoming ${req.method} request: ${req.url}`)
     const route = ROUTE_CONFIG.find(
       (r) => r.path === req.path && r.method === req.method,
     );
@@ -47,6 +48,11 @@ export class ProxyService {
       this.logger.error(
         `Handling request for route: ${req.method} ${req.path} trace_id: ${inspect(this.result.traceId)} span_id: ${inspect(this.result.spanId)} `,
       );
+      this.result = JSON.stringify(activeSpan);
+      console.log('result', activeSpan);
+      this.logger.error(
+        `Handling request for route: ${req.method} ${req.path} trace_id: ${inspect(this.result.traceId)} span_id: ${inspect(this.result.spanId)} `,
+      );
       throw new Error('Route config not found');
     }
 
@@ -54,6 +60,14 @@ export class ProxyService {
     if (activeSpan) {
       activeSpan.setAttribute('proxy.route', route.path);
       activeSpan.setAttribute('proxy.method', route.method);
+      activeSpan.setAttribute(
+        'proxy.handler',
+        RouteHandler[route.routeHandler],
+      );
+      this.result = activeSpan.spanContext();
+      this.logger.log(
+        `Handling request for route: ${req.method} ${req.path} trace_id: ${inspect(this.result.traceId)} span_id: ${inspect(this.result.spanId)} `,
+      );
       activeSpan.setAttribute(
         'proxy.handler',
         RouteHandler[route.routeHandler],
@@ -113,7 +127,6 @@ export class ProxyService {
           //   // const cached = await this.redisClient.get(`${req.url}`);
           //   // if (cached) {
           //   //   console.log(`Returning Cached Response for ${req.url}`);
-
           //     // Create span for cached response to maintain visibility in Coroot
           //     return await this.tracer.startActiveSpan(
           //       `aggregate.parallel.cached ${route.path}`,
@@ -125,7 +138,6 @@ export class ProxyService {
           //         span.setAttribute('api.response.data', cached);
           //         span.setAttribute('api.response.size', cached.length);
           //         span.setAttribute('http.status_code', 200); // Cached responses are treated as successful
-
           //         return JSON.parse(cached);
           //       },
           //     );
@@ -167,6 +179,24 @@ export class ProxyService {
                   error: 'Unexpected failure',
                 },
           );
+                  const isAggregatedResponse = (
+          r: any,
+        ): r is AggregatedResponse => 'target' in r && 'success' in r;
+
+        const unauthorized = normalizedResults.find(
+          (r): r is AggregatedResponse =>
+            isAggregatedResponse(r) &&
+            (r.httpStatus === 401 || r.httpStatus === 403),
+        );
+
+        if (unauthorized) {
+          const error: any = new CustomError(
+            `Authorization error from target: ${unauthorized.target}`,500
+          );
+          error.httpStatusCode = unauthorized.httpStatus;
+          error.downstreamResponse = unauthorized.downstreamResponse;
+          throw error;
+        }
 
           span.setAttribute('proxy.parallel.results', normalizedResults.length);
           const finalResult = route.resTransform
@@ -186,7 +216,6 @@ export class ProxyService {
           // } catch (cacheError) {
           //   console.error('Cache Storage Error:', cacheError);
           // }
-
           return finalResult;
         } catch (err) {
           span.recordException(err as Error);
@@ -221,7 +250,6 @@ export class ProxyService {
           //   const cached = await this.redisClient.get(`${req.url}`);
           //   if (cached) {
           //     console.log(`Returning Cached Response for ${req.url}`);
-
           //     // Create span for cached response to maintain visibility in Coroot
           //     return await this.tracer.startActiveSpan(
           //       `aggregate.sequential.cached ${route.path}`,
@@ -233,7 +261,6 @@ export class ProxyService {
           //         span.setAttribute('api.response.data', cached);
           //         span.setAttribute('api.response.size', cached.length);
           //         span.setAttribute('http.status_code', 200); // Cached responses are treated as successful
-
           //         return JSON.parse(cached);
           //       },
           //     );
@@ -241,7 +268,6 @@ export class ProxyService {
           // } catch (cacheGetError) {
           //   console.error('Cache Get Error:', cacheGetError);
           // }
-
           for (const target of route.targets) {
             try {
               const responseData = await this.handleTransformRequest(
@@ -288,7 +314,6 @@ export class ProxyService {
           // } catch (cacheError) {
           //   console.error('Cache Storage Error:', cacheError);
           // }
-
           return finalResult;
         } catch (err) {
           span.recordException(err as Error);
@@ -312,7 +337,6 @@ export class ProxyService {
     //   const cached = await this.redisClient.get(`${req.url}`);
     //   if (cached) {
     //     console.log(`Returning Cached Response for ${req.url}`);
-
     //     // Create span for cached response to maintain visibility in Coroot
     //     return await this.tracer.startActiveSpan(
     //       `proxy.transform.cached ${target.name || target.url}`,
@@ -324,7 +348,6 @@ export class ProxyService {
     //         span.setAttribute('api.response.data', cached);
     //         span.setAttribute('api.response.size', cached.length);
     //         span.setAttribute('http.status_code', 200); // Cached responses are treated as successful
-
     //         return JSON.parse(cached);
     //       },
     //     );
@@ -388,6 +411,14 @@ export class ProxyService {
               span.setAttribute('api.response.data', responseStr);
             }
           }
+          if (response.status === 401 || response.status === 403) {
+            const error = new CustomError(
+              `Downstream service (${target.name || target.url}) returned ${response.status}`,
+            500)   as any;
+            error.status = response.status;
+            error.response = response;
+            throw error;
+          }
 
           // Handle error status codes (4xx, 5xx) but still return the response data
           if (response.status >= 400) {
@@ -416,7 +447,6 @@ export class ProxyService {
           // } catch (cacheError) {
           //   console.error('Cache Storage Error:', cacheError);
           // }
-
           return responseData;
         } catch (err) {
           span.recordException(err as Error);
@@ -455,6 +485,14 @@ export class ProxyService {
                   span.setAttribute('api.error.response.data', errorDataStr);
                 }
               }
+              if (errorResponse.status === 401 || errorResponse.status === 403) {
+              const authError = new CustomError(
+                `Authorization error from target: ${target.name || target.url}`,500
+              ) as any;
+              authError.httpStatusCode = errorResponse.status;
+              authError.response = errorResponse;
+              throw authError;
+            }
             }
           }
 
@@ -531,4 +569,5 @@ export class ProxyService {
 
     return headers;
   }
+
 }

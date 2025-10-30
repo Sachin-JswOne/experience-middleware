@@ -14,10 +14,13 @@ import { AppService } from './app.service';
     PrometheusModule.register({
       path: '/metrics',
     }),
+    PrometheusModule.register({
+      path: '/metrics',
+    }),
     ServeStaticModule.forRoot({
       rootPath: join(__dirname, '..', 'public'),
       exclude: ['/metrics'],
-    }),
+     }),
     ConfigModule.forRoot({
       isGlobal: true,
     }),
