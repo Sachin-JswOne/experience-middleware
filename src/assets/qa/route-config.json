@@ -731,8 +731,6 @@
       "reqTransform": "general.transformers.moveBodyToQueryParams",
       "resTransform": "cms.transformers.replaceUriPrefix"
     }
-  }
-      }
   },
   {
     "path": "${PATH_URL}/v1/app-orders",
