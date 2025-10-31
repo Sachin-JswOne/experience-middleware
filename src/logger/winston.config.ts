@@ -1,8 +1,10 @@
-/* eslint-disable @typescript-eslint/restrict-template-expressions */
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 // src/logger/winston.config.ts
 import { utilities as nestWinstonModuleUtilities } from 'nest-winston';
 import * as winston from 'winston';
- 
+
 export const winstonConfig: winston.LoggerOptions = {
   transports: [
     new winston.transports.Console({
@@ -27,4 +29,3 @@ export const winstonConfig: winston.LoggerOptions = {
     }),
   ],
 };
- 

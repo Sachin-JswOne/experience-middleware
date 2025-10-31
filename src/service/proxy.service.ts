@@ -14,6 +14,7 @@ import { ROUTE_CONFIG } from '../config/route.config';
 import { BaseRequest } from '../models/base-request.model';
 import {
   AggregateRouteConfig,
+  ConditionalRouteConfig,
   TargetConfig,
 } from 'src/models/route-config.model';
 import { Request } from 'express';
@@ -23,6 +24,7 @@ import { AggregatedResponse } from 'src/models/aggregated-response.model';
 import { IncomingHttpHeaders } from 'http';
 import { inspect } from 'util';
 import { CustomError } from 'src/utils/CustomError';
+import { match } from 'path-to-regexp';
 // import Redis from 'ioredis';
 
 @Injectable()
@@ -33,9 +35,7 @@ export class ProxyService {
   public result: any = '';
   async handleRequest(req: Request) {
     console.log(`Incoming ${req.method} request: ${req.url}`)
-    const route = ROUTE_CONFIG.find(
-      (r) => r.path === req.path && r.method === req.method,
-    );
+    const route = this.findRoute(req);
 
     if (!route) {
       const activeSpan = trace.getSpan(context.active());
@@ -43,7 +43,13 @@ export class ProxyService {
         code: SpanStatusCode.ERROR,
         message: `Route config not found for ${req.method} ${req.path}`,
       });
-      this.result = JSON.stringify(activeSpan);
+      const spanContext = activeSpan?.spanContext();
+      this.result = spanContext
+        ? {
+            traceId: spanContext.traceId,
+            spanId: spanContext.spanId,
+          }
+        : {};
       console.log('result', activeSpan);
       this.logger.error(
         `Handling request for route: ${req.method} ${req.path} trace_id: ${inspect(this.result.traceId)} span_id: ${inspect(this.result.spanId)} `,
@@ -83,9 +89,47 @@ export class ProxyService {
         return await this.handleTransformRequest(route.target, req);
       case RouteHandler.AGGREGATE:
         return await this.handleAggregateRequest(route, req);
+      case RouteHandler.CONDITIONAL:
+        return this.handleConditionalRequest(route, req);
       default:
         throw new Error('Unsupported route handler');
     }
+  }
+
+  private findRoute(req: Request) {
+    for (const route of ROUTE_CONFIG) {
+      if (route.method !== req.method) {
+        continue;
+      }
+
+      const routeMatcher = match(route.path, { decode: decodeURIComponent });
+      const result = routeMatcher(req.path);
+
+      if (result) {
+        req.params = { ...req.params, ...(result.params as any) };
+        return route;
+      }
+    }
+    return undefined;
+  }
+  private async handleConditionalRequest(
+    route: ConditionalRouteConfig,
+    req: Request,
+  ) {
+    const activeSpan = trace.getSpan(context.active());
+    activeSpan?.setAttribute('proxy.route_handler', RouteHandler.CONDITIONAL);
+
+    const targetName = await applyTransform(route.conditionTransform, req);
+    const targetToExecute = route.targets.find((t) => t.name === targetName);
+
+    if (!targetToExecute) {
+      throw new Error(
+        `Conditional target '${targetName}' not found in route config for path '${route.path}'`,
+      );
+    }
+
+    activeSpan?.setAttribute('proxy.conditional.selected_target', targetName);
+    return this.handleTransformRequest(targetToExecute, req);
   }
 
   private async handleAggregateRequest(
@@ -517,6 +561,7 @@ export class ProxyService {
       url: url,
       body: req.body,
       headers: this.getHeadersToPass(req.headers, headersToPass, staticHeaders),
+      params: req.params,
     };
 
     if (requestTransform) {

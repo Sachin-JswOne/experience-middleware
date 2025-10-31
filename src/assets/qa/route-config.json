@@ -318,6 +318,14 @@
         },
         "reqTransform": "cms.transformers.homeBlogs",
         "resTransform": "cms.transformers.replaceUriPrefix"
+      },
+        {
+        "name": "app-in-transit",
+        "url": "https://qa-ssr.msme.jswone.in/order-service/order/v1/material-tracking/dispatched-shipments",
+        "method": "GET",
+        "timeout": { "request": 5000, "socket": 1000 },
+        "headersToPass": [ { "source": "authorization", "destination": "access_token" } ],
+        "reqTransform": "app.transformers.transformInTransitRequest"
       }
     ],
     "resTransform": "app.transformers.mergeHomePageResponses"
@@ -723,5 +731,66 @@
       "reqTransform": "general.transformers.moveBodyToQueryParams",
       "resTransform": "cms.transformers.replaceUriPrefix"
     }
+  },
+  {
+    "path": "${PATH_URL}/v1/app-orders",
+    "method": "POST",
+    "routeHandler": "AGGREGATE",
+    "aggregationType": "PARALLEL",
+    "targets": [
+      {
+        "name": "app-material-tracking",
+        "url": "https://cms-msme-ext.qa.jswone.in/api/app-order-page",
+        "method": "GET",
+      "timeout": { "request": 5000, "socket": 1000 },
+        "reqTransform": "general.transformers.moveBodyToQueryParams"
+      },
+      {
+        "name": "app-order-listing",
+        "url": "https://tms.qa.jswone.in/opportunity/retail/fetch-order-list",
+        "method": "GET",
+        "staticHeaders":{
+          "Authorization": "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJKU1dPTkUiLCJpYXQiOjE3NTE1MzY4NTMsImV4cCI6MTc4MzA3Mjg1MywiYXVkIjoiIiwic3ViIjoib3JkZXJ1bmlmaWNhdGlvbkBqc3dvbmUuY29tIiwiRW1haWwiOiJvcmRlcnVuaWZpY2F0aW9uQGpzd29uZS5jb20iLCJSb2xlIjoiQWRtaW4ifQ.pf4XPzgeoZXIuTcQ4JAqpfln7UfBLkvYQcnqEyrbSqA"
+        },
+      "timeout": { "request": 5000, "socket": 1000 },
+        "reqTransform": "orderListing.transformers.transformOrderListingRequest",
+        "resTransform": "orderListing.transformers.transformOrderListingResponse",
+        "requiredParams": ["gstin","customerType"]
+      }
+    ],
+    "resTransform": "orderListing.transformers.mergeMaterialTrackingAndOrderListingResponses"
+  },
+    {
+    "path": "${PATH_URL}/v1/order-detail/:id",
+    "method": "GET",
+    "routeHandler": "CONDITIONAL",
+    "conditionTransform": "orderDetails.transformers.selectOrderDetailTarget",
+    "targets": [
+      {
+        "name": "order-detail",
+        "url": "https://qa-oms.msme.jswone.in/external-connector-inbound/api/internal/v1/retail/fetch-order-details",
+        "method": "GET",
+        "timeout": { "request": 5000, "socket": 1000 },
+         "staticHeaders": {
+          "Authorization": "${X_API_KEY_FOR_ORDER_LISTING}",
+          "client_id": "${ERP_CLIENT_ID}"
+      },
+      "reqTransform": "orderDetails.transformers.transformOrderDetailsRequest",
+      "resTransform": "orderDetails.transformers.transformOrderDetailsResponse"
+    },
+      {
+        "name": "opportunity-detail",
+        "url": "https://tms.qa.jswone.in/jswone/retail/fetch-opportunity-details",
+        "method": "GET",
+        "staticHeaders":{
+          "Authorization": "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJPbmxpbmUgSldUIEJ1aWxkZXIiLCJpYXQiOjE3NDQ4ODcyMzgsImV4cCI6MTc3NjQyMzIzOCwiYXVkIjoiZnJpZWdodCB0aWdlciIsInN1YiI6IiJ9.6Ib-8yeVhRuolg5ko0SMxjcjQK8za1mkpVVaLFtPMyE",
+          "Content-Type": "application/json"
+        },
+        "timeout": { "request": 5000, "socket": 1000 },
+        "reqTransform": "orderDetails.transformers.transformOpportunityDetailsRequest",
+        "resTransform": "orderDetails.transformers.transformOpportunityDetailsResponse",
+        "requiredParams": ["customerType"]
+      }
+    ]
   }
 ]
