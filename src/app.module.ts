@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { PrometheusModule } from '@willsoto/nestjs-prometheus';
+// import { PrometheusModule } from '@willsoto/nestjs-prometheus';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { ConfigModule } from '@nestjs/config';
 import { ProxyService } from './service/proxy.service';
@@ -11,13 +11,16 @@ import { AppService } from './app.service';
 
 @Module({
   imports: [
-    PrometheusModule.register({
-      path: '/metrics',
-    }),
+    // PrometheusModule.register({
+    //   path: '/metrics',
+    // }),
+    // PrometheusModule.register({
+    //   path: '/metrics',
+    // }),
     ServeStaticModule.forRoot({
       rootPath: join(__dirname, '..', 'public'),
       exclude: ['/metrics'],
-    }),
+     }),
     ConfigModule.forRoot({
       isGlobal: true,
     }),

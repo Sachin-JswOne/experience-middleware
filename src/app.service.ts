@@ -46,8 +46,7 @@ export class AppService {
 
   //   // Handle pub/sub messages
   //   this.redisClient.on('message', (channel, message) => {
-  //     this.logger.log(`Received message on channel '${channel}': ${message}`);
-      
+  //     this.logger.log(`Received message on channel '${channel}': ${message}`);   
   //     // Handle cache events specifically
   //     if (channel === 'cache-events') {
   //       try {

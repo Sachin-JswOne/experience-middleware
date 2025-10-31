@@ -9,7 +9,10 @@
         "name": "app-home-page",
         "url": "${CMS_MSME_URL}/v1/app-home-page",
         "method": "GET",
-        "timeout": { "request": "${TIMEOUTS.REQUEST}", "socket": "${TIMEOUTS.SOCKET}" },
+        "timeout": {
+          "request": "${TIMEOUTS.REQUEST}",
+          "socket": "${TIMEOUTS.SOCKET}"
+        },
         "reqTransform": "general.transformers.moveBodyToQueryParams",
         "resTransform": "cms.transformers.replaceUriPrefix"
       },
@@ -17,27 +20,45 @@
         "name": "app-top-items",
         "url": "${RETAIL_URL}/v3/seller/top-product",
         "method": "GET",
-        "timeout": { "request": "${TIMEOUTS.REQUEST}", "socket": "${TIMEOUTS.SOCKET}" },
+        "timeout": {
+          "request": "${TIMEOUTS.REQUEST}",
+          "socket": "${TIMEOUTS.SOCKET}"
+        },
         "reqTransform": "general.transformers.convertToGetRequest",
-       "headersToPass": [ { "source": "authorization", "destination": "authorization" },{"source": "x-user-state", "destination": "x-user-state"} ],
+        "headersToPass": [
+          { "source": "authorization", "destination": "authorization" },
+          { "source": "x-user-state", "destination": "x-user-state" }
+        ],
         "requiredParams": ["pincode"]
       },
       {
         "name": "app-buy-again",
         "url": "${RETAIL_URL}/v1/seller/buy-again",
         "method": "GET",
-        "timeout": { "request": "${TIMEOUTS.REQUEST}", "socket": "${TIMEOUTS.SOCKET}" },
+        "timeout": {
+          "request": "${TIMEOUTS.REQUEST}",
+          "socket": "${TIMEOUTS.SOCKET}"
+        },
         "reqTransform": "general.transformers.convertToGetRequest",
-       "headersToPass": [ { "source": "authorization", "destination": "authorization" },{"source": "x-user-state", "destination": "x-user-state"} ],
+        "headersToPass": [
+          { "source": "authorization", "destination": "authorization" },
+          { "source": "x-user-state", "destination": "x-user-state" }
+        ],
         "requiredParams": ["pincode"]
       },
       {
         "name": "app-categories",
         "url": "{RETAIL_URL}/v2/seller/category",
         "method": "GET",
-        "timeout": { "request": "${TIMEOUTS.REQUEST}", "socket": "${TIMEOUTS.SOCKET}" },
+        "timeout": {
+          "request": "${TIMEOUTS.REQUEST}",
+          "socket": "${TIMEOUTS.SOCKET}"
+        },
         "reqTransform": "general.transformers.convertToGetRequest",
-       "headersToPass": [ { "source": "authorization", "destination": "authorization" },{"source": "x-user-state", "destination": "x-user-state"} ],
+        "headersToPass": [
+          { "source": "authorization", "destination": "authorization" },
+          { "source": "x-user-state", "destination": "x-user-state" }
+        ],
         "requiredParams": ["pincode"]
       }
     ],
@@ -51,7 +72,10 @@
       "name": "app-slc-cart-details",
       "url": "${APP_SLC_CART_URL}",
       "method": "GET",
-      "timeout": { "request": "${TIMEOUTS.REQUEST_MIN}", "socket": "${TIMEOUTS.SOCKET}" },
+      "timeout": {
+        "request": "${TIMEOUTS.REQUEST_MIN}",
+        "socket": "${TIMEOUTS.SOCKET}"
+      },
       "reqTransform": "general.transformers.convertAuthorizationToAccessTokenInHeader",
       "resTransform": "slc.transformers.convertSlcResponse",
       "headersToPass": [
@@ -67,7 +91,10 @@
       "name": "appGlobalPage",
       "url": "${CMS_MSME_URL}/app-global",
       "method": "GET",
-      "timeout": { "request": "${TIMEOUTS.REQUEST}", "socket": "${TIMEOUTS.SOCKET}" },
+      "timeout": {
+        "request": "${TIMEOUTS.REQUEST}",
+        "socket": "${TIMEOUTS.SOCKET}"
+      },
       "reqTransform": "general.transformers.moveBodyToQueryParams",
       "resTransform": "cms.transformers.replaceUriPrefix"
     }
@@ -80,7 +107,10 @@
       "name": "appPdp",
       "url": "${LINE_ITEM_PRICE_URL}",
       "method": "POST",
-      "timeout": { "request": "${TIMEOUTS.REQUEST}", "socket": "${TIMEOUTS.SOCKET}" },
+      "timeout": {
+        "request": "${TIMEOUTS.REQUEST}",
+        "socket": "${TIMEOUTS.SOCKET}"
+      },
       "headersToPass": [
         { "source": "authorization", "destination": "access_token" }
       ],
@@ -98,7 +128,10 @@
         "name": "ccp-buy-again-with-prices",
         "url": "${BUY_AGAIN_PRICE_URL}",
         "method": "GET",
-        "timeout": { "request": "${TIMEOUTS.REQUEST}", "socket": "${TIMEOUTS.SOCKET}" },
+        "timeout": {
+          "request": "${TIMEOUTS.REQUEST}",
+          "socket": "${TIMEOUTS.SOCKET}"
+        },
         "headersToPass": [
           { "source": "authorization", "destination": "access_token" }
         ]
@@ -107,7 +140,10 @@
         "name": "app-buy-again",
         "url": "${RETAIL_URL}/v1/seller/buy-again",
         "method": "GET",
-        "timeout": { "request": "${TIMEOUTS.REQUEST_MIN}", "socket": "${TIMEOUTS.SOCKET}" },
+        "timeout": {
+          "request": "${TIMEOUTS.REQUEST_MIN}",
+          "socket": "${TIMEOUTS.SOCKET}"
+        },
         "headersToPass": [
           { "source": "authorization", "destination": "authorization" }
         ],
@@ -124,32 +160,44 @@
       "name": "appPdpPageChanges",
       "url": "${CMS_MSME_URL}/app-pdp-pages",
       "method": "GET",
-      "timeout": { "request": "${TIMEOUTS.REQUEST}", "socket": "${TIMEOUTS.SOCKET}" },
+      "timeout": {
+        "request": "${TIMEOUTS.REQUEST}",
+        "socket": "${TIMEOUTS.SOCKET}"
+      },
       "reqTransform": "general.transformers.moveBodyToQueryParams",
       "resTransform": "cms.transformers.replaceUriPrefix"
     }
   },
-   {
+  {
     "path": "${PATH_URL}/v1/app-top-brands",
     "method": "POST",
     "routeHandler": "AGGREGATE",
     "aggregationType": "PARALLEL",
     "targets": [
       {
-      "name": "app-top-brands-page",
-      "url": "${CMS_MSME_URL}/app-branding-listing-page",
-      "method": "GET",
-      "timeout": { "request": "${TIMEOUTS.REQUEST}", "socket": "${TIMEOUTS.SOCKET}" },
-      "reqTransform": "general.transformers.moveBodyToQueryParams",
-      "resTransform": "cms.transformers.replaceUriPrefix"
-    },
+        "name": "app-top-brands-page",
+        "url": "${CMS_MSME_URL}/app-branding-listing-page",
+        "method": "GET",
+        "timeout": {
+          "request": "${TIMEOUTS.REQUEST}",
+          "socket": "${TIMEOUTS.SOCKET}"
+        },
+        "reqTransform": "general.transformers.moveBodyToQueryParams",
+        "resTransform": "cms.transformers.replaceUriPrefix"
+      },
       {
         "name": "app-top-brands",
         "url": "${RETAIL_URL}/v2/seller/category",
         "method": "GET",
-        "timeout": { "request": "${TIMEOUTS.REQUEST_MIN}", "socket": "${TIMEOUTS.SOCKET}" },
+        "timeout": {
+          "request": "${TIMEOUTS.REQUEST_MIN}",
+          "socket": "${TIMEOUTS.SOCKET}"
+        },
         "reqTransform": "general.transformers.convertToGetRequest",
-        "headersToPass": [ { "source": "authorization", "destination": "authorization" },{"source": "x-user-state", "destination": "x-user-state"} ],
+        "headersToPass": [
+          { "source": "authorization", "destination": "authorization" },
+          { "source": "x-user-state", "destination": "x-user-state" }
+        ],
         "requiredParams": ["pincode"]
       }
     ],
@@ -165,7 +213,10 @@
         "name": "app-home-page",
         "url": "${CMS_MSME_URL}/app-home-page-v2",
         "method": "GET",
-        "timeout": { "request": "${TIMEOUTS.REQUEST}", "socket": "${TIMEOUTS.SOCKET}" },
+        "timeout": {
+          "request": "${TIMEOUTS.REQUEST}",
+          "socket": "${TIMEOUTS.SOCKET}"
+        },
         "reqTransform": "general.transformers.moveBodyToQueryParams",
         "resTransform": "cms.transformers.replaceUriPrefix"
       },
@@ -173,41 +224,62 @@
         "name": "app-top-items",
         "url": "${RETAIL_URL}/v3/seller/top-product",
         "method": "GET",
-        "timeout": { "request": "${TIMEOUTS.REQUEST}", "socket": "${TIMEOUTS.SOCKET}" },
+        "timeout": {
+          "request": "${TIMEOUTS.REQUEST}",
+          "socket": "${TIMEOUTS.SOCKET}"
+        },
         "reqTransform": "general.transformers.convertToGetRequest",
-        "headersToPass": [ { "source": "authorization", "destination": "authorization" },{"source": "x-user-state", "destination": "x-user-state"} ],
+        "headersToPass": [
+          { "source": "authorization", "destination": "authorization" },
+          { "source": "x-user-state", "destination": "x-user-state" }
+        ],
         "requiredParams": ["pincode"]
       },
       {
         "name": "app-buy-again",
         "url": "${RETAIL_URL}/v1/seller/buy-again",
         "method": "GET",
-        "timeout": { "request": "${TIMEOUTS.REQUEST}", "socket": "${TIMEOUTS.SOCKET}" },
+        "timeout": {
+          "request": "${TIMEOUTS.REQUEST}",
+          "socket": "${TIMEOUTS.SOCKET}"
+        },
         "reqTransform": "general.transformers.convertToGetRequest",
-        "headersToPass": [ { "source": "authorization", "destination": "authorization" },{"source": "x-user-state", "destination": "x-user-state"} ],
+        "headersToPass": [
+          { "source": "authorization", "destination": "authorization" },
+          { "source": "x-user-state", "destination": "x-user-state" }
+        ],
         "requiredParams": ["pincode"]
       },
       {
         "name": "app-categories",
         "url": "${RETAIL_URL}/v2/seller/category",
         "method": "GET",
-        "timeout": { "request": "${TIMEOUTS.REQUEST}", "socket": "${TIMEOUTS.SOCKET}" },
+        "timeout": {
+          "request": "${TIMEOUTS.REQUEST}",
+          "socket": "${TIMEOUTS.SOCKET}"
+        },
         "reqTransform": "general.transformers.convertToGetRequest",
-        "headersToPass": [ { "source": "authorization", "destination": "authorization" },{"source": "x-user-state", "destination": "x-user-state"} ],
+        "headersToPass": [
+          { "source": "authorization", "destination": "authorization" },
+          { "source": "x-user-state", "destination": "x-user-state" }
+        ],
         "requiredParams": ["pincode"]
       },
       {
         "name": "app-blogs",
         "url": "https://internal-cms-ext.jswonemsme.com/api/jsw-blogs-articless",
         "method": "GET",
-        "timeout": { "request": "${TIMEOUTS.REQUEST}", "socket": "${TIMEOUTS.SOCKET}" },
+        "timeout": {
+          "request": "${TIMEOUTS.REQUEST}",
+          "socket": "${TIMEOUTS.SOCKET}"
+        },
         "reqTransform": "cms.transformers.homeBlogs",
         "resTransform": "cms.transformers.replaceUriPrefix"
-    }
+      }
     ],
     "resTransform": "app.transformers.mergeHomePageResponses"
   },
-    {
+  {
     "path": "${PATH_URL}/v1/app-invoice-and-documents",
     "method": "GET",
     "routeHandler": "TRANSFORM",
@@ -215,11 +287,14 @@
       "name": "appInvoiceAndDocuments",
       "url": "${ERP_BASE_URI}/fetch-order-invoice-docs",
       "method": "GET",
-      "timeout": { "request": "${TIMEOUTS.REQUEST}", "socket": "${TIMEOUTS.SOCKET}" },
+      "timeout": {
+        "request": "${TIMEOUTS.REQUEST}",
+        "socket": "${TIMEOUTS.SOCKET}"
+      },
       "requiredParams": ["orderNumber"],
       "staticHeaders": {
-          "Authorization": "${X_API_KEY_FOR_ORDER_LISTING}",
-          "client_id": "${ERP_CLIENT_ID}"
+        "Authorization": "${X_API_KEY_FOR_ORDER_LISTING}",
+        "client_id": "${ERP_CLIENT_ID}"
       },
       "resTransform": "invoiceAndDocuments.transformers.transformInvoiceAndDocuments"
     }
@@ -234,7 +309,10 @@
         "name": "app-cart-page",
         "url": "${CMS_MSME_URL}/app-cart-page",
         "method": "GET",
-        "timeout": { "request": "${TIMEOUTS.REQUEST}", "socket": "${TIMEOUTS.SOCKET}" },
+        "timeout": {
+          "request": "${TIMEOUTS.REQUEST}",
+          "socket": "${TIMEOUTS.SOCKET}"
+        },
         "reqTransform": "general.transformers.moveBodyToQueryParams",
         "resTransform": "cms.transformers.replaceUriPrefix"
       },
@@ -242,51 +320,67 @@
         "name": "app-buy-again",
         "url": "${RETAIL_URL}/v1/seller/buy-again",
         "method": "GET",
-        "timeout": { "request": "${TIMEOUTS.REQUEST_MIN}", "socket": "${TIMEOUTS.SOCKET}" },
+        "timeout": {
+          "request": "${TIMEOUTS.REQUEST_MIN}",
+          "socket": "${TIMEOUTS.SOCKET}"
+        },
         "reqTransform": "general.transformers.convertToGetRequest",
-        "headersToPass": [ { "source": "authorization", "destination": "authorization" } ],
+        "headersToPass": [
+          { "source": "authorization", "destination": "authorization" }
+        ],
         "requiredParams": ["pincode"]
       },
-        {
+      {
         "name": "app-cart-summary",
         "url": "${RETAIL_URL}/v3/seller/cart",
         "method": "GET",
-        "timeout": { "request": "${TIMEOUTS.REQUEST_MIN}", "socket": "${TIMEOUTS.SOCKET}" },
+        "timeout": {
+          "request": "${TIMEOUTS.REQUEST_MIN}",
+          "socket": "${TIMEOUTS.SOCKET}"
+        },
         "reqTransform": "general.transformers.convertToGetRequest",
-        "headersToPass": [ { "source": "authorization", "destination": "authorization" } ],
+        "headersToPass": [
+          { "source": "authorization", "destination": "authorization" }
+        ],
         "requiredParams": ["pincode"]
       }
     ],
     "resTransform": "cart.transformers.mergeCartPageResponses"
   },
-   {
+  {
     "path": "${PATH_URL}/v1/app-shipments",
     "method": "GET",
     "routeHandler": "AGGREGATE",
     "aggregationType": "PARALLEL",
     "targets": [
-        {
-      "name": "app-shipment",
-      "url": "${ERP_BASE_URI}/track-order-shipments",
-      "method": "GET",
-      "timeout": { "request": "${TIMEOUTS.REQUEST}", "socket": "${TIMEOUTS.SOCKET}" },
-      "requiredParams": ["orderNumber"],
-      "staticHeaders": {
-          "Authorization": "${X_API_KEY_FOR_ORDER_LISTING}",
-          "client_id": "${ERP_CLIENT_ID}"
-      }
-    },
       {
-      "name": "app-invoice-and-documents",
-      "url": "${ERP_BASE_URI}/fetch-order-invoice-docs",
-      "method": "GET",
-      "timeout": { "request": "${TIMEOUTS.REQUEST}", "socket": "${TIMEOUTS.SOCKET}" },
-      "requiredParams": ["orderNumber"],
-      "staticHeaders": {
+        "name": "app-shipment",
+        "url": "${ERP_BASE_URI}/track-order-shipments",
+        "method": "GET",
+        "timeout": {
+          "request": "${TIMEOUTS.REQUEST}",
+          "socket": "${TIMEOUTS.SOCKET}"
+        },
+        "requiredParams": ["orderNumber"],
+        "staticHeaders": {
           "Authorization": "${X_API_KEY_FOR_ORDER_LISTING}",
           "client_id": "${ERP_CLIENT_ID}"
+        }
+      },
+      {
+        "name": "app-invoice-and-documents",
+        "url": "${ERP_BASE_URI}/fetch-order-invoice-docs",
+        "method": "GET",
+        "timeout": {
+          "request": "${TIMEOUTS.REQUEST}",
+          "socket": "${TIMEOUTS.SOCKET}"
+        },
+        "requiredParams": ["orderNumber"],
+        "staticHeaders": {
+          "Authorization": "${X_API_KEY_FOR_ORDER_LISTING}",
+          "client_id": "${ERP_CLIENT_ID}"
+        }
       }
-    }
     ],
     "resTransform": "shipments.transformers.mergeInvoiceAndShipmentsResponse"
   },
@@ -298,11 +392,14 @@
       "name": "verify-gstin",
       "url": "${VERIFY_GSTIN_URL}",
       "method": "POST",
-      "staticHeaders":{
+      "staticHeaders": {
         "content-type": "application/json",
         "X-API-KEY": "${GSTIN_X_API_KEY}"
       },
-      "timeout": { "request": "${TIMEOUTS.REQUEST}", "socket": "${TIMEOUTS.SOCKET}" },
+      "timeout": {
+        "request": "${TIMEOUTS.REQUEST}",
+        "socket": "${TIMEOUTS.SOCKET}"
+      },
       "reqTransform": "verifyGstin.transformers.verifyGstin",
       "resTransform": "verifyGstin.transformers.verifyGstinResponse"
     }
@@ -320,12 +417,14 @@
         "timeout": { "request": 5000, "socket": 1000 },
         "reqTransform": "general.transformers.moveBodyToQueryParams"
       },
-            {
+      {
         "name": "homes-project-details",
         "url": "https://service.jswonehomes.com/homes-service/v1/project/project-details",
         "method": "GET",
         "timeout": { "request": 5000, "socket": 1000 },
-        "headersToPass": [ { "source": "authorization", "destination": "Authorization" } ],
+        "headersToPass": [
+          { "source": "authorization", "destination": "Authorization" }
+        ],
         "reqTransform": "general.transformers.convertToGetRequest",
         "requiredParams": ["project_id"]
       }
@@ -345,12 +444,14 @@
         "timeout": { "request": 5000, "socket": 1000 },
         "reqTransform": "general.transformers.moveBodyToQueryParams"
       },
-            {
+      {
         "name": "homes-user-details",
         "url": "https://service.jswonehomes.com/homes-service/v1/user/details",
         "method": "GET",
         "timeout": { "request": 5000, "socket": 1000 },
-        "headersToPass": [ { "source": "authorization", "destination": "Authorization" } ],
+        "headersToPass": [
+          { "source": "authorization", "destination": "Authorization" }
+        ],
         "reqTransform": "general.transformers.convertToGetRequest"
       }
     ],
@@ -360,15 +461,16 @@
     "path": "/xp-mi/public/v1/homes/project/progress-report",
     "method": "POST",
     "routeHandler": "TRANSFORM",
-    "target": 
-      {
-        "name": "homes-progress-report",
-        "url": "https://service.jswonehomes.com/homes-service/v1/project/progress-reports",
-        "method": "GET",
-        "timeout": { "request": 5000, "socket": 1000 },
-        "headersToPass": [ { "source": "authorization", "destination": "Authorization" } ],
-        "requiredParams": ["project_id"]
-      }
+    "target": {
+      "name": "homes-progress-report",
+      "url": "https://service.jswonehomes.com/homes-service/v1/project/progress-reports",
+      "method": "GET",
+      "timeout": { "request": 5000, "socket": 1000 },
+      "headersToPass": [
+        { "source": "authorization", "destination": "Authorization" }
+      ],
+      "requiredParams": ["project_id"]
+    }
   },
   {
     "path": "${PATH_URL}/v1/reset-password",
@@ -378,12 +480,12 @@
       "name": "app-reset-password",
       "url": "${MSME_BASE_URI_REGISTRATION}/customer/reset/password",
       "method": "POST",
-        "timeout": {
+      "timeout": {
         "request": "${TIMEOUTS.REQUEST}",
         "socket": "${TIMEOUTS.SOCKET}"
       },
       "staticHeaders": {
-         "X-API-KEY": "${X_API_KEY_FOR_REGISTRATION}"
+        "X-API-KEY": "${X_API_KEY_FOR_REGISTRATION}"
       },
       "reqTransform": "login.transformers.transformResetPasswordRequest",
       "resTransform": "login.transformers.transformResetPasswordResponse"
@@ -397,10 +499,10 @@
       "name": "app-verify-mobile-number",
       "url": "${MSME_BASE_URI}/otp/send",
       "method": "POST",
-      "staticHeaders":{
+      "staticHeaders": {
         "X-API-KEY": "${X_API_KEY_FOR_LOGIN}"
       },
-         "timeout": {
+      "timeout": {
         "request": "${TIMEOUTS.REQUEST}",
         "socket": "${TIMEOUTS.SOCKET}"
       },
@@ -416,7 +518,7 @@
       "name": "appLoginPage",
       "url": "${CMS_MSME_URL}/app-login-page",
       "method": "GET",
-         "timeout": {
+      "timeout": {
         "request": "${TIMEOUTS.REQUEST}",
         "socket": "${TIMEOUTS.SOCKET}"
       },
@@ -424,7 +526,7 @@
       "resTransform": "cms.transformers.replaceUriPrefix"
     }
   },
-   {
+  {
     "path": "${PATH_URL}/v1/verify-mobile-number-with-otp",
     "method": "POST",
     "routeHandler": "TRANSFORM",
@@ -432,10 +534,10 @@
       "name": "app-verify-mobile-number-with-otp",
       "url": "${MSME_BASE_URI}/otp/verify",
       "method": "POST",
-      "staticHeaders":{
+      "staticHeaders": {
         "X-API-KEY": "${X_API_KEY_FOR_LOGIN}"
       },
-         "timeout": {
+      "timeout": {
         "request": "${TIMEOUTS.REQUEST}",
         "socket": "${TIMEOUTS.SOCKET}"
       },
@@ -444,106 +546,141 @@
     }
   },
   {
-  "path": "${PATH_URL}/v1/create-address",
-  "method": "POST",
-  "routeHandler": "AGGREGATE",
-  "aggregationType": "SEQUENTIAL",
-  "targets": [
-    {
-      "name": "get-sf-tokens",
-      "url": "${SF_AUTH_TOKEN_URI}",
-      "method": "POST",
-      "timeout": {
-        "request": "${TIMEOUTS.REQUEST}",
-        "socket": "${TIMEOUTS.SOCKET}"
+    "path": "${PATH_URL}/v1/create-address",
+    "method": "POST",
+    "routeHandler": "AGGREGATE",
+    "aggregationType": "SEQUENTIAL",
+    "targets": [
+      {
+        "name": "get-sf-tokens",
+        "url": "${SF_AUTH_TOKEN_URI}",
+        "method": "POST",
+        "timeout": {
+          "request": "${TIMEOUTS.REQUEST}",
+          "socket": "${TIMEOUTS.SOCKET}"
+        },
+        "staticHeaders": {
+          "Content-Type": "application/x-www-form-urlencoded"
+        },
+        "requiredParams": ["*"],
+        "reqTransform": "general.transformers.createQueryParams",
+        "resTransform": ""
       },
-      "staticHeaders": {
-        "Content-Type": "application/x-www-form-urlencoded"
-      },
-      "requiredParams": ["*"],
-      "reqTransform": "general.transformers.createQueryParams",
-      "resTransform": ""
-    },
-    {
-      "name": "create-address",
-      "url": "${SF_OPPORTUNITY_URI}/v1/SiteAddress",
-      "method": "POST",
-      "timeout": {
-        "request": "${TIMEOUTS.REQUEST}",
-        "socket": "${TIMEOUTS.SOCKET}"
-      },
-      "reqTransform": "address.transformers.createAddress",
-      "headersToPass": [],
-      "requiredParams": ["*"]
-    }
-  ],
-  "resTransform": "general.transformers.successOnly"
+      {
+        "name": "create-address",
+        "url": "${SF_OPPORTUNITY_URI}/v1/SiteAddress",
+        "method": "POST",
+        "timeout": {
+          "request": "${TIMEOUTS.REQUEST}",
+          "socket": "${TIMEOUTS.SOCKET}"
+        },
+        "reqTransform": "address.transformers.createAddress",
+        "headersToPass": [],
+        "requiredParams": ["*"]
+      }
+    ],
+    "resTransform": "general.transformers.successOnly"
   },
-   {
-  "path": "${PATH_URL}/v1/get-address",
-  "method": "GET",
-  "routeHandler": "AGGREGATE",
-  "aggregationType": "SEQUENTIAL",
-  "targets": [
-    {
-      "name": "get-sf-tokens",
-      "url": "${SF_AUTH_TOKEN_URI}",
-      "method": "POST",
-      "timeout": {
-        "request": "${TIMEOUTS.REQUEST}",
-        "socket": "${TIMEOUTS.SOCKET}"
+  {
+    "path": "${PATH_URL}/v1/get-address",
+    "method": "GET",
+    "routeHandler": "AGGREGATE",
+    "aggregationType": "SEQUENTIAL",
+    "targets": [
+      {
+        "name": "get-sf-tokens",
+        "url": "${SF_AUTH_TOKEN_URI}",
+        "method": "POST",
+        "timeout": {
+          "request": "${TIMEOUTS.REQUEST}",
+          "socket": "${TIMEOUTS.SOCKET}"
+        },
+        "staticHeaders": {
+          "Content-Type": "application/x-www-form-urlencoded"
+        },
+        "requiredParams": ["*"],
+        "reqTransform": "general.transformers.createQueryParams"
       },
-      "staticHeaders": {
-        "Content-Type": "application/x-www-form-urlencoded"
-      },
-      "requiredParams": ["*"],
-      "reqTransform": "general.transformers.createQueryParams"
-    },
-    {
-      "name": "get-address",
-      "url": "${SF_OPPORTUNITY_URI}/retailAddressData",
-      "method": "GET",
-      "timeout": {
-        "request": "${TIMEOUTS.REQUEST}",
-        "socket": "${TIMEOUTS.SOCKET}"
-      },
+      {
+        "name": "get-address",
+        "url": "${SF_OPPORTUNITY_URI}/retailAddressData",
+        "method": "GET",
+        "timeout": {
+          "request": "${TIMEOUTS.REQUEST}",
+          "socket": "${TIMEOUTS.SOCKET}"
+        },
         "headersToPass": [
-        {
-          "source": "authorization",
-          "destination": "authorization"
-        }
-      ],
-      "reqTransform": "address.transformers.getAddressRequest"
-    }
-  ],
-  "resTransform": "address.transformers.getAddressResponse"
+          {
+            "source": "authorization",
+            "destination": "authorization"
+          }
+        ],
+        "reqTransform": "address.transformers.getAddressRequest"
+      }
+    ],
+    "resTransform": "address.transformers.getAddressResponse"
   },
   {
     "path": "/xp-mi/public/v1/homes/project/design-documents",
     "method": "POST",
     "routeHandler": "TRANSFORM",
-    "target": 
-      {
-        "name": "homes-design-documents",
-        "url": "https://service.jswonehomes.com/homes-service/v1/project/design-documents",
-        "method": "GET",
-        "timeout": { "request": 5000, "socket": 1000 },
-        "headersToPass": [ { "source": "authorization", "destination": "Authorization" } ],
-        "requiredParams": ["project_id"]
-      }
+    "target": {
+      "name": "homes-design-documents",
+      "url": "https://service.jswonehomes.com/homes-service/v1/project/design-documents",
+      "method": "GET",
+      "timeout": { "request": 5000, "socket": 1000 },
+      "headersToPass": [
+        { "source": "authorization", "destination": "Authorization" }
+      ],
+      "requiredParams": ["project_id"]
+    }
   },
-    {
+  {
     "path": "/xp-mi/public/v1/homes/project/construction-documents",
     "method": "POST",
     "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "homes-construction-documents",
+      "url": "http://service.jswonehomes.com/homes-service/v1/project/construction-documents",
+      "method": "GET",
+      "timeout": { "request": 5000, "socket": 1000 },
+      "headersToPass": [
+        { "source": "authorization", "destination": "Authorization" }
+      ],
+      "requiredParams": ["project_id"]
+    }
+  },
+  {
+    "path": "${PATH_URL}/v1/feature-flags",
+    "method": "POST",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "cmsFeatureFlag",
+      "url": "${CMS_MSME_URL}/ccp-feature-flags",
+      "method": "GET",
+      "timeout": {
+        "request": "${TIMEOUTS.REQUEST}",
+        "socket": "${TIMEOUTS.SOCKET}"
+      },
+      "reqTransform": "general.transformers.moveBodyToQueryParams",
+      "resTransform": "cms.transformers.replaceUriPrefix"
+    }
+  },
+  {
+    "path": "${PATH_URL}/v1/paymentsdue",
+    "method": "GET",
+    "routeHandler": "TRANSFORM",
     "target": 
       {
-        "name": "homes-construction-documents",
-        "url": "http://service.jswonehomes.com/homes-service/v1/project/construction-documents",
+        "name": "payments-due",
+        "url": "https://www.jswonemsme.com/customer/payment/v2/totalDueAmount",
         "method": "GET",
-        "timeout": { "request": 5000, "socket": 1000 },
-        "headersToPass": [ { "source": "authorization", "destination": "Authorization" } ],
-        "requiredParams": ["project_id"]
+        "timeout": {        
+          "request": "${TIMEOUTS.REQUEST}",
+          "socket": "${TIMEOUTS.SOCKET}"
+        },
+        "headersToPass": [ { "source": "authorization", "destination": "access_token"} ],
+        "requiredParams": ["entityName"]
       }
   }
 ]
