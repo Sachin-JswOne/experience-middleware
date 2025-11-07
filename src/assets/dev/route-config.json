@@ -319,12 +319,14 @@
         "reqTransform": "cms.transformers.homeBlogs",
         "resTransform": "cms.transformers.replaceUriPrefix"
       },
-       {
+      {
         "name": "app-in-transit",
         "url": "https://qa-ssr.msme.jswone.in/order-service/order/v1/material-tracking/dispatched-shipments",
         "method": "GET",
         "timeout": { "request": 5000, "socket": 1000 },
-        "headersToPass": [ { "source": "authorization", "destination": "access_token" } ],
+        "headersToPass": [
+          { "source": "authorization", "destination": "access_token" }
+        ],
         "reqTransform": "app.transformers.transformInTransitRequest"
       }
     ],
@@ -675,15 +677,16 @@
     "path": "/xp-mi/public/v1/homes/project/design-documents",
     "method": "POST",
     "routeHandler": "TRANSFORM",
-    "target": 
-      {
-        "name": "homes-design-documents",
-        "url": "http://34.100.206.209/homes-service/v1/project/design-documents",
-        "method": "GET",
-        "timeout": { "request": 5000, "socket": 1000 },
-        "headersToPass": [ { "source": "authorization", "destination": "Authorization" } ],
-        "requiredParams": ["project_id"]
-      }
+    "target": {
+      "name": "homes-design-documents",
+      "url": "http://34.100.206.209/homes-service/v1/project/design-documents",
+      "method": "GET",
+      "timeout": { "request": 5000, "socket": 1000 },
+      "headersToPass": [
+        { "source": "authorization", "destination": "Authorization" }
+      ],
+      "requiredParams": ["project_id"]
+    }
   },
   {
     "path": "${PATH_URL}/v1/app-orders",
@@ -695,25 +698,25 @@
         "name": "app-material-tracking",
         "url": "https://cms-msme-ext.qa.jswone.in/api/app-order-page",
         "method": "GET",
-      "timeout": { "request": 5000, "socket": 1000 },
+        "timeout": { "request": 5000, "socket": 1000 },
         "reqTransform": "general.transformers.moveBodyToQueryParams"
       },
       {
         "name": "app-order-listing",
         "url": "https://tms.qa.jswone.in/opportunity/retail/fetch-order-list",
         "method": "GET",
-        "staticHeaders":{
+        "staticHeaders": {
           "Authorization": "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJKU1dPTkUiLCJpYXQiOjE3NTE1MzY4NTMsImV4cCI6MTc4MzA3Mjg1MywiYXVkIjoiIiwic3ViIjoib3JkZXJ1bmlmaWNhdGlvbkBqc3dvbmUuY29tIiwiRW1haWwiOiJvcmRlcnVuaWZpY2F0aW9uQGpzd29uZS5jb20iLCJSb2xlIjoiQWRtaW4ifQ.pf4XPzgeoZXIuTcQ4JAqpfln7UfBLkvYQcnqEyrbSqA"
         },
-      "timeout": { "request": 5000, "socket": 1000 },
+        "timeout": { "request": 5000, "socket": 1000 },
         "reqTransform": "orderListing.transformers.transformOrderListingRequest",
         "resTransform": "orderListing.transformers.transformOrderListingResponse",
-        "requiredParams": ["gstin","customerType"]
+        "requiredParams": ["gstin", "customerType"]
       }
     ],
     "resTransform": "orderListing.transformers.mergeMaterialTrackingAndOrderListingResponses"
   },
-    {
+  {
     "path": "${PATH_URL}/v1/order-detail/:id",
     "method": "GET",
     "routeHandler": "CONDITIONAL",
@@ -724,18 +727,18 @@
         "url": "https://qa-oms.msme.jswone.in/external-connector-inbound/api/internal/v1/retail/fetch-order-details",
         "method": "GET",
         "timeout": { "request": 5000, "socket": 1000 },
-         "staticHeaders": {
+        "staticHeaders": {
           "Authorization": "${X_API_KEY_FOR_ORDER_LISTING}",
           "client_id": "${ERP_CLIENT_ID}"
+        },
+        "reqTransform": "orderDetails.transformers.transformOrderDetailsRequest",
+        "resTransform": "orderDetails.transformers.transformOrderDetailsResponse"
       },
-      "reqTransform": "orderDetails.transformers.transformOrderDetailsRequest",
-      "resTransform": "orderDetails.transformers.transformOrderDetailsResponse"
-    },
       {
         "name": "opportunity-detail",
         "url": "https://tms.qa.jswone.in/jswone/retail/fetch-opportunity-details",
         "method": "GET",
-        "staticHeaders":{
+        "staticHeaders": {
           "Authorization": "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJPbmxpbmUgSldUIEJ1aWxkZXIiLCJpYXQiOjE3NDQ4ODcyMzgsImV4cCI6MTc3NjQyMzIzOCwiYXVkIjoiZnJpZWdodCB0aWdlciIsInN1YiI6IiJ9.6Ib-8yeVhRuolg5ko0SMxjcjQK8za1mkpVVaLFtPMyE",
           "Content-Type": "application/json"
         },
@@ -750,32 +753,34 @@
     "path": "/xp-mi/public/v1/homes/project/construction-documents",
     "method": "POST",
     "routeHandler": "TRANSFORM",
-    "target": 
-      {
-        "name": "homes-construction-documents",
-        "url": "http://34.100.206.209/homes-service/v1/project/construction-documents",
-        "method": "GET",
-        "timeout": { "request": 5000, "socket": 1000 },
-        "headersToPass": [ { "source": "authorization", "destination": "Authorization" } ],
-        "requiredParams": ["project_id"]
-      }
+    "target": {
+      "name": "homes-construction-documents",
+      "url": "http://34.100.206.209/homes-service/v1/project/construction-documents",
+      "method": "GET",
+      "timeout": { "request": 5000, "socket": 1000 },
+      "headersToPass": [
+        { "source": "authorization", "destination": "Authorization" }
+      ],
+      "requiredParams": ["project_id"]
+    }
   },
   {
     "path": "${PATH_URL}/v1/paymentsdue",
     "method": "GET",
     "routeHandler": "TRANSFORM",
-    "target": 
-      {
-        "name": "payments-due",
-        "url": "${PAYMENTS_DUE_URI}",
-        "method": "GET",
-        "timeout": {        
-          "request": "${TIMEOUTS.REQUEST}",
-          "socket": "${TIMEOUTS.SOCKET}"
-        },
-        "headersToPass": [ { "source": "authorization", "destination": "access_token"} ],
-        "requiredParams": ["entityName"]
-      }
+    "target": {
+      "name": "payments-due",
+      "url": "${PAYMENTS_DUE_URI}",
+      "method": "GET",
+      "timeout": {
+        "request": "${TIMEOUTS.REQUEST}",
+        "socket": "${TIMEOUTS.SOCKET}"
+      },
+      "headersToPass": [
+        { "source": "authorization", "destination": "access_token" }
+      ],
+      "requiredParams": ["entityName"]
+    }
   },
   {
     "path": "${PATH_URL}/v1/feature-flags",
@@ -792,5 +797,36 @@
       "reqTransform": "general.transformers.moveBodyToQueryParams",
       "resTransform": "cms.transformers.replaceUriPrefix"
     }
+  },
+  {
+    "path": "/xp-mi/public/v1/web-home-page",
+    "method": "POST",
+    "routeHandler": "AGGREGATE",
+    "aggregationType": "PARALLEL",
+    "targets": [
+      {
+        "name": "app-home-page",
+        "url": "${CMS_MSME_URL}/app-home-page-v2",
+        "method": "GET",
+        "timeout": {
+          "request": "${TIMEOUTS.REQUEST}",
+          "socket": "${TIMEOUTS.SOCKET}"
+        },
+        "reqTransform": "general.transformers.moveBodyToQueryParams",
+        "resTransform": "cms.transformers.replaceUriPrefix"
+      },
+      {
+        "name": "app-blogs",
+        "url": "${CMS_MSME_URL}/jsw-blogs-articless",
+        "method": "GET",
+        "timeout": {
+          "request": "${TIMEOUTS.REQUEST}",
+          "socket": "${TIMEOUTS.SOCKET}"
+        },
+        "reqTransform": "cms.transformers.homeBlogs",
+        "resTransform": "cms.transformers.replaceUriPrefix"
+      }
+    ],
+    "resTransform": "web.transformers.mergeWebHomePageResponses"
   }
 ]
