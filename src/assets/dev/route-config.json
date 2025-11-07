@@ -799,7 +799,7 @@
     }
   },
   {
-    "path": "/xp-mi/public/v1/mweb-home-page",
+    "path": "/xp-mi/public/v1/web-home-page",
     "method": "POST",
     "routeHandler": "AGGREGATE",
     "aggregationType": "PARALLEL",
@@ -827,6 +827,6 @@
         "resTransform": "cms.transformers.replaceUriPrefix"
       }
     ],
-    "resTransform": "mweb.transformers.mergeWebHomePageResponses"
+    "resTransform": "web.transformers.mergeWebHomePageResponses"
   }
 ]

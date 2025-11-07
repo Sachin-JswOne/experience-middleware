@@ -27,7 +27,7 @@ export function mergeWebHomePageResponses(
     cmsResponse.data === null
   ) {
     Logger.error(
-      `Error for Mweb Home Page API method: mergeWebHomePageResponses ${getFormattedTracingContext()} CMS response is missing or invalid.`,
+      `Error for Web Home Page API method: mergeWebHomePageResponses ${getFormattedTracingContext()} CMS response is missing or invalid.`,
     );
     return { data: {}, meta: {} };
   }
@@ -37,41 +37,28 @@ export function mergeWebHomePageResponses(
     ...cmsResponse.data.data,
   };
 
-  // Extract sections or blocks from CMS
-  // Handle both structures since app-home-page-v2 returns blocks
-  let sections: any[] = [];
-  let blocks: any[] = [];
+  // Extract blocks from CMS
   const cmsData = cmsResponse.data.data as {
-    sections?: any[];
     blocks?: any[];
   };
 
-  if (cmsData) {
-    if (Array.isArray(cmsData.sections)) {
-      sections = [...cmsData.sections];
-    } else if (Array.isArray(cmsData.blocks)) {
-      blocks = [...cmsData.blocks];
-      sections = [...blocks]; // Use blocks as sections for injection logic
-    }
-  }
+  const blocks: any[] = Array.isArray(cmsData?.blocks)
+    ? [...cmsData.blocks]
+    : [];
 
   // Inject blogs
   const blogs = blogsResponse?.data?.data || [];
-  const blogsSection = sections.find(
-    (section: any) =>
-      section.type === 'blogs' ||
-      section.__component === 'app-components.app-blog-list-component',
+  const blogsBlock = blocks.find(
+    (block: any) =>
+      block.type === 'blogs' ||
+      block.__component === 'app-components.app-blog-list-component',
   );
-  if (blogsSection) {
-    blogsSection.blogs = blogs;
+  if (blogsBlock) {
+    blogsBlock.blogs = blogs;
   }
 
-  // Update merged data - preserve original structure (blocks or sections)
-  if (blocks.length > 0) {
-    mergedData.blocks = sections; // Update blocks with injected data
-  } else {
-    mergedData.sections = sections;
-  }
+  // Update merged data with blocks
+  mergedData.blocks = blocks;
 
   return {
     data: mergedData,
