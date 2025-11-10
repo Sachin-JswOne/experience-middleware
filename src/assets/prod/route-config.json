@@ -281,9 +281,11 @@
         "url": "https://www.jswonemsme.com/order-service/order/v1/material-tracking/dispatched-shipments",
         "method": "GET",
         "timeout": { "request": 5000, "socket": 1000 },
-        "headersToPass": [ { "source": "authorization", "destination": "access_token" } ],
+        "headersToPass": [
+          { "source": "authorization", "destination": "access_token" }
+        ],
         "reqTransform": "app.transformers.transformInTransitRequest"
-        }
+      }
     ],
     "resTransform": "app.transformers.mergeHomePageResponses"
   },
@@ -678,18 +680,19 @@
     "path": "${PATH_URL}/v1/paymentsdue",
     "method": "GET",
     "routeHandler": "TRANSFORM",
-    "target": 
-      {
-        "name": "payments-due",
-        "url": "https://www.jswonemsme.com/customer/payment/v2/totalDueAmount",
-        "method": "GET",
-        "timeout": {        
-          "request": "${TIMEOUTS.REQUEST}",
-          "socket": "${TIMEOUTS.SOCKET}"
-        },
-        "headersToPass": [ { "source": "authorization", "destination": "access_token"} ],
-        "requiredParams": ["entityName"]
-      }
+    "target": {
+      "name": "payments-due",
+      "url": "https://www.jswonemsme.com/customer/payment/v2/totalDueAmount",
+      "method": "GET",
+      "timeout": {
+        "request": "${TIMEOUTS.REQUEST}",
+        "socket": "${TIMEOUTS.SOCKET}"
+      },
+      "headersToPass": [
+        { "source": "authorization", "destination": "access_token" }
+      ],
+      "requiredParams": ["entityName"]
+    }
   },
   {
     "path": "${PATH_URL}/v1/app-orders",
@@ -701,22 +704,22 @@
         "name": "app-material-tracking",
         "url": "https://internal-cms-ext.jswonemsme.com/api/app-order-page",
         "method": "GET",
-      "timeout": { "request": 5000, "socket": 1000 },
+        "timeout": { "request": 5000, "socket": 1000 },
         "reqTransform": "general.transformers.moveBodyToQueryParams"
       },
       {
         "name": "app-order-listing",
         "url": "https://oms.jswonemsme.com/opportunity/retail/fetch-order-list",
         "method": "GET",
-        "staticHeaders":{
+        "staticHeaders": {
           "Authorization": "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJPbmxpbmUgSldUIEJ1aWxkZXIiLCJpYXQiOjE3NTI0ODI2NzksImV4cCI6MjUzMzg3NTU3ODc5LCJhdWQiOiJyZXRhaWxzLWFwcCIsInN1YiI6InJldGFpbHNAanN3b25lLmluIiwiR2l2ZW5OYW1lIjoiUmV0YWlscyIsIkVtYWlsIjoicmV0YWlsc0Bqc3dvbmUuaW4iLCJSb2xlIjoiQURNSU4ifQ.NlGWFVVxEMtCVqz4tyMFX-R_qLoOjg_7alWl1MVcmnI"
         },
-      "timeout": { "request": 5000, "socket": 1000 },
+        "timeout": { "request": 5000, "socket": 1000 },
         "reqTransform": "orderListing.transformers.transformOrderListingRequest",
         "resTransform": "orderListing.transformers.transformOrderListingResponse",
-        "requiredParams": ["gstin","customerType"]
+        "requiredParams": ["gstin", "customerType"]
       }
-      ],
+    ],
     "resTransform": "orderListing.transformers.mergeMaterialTrackingAndOrderListingResponses"
   },
   {
@@ -730,18 +733,18 @@
         "url": "https://oms.jswonemsme.com/external-connector-inbound/api/internal/v1/retail/fetch-order-details",
         "method": "GET",
         "timeout": { "request": 5000, "socket": 1000 },
-         "staticHeaders": {
+        "staticHeaders": {
           "Authorization": "${X_API_KEY_FOR_ORDER_LISTING}",
           "client_id": "${ERP_CLIENT_ID}"
+        },
+        "reqTransform": "orderDetails.transformers.transformOrderDetailsRequest",
+        "resTransform": "orderDetails.transformers.transformOrderDetailsResponse"
       },
-      "reqTransform": "orderDetails.transformers.transformOrderDetailsRequest",
-      "resTransform": "orderDetails.transformers.transformOrderDetailsResponse"
-    },
       {
         "name": "opportunity-detail",
         "url": "https://oms.jswonemsme.com/jswone/retail/fetch-opportunity-details",
         "method": "GET",
-        "staticHeaders":{
+        "staticHeaders": {
           "Authorization": "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJPbmxpbmUgSldUIEJ1aWxkZXIiLCJpYXQiOjE3NDQ4ODcyMzgsImV4cCI6MTc3NjQyMzIzOCwiYXVkIjoiZnJpZWdodCB0aWdlciIsInN1YiI6IiJ9.6Ib-8yeVhRuolg5ko0SMxjcjQK8za1mkpVVaLFtPMyE",
           "Content-Type": "application/json"
         },
@@ -752,7 +755,38 @@
       }
     ]
   },
-    {
+  {
+    "path": "/xp-mi/public/v1/web-home-page",
+    "method": "POST",
+    "routeHandler": "AGGREGATE",
+    "aggregationType": "PARALLEL",
+    "targets": [
+      {
+        "name": "app-home-page",
+        "url": "${CMS_MSME_URL}/app-home-page-v2",
+        "method": "GET",
+        "timeout": {
+          "request": "${TIMEOUTS.REQUEST}",
+          "socket": "${TIMEOUTS.SOCKET}"
+        },
+        "reqTransform": "general.transformers.moveBodyToQueryParams",
+        "resTransform": "cms.transformers.replaceUriPrefix"
+      },
+      {
+        "name": "app-blogs",
+        "url": "${CMS_MSME_URL}/jsw-blogs-articless",
+        "method": "GET",
+        "timeout": {
+          "request": "${TIMEOUTS.REQUEST}",
+          "socket": "${TIMEOUTS.SOCKET}"
+        },
+        "reqTransform": "cms.transformers.homeBlogs",
+        "resTransform": "cms.transformers.replaceUriPrefix"
+      }
+    ],
+    "resTransform": "web.transformers.mergeWebHomePageResponses"
+  },
+  {
     "path": "${PATH_URL}/v1/otp-implicit-consent",
     "method": "POST",
     "routeHandler": "TRANSFORM",
