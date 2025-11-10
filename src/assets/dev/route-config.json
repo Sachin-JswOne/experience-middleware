@@ -828,5 +828,20 @@
       }
     ],
     "resTransform": "web.transformers.mergeWebHomePageResponses"
+  },
+  {
+    "path": "${PATH_URL}/v1/otp-implicit-consent",
+    "method": "POST",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "otp-implicit-consent",
+      "url": "https://qa.msme.jswone.in/customer/v1/privacy/consent",
+      "method": "POST",
+      "timeout": {
+        "request": "${TIMEOUTS.REQUEST}",
+        "socket": "${TIMEOUTS.SOCKET}"
+      },
+      "reqTransform": "implicit-consent.transformers.implictConsent"
+    }
   }
 ]
