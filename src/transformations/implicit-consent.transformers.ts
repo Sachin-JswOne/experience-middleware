@@ -3,11 +3,14 @@ import {
     CONSENT_EVENT_NAME,
     CONSENT_REGISTRATION_SOURCE
 } from 'src/config/app.config';
-
+import { Logger } from '@nestjs/common';
+import { getFormattedTracingContext } from 'src/utils/tracing.util';
 export function implictConsent(
     request: BaseRequest
 ): BaseRequest {
+    
     const requestBody: any = request?.body;
+    Logger.log(`Transforming Implicit-Consent Request  ${request.url} method: implictConsent ${getFormattedTracingContext()}`);
     const requestData = transformMsmeRegistrationPayload(requestBody)
 
     const consentIp = request.headers["x-forwarded-for"]
