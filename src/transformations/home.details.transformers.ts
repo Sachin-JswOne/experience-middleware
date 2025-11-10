@@ -83,10 +83,11 @@ export function mergeProjectDetailsAndTrackerResponses(
   const homesTeam = {
     ...strapiData.data.homesTeam,
     note : homesData.userDetails.length > 0
-        ? `${note} ${homesData.userDetails
+        ? `${note} ${[...new Set(
+            homesData.userDetails
             .map((m: any) => m.level)
             .sort((a: string, b: string) => a.localeCompare(b))
-           .join(" → ")}`
+          )].join(" → ")}`
         : "",
 
     userCard:
