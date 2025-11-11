@@ -730,10 +730,10 @@
         "staticHeaders": {
           "Authorization": "${X_API_KEY_FOR_ORDER_LISTING}",
           "client_id": "${ERP_CLIENT_ID}"
-        },
-        "reqTransform": "orderDetails.transformers.transformOrderDetailsRequest",
-        "resTransform": "orderDetails.transformers.transformOrderDetailsResponse"
       },
+      "reqTransform": "orderDetails.transformers.transformOrderDetailsRequest",
+      "resTransform": "orderDetails.transformers.transformOrderDetailsResponse"
+    },
       {
         "name": "opportunity-detail",
         "url": "https://tms.qa.jswone.in/jswone/retail/fetch-opportunity-details",
@@ -753,22 +753,22 @@
     "path": "/xp-mi/public/v1/homes/project/construction-documents",
     "method": "POST",
     "routeHandler": "TRANSFORM",
-    "target": {
+    "target": 
+      {
       "name": "homes-construction-documents",
       "url": "http://34.100.206.209/homes-service/v1/project/construction-documents",
       "method": "GET",
-      "timeout": { "request": 5000, "socket": 1000 },
-      "headersToPass": [
-        { "source": "authorization", "destination": "Authorization" }
-      ],
-      "requiredParams": ["project_id"]
+        "timeout": { "request": 5000, "socket": 1000 },
+        "headersToPass": [ { "source": "authorization", "destination": "Authorization" } ],
+        "requiredParams": ["project_id"]
     }
   },
   {
     "path": "${PATH_URL}/v1/paymentsdue",
     "method": "GET",
     "routeHandler": "TRANSFORM",
-    "target": {
+    "target": 
+      {
       "name": "payments-due",
       "url": "${PAYMENTS_DUE_URI}",
       "method": "GET",
@@ -776,10 +776,8 @@
         "request": "${TIMEOUTS.REQUEST}",
         "socket": "${TIMEOUTS.SOCKET}"
       },
-      "headersToPass": [
-        { "source": "authorization", "destination": "access_token" }
-      ],
-      "requiredParams": ["entityName"]
+        "headersToPass": [ { "source": "authorization", "destination": "access_token"} ],
+        "requiredParams": ["entityName"]
     }
   },
   {
@@ -843,5 +841,42 @@
       },
       "reqTransform": "implicit-consent.transformers.implictConsent"
     }
+  },
+  {
+    "path": "${PATH_URL}/v1/login",
+    "method": "POST",
+    "routeHandler": "CONDITIONAL",
+    "conditionTransform": "login.transformers.selectLoginTarget",
+    "targets": [
+      {
+        "name": "generate-otp-login",
+        "url": "https://qa-ssr.msme.jswone.in/auth/api/v1/construct/otp/send",
+        "method": "POST",
+        "staticHeaders": {
+          "X-API-KEY": "${X_API_KEY_FOR_LOGIN}"
+        },
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
+        "reqTransform": "login.transformers.transformVerifyMobileNumberRequest",
+        "resTransform": "login.transformers.transformOtpLoginResponse"
+      },
+      {
+        "name": "email-login",
+        "url": "https://qa-ssr.msme.jswone.in/auth/api/v1/construct/email/exist",
+        "method": "POST",
+        "staticHeaders": {
+          "content-type": "application/json",
+          "X-API-KEY": "${X_API_KEY_FOR_LOGIN}"
+        },
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
+        "reqTransform": "login.transformers.transformEmailLoginRequest",
+        "resTransform": "login.transformers.transformEmailLoginResponse"
+      }
+    ]
   }
 ]

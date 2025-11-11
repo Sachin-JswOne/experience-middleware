@@ -800,5 +800,42 @@
       },
       "reqTransform": "implicit-consent.transformers.implictConsent"
     }
+  },
+  {
+    "path": "${PATH_URL}/v1/login",
+    "method": "POST",
+    "routeHandler": "CONDITIONAL",
+    "conditionTransform": "login.transformers.selectLoginTarget",
+    "targets": [
+      {
+        "name": "generate-otp-login",
+        "url": "https://www.jswonemsme.com/auth/api/v1/construct/otp/send",
+        "method": "POST",
+        "staticHeaders": {
+          "X-API-KEY": "${X_API_KEY_FOR_LOGIN}"
+        },
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
+        "reqTransform": "login.transformers.transformVerifyMobileNumberRequest",
+        "resTransform": "login.transformers.transformOtpLoginResponse"
+      },
+      {
+        "name": "email-login",
+        "url": "https://www.jswonemsme.com/auth/api/v1/construct/email/exist",
+        "method": "POST",
+        "staticHeaders": {
+          "content-type": "application/json",
+          "X-API-KEY": "${X_API_KEY_FOR_LOGIN}"
+        },
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
+        "reqTransform": "login.transformers.transformEmailLoginRequest",
+        "resTransform": "login.transformers.transformEmailLoginResponse"
+      }
+    ]
   }
 ]
