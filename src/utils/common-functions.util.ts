@@ -30,3 +30,31 @@ export function convertToDouble(strNumber) {
 
   return doubleNumber;
 }
+
+export function getFormattedTime(): string {
+   const now = new Date();
+  const options: Intl.DateTimeFormatOptions = {
+    timeZone: 'Asia/Kolkata',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false,
+  };
+
+  const formatter = new Intl.DateTimeFormat('en-US', options);
+  const parts = formatter.formatToParts(now);
+
+  const partMap = parts.reduce(
+    (acc, part) => {
+      acc[part.type] = part.value;
+      return acc;
+    },
+    {} as Record<Intl.DateTimeFormatPartTypes, string>,
+  );
+
+  const timestamp = `${partMap.year}-${partMap.month}-${partMap.day} ${partMap.hour}:${partMap.minute}:${partMap.second}`;
+  return timestamp;
+}
