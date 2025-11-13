@@ -504,15 +504,17 @@ describe('login.transformers', () => {
 
   describe('transformOtpLoginResponse', () => {
     it('should return requestId and userExists:true on success', () => {
-      const response = { data: { success: true, requestId: '12345' } };
+      const response = {
+        data: { success: true, requestId: '12345', existing: true },
+      };
       const result = transformOtpLoginResponse(response);
       expect(result).toEqual({ requestId: '12345', userExists: true });
     });
 
-    it('should return undefined if requestId is not present in the transformed response', () => {
+    it('should return undefined values if requestId and existing are not present in the response', () => {
       const response = { data: { success: true } };
       const result = transformOtpLoginResponse(response);
-      expect(result).toBeUndefined();
+      expect(result).toEqual({ requestId: undefined, userExists: undefined });
     });
   });
 
