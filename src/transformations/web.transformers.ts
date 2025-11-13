@@ -19,6 +19,7 @@ export function mergeWebHomePageResponses(
 
   const cmsResponse = responses['app-home-page'];
   const blogsResponse = responses['app-blogs'];
+  const buyAgainResponse = responses['ccp-buy-again-with-prices'];
 
   if (
     !cmsResponse ||
@@ -45,6 +46,31 @@ export function mergeWebHomePageResponses(
   const blocks: any[] = Array.isArray(cmsData?.blocks)
     ? [...cmsData.blocks]
     : [];
+
+  // Inject buy again data
+  if (buyAgainResponse?.success) {
+    const rawData = buyAgainResponse.data ?? {};
+    const { listOfBuyAgainProducts, variantList, skuSize } = rawData as any;
+    
+    const products = listOfBuyAgainProducts ?? variantList ?? (Array.isArray(rawData) ? rawData : []);
+    
+    if (products.length > 0) {
+      const block = blocks.find((b: any) => 
+        b.type === 'buy-again' || b.__component === 'app-components.app-buy-again'
+      );
+      
+      if (block) {
+        block.listOfBuyAgainProducts = products;
+        if (variantList) block.variantList = variantList;
+        if (skuSize != null) block.skuSize = skuSize;
+      }
+    }
+  } else if (buyAgainResponse && !buyAgainResponse.success) {
+    Logger.warn(
+      `Warning for Web Home Page API method: mergeWebHomePageResponses ${getFormattedTracingContext()} CCP buy again response failed.`,
+      buyAgainResponse.error ?? 'Unknown error',
+    );
+  }
 
   // Inject blogs
   const blogs = blogsResponse?.data?.data || [];

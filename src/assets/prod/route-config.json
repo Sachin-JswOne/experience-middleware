@@ -789,6 +789,22 @@
         "resTransform": "cms.transformers.replaceUriPrefix"
       },
       {
+        "name": "ccp-buy-again-with-prices",
+        "url": "${BUY_AGAIN_PRICE_URL}",
+        "method": "GET",
+        "timeout": {
+          "request": "${TIMEOUTS.REQUEST}",
+          "socket": "${TIMEOUTS.SOCKET}"
+        },
+        "reqTransform": "general.transformers.convertToGetRequest",
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "access_token"
+          }
+        ]
+      },
+      {
         "name": "app-blogs",
         "url": "${CMS_MSME_URL}/jsw-blogs-articless",
         "method": "GET",
