@@ -248,13 +248,41 @@ export function validateEmailAndPhoneNumber(
 }
 
 export function transformOtpLoginResponse(response: any) {
-  const result = transformVerifyMobileNumberResponse(response);
-  if (result && result.requestId) {
-    return {
-      requestId: result.requestId,
-      userExists: true,
-    };
+  const responseData = response;
+
+  if (!responseData) {
+    Logger.error(
+      `Error for Sent Otp API method: transformOtpLoginResponse ${getFormattedTracingContext()} CCP Sent Otp API is failing`,
+    );
+    throw new CustomError(
+      'CCP Sent Otp API is failing',
+      HttpStatus.INTERNAL_SERVER_ERROR,
+    );
   }
+  if (!responseData.success && responseData.error) {
+    Logger.error(
+      `Error for Sent Otp API method: transformOtpLoginResponse ${getFormattedTracingContext()} ${responseData.error?.message || 'CCP Sent Otp API is failing'}`,
+    );
+    throw new CustomError(
+      responseData.error?.message,
+      responseData.error?.code || HttpStatus.INTERNAL_SERVER_ERROR,
+    );
+  }
+  const sentOtpResponse = responseData?.data;
+
+  if (!sentOtpResponse.success) {
+    const errorMessage =
+      MSME_ERRORS_MAPPING[sentOtpResponse.message] || sentOtpResponse.message;
+    Logger.error(
+      `Error for Sent Otp API method: transformOtpLoginResponse ${getFormattedTracingContext()} ${errorMessage}`,
+    );
+    throw new CustomError(errorMessage, HttpStatus.BAD_REQUEST);
+  }
+
+  return {
+    requestId: sentOtpResponse.requestId,
+    userExists: sentOtpResponse.existing,
+  };
 }
 
 export function transformEmailLoginRequest(request) {
