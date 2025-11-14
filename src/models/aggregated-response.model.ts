@@ -1,3 +1,5 @@
+import { CustomError } from 'src/utils/CustomError';
+
 export interface AggregatedResponse {
   target: string;
   success: boolean;
@@ -5,4 +7,5 @@ export interface AggregatedResponse {
   error?: string;
   httpStatus?: number;
   downstreamResponse?: any;
+  customError?: CustomError | null;
 }

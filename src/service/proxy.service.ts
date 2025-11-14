@@ -1,7 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unnecessary-type-assertion */
-/* eslint-disable @typescript-eslint/require-await */
 /* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
@@ -34,7 +32,7 @@ export class ProxyService {
   // private readonly redisClient = new Redis({ host: 'localhost', port: 6379 });
   public result: any = '';
   async handleRequest(req: Request) {
-    console.log(`Incoming ${req.method} request: ${req.url}`)
+    console.log(`Incoming ${req.method} request: ${req.url}`);
     const route = this.findRoute(req);
 
     if (!route) {
@@ -209,6 +207,7 @@ export class ProxyService {
                     error: err?.message || String(err),
                     httpStatus: err?.status || 500,
                     downstreamResponse: err?.response?.data || null,
+                    customError: err instanceof CustomError ? err : null,
                   };
                 }
               },
@@ -223,24 +222,24 @@ export class ProxyService {
                   error: 'Unexpected failure',
                 },
           );
-                  const isAggregatedResponse = (
-          r: any,
-        ): r is AggregatedResponse => 'target' in r && 'success' in r;
+          const isAggregatedResponse = (r: any): r is AggregatedResponse =>
+            'target' in r && 'success' in r;
 
-        const unauthorized = normalizedResults.find(
-          (r): r is AggregatedResponse =>
-            isAggregatedResponse(r) &&
-            (r.httpStatus === 401 || r.httpStatus === 403),
-        );
-
-        if (unauthorized) {
-          const error: any = new CustomError(
-            `Authorization error from target: ${unauthorized.target}`,500
+          const unauthorized = normalizedResults.find(
+            (r): r is AggregatedResponse =>
+              isAggregatedResponse(r) &&
+              (r.httpStatus === 401 || r.httpStatus === 403),
           );
-          error.httpStatusCode = unauthorized.httpStatus;
-          error.downstreamResponse = unauthorized.downstreamResponse;
-          throw error;
-        }
+
+          if (unauthorized) {
+            const error: any = new CustomError(
+              `Authorization error from target: ${unauthorized.target}`,
+              500,
+            );
+            error.httpStatusCode = unauthorized.httpStatus;
+            error.downstreamResponse = unauthorized.downstreamResponse;
+            throw error;
+          }
 
           span.setAttribute('proxy.parallel.results', normalizedResults.length);
           const finalResult = route.resTransform
@@ -458,7 +457,8 @@ export class ProxyService {
           if (response.status === 401 || response.status === 403) {
             const error = new CustomError(
               `Downstream service (${target.name || target.url}) returned ${response.status}`,
-            500)   as any;
+              500,
+            ) as any;
             error.status = response.status;
             error.response = response;
             throw error;
@@ -529,14 +529,18 @@ export class ProxyService {
                   span.setAttribute('api.error.response.data', errorDataStr);
                 }
               }
-              if (errorResponse.status === 401 || errorResponse.status === 403) {
-              const authError = new CustomError(
-                `Authorization error from target: ${target.name || target.url}`,500
-              ) as any;
-              authError.httpStatusCode = errorResponse.status;
-              authError.response = errorResponse;
-              throw authError;
-            }
+              if (
+                errorResponse.status === 401 ||
+                errorResponse.status === 403
+              ) {
+                const authError = new CustomError(
+                  `Authorization error from target: ${target.name || target.url}`,
+                  500,
+                ) as any;
+                authError.httpStatusCode = errorResponse.status;
+                authError.response = errorResponse;
+                throw authError;
+              }
             }
           }
 
@@ -614,5 +618,4 @@ export class ProxyService {
 
     return headers;
   }
-
 }
