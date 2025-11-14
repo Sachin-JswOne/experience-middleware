@@ -876,7 +876,7 @@
     "routeHandler": "TRANSFORM",
     "target": {
       "name": "webGlobalPage",
-      "url": "${CMS_MSME_URL}/web-global",
+      "url": "${CMS_MSME_URL}/app-global",
       "method": "GET",
       "timeout": {
         "request": "${TIMEOUTS.REQUEST}",
