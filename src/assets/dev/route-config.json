@@ -910,5 +910,21 @@
         "resTransform": "login.transformers.transformEmailLoginResponse"
       }
     ]
+  },
+    {
+    "path": "${PATH_URL}/v1/web-global",
+    "method": "POST",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "webGlobalPage",
+      "url": "${CMS_MSME_URL}/app-global",
+      "method": "GET",
+      "timeout": {
+        "request": "${TIMEOUTS.REQUEST}",
+        "socket": "${TIMEOUTS.SOCKET}"
+      },
+      "reqTransform": "general.transformers.moveBodyToQueryParams",
+      "resTransform": "cms.transformers.replaceUriPrefix"
+    }
   }
 ]
