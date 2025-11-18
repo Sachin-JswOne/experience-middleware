@@ -926,5 +926,30 @@
       "reqTransform": "general.transformers.moveBodyToQueryParams",
       "resTransform": "cms.transformers.replaceUriPrefix"
     }
+  },
+  {
+    "path": "v1/central_commerce/catalogue/search",
+    "method": "POST",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "msmeCatalogueSearch",
+      "url": "https://qa.msme.jswone.in/central_commerce/catalogue/search",
+      "method": "POST",
+      "timeout": {
+        "request": "${TIMEOUTS.REQUEST}",
+        "socket": "${TIMEOUTS.SOCKET}"
+      },
+      "headersToPass": [
+        {
+          "source": "access_token",
+          "destination": "access_token"
+        },
+        {
+          "source": "traceId",
+          "destination": "traceId"
+        }
+      ],
+      "requiredParams": ["*"]
+    }
   }
 ]
