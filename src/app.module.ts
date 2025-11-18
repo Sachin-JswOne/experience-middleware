@@ -7,7 +7,8 @@ import { ProxyController } from './controller/proxy.controller';
 import { join } from 'path';
 // import { RedisProvider } from './redis.provider';
 import { AppService } from './app.service';
-
+import { WinstonModule } from 'nest-winston';
+import { winstonConfig } from './logger/winston.config';
 
 @Module({
   imports: [
@@ -17,10 +18,11 @@ import { AppService } from './app.service';
     // PrometheusModule.register({
     //   path: '/metrics',
     // }),
+    WinstonModule.forRoot(winstonConfig),
     ServeStaticModule.forRoot({
       rootPath: join(__dirname, '..', 'public'),
       exclude: ['/metrics'],
-     }),
+    }),
     ConfigModule.forRoot({
       isGlobal: true,
     }),
