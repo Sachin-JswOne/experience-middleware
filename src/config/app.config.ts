@@ -96,3 +96,96 @@ export const TIMEOUTS = {
 
 export const GUEST = 'guest';
 export const GUEST_USER_STATE = 'G';
+
+export const ERP_ORDER_TYPE_MAPPING = {
+  PRIVATE_BRAND: 'PRIVATE BRAND',
+  MSME: 'MSME',
+};
+
+export const ERP_SHIP_TO_TYPE_MAPPING = {
+  SECONDARY: 'secondary',
+};
+
+export const ERP_ORDER_STATUS = {
+  Placed: 'Placed',
+  Created: 'Created',
+  Order_Created: 'Order_Created',
+};
+
+export const ERP_ORDER_STATUS_MAPPING = {
+  Placed: 'Awaiting payment',
+  Created: 'Awaiting payment',
+  Confirmed: 'Order confirmed',
+  'Delivery in progress': 'Delivery in progress',
+  Delivered: 'Order delivered',
+  Cancelled: 'Order cancelled',
+  Closed: 'Order delivered',
+  Order_Created: 'Order created',
+};
+
+export const ORDER_LIST_UOM_MAPPING = {
+  'No. of bags': 'Bags',
+};
+
+export const UOM = {
+  MT: 'mt',
+  Bags: 'bags',
+  NUMBER_OF_BAGS: 'bags',
+  'No. of bags': 'Number of bags',
+  NUMBER_OF_SHEETS: 'MT',
+  kg: 'kg',
+  colour: 'colour',
+  GSM: 'GSM',
+};
+
+export const APP_STATUS_FOR_MSME = {
+  new: 'Awaiting confirmation',
+  'awaiting pricing': 'Awaiting confirmation',
+  'awaiting customer approval': 'Awaiting confirmation',
+  'awaiting document': 'Awaiting confirmation',
+  'awaiting pi': 'Awaiting confirmation',
+  'awaiting payment': 'Awaiting confirmation',
+  lost: 'Order cancelled',
+};
+
+export const CONNECTOR_ORDER_TYPE_MAPPING = {
+  PRIVATE_BRAND: 'Private Brand',
+};
+
+export const APP_STATUS_PB_WHEN_NO_FULLFILLEDBY_PRESENT = {
+  new: 'Awaiting confirmation',
+  rejected: 'Awaiting confirmation',
+  lost: 'Order cancelled',
+};
+
+export const APP_STATUS_PB_WHEN__FULLFILLEDBY_JSW_ONE = {
+  new: 'Awaiting confirmation',
+  quoted: 'Awaiting confirmation',
+  'awaiting approval from jsw one': 'Awaiting confirmation',
+  'awaiting customer approval': 'Awaiting confirmation',
+  'awaiting credit approval from jsw one': 'Awaiting confirmation',
+  rejected: 'Order cancelled',
+  lost: 'Order cancelled',
+};
+
+export const APP_STATUS_PB_WHEN__FULLFILLEDBY_JSW_ONE_DISTRIBUTOR = {
+  new: 'Awaiting confirmation',
+  quoted: 'Order confirmed',
+  success: 'Order delivered',
+  lost: 'Order cancelled',
+};
+
+export const PB_ORDER_TAGS = {
+  'JSW One': 'Fulfilled by JSW One',
+  Warehouse: 'Fulfilled by JSW One Distributor',
+};
+
+export const PAYMENT_STATUS_MAPPING = {
+  Full: 'Paid',
+  Pending: 'Pending',
+  Partial: 'Partial',
+};
+
+export const DEFAULT_VALUE = 0.0;
+export const CONSENT_EVENT_NAME="opt-in";
+export const CONSENT_REGISTRATION_SOURCE = "JSW One MSME App";

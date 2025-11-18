@@ -5,6 +5,7 @@
 import { AggregatedResponse } from 'src/models/aggregated-response.model';
 import { Logger } from '@nestjs/common';
 import { getFormattedTracingContext } from 'src/utils/tracing.util';
+import { BaseRequest } from 'src/models/base-request.model';
 
 export function mergeHomePageResponses(
   aggregatedResponses: AggregatedResponse[],
@@ -21,13 +22,16 @@ export function mergeHomePageResponses(
   const buyAgainResponse = responses['app-buy-again'];
   const categoriesResponse = responses['app-categories'];
   const blogResponse = responses['app-blogs'];
+  const inTransitResponse = responses['app-in-transit'];
 
   if (
     !strapiResponse ||
     typeof strapiResponse.data !== 'object' ||
     strapiResponse.data === null
   ) {
-    Logger.error(`Error for Home Page API method: mergeHomePageResponses ${getFormattedTracingContext()} Strapi response is missing or invalid`);
+    Logger.error(
+      `Error for Home Page API method: mergeHomePageResponses ${getFormattedTracingContext()} Strapi response is missing or invalid`,
+    );
     return { data: {}, meta: {} };
   }
 
@@ -47,6 +51,7 @@ export function mergeHomePageResponses(
     ];
   }
   const blocks: any[] = originalBlocks;
+
   const buyAgainProducts = (
     buyAgainResponse?.data as { listOfBuyAgainProducts?: unknown }
   )?.listOfBuyAgainProducts;
@@ -135,6 +140,26 @@ export function mergeHomePageResponses(
     }
   }
 
+  const inTransitApiResponse = inTransitResponse;
+  let inTransit = false;
+  if (
+    inTransitApiResponse.success &&
+    inTransitApiResponse.data.success &&
+    inTransitApiResponse.data.data.success
+  ) {
+    const inTransitData = inTransitApiResponse.data.data.response.data;
+    if (inTransitData && inTransitData.length > 0) {
+      inTransit = true;
+    }
+  }
+
+  const inTransitBlock = blocks.find(
+    (block) => block.__component === 'app-components.app-link-banner',
+  );
+  if (inTransitBlock) {
+    inTransitBlock.inTransit = inTransit;
+  }
+
   mergedData.blocks = blocks;
 
   return {
@@ -188,7 +213,9 @@ export function mergeBuyAgainResponses(
       return buyAgainRetailApiResponse.data;
     }
   } else {
-    Logger.error(`Error for Buy Again API method: mergeBuyAgainResponses ${getFormattedTracingContext()} Buy again retail API response failed`);
+    Logger.error(
+      `Error for Buy Again API method: mergeBuyAgainResponses ${getFormattedTracingContext()} Buy again retail API response failed`,
+    );
     return {
       listOfBuyAgainProducts: [],
     };
@@ -222,7 +249,9 @@ export function mergeTopBrandsResponses(aggregatedResponses) {
       const topBrandsStrapiResponse = strapiBrandsResponse.branding_sections[0];
 
       if (!topBrandsStrapiResponse) {
-        Logger.error(`Error for Top Brands API method: mergeTopBrandsResponses ${getFormattedTracingContext()} Top brands Strapi response is missing`);
+        Logger.error(
+          `Error for Top Brands API method: mergeTopBrandsResponses ${getFormattedTracingContext()} Top brands Strapi response is missing`,
+        );
         return defaultResponse;
       }
       const brands: any[] = [];
@@ -260,10 +289,23 @@ export function mergeTopBrandsResponses(aggregatedResponses) {
         };
       }
     }
-    Logger.error(`Error for Top Brands API method: mergeTopBrandsResponses ${getFormattedTracingContext()} Strapi branding sections not found or invalid`);
+    Logger.error(
+      `Error for Top Brands API method: mergeTopBrandsResponses ${getFormattedTracingContext()} Strapi branding sections not found or invalid`,
+    );
     return defaultResponse;
   } else {
-    Logger.error(`Error for Top Brands API method: mergeTopBrandsResponses ${getFormattedTracingContext()} Strapi or API data response failed`);
+    Logger.error(
+      `Error for Top Brands API method: mergeTopBrandsResponses ${getFormattedTracingContext()} Strapi or API data response failed`,
+    );
     return defaultResponse;
   }
+}
+
+export function transformInTransitRequest(request) {
+  const finalTransformedRequest: BaseRequest = {
+    ...request,
+    body: null,
+  };
+  finalTransformedRequest.url.search = `?page=1&size=10&cursorTimestamp=0`;
+  return finalTransformedRequest;
 }

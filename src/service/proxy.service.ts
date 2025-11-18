@@ -1,7 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unnecessary-type-assertion */
-/* eslint-disable @typescript-eslint/require-await */
 /* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
@@ -14,6 +12,7 @@ import { ROUTE_CONFIG } from '../config/route.config';
 import { BaseRequest } from '../models/base-request.model';
 import {
   AggregateRouteConfig,
+  ConditionalRouteConfig,
   TargetConfig,
 } from 'src/models/route-config.model';
 import { Request } from 'express';
@@ -23,6 +22,7 @@ import { AggregatedResponse } from 'src/models/aggregated-response.model';
 import { IncomingHttpHeaders } from 'http';
 import { inspect } from 'util';
 import { CustomError } from 'src/utils/CustomError';
+import { match } from 'path-to-regexp';
 // import Redis from 'ioredis';
 
 @Injectable()
@@ -32,10 +32,8 @@ export class ProxyService {
   // private readonly redisClient = new Redis({ host: 'localhost', port: 6379 });
   public result: any = '';
   async handleRequest(req: Request) {
-    console.log(`Incoming ${req.method} request: ${req.url}`)
-    const route = ROUTE_CONFIG.find(
-      (r) => r.path === req.path && r.method === req.method,
-    );
+    console.log(`Incoming ${req.method} request: ${req.url}`);
+    const route = this.findRoute(req);
 
     if (!route) {
       const activeSpan = trace.getSpan(context.active());
@@ -43,7 +41,13 @@ export class ProxyService {
         code: SpanStatusCode.ERROR,
         message: `Route config not found for ${req.method} ${req.path}`,
       });
-      this.result = JSON.stringify(activeSpan);
+      const spanContext = activeSpan?.spanContext();
+      this.result = spanContext
+        ? {
+            traceId: spanContext.traceId,
+            spanId: spanContext.spanId,
+          }
+        : {};
       console.log('result', activeSpan);
       this.logger.error(
         `Handling request for route: ${req.method} ${req.path} trace_id: ${inspect(this.result.traceId)} span_id: ${inspect(this.result.spanId)} `,
@@ -83,9 +87,47 @@ export class ProxyService {
         return await this.handleTransformRequest(route.target, req);
       case RouteHandler.AGGREGATE:
         return await this.handleAggregateRequest(route, req);
+      case RouteHandler.CONDITIONAL:
+        return this.handleConditionalRequest(route, req);
       default:
         throw new Error('Unsupported route handler');
     }
+  }
+
+  private findRoute(req: Request) {
+    for (const route of ROUTE_CONFIG) {
+      if (route.method !== req.method) {
+        continue;
+      }
+
+      const routeMatcher = match(route.path, { decode: decodeURIComponent });
+      const result = routeMatcher(req.path);
+
+      if (result) {
+        req.params = { ...req.params, ...(result.params as any) };
+        return route;
+      }
+    }
+    return undefined;
+  }
+  private async handleConditionalRequest(
+    route: ConditionalRouteConfig,
+    req: Request,
+  ) {
+    const activeSpan = trace.getSpan(context.active());
+    activeSpan?.setAttribute('proxy.route_handler', RouteHandler.CONDITIONAL);
+
+    const targetName = await applyTransform(route.conditionTransform, req);
+    const targetToExecute = route.targets.find((t) => t.name === targetName);
+
+    if (!targetToExecute) {
+      throw new Error(
+        `Conditional target '${targetName}' not found in route config for path '${route.path}'`,
+      );
+    }
+
+    activeSpan?.setAttribute('proxy.conditional.selected_target', targetName);
+    return this.handleTransformRequest(targetToExecute, req);
   }
 
   private async handleAggregateRequest(
@@ -165,6 +207,7 @@ export class ProxyService {
                     error: err?.message || String(err),
                     httpStatus: err?.status || 500,
                     downstreamResponse: err?.response?.data || null,
+                    customError: err instanceof CustomError ? err : null,
                   };
                 }
               },
@@ -179,24 +222,24 @@ export class ProxyService {
                   error: 'Unexpected failure',
                 },
           );
-                  const isAggregatedResponse = (
-          r: any,
-        ): r is AggregatedResponse => 'target' in r && 'success' in r;
+          const isAggregatedResponse = (r: any): r is AggregatedResponse =>
+            'target' in r && 'success' in r;
 
-        const unauthorized = normalizedResults.find(
-          (r): r is AggregatedResponse =>
-            isAggregatedResponse(r) &&
-            (r.httpStatus === 401 || r.httpStatus === 403),
-        );
-
-        if (unauthorized) {
-          const error: any = new CustomError(
-            `Authorization error from target: ${unauthorized.target}`,500
+          const unauthorized = normalizedResults.find(
+            (r): r is AggregatedResponse =>
+              isAggregatedResponse(r) &&
+              (r.httpStatus === 401 || r.httpStatus === 403),
           );
-          error.httpStatusCode = unauthorized.httpStatus;
-          error.downstreamResponse = unauthorized.downstreamResponse;
-          throw error;
-        }
+
+          if (unauthorized) {
+            const error: any = new CustomError(
+              `Authorization error from target: ${unauthorized.target}`,
+              500,
+            );
+            error.httpStatusCode = unauthorized.httpStatus;
+            error.downstreamResponse = unauthorized.downstreamResponse;
+            throw error;
+          }
 
           span.setAttribute('proxy.parallel.results', normalizedResults.length);
           const finalResult = route.resTransform
@@ -414,7 +457,8 @@ export class ProxyService {
           if (response.status === 401 || response.status === 403) {
             const error = new CustomError(
               `Downstream service (${target.name || target.url}) returned ${response.status}`,
-            500)   as any;
+              500,
+            ) as any;
             error.status = response.status;
             error.response = response;
             throw error;
@@ -485,14 +529,18 @@ export class ProxyService {
                   span.setAttribute('api.error.response.data', errorDataStr);
                 }
               }
-              if (errorResponse.status === 401 || errorResponse.status === 403) {
-              const authError = new CustomError(
-                `Authorization error from target: ${target.name || target.url}`,500
-              ) as any;
-              authError.httpStatusCode = errorResponse.status;
-              authError.response = errorResponse;
-              throw authError;
-            }
+              if (
+                errorResponse.status === 401 ||
+                errorResponse.status === 403
+              ) {
+                const authError = new CustomError(
+                  `Authorization error from target: ${target.name || target.url}`,
+                  500,
+                ) as any;
+                authError.httpStatusCode = errorResponse.status;
+                authError.response = errorResponse;
+                throw authError;
+              }
             }
           }
 
@@ -517,6 +565,7 @@ export class ProxyService {
       url: url,
       body: req.body,
       headers: this.getHeadersToPass(req.headers, headersToPass, staticHeaders),
+      params: req.params,
     };
 
     if (requestTransform) {
@@ -569,5 +618,4 @@ export class ProxyService {
 
     return headers;
   }
-
 }

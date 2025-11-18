@@ -1,20 +1,43 @@
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
+/* eslint-disable @typescript-eslint/unbound-method */
+/* eslint-disable @typescript-eslint/no-unsafe-return */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-import { HttpStatus } from '@nestjs/common';
+import { HttpStatus, Logger } from '@nestjs/common';
 import {
+  selectLoginTarget,
+  transformEmailLoginRequest,
+  transformEmailLoginResponse,
+  transformOtpLoginResponse,
   transformResetPasswordRequest,
   transformResetPasswordResponse,
   transformVerifyMobileNumberOtpResponse,
   transformVerifyMobileNumberRequest,
   transformVerifyMobileNumberResponse,
   transformVerifyMobileNumberWithOtpRequest,
+  validateEmailAndPhoneNumber,
   validateVerifyMobileNumberWithOtpData,
 } from '../login.transformers';
 import { BaseRequest } from 'src/models/base-request.model';
 import { CustomError } from 'src/utils/CustomError';
 import { MSME, MSME_ERRORS_MAPPING } from 'src/config/app.config';
 
+jest.mock('src/utils/CustomError');
+jest.mock('src/utils/tracing.util', () => ({
+  getFormattedTracingContext: jest.fn(() => 'test-trace-id'),
+}));
+jest.mock('@nestjs/common', () => ({
+  ...jest.requireActual('@nestjs/common'),
+  Logger: {
+    error: jest.fn(),
+    log: jest.fn(),
+  },
+}));
+
 describe('login.transformers', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
   describe('transformResetPasswordRequest', () => {
     it('should transform the request correctly with a valid emailId', () => {
       const request: BaseRequest = {
@@ -388,6 +411,146 @@ describe('login.transformers', () => {
         MSME_ERRORS_MAPPING['Invalid OTP.'] || 'Invalid OTP.';
       expect(() => transformVerifyMobileNumberOtpResponse(apiResponse)).toThrow(
         new CustomError(expectedMessage, HttpStatus.BAD_REQUEST),
+      );
+    });
+  });
+
+  describe('selectLoginTarget', () => {
+    it('should return "generate-otp-login" when only phoneNumber is provided', () => {
+      const request: Partial<BaseRequest> = {
+        body: { phoneNumber: '1234567890' },
+        url: new URL('http://localhost/login'),
+      };
+      const result = selectLoginTarget(request as BaseRequest);
+      expect(result).toBe('generate-otp-login');
+    });
+
+    it('should return "email-login" when only email is provided', () => {
+      const request: Partial<BaseRequest> = {
+        body: { email: 'test@example.com' },
+        url: new URL('http://localhost/login'),
+      };
+      const result = selectLoginTarget(request as BaseRequest);
+      expect(result).toBe('email-login');
+    });
+
+    it('should throw CustomError if both email and phoneNumber are provided', () => {
+      const request: Partial<BaseRequest> = {
+        body: { email: 'test@example.com', phoneNumber: '1234567890' },
+        url: new URL('http://localhost/login'),
+      };
+      expect(() => selectLoginTarget(request as BaseRequest)).toThrow(
+        CustomError,
+      );
+      expect(CustomError).toHaveBeenCalledWith(
+        'Either email or phoneNumber is required',
+        HttpStatus.BAD_REQUEST,
+      );
+    });
+
+    it('should throw CustomError if neither email nor phoneNumber is provided', () => {
+      const request: Partial<BaseRequest> = {
+        body: {},
+        url: new URL('http://localhost/login'),
+      };
+      expect(() => selectLoginTarget(request as BaseRequest)).toThrow(
+        CustomError,
+      );
+      expect(CustomError).toHaveBeenCalledWith(
+        'Either email or phoneNumber is required',
+        HttpStatus.BAD_REQUEST,
+      );
+    });
+  });
+
+  describe('validateEmailAndPhoneNumber', () => {
+    it('should return valid when only email is provided', () => {
+      const result = validateEmailAndPhoneNumber('test@example.com', '');
+      expect(result).toEqual({ isValid: true });
+    });
+
+    it('should return valid when only phoneNumber is provided', () => {
+      const result = validateEmailAndPhoneNumber('', '1234567890');
+      expect(result).toEqual({ isValid: true });
+    });
+
+    it('should return invalid when both email and phoneNumber are provided', () => {
+      const result = validateEmailAndPhoneNumber(
+        'test@example.com',
+        '1234567890',
+      );
+      expect(result).toEqual({
+        isValid: false,
+        errorMessage: 'Either email or phoneNumber is required',
+      });
+    });
+
+    it('should return invalid when both are empty strings', () => {
+      const result = validateEmailAndPhoneNumber('', '');
+      expect(result).toEqual({
+        isValid: false,
+        errorMessage: 'Either email or phoneNumber is required',
+      });
+    });
+
+    it('should return invalid when neither is provided', () => {
+      const result = validateEmailAndPhoneNumber('', '');
+      expect(result).toEqual({
+        isValid: false,
+        errorMessage: 'Either email or phoneNumber is required',
+      });
+    });
+  });
+
+  describe('transformOtpLoginResponse', () => {
+    it('should return requestId and userExists:true on success', () => {
+      const response = {
+        data: { success: true, requestId: '12345', existing: true },
+      };
+      const result = transformOtpLoginResponse(response);
+      expect(result).toEqual({ requestId: '12345', userExists: true });
+    });
+
+    it('should return undefined values if requestId and existing are not present in the response', () => {
+      const response = { data: { success: true } };
+      const result = transformOtpLoginResponse(response);
+      expect(result).toEqual({ requestId: undefined, userExists: undefined });
+    });
+  });
+
+  describe('transformEmailLoginRequest', () => {
+    it('should transform the request correctly', () => {
+      const request = {
+        body: { email: 'Test@Example.COM' },
+        url: new URL('http://localhost/login'),
+      };
+      const transformedRequest = transformEmailLoginRequest(request);
+      expect(transformedRequest.url.search).toBe('?emailId=test@example.com');
+      expect(transformedRequest.body).toBeNull();
+    });
+  });
+
+  describe('transformEmailLoginResponse', () => {
+    it('should return userExists: true when API response data is true', () => {
+      const response = { data: true };
+      const result = transformEmailLoginResponse(response);
+      expect(result).toEqual({ requestId: '', userExists: true });
+    });
+
+    it('should return userExists: false when API response data is false', () => {
+      const response = { data: false };
+      const result = transformEmailLoginResponse(response);
+      expect(result).toEqual({ requestId: '', userExists: false });
+    });
+
+    it('should throw CustomError if responseData is null or undefined', () => {
+      expect(() => transformEmailLoginResponse(null)).toThrow(CustomError);
+      expect(Logger.error).toHaveBeenCalledWith(
+        'Error for Email Login API method: transformEmailLoginResponse test-trace-id CCP Email Login API is failing',
+      );
+      expect(CustomError).toHaveBeenCalledWith(
+        'CCP Email Login API is failing',
+        HttpStatus.INTERNAL_SERVER_ERROR,
       );
     });
   });
