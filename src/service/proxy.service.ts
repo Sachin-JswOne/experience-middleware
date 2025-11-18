@@ -165,6 +165,7 @@ export class ProxyService {
                     error: err?.message || String(err),
                     httpStatus: err?.status || 500,
                     downstreamResponse: err?.response?.data || null,
+                    customError: err instanceof CustomError ? err : null,
                   };
                 }
               },
