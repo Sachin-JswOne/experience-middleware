@@ -481,14 +481,14 @@
     "targets": [
       {
         "name": "strapi-project-detail",
-        "url": "http://cms-dev.onejswhomes.in/api/project-page",
+        "url": "http://34.117.162.157/api/project-page",
         "method": "GET",
         "timeout": { "request": 5000, "socket": 1000 },
         "reqTransform": "general.transformers.moveBodyToQueryParams"
       },
       {
         "name": "homes-project-details",
-        "url": "http://34.100.206.209/homes-service/v1/project/project-details",
+        "url": "http://34.95.122.83/homes-service/v1/project/project-details",
         "method": "GET",
         "timeout": { "request": 5000, "socket": 1000 },
         "headersToPass": [
@@ -508,14 +508,14 @@
     "targets": [
       {
         "name": "strapi-user-detail",
-        "url": "http://cms-dev.onejswhomes.in/api/user-info",
+        "url": "http://34.117.162.157/api/user-info",
         "method": "GET",
         "timeout": { "request": 5000, "socket": 1000 },
         "reqTransform": "general.transformers.moveBodyToQueryParams"
       },
       {
         "name": "homes-user-details",
-        "url": "http://34.100.206.209/homes-service/v1/user/details",
+        "url": "http://34.95.122.83/homes-service/v1/user/details",
         "method": "GET",
         "timeout": { "request": 5000, "socket": 1000 },
         "headersToPass": [
@@ -532,7 +532,7 @@
     "routeHandler": "TRANSFORM",
     "target": {
       "name": "homes-progress-report",
-      "url": "http://34.100.206.209/homes-service/v1/project/progress-reports",
+      "url": "http://34.95.122.83/homes-service/v1/project/progress-reports",
       "method": "GET",
       "timeout": { "request": 5000, "socket": 1000 },
       "headersToPass": [
@@ -695,7 +695,7 @@
     "routeHandler": "TRANSFORM",
     "target": {
       "name": "homes-design-documents",
-      "url": "http://34.100.206.209/homes-service/v1/project/design-documents",
+      "url": "http://34.95.122.83/homes-service/v1/project/design-documents",
       "method": "GET",
       "timeout": { "request": 5000, "socket": 1000 },
       "headersToPass": [
