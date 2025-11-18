@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-return */
 /* eslint-disable no-prototype-builtins */
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-unsafe-call */
@@ -20,11 +21,15 @@ export function transformResetPasswordRequest(
 
   const { emailId } = request.body;
   if (!emailId || emailId === '') {
-    Logger.error(`Error for ${request.url} method: transformResetPasswordRequest ${getFormattedTracingContext()} Email ID is required`);
+    Logger.error(
+      `Error for ${request.url} method: transformResetPasswordRequest ${getFormattedTracingContext()} Email ID is required`,
+    );
     throw new CustomError('emailId is required', HttpStatus.BAD_REQUEST);
   }
   transformedRequest.url.search = `?email=${emailId.toLowerCase()}`;
-  Logger.log(`Transforming Reset Password Request ${getFormattedTracingContext()}`);
+  Logger.log(
+    `Transforming Reset Password Request ${getFormattedTracingContext()}`,
+  );
   return transformedRequest;
 }
 
@@ -32,14 +37,18 @@ export function transformResetPasswordResponse(response: any) {
   const responseData = response?.data;
 
   if (!responseData) {
-    Logger.error(`Error for Reset Password API method: transformResetPasswordResponse ${getFormattedTracingContext()} CCP Reset Password API is failing`);
+    Logger.error(
+      `Error for Reset Password API method: transformResetPasswordResponse ${getFormattedTracingContext()} CCP Reset Password API is failing`,
+    );
     throw new CustomError(
       'CCP Reset Password API is failing',
       HttpStatus.INTERNAL_SERVER_ERROR,
     );
   }
   if (!responseData.success && responseData.error) {
-    Logger.error(`Error for Reset Password API method: transformResetPasswordResponse ${getFormattedTracingContext()} ${responseData.error?.message || 'CCP Reset Password API is failing'}`);
+    Logger.error(
+      `Error for Reset Password API method: transformResetPasswordResponse ${getFormattedTracingContext()} ${responseData.error?.message || 'CCP Reset Password API is failing'}`,
+    );
     throw new CustomError(
       responseData.error?.message,
       responseData.error?.code,
@@ -63,7 +72,9 @@ export function transformVerifyMobileNumberRequest(
   const { phoneNumber } = request.body;
 
   if (!phoneNumber || phoneNumber === '') {
-    Logger.error(`Error for ${request.url} method: transformVerifyMobileNumberRequest ${getFormattedTracingContext()} PhoneNumber is required`);
+    Logger.error(
+      `Error for ${request.url} method: transformVerifyMobileNumberRequest ${getFormattedTracingContext()} PhoneNumber is required`,
+    );
     throw new CustomError('PhoneNumber is required', HttpStatus.BAD_REQUEST);
   }
   const transformedRequest: BaseRequest = {
@@ -81,14 +92,18 @@ export function transformVerifyMobileNumberResponse(response: any) {
   const responseData = response;
 
   if (!responseData) {
-    Logger.error(`Error for Verify Mobile Number API method: transformVerifyMobileNumberResponse ${getFormattedTracingContext()} CCP Verify Mobile Number API is failing`);
+    Logger.error(
+      `Error for Verify Mobile Number API method: transformVerifyMobileNumberResponse ${getFormattedTracingContext()} CCP Verify Mobile Number API is failing`,
+    );
     throw new CustomError(
       'CCP Verify Mobile Number API is failing',
       HttpStatus.INTERNAL_SERVER_ERROR,
     );
   }
   if (!responseData.success && responseData.error) {
-    Logger.error(`Error for Verify Mobile Number API method: transformVerifyMobileNumberResponse ${getFormattedTracingContext()} ${responseData.error?.message || 'CCP Verify Mobile Number API is failing'}`);
+    Logger.error(
+      `Error for Verify Mobile Number API method: transformVerifyMobileNumberResponse ${getFormattedTracingContext()} ${responseData.error?.message || 'CCP Verify Mobile Number API is failing'}`,
+    );
     throw new CustomError(
       responseData.error?.message,
       responseData.error?.code || HttpStatus.INTERNAL_SERVER_ERROR,
@@ -97,12 +112,13 @@ export function transformVerifyMobileNumberResponse(response: any) {
   const verifyMobileNumberResponse = responseData?.data;
 
   if (!verifyMobileNumberResponse.success) {
-    const errorMessage = MSME_ERRORS_MAPPING[verifyMobileNumberResponse.message] || verifyMobileNumberResponse.message;
-    Logger.error(`Error for Verify Mobile Number API method: transformVerifyMobileNumberResponse ${getFormattedTracingContext()} ${errorMessage}`);
-    throw new CustomError(
-      errorMessage,
-      HttpStatus.BAD_REQUEST,
+    const errorMessage =
+      MSME_ERRORS_MAPPING[verifyMobileNumberResponse.message] ||
+      verifyMobileNumberResponse.message;
+    Logger.error(
+      `Error for Verify Mobile Number API method: transformVerifyMobileNumberResponse ${getFormattedTracingContext()} ${errorMessage}`,
     );
+    throw new CustomError(errorMessage, HttpStatus.BAD_REQUEST);
   }
 
   return {
@@ -116,7 +132,9 @@ export function transformVerifyMobileNumberWithOtpRequest(
   const validationResult = validateVerifyMobileNumberWithOtpData(request.body);
 
   if (!validationResult.isValid) {
-    Logger.error(`Error for ${request.url} method: transformVerifyMobileNumberWithOtpRequest ${getFormattedTracingContext()} ${validationResult.errorMessage || 'Validation failed'}`);
+    Logger.error(
+      `Error for ${request.url} method: transformVerifyMobileNumberWithOtpRequest ${getFormattedTracingContext()} ${validationResult.errorMessage || 'Validation failed'}`,
+    );
     throw new CustomError(
       validationResult.errorMessage || '',
       HttpStatus.BAD_REQUEST,
@@ -156,14 +174,18 @@ export function transformVerifyMobileNumberOtpResponse(response: any) {
   const responseData = response;
 
   if (!responseData) {
-    Logger.error(`Error for Verify Mobile Number With OTP API method: transformVerifyMobileNumberOtpResponse ${getFormattedTracingContext()} CCP Verify Mobile Number With OTP API is failing`);
+    Logger.error(
+      `Error for Verify Mobile Number With OTP API method: transformVerifyMobileNumberOtpResponse ${getFormattedTracingContext()} CCP Verify Mobile Number With OTP API is failing`,
+    );
     throw new CustomError(
       'CCP Verify Mobile Number With OTP API is failing',
       HttpStatus.INTERNAL_SERVER_ERROR,
     );
   }
   if (!responseData.success && responseData.error) {
-    Logger.error(`Error for Verify Mobile Number With OTP API method: transformVerifyMobileNumberOtpResponse ${getFormattedTracingContext()} ${responseData.error?.message || 'CCP Verify Mobile Number With OTP API is failing'}`);
+    Logger.error(
+      `Error for Verify Mobile Number With OTP API method: transformVerifyMobileNumberOtpResponse ${getFormattedTracingContext()} ${responseData.error?.message || 'CCP Verify Mobile Number With OTP API is failing'}`,
+    );
     throw new CustomError(
       responseData.error?.message,
       responseData.error?.code || HttpStatus.INTERNAL_SERVER_ERROR,
@@ -172,15 +194,122 @@ export function transformVerifyMobileNumberOtpResponse(response: any) {
   const verifyMobileNumberWithOtpResponse = responseData?.data;
 
   if (!verifyMobileNumberWithOtpResponse.success) {
-    const errorMessage = MSME_ERRORS_MAPPING[verifyMobileNumberWithOtpResponse.message] || verifyMobileNumberWithOtpResponse.message;
-    Logger.error(`Error for Verify Mobile Number With OTP API method: transformVerifyMobileNumberOtpResponse ${getFormattedTracingContext()} ${errorMessage}`);
-    throw new CustomError(
-      errorMessage,
-      HttpStatus.BAD_REQUEST,
+    const errorMessage =
+      MSME_ERRORS_MAPPING[verifyMobileNumberWithOtpResponse.message] ||
+      verifyMobileNumberWithOtpResponse.message;
+    Logger.error(
+      `Error for Verify Mobile Number With OTP API method: transformVerifyMobileNumberOtpResponse ${getFormattedTracingContext()} ${errorMessage}`,
     );
+    throw new CustomError(errorMessage, HttpStatus.BAD_REQUEST);
   }
 
   return {
     success: true,
   };
+}
+
+export function selectLoginTarget(request: BaseRequest) {
+  const { email, phoneNumber } = request.body;
+
+  const validationResult = validateEmailAndPhoneNumber(email, phoneNumber);
+
+  if (!validationResult.isValid) {
+    Logger.error(
+      `Error for ${request.url} method: selectLoginTarget ${getFormattedTracingContext()} ${validationResult.errorMessage || 'Validation failed'}`,
+    );
+    throw new CustomError(
+      validationResult.errorMessage || '',
+      HttpStatus.BAD_REQUEST,
+    );
+  }
+
+  if (phoneNumber && phoneNumber !== '') {
+    return 'generate-otp-login';
+  } else {
+    return 'email-login';
+  }
+}
+
+export function validateEmailAndPhoneNumber(
+  email: string,
+  phoneNumber: string,
+) {
+  if (
+    (email === '' && phoneNumber === '') ||
+    (email && phoneNumber) ||
+    (!email && !phoneNumber)
+  ) {
+    return {
+      isValid: false,
+      errorMessage: 'Either email or phoneNumber is required',
+    };
+  }
+  return { isValid: true };
+}
+
+export function transformOtpLoginResponse(response: any) {
+  const responseData = response;
+
+  if (!responseData) {
+    Logger.error(
+      `Error for Sent Otp API method: transformOtpLoginResponse ${getFormattedTracingContext()} CCP Sent Otp API is failing`,
+    );
+    throw new CustomError(
+      'CCP Sent Otp API is failing',
+      HttpStatus.INTERNAL_SERVER_ERROR,
+    );
+  }
+  if (!responseData.success && responseData.error) {
+    Logger.error(
+      `Error for Sent Otp API method: transformOtpLoginResponse ${getFormattedTracingContext()} ${responseData.error?.message || 'CCP Sent Otp API is failing'}`,
+    );
+    throw new CustomError(
+      responseData.error?.message,
+      responseData.error?.code || HttpStatus.INTERNAL_SERVER_ERROR,
+    );
+  }
+  const sentOtpResponse = responseData?.data;
+
+  if (!sentOtpResponse.success) {
+    const errorMessage =
+      MSME_ERRORS_MAPPING[sentOtpResponse.message] || sentOtpResponse.message;
+    Logger.error(
+      `Error for Sent Otp API method: transformOtpLoginResponse ${getFormattedTracingContext()} ${errorMessage}`,
+    );
+    throw new CustomError(errorMessage, HttpStatus.BAD_REQUEST);
+  }
+
+  return {
+    requestId: sentOtpResponse.requestId,
+    userExists: sentOtpResponse.existing,
+  };
+}
+
+export function transformEmailLoginRequest(request) {
+  const { email } = request.body;
+
+  request.url.search = `?emailId=${email.toLowerCase()}`;
+  request.body = null;
+
+  return request;
+}
+
+export function transformEmailLoginResponse(response) {
+  const responseData = response;
+
+  if (!responseData) {
+    Logger.error(
+      `Error for Email Login API method: transformEmailLoginResponse ${getFormattedTracingContext()} CCP Email Login API is failing`,
+    );
+    throw new CustomError(
+      'CCP Email Login API is failing',
+      HttpStatus.INTERNAL_SERVER_ERROR,
+    );
+  }
+  const isEmailExists = responseData?.data;
+
+  return (response = {
+    requestId: '',
+    userExists: isEmailExists,
+  });
 }

@@ -39,5 +39,13 @@ export interface AggregateRouteConfig extends BaseRouteConfig {
   targets: TargetConfig[];
   resTransform?: string;
 }
+export interface ConditionalRouteConfig extends BaseRouteConfig {
+  routeHandler: RouteHandler.CONDITIONAL;
+  conditionTransform: string;
+  targets: TargetConfig[];
+}
 
-export type RouteConfig = TransformRouteConfig | AggregateRouteConfig;
+export type RouteConfig =
+  | TransformRouteConfig
+  | AggregateRouteConfig
+  | ConditionalRouteConfig;
