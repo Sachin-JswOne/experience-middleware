@@ -11,12 +11,12 @@ import { AppService } from './app.service';
 
 @Module({
   imports: [
-    PrometheusModule.register({
-      path: '/metrics',
-    }),
-    PrometheusModule.register({
-      path: '/metrics',
-    }),
+    // PrometheusModule.register({
+    //   path: '/metrics',
+    // }),
+    // PrometheusModule.register({
+    //   path: '/metrics',
+    // }),
     ServeStaticModule.forRoot({
       rootPath: join(__dirname, '..', 'public'),
       exclude: ['/metrics'],
