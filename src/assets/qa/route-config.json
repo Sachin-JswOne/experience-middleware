@@ -857,7 +857,7 @@
         "reqTransform": "general.transformers.convertToGetRequest",
         "headersToPass": [
           {
-            "source": "authorization",
+            "source": "access_token",
             "destination": "access_token"
           }
         ]
@@ -872,6 +872,23 @@
         },
         "reqTransform": "cms.transformers.homeBlogs",
         "resTransform": "cms.transformers.replaceUriPrefix"
+      },
+      {
+        "name": "pending-dispatch-quantity",
+        "url": "https://qa.msme.jswone.in/order-service/order/v1/material-tracking/pending-dispatch-quantity",
+        "method": "GET",
+        "timeout": {
+          "request": "${TIMEOUTS.REQUEST}",
+          "socket": "${TIMEOUTS.SOCKET}"
+        },
+        "reqTransform": "general.transformers.convertToGetRequest",
+        "headersToPass": [
+       
+          {
+            "source": "access_token",
+            "destination": "access_token"
+          }
+        ]
       }
     ],
     "resTransform": "web.transformers.mergeWebHomePageResponses"
@@ -975,5 +992,44 @@
         "*"
       ]
     }
+  },
+  {
+    "path": "${PATH_URL}/v1/customer-profile",
+    "method": "GET",
+    "routeHandler": "AGGREGATE",
+    "aggregationType": "PARALLEL",
+    "targets": [
+      {
+        "name": "profile",
+        "url": "https://qa.msme.jswone.in/customer/me/profile",
+        "method": "GET",
+        "timeout": {
+          "request": "${TIMEOUTS.REQUEST}",
+          "socket": "${TIMEOUTS.SOCKET}"
+        },
+        "headersToPass": [
+          {
+            "source": "access_token",
+            "destination": "access_token"
+          }
+        ]
+      },
+      {
+        "name": "customerData",
+        "url": "https://qa.msme.jswone.in/customer/me/v2",
+        "method": "GET",
+        "timeout": {
+          "request": "${TIMEOUTS.REQUEST}",
+          "socket": "${TIMEOUTS.SOCKET}"
+        },
+        "headersToPass": [
+          {
+            "source": "access_token",
+            "destination": "access_token"
+          }
+        ]
+      }
+    ],
+    "resTransform": "customer.transformers.transformCustomerProfileResponses"
   }
 ]

@@ -20,6 +20,7 @@ export function mergeWebHomePageResponses(
   const cmsResponse = responses['app-home-page'];
   const blogsResponse = responses['app-blogs'];
   const buyAgainResponse = responses['ccp-buy-again-with-prices'];
+  const pendingDispatchResponse = responses['pending-dispatch-quantity'];
 
   if (
     !cmsResponse ||
@@ -81,6 +82,16 @@ export function mergeWebHomePageResponses(
   );
   if (blogsBlock) {
     blogsBlock.blogs = blogs;
+  }
+
+  // Inject pending dispatch quantity data
+  if (pendingDispatchResponse?.success) {
+    mergedData.pendingDispatchQuantity = pendingDispatchResponse.data;
+  } else if (pendingDispatchResponse && !pendingDispatchResponse.success) {
+    Logger.warn(
+      `Warning for Web Home Page API method: mergeWebHomePageResponses ${getFormattedTracingContext()} pending-dispatch-quantity response failed.`,
+      pendingDispatchResponse.error ?? 'Unknown error',
+    );
   }
 
   // Update merged data with blocks
