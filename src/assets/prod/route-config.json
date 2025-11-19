@@ -885,5 +885,53 @@
       "reqTransform": "general.transformers.moveBodyToQueryParams",
       "resTransform": "cms.transformers.replaceUriPrefix"
     }
+  },
+  {
+    "path": "/xp-mi/public/v1/central_commerce/catalogue/search",
+    "method": "POST",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "msmeCatalogueSearch",
+      "url": "https://www.jswonemsme.com/central_commerce/catalogue/search",
+      "method": "POST",
+      "timeout": {
+        "request": "${TIMEOUTS.REQUEST}",
+        "socket": "${TIMEOUTS.SOCKET}"
+      },
+      "headersToPass": [
+        {
+          "source": "access_token",
+          "destination": "access_token"
+        },
+        {
+          "source": "traceId",
+          "destination": "traceId"
+        }
+      ],
+      "requiredParams": ["*"]
+    }
+  },
+  {
+    "path": "/xp-mi/public/v1/central_commerce/product/selector",
+    "method": "POST",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "msmeProductSelector",
+      "url": "https://www.jswonemsme.com/central_commerce/product/selector",
+      "method": "POST",
+      "timeout": {
+        "request": "${TIMEOUTS.REQUEST}",
+        "socket": "${TIMEOUTS.SOCKET}"
+      },
+      "headersToPass": [
+        {
+          "source": "access_token",
+          "destination": "access_token"
+        }
+      ],
+      "requiredParams": [
+        "*"
+      ]
+    }
   }
 ]
