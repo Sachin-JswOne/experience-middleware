@@ -790,7 +790,7 @@
       },
       {
         "name": "ccp-buy-again-with-prices",
-        "url": "${BUY_AGAIN_PRICE_URL}",
+        "url": "https://www.jswonemsme.com/buy-again/list",
         "method": "GET",
         "timeout": {
           "request": "${TIMEOUTS.REQUEST}",
@@ -814,6 +814,23 @@
         },
         "reqTransform": "cms.transformers.homeBlogs",
         "resTransform": "cms.transformers.replaceUriPrefix"
+      },
+      {
+        "name": "pending-dispatch-quantity",
+        "url": "https://www.jswonemsme.com/order-service/order/v1/material-tracking/pending-dispatch-quantity",
+        "method": "GET",
+        "timeout": {
+          "request": "${TIMEOUTS.REQUEST}",
+          "socket": "${TIMEOUTS.SOCKET}"
+        },
+        "reqTransform": "general.transformers.convertToGetRequest",
+        "headersToPass": [
+         
+          {
+            "source": "access_token",
+            "destination": "access_token"
+          }
+        ]
       }
     ],
     "resTransform": "web.transformers.mergeWebHomePageResponses"
@@ -933,5 +950,44 @@
         "*"
       ]
     }
+  },
+  {
+    "path": "${PATH_URL}/v1/customer-profile",
+    "method": "GET",
+    "routeHandler": "AGGREGATE",
+    "aggregationType": "PARALLEL",
+    "targets": [
+      {
+        "name": "profile",
+        "url": "https://www.jswonemsme.com/customer/me/profile",
+        "method": "GET",
+        "timeout": {
+          "request": "${TIMEOUTS.REQUEST}",
+          "socket": "${TIMEOUTS.SOCKET}"
+        },
+        "headersToPass": [
+          {
+            "source": "access_token",
+            "destination": "access_token"
+          }
+        ]
+      },
+      {
+        "name": "customerData",
+        "url": "https://www.jswonemsme.com/customer/me/v2",
+        "method": "GET",
+        "timeout": {
+          "request": "${TIMEOUTS.REQUEST}",
+          "socket": "${TIMEOUTS.SOCKET}"
+        },
+        "headersToPass": [
+          {
+            "source": "access_token",
+            "destination": "access_token"
+          }
+        ]
+      }
+    ],
+    "resTransform": "customer.transformers.transformCustomerProfileResponses"
   }
 ]
