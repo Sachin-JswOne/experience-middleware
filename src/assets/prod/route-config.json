@@ -887,7 +887,7 @@
     }
   },
   {
-    "path": "v1/central_commerce/catalogue/search",
+    "path": "/xp-mi/public/v1/central_commerce/catalogue/search",
     "method": "POST",
     "routeHandler": "TRANSFORM",
     "target": {
@@ -912,7 +912,7 @@
     }
   },
   {
-    "path": "v1/central_commerce/product/selector",
+    "path": "/xp-mi/public/v1/central_commerce/product/selector",
     "method": "POST",
     "routeHandler": "TRANSFORM",
     "target": {
