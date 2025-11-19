@@ -710,7 +710,7 @@
     "routeHandler": "TRANSFORM",
     "target": {
       "name": "homes-construction-documents",
-      "url": "http://34.100.206.209/homes-service/v1/project/construction-documents",
+      "url": "http://34.95.122.83/homes-service/v1/project/construction-documents",
       "method": "GET",
       "timeout": { "request": 5000, "socket": 1000 },
       "headersToPass": [
