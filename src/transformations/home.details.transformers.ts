@@ -53,7 +53,6 @@ function handleHomesError(
   throw errorToThrow;
 }
 
-
 export function mergeProjectDetailsAndTrackerResponses(
   aggregatedResponses: AggregatedResponse[],
 ): any {
@@ -78,11 +77,45 @@ export function mergeProjectDetailsAndTrackerResponses(
 
   const strapiData = { ...strapiResponse.data };
   const homesData = homesDashboardResponse.data;
-  const projectItems =
+  const activeStage = homesData?.projectStepperResponse?.activeStage;
+
+  const mergedDesignItems =
     strapiData?.data?.projectDetails?.projectItems?.map((item: any) => ({
       ...item,
       value: homesData[item.key],
     })) ?? [];
+
+  const mergedPreConstructionItems =
+    strapiData?.data?.projectDetailsPreConstruction?.projectItems?.map((item: any) => ({
+      ...item,
+      value: homesData[item.key],
+    })) ?? [];
+
+  const mergedConstructionItems =
+    strapiData?.data?.projectDetailsConstruction?.projectItems?.map((item: any) => ({
+      ...item,
+      value: homesData[item.key],
+    })) ?? [];
+
+  let finalProjectDetails = {
+    projectDetails: { ...strapiData.data.projectDetails, projectItems: [] },
+    projectDetailsPreConstruction: {
+      ...strapiData.data.projectDetailsPreConstruction,
+      projectItems: [],
+    },
+    projectDetailsConstruction: {
+      ...strapiData.data.projectDetailsConstruction,
+      projectItems: [],
+    },
+  };
+
+  if (activeStage === "Design") {
+    finalProjectDetails.projectDetails.projectItems = mergedDesignItems;
+  } else if (activeStage === "PreConstruction") {
+    finalProjectDetails.projectDetailsPreConstruction.projectItems = mergedPreConstructionItems;
+  } else if (activeStage === "Construction") {
+    finalProjectDetails.projectDetailsConstruction.projectItems = mergedConstructionItems;
+  }
 
   strapiData.data.imageUrl = homesData?.imageUrl ?? "";
 
@@ -92,7 +125,8 @@ export function mergeProjectDetailsAndTrackerResponses(
     address: homesData?.addressLine1 ?? ""
   };
 
-  const note = strapiData?.data?.homesTeam?.note ?? `Please raise the escalation call in the following order : `;
+  const note = strapiData?.data?.homesTeam?.note ??
+    `Please raise the escalation call in the following order : `;
 
   const homesTeam = {
     ...strapiData.data.homesTeam,
@@ -103,8 +137,7 @@ export function mergeProjectDetailsAndTrackerResponses(
           .sort((a: string, b: string) => a.localeCompare(b))
       )].join(" → ")}`
       : "",
-
-    userCard:[
+    userCard: [
       ...(homesData.userDetails?.map((member: any) => ({
         name: member.userName,
         designation: member.projectRoleName,
@@ -113,25 +146,34 @@ export function mergeProjectDetailsAndTrackerResponses(
         level: member.level
       })) ?? []),
       {
-        name : 'Customer Care',
-        email : 'support.homes@jswone.in',
-        mobile : '72080 55527' 
+        name: 'Customer Care',
+        email: 'support.homes@jswone.in',
+        mobile: '72080 55527'
       }
     ]
   };
-  let currentprojectStage: string[] = [];
-  const homesDesignStage = homesData?.projectStepperResponse?.stages.find((stage) => stage.stageName === 'designStage');
-  const homesPreConstructionStage = homesData?.projectStepperResponse?.stages?.find((stage) => stage.stageName === 'preConstructionStage');
-  strapiData.data.projectTracker.activeStage = homesData?.projectStepperResponse?.activeStage;
 
+  let currentprojectStage: string[] = [];
+  const homesDesignStage = homesData?.projectStepperResponse?.stages
+    .find((stage) => stage.stageName === 'designStage');
+
+  const homesPreConstructionStage = homesData?.projectStepperResponse?.stages
+    ?.find((stage) => stage.stageName === 'preConstructionStage');
+
+  strapiData.data.projectTracker.activeStage = activeStage;
+
+  // ------ DESIGN TRACKER ------
   strapiData.data.projectTracker.designStage.active = homesDesignStage?.active;
   strapiData.data.projectTracker.designStage.completed = homesDesignStage?.completed;
+
   const designStage =
     strapiData?.data?.projectTracker?.designStage?.subSteps?.map((member: any) => {
       const milestoneName = member.fieldName;
+
       if (homesDesignStage?.milestones?.[milestoneName]?.status?.toLowerCase().includes('progress')) {
-        currentprojectStage = [member?.title]
+        currentprojectStage = [member?.title];
       }
+
       return {
         ...member,
         currentStatus: homesDesignStage?.milestones?.[milestoneName]?.status ?? '',
@@ -139,6 +181,7 @@ export function mergeProjectDetailsAndTrackerResponses(
       };
     }) ?? [];
 
+  // ------ PRE-CONSTRUCTION TRACKER ------
   strapiData.data.projectTracker.preConstructionStage.active = homesDesignStage?.active;
   strapiData.data.projectTracker.preConstructionStage.completed = homesDesignStage?.completed;
 
@@ -151,47 +194,35 @@ export function mergeProjectDetailsAndTrackerResponses(
         }
         return {
           ...member,
-          currentStatus:
-            homesPreConstructionStage?.milestones?.[milestoneName]?.status ?? '',
+          currentStatus: homesPreConstructionStage?.milestones?.[milestoneName]?.status ?? '',
           date: homesPreConstructionStage?.milestones?.[milestoneName]?.date ?? '',
         };
       },
     ) ?? [];
 
-  if (homesData?.projectStepperResponse?.activeStage == 'Construction') {
+  if (activeStage === 'Construction') {
     const constructionStageStepper = strapiData?.data?.projectTracker?.constructionStage;
     const constructionMileStone = homesData?.projectStepperResponse?.constructionStageMilestone;
     constructionStageStepper.completion.daysLeft = constructionMileStone?.daysLeft;
     constructionStageStepper.completion.progress = constructionMileStone?.percentageCompletion;
     constructionStageStepper.endDate = constructionMileStone.endDate;
     constructionStageStepper.startDate = constructionMileStone?.startDate;
-    constructionStageStepper.recentReports = constructionMileStone.recentProgressReportDetails
-      .map((report: any) => {
-        return {
-          ...constructionStageStepper.recentReports,
-          fileName: report?.reportFileName ?? '',
-          url: report?.reportFileUrl ?? ''
-        }
-      }) ?? [];
-    constructionStageStepper.stageDetails = homesData?.projectStepperResponse?.constructionStageMilestone?.activeMilestones
-      .map((milestone: any) => {
-        return {
-          ...constructionStageStepper.stageDetails,
-          milestoneName: milestone?.name ?? '',
-          progress: milestone?.percentageCompletion ?? 0
-        }
-      });
-
-    currentprojectStage = homesData?.projectStepperResponse?.constructionStageMilestone?.activeMilestones
-      .map((milestone: any) => {
-        return milestone?.name
-      }) ?? [];
-
-    strapiData.data.projectDetailsConstruction =
-      strapiData?.data?.projectDetailsConstruction?.projectItems?.map((item: any) => ({
-        ...item,
-        value: homesData[item.key],
+    constructionStageStepper.recentReports =
+      constructionMileStone.recentProgressReportDetails?.map((report: any) => ({
+        ...constructionStageStepper.recentReports,
+        fileName: report?.reportFileName ?? '',
+        url: report?.reportFileUrl ?? ''
       })) ?? [];
+
+    constructionStageStepper.stageDetails =
+      constructionMileStone?.activeMilestones?.map((milestone: any) => ({
+        ...constructionStageStepper.stageDetails,
+        milestoneName: milestone?.name ?? '',
+        progress: milestone?.percentageCompletion ?? 0
+      }));
+
+    currentprojectStage =
+      constructionMileStone?.activeMilestones?.map((m: any) => m.name) ?? [];
   }
   const projectTracker = {
     ...strapiData.data.projectTracker,
@@ -216,15 +247,11 @@ export function mergeProjectDetailsAndTrackerResponses(
     ...strapiData,
     data: {
       ...strapiData.data,
-      projectDetails: {
-        ...strapiData.data.projectDetails,
-        projectItems,
-      },
+      ...finalProjectDetails,
       title,
       projectID,
       homesTeam,
       projectTracker,
     },
   };
-
 }
