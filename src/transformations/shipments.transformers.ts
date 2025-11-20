@@ -13,7 +13,6 @@ import { formatDate } from 'src/utils/common-functions.util';
 import { CustomError } from 'src/utils/CustomError';
 import { HttpStatus } from '@nestjs/common';
 import { Logger } from '@nestjs/common';
-import { getFormattedTracingContext } from 'src/utils/tracing.util';
 
 export function mergeInvoiceAndShipmentsResponse(
   aggregatedResponses: AggregatedResponse[],
@@ -54,7 +53,7 @@ export function mergeInvoiceAndShipmentsResponse(
     return { listOfShipments: shipments };
   } catch (error) {
     Logger.log(
-      `Transforming Shipment Request  method: mergeInvoiceAndShipmentResponse ${getFormattedTracingContext()}`,
+      `Transforming Shipment Request  method: mergeInvoiceAndShipmentResponse`,
     );
     console.error('Error in mergeInvoiceAndShipmentsResponse:', error);
     throw error;

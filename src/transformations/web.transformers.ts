@@ -4,7 +4,6 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { AggregatedResponse } from 'src/models/aggregated-response.model';
 import { Logger } from '@nestjs/common';
-import { getFormattedTracingContext } from 'src/utils/tracing.util';
 
 export function mergeWebHomePageResponses(
   aggregatedResponses: AggregatedResponse[],
@@ -28,7 +27,7 @@ export function mergeWebHomePageResponses(
     cmsResponse.data === null
   ) {
     Logger.error(
-      `Error for Web Home Page API method: mergeWebHomePageResponses ${getFormattedTracingContext()} CMS response is missing or invalid.`,
+      `Error for Web Home Page API method: mergeWebHomePageResponses CMS response is missing or invalid.`,
     );
     return { data: {}, meta: {} };
   }
@@ -51,14 +50,19 @@ export function mergeWebHomePageResponses(
   if (buyAgainResponse?.success) {
     const rawData = buyAgainResponse.data ?? {};
     const { listOfBuyAgainProducts, variantList, skuSize } = rawData as any;
-    
-    const products = listOfBuyAgainProducts ?? variantList ?? (Array.isArray(rawData) ? rawData : []);
-    
+
+    const products =
+      listOfBuyAgainProducts ??
+      variantList ??
+      (Array.isArray(rawData) ? rawData : []);
+
     if (products.length > 0) {
-      const block = blocks.find((b: any) => 
-        b.type === 'buy-again' || b.__component === 'app-components.app-buy-again'
+      const block = blocks.find(
+        (b: any) =>
+          b.type === 'buy-again' ||
+          b.__component === 'app-components.app-buy-again',
       );
-      
+
       if (block) {
         block.listOfBuyAgainProducts = products;
         if (variantList) block.variantList = variantList;
@@ -67,7 +71,7 @@ export function mergeWebHomePageResponses(
     }
   } else if (buyAgainResponse && !buyAgainResponse.success) {
     Logger.warn(
-      `Warning for Web Home Page API method: mergeWebHomePageResponses ${getFormattedTracingContext()} CCP buy again response failed.`,
+      `Warning for Web Home Page API method: mergeWebHomePageResponses CCP buy again response failed.`,
       buyAgainResponse.error ?? 'Unknown error',
     );
   }

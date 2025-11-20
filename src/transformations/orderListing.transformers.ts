@@ -26,7 +26,6 @@ import { HttpStatusCode } from 'axios';
 import { CustomError } from 'src/utils/CustomError';
 import { AggregatedResponse } from 'src/models/aggregated-response.model';
 import { Logger } from '@nestjs/common';
-import { getFormattedTracingContext } from 'src/utils/tracing.util';
 
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 export function transformOrderListingRequest(request) {
@@ -452,7 +451,7 @@ export function mergeMaterialTrackingAndOrderListingResponses(
       materialTrackingResponse.data === null
     ) {
       Logger.error(
-        `Error for Orders Page API method: mergeMaterialTrackingAndOrderListingResponses ${getFormattedTracingContext()} Strapi response is missing or invalid`,
+        `Error for Orders Page API method: mergeMaterialTrackingAndOrderListingResponses Strapi response is missing or invalid`,
       );
       return { data: {}, meta: {} };
     }
@@ -496,7 +495,7 @@ export function mergeMaterialTrackingAndOrderListingResponses(
     };
   } catch (error) {
     Logger.log(
-      `Transforming Shipment Request  method: mergeMaterialTrackingAndOrderListingResponses ${getFormattedTracingContext()}`,
+      `Transforming Shipment Request  method: mergeMaterialTrackingAndOrderListingResponses`,
     );
     console.error(
       'Error in mergeMaterialTrackingAndOrderListingResponses:',

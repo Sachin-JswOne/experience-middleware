@@ -9,7 +9,6 @@ import { MSME, MSME_ERRORS_MAPPING } from 'src/config/app.config';
 import { BaseRequest } from 'src/models/base-request.model';
 import { CustomError } from 'src/utils/CustomError';
 import { Logger } from '@nestjs/common';
-import { getFormattedTracingContext } from 'src/utils/tracing.util';
 
 export function transformResetPasswordRequest(
   request: BaseRequest,
@@ -22,14 +21,12 @@ export function transformResetPasswordRequest(
   const { emailId } = request.body;
   if (!emailId || emailId === '') {
     Logger.error(
-      `Error for ${request.url} method: transformResetPasswordRequest ${getFormattedTracingContext()} Email ID is required`,
+      `Error for ${request.url} method: transformResetPasswordRequest Email ID is required`,
     );
     throw new CustomError('emailId is required', HttpStatus.BAD_REQUEST);
   }
   transformedRequest.url.search = `?email=${emailId.toLowerCase()}`;
-  Logger.log(
-    `Transforming Reset Password Request ${getFormattedTracingContext()}`,
-  );
+  Logger.log(`Transforming Reset Password Request`);
   return transformedRequest;
 }
 
@@ -38,7 +35,7 @@ export function transformResetPasswordResponse(response: any) {
 
   if (!responseData) {
     Logger.error(
-      `Error for Reset Password API method: transformResetPasswordResponse ${getFormattedTracingContext()} CCP Reset Password API is failing`,
+      `Error for Reset Password API method: transformResetPasswordResponse CCP Reset Password API is failing`,
     );
     throw new CustomError(
       'CCP Reset Password API is failing',
@@ -47,7 +44,7 @@ export function transformResetPasswordResponse(response: any) {
   }
   if (!responseData.success && responseData.error) {
     Logger.error(
-      `Error for Reset Password API method: transformResetPasswordResponse ${getFormattedTracingContext()} ${responseData.error?.message || 'CCP Reset Password API is failing'}`,
+      `Error for Reset Password API method: transformResetPasswordResponse ${responseData.error?.message || 'CCP Reset Password API is failing'}`,
     );
     throw new CustomError(
       responseData.error?.message,
@@ -73,7 +70,7 @@ export function transformVerifyMobileNumberRequest(
 
   if (!phoneNumber || phoneNumber === '') {
     Logger.error(
-      `Error for ${request.url} method: transformVerifyMobileNumberRequest ${getFormattedTracingContext()} PhoneNumber is required`,
+      `Error for ${request.url} method: transformVerifyMobileNumberRequest PhoneNumber is required`,
     );
     throw new CustomError('PhoneNumber is required', HttpStatus.BAD_REQUEST);
   }
@@ -93,7 +90,7 @@ export function transformVerifyMobileNumberResponse(response: any) {
 
   if (!responseData) {
     Logger.error(
-      `Error for Verify Mobile Number API method: transformVerifyMobileNumberResponse ${getFormattedTracingContext()} CCP Verify Mobile Number API is failing`,
+      `Error for Verify Mobile Number API method: transformVerifyMobileNumberResponse CCP Verify Mobile Number API is failing`,
     );
     throw new CustomError(
       'CCP Verify Mobile Number API is failing',
@@ -102,7 +99,7 @@ export function transformVerifyMobileNumberResponse(response: any) {
   }
   if (!responseData.success && responseData.error) {
     Logger.error(
-      `Error for Verify Mobile Number API method: transformVerifyMobileNumberResponse ${getFormattedTracingContext()} ${responseData.error?.message || 'CCP Verify Mobile Number API is failing'}`,
+      `Error for Verify Mobile Number API method: transformVerifyMobileNumberResponse ${responseData.error?.message || 'CCP Verify Mobile Number API is failing'}`,
     );
     throw new CustomError(
       responseData.error?.message,
@@ -116,7 +113,7 @@ export function transformVerifyMobileNumberResponse(response: any) {
       MSME_ERRORS_MAPPING[verifyMobileNumberResponse.message] ||
       verifyMobileNumberResponse.message;
     Logger.error(
-      `Error for Verify Mobile Number API method: transformVerifyMobileNumberResponse ${getFormattedTracingContext()} ${errorMessage}`,
+      `Error for Verify Mobile Number API method: transformVerifyMobileNumberResponse ${errorMessage}`,
     );
     throw new CustomError(errorMessage, HttpStatus.BAD_REQUEST);
   }
@@ -133,7 +130,7 @@ export function transformVerifyMobileNumberWithOtpRequest(
 
   if (!validationResult.isValid) {
     Logger.error(
-      `Error for ${request.url} method: transformVerifyMobileNumberWithOtpRequest ${getFormattedTracingContext()} ${validationResult.errorMessage || 'Validation failed'}`,
+      `Error for ${request.url} method: transformVerifyMobileNumberWithOtpRequest ${validationResult.errorMessage || 'Validation failed'}`,
     );
     throw new CustomError(
       validationResult.errorMessage || '',
@@ -175,7 +172,7 @@ export function transformVerifyMobileNumberOtpResponse(response: any) {
 
   if (!responseData) {
     Logger.error(
-      `Error for Verify Mobile Number With OTP API method: transformVerifyMobileNumberOtpResponse ${getFormattedTracingContext()} CCP Verify Mobile Number With OTP API is failing`,
+      `Error for Verify Mobile Number With OTP API method: transformVerifyMobileNumberOtpResponse CCP Verify Mobile Number With OTP API is failing`,
     );
     throw new CustomError(
       'CCP Verify Mobile Number With OTP API is failing',
@@ -184,7 +181,7 @@ export function transformVerifyMobileNumberOtpResponse(response: any) {
   }
   if (!responseData.success && responseData.error) {
     Logger.error(
-      `Error for Verify Mobile Number With OTP API method: transformVerifyMobileNumberOtpResponse ${getFormattedTracingContext()} ${responseData.error?.message || 'CCP Verify Mobile Number With OTP API is failing'}`,
+      `Error for Verify Mobile Number With OTP API method: transformVerifyMobileNumberOtpResponse ${responseData.error?.message || 'CCP Verify Mobile Number With OTP API is failing'}`,
     );
     throw new CustomError(
       responseData.error?.message,
@@ -198,7 +195,7 @@ export function transformVerifyMobileNumberOtpResponse(response: any) {
       MSME_ERRORS_MAPPING[verifyMobileNumberWithOtpResponse.message] ||
       verifyMobileNumberWithOtpResponse.message;
     Logger.error(
-      `Error for Verify Mobile Number With OTP API method: transformVerifyMobileNumberOtpResponse ${getFormattedTracingContext()} ${errorMessage}`,
+      `Error for Verify Mobile Number With OTP API method: transformVerifyMobileNumberOtpResponse ${errorMessage}`,
     );
     throw new CustomError(errorMessage, HttpStatus.BAD_REQUEST);
   }
@@ -215,7 +212,7 @@ export function selectLoginTarget(request: BaseRequest) {
 
   if (!validationResult.isValid) {
     Logger.error(
-      `Error for ${request.url} method: selectLoginTarget ${getFormattedTracingContext()} ${validationResult.errorMessage || 'Validation failed'}`,
+      `Error for ${request.url} method: selectLoginTarget ${validationResult.errorMessage || 'Validation failed'}`,
     );
     throw new CustomError(
       validationResult.errorMessage || '',
@@ -252,7 +249,7 @@ export function transformOtpLoginResponse(response: any) {
 
   if (!responseData) {
     Logger.error(
-      `Error for Sent Otp API method: transformOtpLoginResponse ${getFormattedTracingContext()} CCP Sent Otp API is failing`,
+      `Error for Sent Otp API method: transformOtpLoginResponse CCP Sent Otp API is failing`,
     );
     throw new CustomError(
       'CCP Sent Otp API is failing',
@@ -261,7 +258,7 @@ export function transformOtpLoginResponse(response: any) {
   }
   if (!responseData.success && responseData.error) {
     Logger.error(
-      `Error for Sent Otp API method: transformOtpLoginResponse ${getFormattedTracingContext()} ${responseData.error?.message || 'CCP Sent Otp API is failing'}`,
+      `Error for Sent Otp API method: transformOtpLoginResponse ${responseData.error?.message || 'CCP Sent Otp API is failing'}`,
     );
     throw new CustomError(
       responseData.error?.message,
@@ -274,7 +271,7 @@ export function transformOtpLoginResponse(response: any) {
     const errorMessage =
       MSME_ERRORS_MAPPING[sentOtpResponse.message] || sentOtpResponse.message;
     Logger.error(
-      `Error for Sent Otp API method: transformOtpLoginResponse ${getFormattedTracingContext()} ${errorMessage}`,
+      `Error for Sent Otp API method: transformOtpLoginResponse ${errorMessage}`,
     );
     throw new CustomError(errorMessage, HttpStatus.BAD_REQUEST);
   }
@@ -299,7 +296,7 @@ export function transformEmailLoginResponse(response) {
 
   if (!responseData) {
     Logger.error(
-      `Error for Email Login API method: transformEmailLoginResponse ${getFormattedTracingContext()} CCP Email Login API is failing`,
+      `Error for Email Login API method: transformEmailLoginResponse CCP Email Login API is failing`,
     );
     throw new CustomError(
       'CCP Email Login API is failing',
