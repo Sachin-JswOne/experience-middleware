@@ -1,11 +1,17 @@
-﻿import './instrumentation';
+﻿/* eslint-disable @typescript-eslint/no-unsafe-argument */
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+import './instrumentation';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { AppService } from './app.service';
 import { TraceContextInterceptor } from './common/trace-context.interceptor';
+import { WinstonModule } from 'nest-winston';
+import { winstonConfig } from './logger/winston.config';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, {
+    logger: WinstonModule.createLogger(winstonConfig),
+  });
   app.useGlobalInterceptors(new TraceContextInterceptor());
   app.setGlobalPrefix('xp-mi');
   app.enableShutdownHooks();

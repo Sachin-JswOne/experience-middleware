@@ -6,7 +6,6 @@ import {
 import { BaseRequest } from 'src/models/base-request.model';
 import { priceRequest, priceResponse } from 'src/models/price.model';
 import { Logger } from '@nestjs/common';
-import { getFormattedTracingContext } from 'src/utils/tracing.util';
 
 export function transformLineItemPriceRequest(
   request: BaseRequest,
@@ -44,7 +43,9 @@ export function transformLineItemPriceRequest(
     ...request,
     body: reqBody,
   };
-  Logger.log(`Transforming Line Item Price Request ${request.url} method: transformLineItemPriceRequest ${getFormattedTracingContext()}`);
+  Logger.log(
+    `Transforming Line Item Price Request ${request.url} method: transformLineItemPriceRequest`,
+  );
   return finalTransformedRequest;
 }
 

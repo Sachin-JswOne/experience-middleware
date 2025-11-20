@@ -2,7 +2,6 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { AggregatedResponse } from 'src/models/aggregated-response.model';
 import { Logger } from '@nestjs/common';
-import { getFormattedTracingContext } from 'src/utils/tracing.util';
 
 export function mergeCartPageResponses(
   aggregatedResponses: AggregatedResponse[],
@@ -24,7 +23,9 @@ export function mergeCartPageResponses(
     typeof strapiCartPageResponse.data !== 'object' ||
     strapiCartPageResponse.data === null
   ) {
-    Logger.error(`Error for Cart Page API method: mergeCartPageResponses ${getFormattedTracingContext()} Strapi cart page response is missing or invalid`);
+    Logger.error(
+      `Error for Cart Page API method: mergeCartPageResponses Strapi cart page response is missing or invalid`,
+    );
     return { data: {}, meta: {} };
   }
 
@@ -75,6 +76,8 @@ export function mergeCartPageResponses(
       data: mergedData,
     };
   }
-  Logger.error(`Error for Cart Page API method: mergeCartPageResponses ${getFormattedTracingContext()} Strapi cart page data structure is invalid`);
+  Logger.error(
+    `Error for Cart Page API method: mergeCartPageResponses Strapi cart page data structure is invalid`,
+  );
   return { data: {}, meta: {} };
 }

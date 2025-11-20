@@ -6,7 +6,6 @@ import { BaseRequest } from 'src/models/base-request.model';
 import { CustomError } from 'src/utils/CustomError';
 import { HttpStatus } from '@nestjs/common';
 import { Logger } from '@nestjs/common';
-import { getFormattedTracingContext } from 'src/utils/tracing.util';
 
 export function verifyGstin(request: BaseRequest): BaseRequest {
   const { gstin } = request.body;
@@ -15,7 +14,9 @@ export function verifyGstin(request: BaseRequest): BaseRequest {
     ...request,
     body: { gstin },
   };
-  Logger.log(`Transforming Verify GSTIN Request ${request.url} method: verifyGstin ${getFormattedTracingContext()}`);
+  Logger.log(
+    `Transforming Verify GSTIN Request ${request.url} method: verifyGstin`,
+  );
   return finalTransformedRequest;
 }
 
@@ -36,7 +37,9 @@ export function verifyGstinResponse(response: any) {
     } else if (error.message?.includes('Please enter valid')) {
       throw new CustomError(error.message, HttpStatus.BAD_REQUEST);
     }
-    Logger.error(`Error for Verify GSTIN API method: verifyGstinResponse ${getFormattedTracingContext()} ${error.message}`);
+    Logger.error(
+      `Error for Verify GSTIN API method: verifyGstinResponse ${error.message}`,
+    );
   } else {
     finalResult.gstVerified = true;
     finalResult.gstDetails = convertToAddress(resData);

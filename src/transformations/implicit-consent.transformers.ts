@@ -6,12 +6,12 @@ import {
   CONSENT_REGISTRATION_SOURCE,
 } from 'src/config/app.config';
 import { Logger } from '@nestjs/common';
-import { getFormattedTracingContext } from 'src/utils/tracing.util';
 import { getFormattedTime } from 'src/utils/common-functions.util';
+
 export function implictConsent(request: BaseRequest): BaseRequest {
   const requestBody: any = request?.body;
   Logger.log(
-    `Transforming Implicit-Consent Request  ${request.url} method: implictConsent ${getFormattedTracingContext()}`,
+    `Transforming Implicit-Consent Request  ${request.url} method: implictConsent`,
   );
   const requestData = transformMsmeRegistrationPayload(requestBody);
 

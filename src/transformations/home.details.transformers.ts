@@ -1,6 +1,5 @@
 import { AggregatedResponse } from 'src/models/aggregated-response.model';
 import { Logger } from '@nestjs/common';
-import { getFormattedTracingContext } from 'src/utils/tracing.util';
 
 export function mergeUserDetailsResponses(
   aggregatedResponses: AggregatedResponse[],
@@ -22,7 +21,7 @@ export function mergeUserDetailsResponses(
 
   if (!strapiUserResponse?.success) {
     Logger.error(
-      `Error for User Details API method: mergeUserDetailsResponses ${getFormattedTracingContext()} Strapi user details responses is missing or failed`,
+      `Error for User Details API method: mergeUserDetailsResponses Strapi user details responses is missing or failed`,
     );
     throw new Error('Strapi user details responses is missing or failed');
   }
@@ -49,7 +48,7 @@ function handleHomesError(
   methodName: string,
 ) {
   Logger.error(
-    `Error for ${methodName} API method: mergeUserDetailsResponses ${getFormattedTracingContext()} Homes ${methodName} responses is missing or failed`,
+    `Error for ${methodName} API method: mergeUserDetailsResponses Homes ${methodName} responses is missing or failed`,
   );
   const errorToThrow = homesUserResponse.customError
     ? homesUserResponse.customError

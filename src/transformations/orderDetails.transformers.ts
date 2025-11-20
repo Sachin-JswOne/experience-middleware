@@ -17,7 +17,6 @@ import { BaseRequest } from 'src/models/base-request.model';
 import { convertToDouble, formatDate } from 'src/utils/common-functions.util';
 import { transformSingleProduct } from './shipments.transformers';
 import { CustomError } from 'src/utils/CustomError';
-import { getFormattedTracingContext } from 'src/utils/tracing.util';
 import {
   getAppStatusFromOpportunities,
   getDeveloperName,
@@ -53,7 +52,7 @@ export function transformOrderDetailsResponse(response: any) {
     return { orderDetails };
   }
   Logger.error(
-    `For method: transformOrderDetailsRequest ${getFormattedTracingContext()} Connector Order Detail API Is throwing error'`,
+    `For method: transformOrderDetailsRequest Connector Order Detail API Is throwing error'`,
   );
   throw new CustomError(response.errors, response.responseCode);
 }
@@ -151,7 +150,7 @@ export function transformOpportunityDetailsResponse(response: any) {
     return { orderDetails: opportunityDetails };
   }
   Logger.error(
-    `For method: transformOpportunityDetailsResponse ${getFormattedTracingContext()} Connector Opportunity Detail API Is throwing error'`,
+    `For method: transformOpportunityDetailsResponse Connector Opportunity Detail API Is throwing error'`,
   );
   throw new CustomError(response.errors, response.responseCode);
 }
