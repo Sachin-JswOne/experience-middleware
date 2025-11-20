@@ -4,6 +4,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { AggregatedResponse } from 'src/models/aggregated-response.model';
 import { Logger } from '@nestjs/common';
+import { getFormattedTracingContext } from 'src/utils/tracing.util';
 
 export function mergeWebHomePageResponses(
   aggregatedResponses: AggregatedResponse[],
