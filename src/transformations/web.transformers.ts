@@ -5,6 +5,8 @@
 import { AggregatedResponse } from 'src/models/aggregated-response.model';
 import { Logger } from '@nestjs/common';
 import { getFormattedTracingContext } from 'src/utils/tracing.util';
+import { BaseRequest } from 'src/models/base-request.model';
+import { CustomError } from 'src/utils/CustomError';
 
 export function mergeWebHomePageResponses(
   aggregatedResponses: AggregatedResponse[],
@@ -21,6 +23,7 @@ export function mergeWebHomePageResponses(
   const blogsResponse = responses['app-blogs'];
   const buyAgainResponse = responses['ccp-buy-again-with-prices'];
   const pendingDispatchResponse = responses['pending-dispatch-quantity'];
+  const webProductsResponse = responses['web-homepage-products'];
 
   if (
     !cmsResponse ||
@@ -99,6 +102,16 @@ export function mergeWebHomePageResponses(
     );
   }
 
+  if (webProductsResponse?.success) {
+    const productsData = webProductsResponse.data.data ?? {};
+    const block = blocks.find(
+      (b: any) =>
+        b.__component === 'app-components.app-product-category',
+    );
+    block?.app_product_categories?.filter(categoryProducts => categoryProducts.webCategoryId && categoryProducts.itemsToShow)
+      .map(categoryProducts => categoryProducts.productsList = productsData[categoryProducts.webCategoryId]);
+  }
+
   // Update merged data with blocks
   mergedData.blocks = blocks;
 
@@ -109,4 +122,79 @@ export function mergeWebHomePageResponses(
       version: '1.0',
     },
   };
+}
+
+export function transformCategoryToFilterRequest(categoryData: {
+  webCategoryId: string;
+  itemsToShow: number;
+}): {
+  offSet: number;
+  limit: number;
+  categoryId: string;
+  filterConditions: any[];
+  directOrderProducts: boolean;
+} {
+  return {
+    offSet: 1,
+    limit: categoryData.itemsToShow,
+    categoryId: categoryData.webCategoryId,
+    filterConditions: [],
+    directOrderProducts: false,
+  };
+}
+
+export function catlougeByCategories(request: BaseRequest, aggregatedResponses: AggregatedResponse[]): BaseRequest {
+  const transformedRequest: BaseRequest = {
+    ...request
+  };
+
+  const responses = aggregatedResponses.reduce(
+    (acc, response) => {
+      acc[response.target] = response;
+      return acc;
+    },
+    {} as Record<string, AggregatedResponse>,
+  );
+
+  const categoriesResponse = responses['app-categories'];
+
+  if (!categoriesResponse || !categoriesResponse.success) {
+    Logger.error(`Error from Strapi for categories response`, categoriesResponse.error);
+    throw new CustomError(categoriesResponse.downstreamResponse, categoriesResponse.httpStatus ?? 500);
+  }
+
+  const categories = categoriesResponse.data.data;
+
+  const filterRequests = categories.filter((category: any) => category.webCategoryId && category.itemsToShow > 0)
+    .map((category) => {
+      return transformCategoryToFilterRequest(category);
+    });
+
+  transformedRequest.body = filterRequests;
+
+  return transformedRequest;
+}
+
+export function handleProductResponse(
+  aggregatedResponses: AggregatedResponse[],
+): any {
+  const responses = aggregatedResponses.reduce(
+    (acc, response) => {
+      acc[response.target] = response;
+      return acc;
+    },
+    {} as Record<string, AggregatedResponse>,
+  );
+  const productsResponse = responses['catlouge-by-categories'];
+
+  if (!productsResponse || !productsResponse.success) {
+    Logger.error(`Error from Strapi for categories response`, productsResponse.error);
+    throw new CustomError(productsResponse.downstreamResponse, productsResponse.httpStatus ?? 500);
+  }
+
+  Object.values(productsResponse.data)
+    .forEach((catProductData: any) => delete catProductData.filterConditions);
+
+  return productsResponse;
+
 }
