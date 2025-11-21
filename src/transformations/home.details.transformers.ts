@@ -143,7 +143,7 @@ export function mergeProjectDetailsAndTrackerResponses(
           .sort((a: string, b: string) => a.localeCompare(b))
       )].join(" → ")}`
       : "",
-    userCard: [
+    userCard: 
       homesData.userDetails?.map((member: any) => ({
         name: member.userName,
         designation: member.projectRoleName,
@@ -151,7 +151,6 @@ export function mergeProjectDetailsAndTrackerResponses(
         mobile: member.phoneNumber,
         level: member.level
       })) ?? []
-    ]
   };
 
   let currentprojectStage: string[] = [];
