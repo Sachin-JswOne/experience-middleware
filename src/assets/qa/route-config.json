@@ -837,11 +837,11 @@
     "targets": [
       {
         "name": "app-home-page",
-        "url": "${CMS_MSME_URL}/app-home-page-v2",
+        "url": "https://qa-cms.msme.jswone.in/api/app-home-page-v2",
         "method": "GET",
         "timeout": {
-          "request": "${TIMEOUTS.REQUEST}",
-          "socket": "${TIMEOUTS.SOCKET}"
+          "request": 5000,
+          "socket": 1000
         },
         "reqTransform": "general.transformers.moveBodyToQueryParams",
         "resTransform": "cms.transformers.replaceUriPrefix"
@@ -851,49 +851,82 @@
         "url": "https://qa.msme.jswone.in/buy-again/list",
         "method": "GET",
         "timeout": {
-          "request": "${TIMEOUTS.REQUEST}",
-          "socket": "${TIMEOUTS.SOCKET}"
+          "request": 5000,
+          "socket": 1000
         },
         "reqTransform": "general.transformers.convertToGetRequest",
         "headersToPass": [
           {
-            "source": "access_token",
+            "source": "authorization",
             "destination": "access_token"
           }
         ]
       },
       {
         "name": "app-blogs",
-        "url": "${CMS_MSME_URL}/jsw-blogs-articless",
+        "url": "https://qa-cms.msme.jswone.in/api/jsw-blogs-articless",
         "method": "GET",
         "timeout": {
-          "request": "${TIMEOUTS.REQUEST}",
-          "socket": "${TIMEOUTS.SOCKET}"
+          "request": 5000,
+          "socket": 1000
         },
         "reqTransform": "cms.transformers.homeBlogs",
         "resTransform": "cms.transformers.replaceUriPrefix"
       },
       {
-        "name": "pending-dispatch-quantity",
-        "url": "https://qa.msme.jswone.in/order-service/order/v1/material-tracking/pending-dispatch-quantity",
+        "name": "web-homepage-products",
+        "url": "http://127.0.0.1:3000/xp-mi/public/v1/web-products",
         "method": "GET",
         "timeout": {
-          "request": "${TIMEOUTS.REQUEST}",
-          "socket": "${TIMEOUTS.SOCKET}"
+          "request": 10000,
+          "socket": 1000
         },
         "reqTransform": "general.transformers.convertToGetRequest",
         "headersToPass": [
-       
           {
-            "source": "access_token",
-            "destination": "access_token"
+            "source": "authorization",
+            "destination": "authorization"
           }
         ]
       }
     ],
     "resTransform": "web.transformers.mergeWebHomePageResponses"
   },
-    {
+  {
+    "path": "/xp-mi/public/v1/web-products",
+    "method": "GET",
+    "routeHandler": "AGGREGATE",
+    "aggregationType": "SEQUENTIAL",
+    "targets": [
+      {
+        "name": "app-categories",
+        "url": "https://qa-cms.msme.jswone.in/api/app-product-categories?fields[0]=displayName&fields[1]=webUrl&fields[2]=webCategoryId&fields[3]=itemsToShow",
+        "method": "GET",
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        }
+      },
+      {
+        "name": "catlouge-by-categories",
+        "url": "https://qa.msme.jswone.in/product/v2/projections/filter/bulk",
+        "method": "POST",
+        "timeout": {
+          "request": 10000,
+          "socket": 1000
+        },
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "access_token"
+          }
+        ],
+        "reqTransform": "web.transformers.catlougeByCategories"
+      }
+    ],
+    "resTransform": "web.transformers.handleProductResponse"
+  },
+  {
     "path": "${PATH_URL}/v1/login",
     "method": "POST",
     "routeHandler": "CONDITIONAL",
@@ -930,7 +963,7 @@
       }
     ]
   },
-    {
+  {
     "path": "${PATH_URL}/v1/web-global",
     "method": "POST",
     "routeHandler": "TRANSFORM",
@@ -967,7 +1000,7 @@
           "source": "traceId",
           "destination": "traceId"
         }
-      ]    
+      ]
     }
   },
   {
@@ -988,9 +1021,7 @@
           "destination": "access_token"
         }
       ],
-      "requiredParams": [
-        "*"
-      ]
+      "requiredParams": ["*"]
     }
   },
   {
