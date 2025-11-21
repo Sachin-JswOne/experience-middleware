@@ -159,7 +159,7 @@ export function transformCustomerLocationResponse(
 
   return {
     ...(localityResponse.data as Record<string, unknown>),
-    pincode,
+    pinCode: pincode,
   };
 }
 
@@ -207,5 +207,12 @@ export function addDefaultPincodeRequest(request: BaseRequest): BaseRequest {
     ...request,
     url,
     body: null,
+  };
+}
+
+export function addDefaultPincodeToResponse(response: unknown): unknown {
+  return {
+    ...(response as Record<string, unknown>),
+    pinCode: DEFAULT_PINCODE,
   };
 }
