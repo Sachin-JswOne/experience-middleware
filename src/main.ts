@@ -28,6 +28,7 @@ async function bootstrap() {
             /^https?:\/\/localhost(?::\d+)?$/,
             /^https?:\/\/jswonehomes\.com$/,
             /^https?:\/\/.*\.jswone\.in$/,
+            /^https?:\/\/.*\.jswonemsme\.com$/,
           ];
 
       if (!origin) return callback(null, true); // Allow server-to-server or curl requests
