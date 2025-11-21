@@ -18,6 +18,24 @@ export function mergeCartPageResponses(
   const buyAgainApiResponse = responses['app-buy-again'];
   const cartSummaryApiResponse = responses['app-cart-summary'];
 
+  Logger.debug(
+    ` Strapi Cart Page Api response from method: mergeCartPageResponses : ${JSON.stringify(
+      strapiCartPageResponse,
+    )}`,
+  );
+
+  Logger.debug(
+    ` Buy Again Api response from method: mergeCartPageResponses : ${JSON.stringify(
+      buyAgainApiResponse,
+    )}`,
+  );
+
+  Logger.debug(
+    ` Cart Summary Api response from method: mergeCartPageResponses : ${JSON.stringify(
+      cartSummaryApiResponse,
+    )}`,
+  );
+
   if (
     !strapiCartPageResponse ||
     typeof strapiCartPageResponse.data !== 'object' ||

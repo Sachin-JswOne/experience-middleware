@@ -10,6 +10,11 @@ export function transformInvoiceAndDocuments(response: any): {
   listOfDocuments;
 } {
   try {
+    Logger.debug(
+      `Invoice and Documents Api response from method: transformInvoiceAndDocuments : ${JSON.stringify(
+        response,
+      )}`,
+    );
     if (!response || typeof response !== 'object') {
       return { listOfDocuments: [] };
     }

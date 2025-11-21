@@ -23,6 +23,36 @@ export function mergeHomePageResponses(
   const blogResponse = responses['app-blogs'];
   const inTransitResponse = responses['app-in-transit'];
 
+  Logger.debug(
+    `Strapi Home Page Api response from method: mergeHomePageResponses : ${JSON.stringify(
+      strapiResponse,
+    )}`,
+  );
+  Logger.debug(
+    `Top Items Api response from method: mergeHomePageResponses : ${JSON.stringify(
+      topItemsResponse,
+    )}`,
+  );
+  Logger.debug(
+    `Buy Again Api response from method: mergeHomePageResponses : ${JSON.stringify(
+      buyAgainResponse,
+    )}`,
+  );
+  Logger.debug(
+    `Categories Api response from method: mergeHomePageResponses : ${JSON.stringify(
+      categoriesResponse,
+    )}`,
+  );
+  Logger.debug(
+    `Blog Api response from method: mergeHomePageResponses : ${JSON.stringify(
+      blogResponse,
+    )}`,
+  );
+  Logger.debug(
+    `In Transit Api response from method: mergeHomePageResponses : ${JSON.stringify(
+      inTransitResponse,
+    )}`,
+  );
   if (
     !strapiResponse ||
     typeof strapiResponse.data !== 'object' ||
@@ -180,6 +210,17 @@ export function mergeBuyAgainResponses(
   const buyAgainPriceApiResponse = responses['ccp-buy-again-with-prices'];
   const buyAgainRetailApiResponse = responses['app-buy-again'];
 
+  Logger.debug(
+    ` Buy Again Price Api response from method: mergeBuyAgainResponses : ${JSON.stringify(
+      buyAgainPriceApiResponse,
+    )}`,
+  );
+
+  Logger.debug(
+    `Buy Again Retail Api response from method: mergeBuyAgainResponses : ${JSON.stringify(
+      buyAgainRetailApiResponse,
+    )}`,
+  );
   if (buyAgainRetailApiResponse.success) {
     if (buyAgainPriceApiResponse.data && buyAgainRetailApiResponse.data) {
       if (buyAgainPriceApiResponse.data.length === 0) {
@@ -232,6 +273,18 @@ export function mergeTopBrandsResponses(aggregatedResponses) {
 
   const strapiTopBrandsData = responses['app-top-brands-page'];
   const topBrandsApiData = responses['app-top-brands'];
+
+  Logger.debug(
+    ` Strapi Top Brands Api response from method: mergeTopBrandsResponses : ${JSON.stringify(
+      strapiTopBrandsData,
+    )}`,
+  );
+
+  Logger.debug(
+    ` Top Brands Api response from method: mergeTopBrandsResponses : ${JSON.stringify(
+      topBrandsApiData,
+    )}`,
+  );
 
   const defaultResponse = {
     productBrands: [],

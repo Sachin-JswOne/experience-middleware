@@ -54,6 +54,11 @@ export function getDeveloperName(customerType) {
 
 export function transformOrderListingResponse(response) {
   const orderListingResult = response?.data?.data;
+  Logger.debug(
+    ` Connector Order Listing Api response from method: transformOrderListingResponse : ${JSON.stringify(
+      orderListingResult,
+    )}`,
+  );
   if (orderListingResult) {
     const OrderListResponse =
       sortProductsArrayBasedOnCreatedDate(orderListingResult);
@@ -444,6 +449,18 @@ export function mergeMaterialTrackingAndOrderListingResponses(
 
     const materialTrackingResponse = responses['app-material-tracking'];
     const orderListingResponse = responses['app-order-listing'];
+
+    Logger.debug(
+      `Strapi Material Tracking Api response from method: mergeMaterialTrackingAndOrderListingResponses : ${JSON.stringify(
+        materialTrackingResponse,
+      )}`,
+    );
+
+    Logger.debug(
+      ` Connector Order And Opportunity Listing Api response from method: mergeMaterialTrackingAndOrderListingResponses : ${JSON.stringify(
+        orderListingResponse,
+      )}`,
+    );
 
     if (
       !materialTrackingResponse ||

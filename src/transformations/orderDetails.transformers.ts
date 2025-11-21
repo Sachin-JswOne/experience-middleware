@@ -47,6 +47,11 @@ export function transformOrderDetailsRequest(request: BaseRequest) {
 
 export function transformOrderDetailsResponse(response: any) {
   const orderDetailsResponse = response?.data?.data;
+  Logger.debug(
+    ` Connector Order Details Api response from method: transformOrderDetailsResponse : ${JSON.stringify(
+      orderDetailsResponse,
+    )}`,
+  );
   if (orderDetailsResponse) {
     const orderDetails = transformOrderDetails(orderDetailsResponse);
     return { orderDetails };
@@ -143,6 +148,11 @@ export function transformOpportunityDetailsRequest(request) {
 
 export function transformOpportunityDetailsResponse(response: any) {
   const opportunityDetailsResponse = response?.data?.data;
+  Logger.debug(
+    ` Connector Opportunity Details Api response from method: transformOpportunityDetailsResponse : ${JSON.stringify(
+      opportunityDetailsResponse,
+    )}`,
+  );
   if (opportunityDetailsResponse) {
     const opportunityDetails = transformOpportunityDetails(
       opportunityDetailsResponse,
