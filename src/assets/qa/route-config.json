@@ -1076,6 +1076,7 @@
         "socket": "${TIMEOUTS.SOCKET}"
       },
       "reqTransform": "location.transformers.addDefaultPincodeRequest",
+      "resTransform": "location.transformers.addDefaultPincodeToResponse",
       "headersToPass": [
         {
           "source": "authorization",
