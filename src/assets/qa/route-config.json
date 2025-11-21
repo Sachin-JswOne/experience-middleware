@@ -1062,5 +1062,26 @@
       }
     ],
     "resTransform": "customer.transformers.transformCustomerProfileResponses"
+  },
+  {
+    "path": "${PATH_URL}/v1/getCustomerLocation",
+    "method": "POST",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "jsw-locality-data",
+      "url": "${RETAIL_URL}/v1/seller/locality-data",
+      "method": "GET",
+      "timeout": {
+        "request": "${TIMEOUTS.REQUEST}",
+        "socket": "${TIMEOUTS.SOCKET}"
+      },
+      "reqTransform": "location.transformers.addDefaultPincodeRequest",
+      "headersToPass": [
+        {
+          "source": "authorization",
+          "destination": "authorization"
+        }
+      ]
+    }
   }
 ]
