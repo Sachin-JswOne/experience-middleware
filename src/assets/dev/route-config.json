@@ -804,7 +804,7 @@
     "routeHandler": "TRANSFORM",
     "target": {
       "name": "cmsFeatureFlag",
-      "url": "https://{CMS_MSME_URL}/ccp-feature-flags",
+      "url": "${CMS_MSME_URL}/ccp-feature-flags",
       "method": "GET",
       "timeout": {
         "request": 5000,
@@ -822,10 +822,10 @@
     "targets": [
       {
         "name": "app-home-page",
-        "url": "https://{CMS_MSME_URL}/app-home-page-v2",
+        "url": "${CMS_MSME_URL}/app-home-page-v2",
         "method": "GET",
         "timeout": {
-          "request": 5000,
+          "request": 10000,
           "socket": 1000
         },
         "reqTransform": "general.transformers.moveBodyToQueryParams",
@@ -849,7 +849,7 @@
       },
       {
         "name": "app-blogs",
-        "url": "https://{CMS_MSME_URL}/jsw-blogs-articless",
+        "url": "${CMS_MSME_URL}/jsw-blogs-articless",
         "method": "GET",
         "timeout": {
           "request": 5000,
@@ -885,7 +885,7 @@
     "targets": [
       {
         "name": "app-categories",
-        "url": "https://{CMS_MSME_URL}/app-product-categories?fields[0]=displayName&fields[1]=webUrl&fields[2]=webCategoryId&fields[3]=itemsToShow",
+        "url": "${CMS_MSME_URL}/app-product-categories?fields[0]=displayName&fields[1]=webUrl&fields[2]=webCategoryId&fields[3]=itemsToShow",
         "method": "GET",
         "timeout": {
           "request": 5000,
@@ -963,7 +963,7 @@
       }
     ]
   },
-    {
+  {
     "path": "${PATH_URL}/v1/web-global",
     "method": "POST",
     "routeHandler": "TRANSFORM",
