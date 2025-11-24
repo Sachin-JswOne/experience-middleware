@@ -1063,26 +1063,40 @@
     ],
     "resTransform": "customer.transformers.transformCustomerProfileResponses"
   },
-  {
+ {
     "path": "${PATH_URL}/v1/getCustomerLocation",
     "method": "POST",
-    "routeHandler": "TRANSFORM",
-    "target": {
-      "name": "jsw-locality-data",
-      "url": "${RETAIL_URL}/v1/seller/locality-data",
-      "method": "GET",
-      "timeout": {
-        "request": "${TIMEOUTS.REQUEST}",
-        "socket": "${TIMEOUTS.SOCKET}"
+    "routeHandler": "AGGREGATE",
+    "aggregationType": "SEQUENTIAL",
+    "targets": [
+      {
+        "name": "google-geocode",
+        "url": "https://maps.googleapis.com/maps/api/geocode/json",
+        "method": "GET",
+        "timeout": {
+          "request": "${TIMEOUTS.REQUEST}",
+          "socket": "${TIMEOUTS.SOCKET}"
+        },
+        "reqTransform": "location.transformers.addGoogleMapsApiKeyRequest",
+        "requiredParams": ["latlng"]
       },
-      "reqTransform": "location.transformers.addDefaultPincodeRequest",
-      "resTransform": "location.transformers.addDefaultPincodeToResponse",
-      "headersToPass": [
-        {
-          "source": "authorization",
-          "destination": "authorization"
-        }
-      ]
-    }
+      {
+        "name": "jsw-locality-data",
+        "url": "${RETAIL_URL}/v1/seller/locality-data",
+        "method": "GET",
+        "timeout": {
+          "request": "${TIMEOUTS.REQUEST}",
+          "socket": "${TIMEOUTS.SOCKET}"
+        },
+        "reqTransform": "location.transformers.getLocalityDataRequest",
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "authorization"
+          }
+        ]
+      }
+    ],
+    "resTransform": "location.transformers.transformCustomerLocationResponse"
   }
 ]
