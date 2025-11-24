@@ -97,6 +97,11 @@ export function getVariantMMID(category: string, productMMID: string): string {
 }
 
 export function transformLineItemPriceResponse(response: priceResponse) {
+  Logger.debug(
+    ` Line Item Price Api response from method: transformLineItemPriceResponse : ${JSON.stringify(
+      response,
+    )}`,
+  );
   if (response.success && response?.price) {
     return {
       price: response?.price?.displayVariantLineItemPrice || 0,

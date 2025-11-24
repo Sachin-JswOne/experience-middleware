@@ -11,7 +11,7 @@ import {
 import * as winston from 'winston';
 
 export const winstonConfig: winston.LoggerOptions = {
-  level: 'debug',
+  level: process.env.LOG_LEVEL ?? 'info',
   transports: [
     new winston.transports.Console({
       format: winston.format.combine(

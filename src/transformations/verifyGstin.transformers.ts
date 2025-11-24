@@ -21,6 +21,11 @@ export function verifyGstin(request: BaseRequest): BaseRequest {
 }
 
 export function verifyGstinResponse(response: any) {
+   Logger.debug(
+    ` Verify GSTIN Api response from method: verifyGstinResponse : ${JSON.stringify(
+      response,
+    )}`,
+  );
   const resData = response?.data;
   const error = response?.error;
   const finalResult = {

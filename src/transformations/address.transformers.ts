@@ -125,6 +125,9 @@ export function getSfIdFromHeaders(request) {
 }
 
 export function getAddressResponse(response) {
+  Logger.debug(
+    `GET Address Api response from method: getAddressResponse : ${JSON.stringify(response)}`,
+  );
   if (response && response.length > 0) {
     const failedRequest = response.find((item) => item.success === false);
     if (failedRequest) {
