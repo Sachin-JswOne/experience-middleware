@@ -186,10 +186,18 @@ export function catlougeByCategories(request: BaseRequest, aggregatedResponses: 
 
   const categories = categoriesResponse.data.data;
 
-  const filterRequests = categories.filter((category: any) => category.webCategoryId && category.itemsToShow > 0)
-    .map((category) => {
-      return transformCategoryToFilterRequest(category);
-    });
+  // Remove duplicates based on webCategoryId
+  const uniqueCategories = Array.from(
+    new Map(
+      categories
+        .filter((category: any) => category.webCategoryId && category.itemsToShow > 0)
+        .map((category: any) => [category.webCategoryId, category])
+    ).values()
+  );
+
+  const filterRequests = uniqueCategories.map((category: any) => {
+    return transformCategoryToFilterRequest(category);
+  });
 
   transformedRequest.body = filterRequests;
 
