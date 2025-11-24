@@ -1101,5 +1101,42 @@
       "reqTransform": "general.transformers.moveBodyToQueryParams",
       "resTransform": "cms.transformers.replaceUriPrefix"
     }
+  },
+     {
+    "path": "/xp-mi/public/v2/app-global-v2",
+    "method": "POST",
+    "routeHandler": "AGGREGATE",
+    "aggregationType": "PARALLEL",
+    "targets": [
+      {
+        "name": "app-global-page-v2",
+        "url": "https://internal-cms-ext.jswonemsme.com/api/app-global-v2",
+        "method": "GET",
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
+        "reqTransform": "general.transformers.moveBodyToQueryParams",
+        "resTransform": "cms.transformers.replaceUriPrefix"
+      },
+      {
+        "name": "app-slc-cart-details",
+        "url": "https://www.jswonemsme.com/v2/cart/get?onlySlc=true",
+        "method": "GET",
+        "timeout": {
+          "request": 15000,
+          "socket": 1000
+        },
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "access_token"
+          }
+        ],
+        "reqTransform": "general.transformers.convertToGetRequest",
+        "resTransform": "slc.transformers.convertSlcResponse"
+      }
+    ],
+    "resTransform": "global.transformers.mergeGlobalAndSlcCartResponses"
   }
 ]
