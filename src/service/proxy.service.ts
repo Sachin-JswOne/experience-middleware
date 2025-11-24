@@ -44,9 +44,9 @@ export class ProxyService {
       const spanContext = activeSpan?.spanContext();
       this.result = spanContext
         ? {
-            traceId: spanContext.traceId,
-            spanId: spanContext.spanId,
-          }
+          traceId: spanContext.traceId,
+          spanId: spanContext.spanId,
+        }
         : {};
       console.log('result', activeSpan);
       this.logger.error(
@@ -218,9 +218,9 @@ export class ProxyService {
             res.status === 'fulfilled'
               ? res.value
               : {
-                  success: false,
-                  error: 'Unexpected failure',
-                },
+                success: false,
+                error: 'Unexpected failure',
+              },
           );
           const isAggregatedResponse = (r: any): r is AggregatedResponse =>
             'target' in r && 'success' in r;

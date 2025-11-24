@@ -779,22 +779,22 @@
     "targets": [
       {
         "name": "app-home-page",
-        "url": "${CMS_MSME_URL}/app-home-page-v2",
+        "url": "{CMS_MSME_URL}/app-home-page-v2",
         "method": "GET",
         "timeout": {
-          "request": "${TIMEOUTS.REQUEST}",
-          "socket": "${TIMEOUTS.SOCKET}"
+          "request": 5000,
+          "socket": 1000
         },
         "reqTransform": "general.transformers.moveBodyToQueryParams",
         "resTransform": "cms.transformers.replaceUriPrefix"
       },
       {
         "name": "ccp-buy-again-with-prices",
-        "url": "${BUY_AGAIN_PRICE_URL}",
+        "url": "https://www.jswonemsme.com/buy-again/list",
         "method": "GET",
         "timeout": {
-          "request": "${TIMEOUTS.REQUEST}",
-          "socket": "${TIMEOUTS.SOCKET}"
+          "request": 5000,
+          "socket": 1000
         },
         "reqTransform": "general.transformers.convertToGetRequest",
         "headersToPass": [
@@ -806,17 +806,67 @@
       },
       {
         "name": "app-blogs",
-        "url": "${CMS_MSME_URL}/jsw-blogs-articless",
+        "url": "{CMS_MSME_URL}/jsw-blogs-articless",
         "method": "GET",
         "timeout": {
-          "request": "${TIMEOUTS.REQUEST}",
-          "socket": "${TIMEOUTS.SOCKET}"
+          "request": 5000,
+          "socket": 1000
         },
         "reqTransform": "cms.transformers.homeBlogs",
         "resTransform": "cms.transformers.replaceUriPrefix"
+      },
+      {
+        "name": "web-homepage-products",
+        "url": "http://127.0.0.1:3000/xp-mi/public/v1/web-products",
+        "method": "GET",
+        "timeout": {
+          "request": 10000,
+          "socket": 1000
+        },
+        "reqTransform": "general.transformers.convertToGetRequest",
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "authorization"
+          }
+        ]
       }
     ],
     "resTransform": "web.transformers.mergeWebHomePageResponses"
+  },
+  {
+    "path": "/xp-mi/public/v1/web-products",
+    "method": "GET",
+    "routeHandler": "AGGREGATE",
+    "aggregationType": "SEQUENTIAL",
+    "targets": [
+      {
+        "name": "app-categories",
+        "url": "${CMS_MSME_URL}/app-product-categories?fields[0]=displayName&fields[1]=webUrl&fields[2]=webCategoryId&fields[3]=itemsToShow",
+        "method": "GET",
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        }
+      },
+      {
+        "name": "catlouge-by-categories",
+        "url": "https://www.jswonemsme.com/product/v2/projections/filter/bulk",
+        "method": "POST",
+        "timeout": {
+          "request": 10000,
+          "socket": 1000
+        },
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "access_token"
+          }
+        ],
+        "reqTransform": "web.transformers.catlougeByCategories"
+      }
+    ],
+    "resTransform": "web.transformers.handleProductResponse"
   },
   {
     "path": "${PATH_URL}/v1/otp-implicit-consent",
@@ -870,7 +920,7 @@
       }
     ]
   },
-   {
+  {
     "path": "${PATH_URL}/v1/web-global",
     "method": "POST",
     "routeHandler": "TRANSFORM",
@@ -887,7 +937,7 @@
     }
   },
   {
-    "path": "v1/central_commerce/catalogue/search",
+    "path": "/xp-mi/public/v1/central_commerce/catalogue/search",
     "method": "POST",
     "routeHandler": "TRANSFORM",
     "target": {
@@ -910,5 +960,101 @@
       ],
       "requiredParams": ["*"]
     }
+  },
+  {
+    "path": "/xp-mi/public/v1/central_commerce/product/selector",
+    "method": "POST",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "msmeProductSelector",
+      "url": "https://www.jswonemsme.com/central_commerce/product/selector",
+      "method": "POST",
+      "timeout": {
+        "request": "${TIMEOUTS.REQUEST}",
+        "socket": "${TIMEOUTS.SOCKET}"
+      },
+      "headersToPass": [
+        {
+          "source": "access_token",
+          "destination": "access_token"
+        }
+      ],
+      "requiredParams": ["*"]
+    }
+  },
+  {
+    "path": "${PATH_URL}/v1/customer-profile",
+    "method": "GET",
+    "routeHandler": "AGGREGATE",
+    "aggregationType": "PARALLEL",
+    "targets": [
+      {
+        "name": "profile",
+        "url": "https://www.jswonemsme.com/customer/me/profile",
+        "method": "GET",
+        "timeout": {
+          "request": "${TIMEOUTS.REQUEST}",
+          "socket": "${TIMEOUTS.SOCKET}"
+        },
+        "headersToPass": [
+          {
+            "source": "access_token",
+            "destination": "access_token"
+          }
+        ]
+      },
+      {
+        "name": "customerData",
+        "url": "https://www.jswonemsme.com/customer/me/v2",
+        "method": "GET",
+        "timeout": {
+          "request": "${TIMEOUTS.REQUEST}",
+          "socket": "${TIMEOUTS.SOCKET}"
+        },
+        "headersToPass": [
+          {
+            "source": "access_token",
+            "destination": "access_token"
+          }
+        ]
+      }
+    ],
+    "resTransform": "customer.transformers.transformCustomerProfileResponses"
+  },
+  {
+    "path": "${PATH_URL}/v1/getCustomerLocation",
+    "method": "POST",
+    "routeHandler": "AGGREGATE",
+    "aggregationType": "SEQUENTIAL",
+    "targets": [
+      {
+        "name": "google-geocode",
+        "url": "https://maps.googleapis.com/maps/api/geocode/json",
+        "method": "GET",
+        "timeout": {
+          "request": "${TIMEOUTS.REQUEST}",
+          "socket": "${TIMEOUTS.SOCKET}"
+        },
+        "reqTransform": "location.transformers.addGoogleMapsApiKeyRequest",
+        "requiredParams": ["latlng"]
+      },
+      {
+        "name": "jsw-locality-data",
+        "url": "${RETAIL_URL}/v1/seller/locality-data",
+        "method": "GET",
+        "timeout": {
+          "request": "${TIMEOUTS.REQUEST}",
+          "socket": "${TIMEOUTS.SOCKET}"
+        },
+        "reqTransform": "location.transformers.getLocalityDataRequest",
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "authorization"
+          }
+        ]
+      }
+    ],
+    "resTransform": "location.transformers.transformCustomerLocationResponse"
   }
 ]

@@ -13,7 +13,6 @@ import { formatDate } from 'src/utils/common-functions.util';
 import { CustomError } from 'src/utils/CustomError';
 import { HttpStatus } from '@nestjs/common';
 import { Logger } from '@nestjs/common';
-import { getFormattedTracingContext } from 'src/utils/tracing.util';
 
 export function mergeInvoiceAndShipmentsResponse(
   aggregatedResponses: AggregatedResponse[],
@@ -29,6 +28,18 @@ export function mergeInvoiceAndShipmentsResponse(
 
     const shipmentsResponse = responses['app-shipment'];
     const invoiceAndDocumentsResponse = responses['app-invoice-and-documents'];
+
+    Logger.debug(
+      ` Shipments Api response from method: mergeInvoiceAndShipmentResponse : ${JSON.stringify(
+        shipmentsResponse,
+      )}`,
+    );
+
+    Logger.debug(
+      `Invoice and Documents Api response from method: mergeInvoiceAndShipmentResponse : ${JSON.stringify(
+        invoiceAndDocumentsResponse,
+      )}`,
+    );
     const data = shipmentsResponse?.data;
 
     const orderShipmentDetailsSRO =
@@ -54,7 +65,7 @@ export function mergeInvoiceAndShipmentsResponse(
     return { listOfShipments: shipments };
   } catch (error) {
     Logger.log(
-      `Transforming Shipment Request  method: mergeInvoiceAndShipmentResponse ${getFormattedTracingContext()}`,
+      `Transforming Shipment Request  method: mergeInvoiceAndShipmentResponse`,
     );
     console.error('Error in mergeInvoiceAndShipmentsResponse:', error);
     throw error;

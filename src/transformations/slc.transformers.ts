@@ -2,13 +2,19 @@
 
 import { SlcResponse } from 'src/models/slc-response.model';
 import { Logger } from '@nestjs/common';
-import { getFormattedTracingContext } from 'src/utils/tracing.util';
 
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 export function convertSlcResponse(response: any): any {
   try {
+    Logger.debug(
+      ` SLC Api response from method: convertSlcResponse : ${JSON.stringify(
+        response,
+      )}`,
+    );
     if (!response || typeof response !== 'object') {
-      Logger.error(`Error for SLC API method: convertSlcResponse ${getFormattedTracingContext()} Response is not an object`);
+      Logger.error(
+        `Error for SLC API method: convertSlcResponse Response is not an object`,
+      );
       return response;
     }
     const newResponse: Record<string, any> = { ...response };
@@ -31,7 +37,9 @@ export function convertSlcResponse(response: any): any {
       return {};
     }
   } catch (error) {
-    Logger.error(`Error for SLC API method: convertSlcResponse ${getFormattedTracingContext()} Error in convertSlcResponse: ${error}`);
+    Logger.error(
+      `Error for SLC API method: convertSlcResponse Error in convertSlcResponse: ${error}`,
+    );
     console.error('Error in convertSlcResponse:', error);
     return {};
   }
