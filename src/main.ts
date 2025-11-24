@@ -19,17 +19,17 @@ async function bootstrap() {
     origin: (origin, callback) => {
       const allowedOrigins = process.env.ALLOWED_ORIGINS
         ? process.env.ALLOWED_ORIGINS.split(',').map(
-            (origin) => new RegExp(origin),
-          )
+          (origin) => new RegExp(origin),
+        )
         : [
-            /^https?:\/\/.*\.onejswhomes\.in$/,
-            /^https?:\/\/.*jswonehomes\.com$/,
-            /^https?:\/\/34\.49\.59\.50$/,
-            /^https?:\/\/localhost(?::\d+)?$/,
-            /^https?:\/\/jswonehomes\.com$/,
-            /^https?:\/\/34\.93\.108\.241$/
-            /^https?:\/\/.*\.jswone\.in$/,
-            /^https?:\/\/.*\.jswonemsme\.com$/
+          /^https?:\/\/.*\.onejswhomes\.in$/,
+          /^https?:\/\/.*jswonehomes\.com$/,
+          /^https?:\/\/34\.49\.59\.50$/,
+          /^https?:\/\/localhost(?::\d+)?$/,
+          /^https?:\/\/jswonehomes\.com$/,
+          /^https?:\/\/34\.93\.108\.241$/,
+          /^https?:\/\/.*\.jswone\.in$/,
+          /^https?:\/\/.*\.jswonemsme\.com$/
         ];
 
       if (!origin) return callback(null, true); // Allow server-to-server or curl requests
