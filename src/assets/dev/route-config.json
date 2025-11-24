@@ -5,7 +5,7 @@
     "routeHandler": "TRANSFORM",
     "target": {
       "name": "appHomePage",
-      "url": "https://qa-cms.msme.jswone.in/api/app-home-page",
+      "url": "https://qa-cms-ext.msme.jswone.in/api/app-home-page",
       "method": "GET",
       "timeout": {
         "request": 5000,
@@ -20,7 +20,7 @@
     "routeHandler": "TRANSFORM",
     "target": {
       "name": "appHomePage",
-      "url": "https://qa-cms.msme.jswone.in/api/app-home-page",
+      "url": "https://qa-cms-ext.msme.jswone.in/api/app-home-page",
       "method": "GET",
       "timeout": {
         "request": 5000,
@@ -38,7 +38,7 @@
     "targets": [
       {
         "name": "app-home-page",
-        "url": "https://qa-cms.msme.jswone.in/api/app-home-page",
+        "url": "https://qa-cms-ext.msme.jswone.in/api/app-home-page",
         "method": "GET",
         "timeout": {
           "request": 5000,
@@ -123,7 +123,7 @@
     "routeHandler": "TRANSFORM",
     "target": {
       "name": "appGlobalPage",
-      "url": "https://qa-cms.msme.jswone.in/api/app-global",
+      "url": "https://qa-cms-ext.msme.jswone.in/api/app-global",
       "method": "GET",
       "timeout": {
         "request": 5000,
@@ -139,7 +139,7 @@
     "routeHandler": "TRANSFORM",
     "target": {
       "name": "app-product-categories",
-      "url": "https://qa-cms.msme.jswone.in/api/app-product-categories",
+      "url": "https://qa-cms-ext.msme.jswone.in/api/app-product-categories",
       "method": "GET",
       "timeout": {
         "request": 5000,
@@ -217,7 +217,7 @@
     "routeHandler": "TRANSFORM",
     "target": {
       "name": "appPdpPageChanges",
-      "url": "https://qa-cms.msme.jswone.in/api/app-pdp-pages",
+      "url": "https://qa-cms-ext.msme.jswone.in/api/app-pdp-pages",
       "method": "GET",
       "timeout": {
         "request": 5000,
@@ -235,7 +235,7 @@
     "targets": [
       {
         "name": "app-top-brands-page",
-        "url": "https://qa-cms.msme.jswone.in/api/app-branding-listing-page",
+        "url": "https://qa-cms-ext.msme.jswone.in/api/app-branding-listing-page",
         "method": "GET",
         "timeout": {
           "request": 5000,
@@ -270,7 +270,7 @@
     "targets": [
       {
         "name": "app-home-page",
-        "url": "https://qa-cms.msme.jswone.in/api/app-home-page-v2",
+        "url": "https://qa-cms-ext.msme.jswone.in/api/app-home-page-v2",
         "method": "GET",
         "timeout": {
           "request": 5000,
@@ -326,7 +326,7 @@
       },
       {
         "name": "app-blogs",
-        "url": "https://qa-cms.msme.jswone.in/api/jsw-blogs-articless",
+        "url": "https://qa-cms-ext.msme.jswone.in/api/jsw-blogs-articless",
         "method": "GET",
         "timeout": {
           "request": 5000,
@@ -376,7 +376,7 @@
     "targets": [
       {
         "name": "app-cart-page",
-        "url": "https://qa-cms.msme.jswone.in/api/app-cart-page",
+        "url": "https://qa-cms-ext.msme.jswone.in/api/app-cart-page",
         "method": "GET",
         "timeout": {
           "request": 5000,
@@ -585,7 +585,7 @@
     "routeHandler": "TRANSFORM",
     "target": {
       "name": "appLoginPage",
-      "url": "https://qa-cms.msme.jswone.in/api/app-login-page",
+      "url": "https://qa-cms-ext.msme.jswone.in/api/app-login-page",
       "method": "GET",
       "timeout": {
         "request": 5000,
@@ -804,7 +804,7 @@
     "routeHandler": "TRANSFORM",
     "target": {
       "name": "cmsFeatureFlag",
-      "url": "https://qa-cms.msme.jswone.in/api/ccp-feature-flags",
+      "url": "${CMS_MSME_URL}/ccp-feature-flags",
       "method": "GET",
       "timeout": {
         "request": 5000,
@@ -822,10 +822,10 @@
     "targets": [
       {
         "name": "app-home-page",
-        "url": "https://qa-cms.msme.jswone.in/api/app-home-page-v2",
+        "url": "${CMS_MSME_URL}/app-home-page-v2",
         "method": "GET",
         "timeout": {
-          "request": 5000,
+          "request": 10000,
           "socket": 1000
         },
         "reqTransform": "general.transformers.moveBodyToQueryParams",
@@ -849,7 +849,7 @@
       },
       {
         "name": "app-blogs",
-        "url": "https://qa-cms.msme.jswone.in/api/jsw-blogs-articless",
+        "url": "${CMS_MSME_URL}/jsw-blogs-articless",
         "method": "GET",
         "timeout": {
           "request": 5000,
@@ -885,7 +885,7 @@
     "targets": [
       {
         "name": "app-categories",
-        "url": "https://qa-cms.msme.jswone.in/api/app-product-categories?fields[0]=displayName&fields[1]=webUrl&fields[2]=webCategoryId&fields[3]=itemsToShow",
+        "url": "${CMS_MSME_URL}/app-product-categories?fields[0]=displayName&fields[1]=webUrl&fields[2]=webCategoryId&fields[3]=itemsToShow",
         "method": "GET",
         "timeout": {
           "request": 5000,
@@ -963,7 +963,7 @@
       }
     ]
   },
-    {
+  {
     "path": "${PATH_URL}/v1/web-global",
     "method": "POST",
     "routeHandler": "TRANSFORM",

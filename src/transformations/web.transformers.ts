@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unnecessary-type-assertion */
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
@@ -25,6 +26,26 @@ export function mergeWebHomePageResponses(
   const pendingDispatchResponse = responses['pending-dispatch-quantity'];
   const webProductsResponse = responses['web-homepage-products'];
 
+  Logger.debug(
+    ` CMS Home Page Api response from method: mergeWebHomePageResponses : ${JSON.stringify(
+      cmsResponse,
+    )}`,
+  );
+  Logger.debug(
+    ` Blogs Api response from method: mergeWebHomePageResponses : ${JSON.stringify(
+      blogsResponse,
+    )}`,
+  );
+  Logger.debug(
+    ` CCP Buy Again With Price Api response from method: mergeWebHomePageResponses : ${JSON.stringify(
+      buyAgainResponse,
+    )}`,
+  );
+  Logger.debug(
+    ` Pending Dispatch Quantity Api response from method: mergeWebHomePageResponses : ${JSON.stringify(
+      pendingDispatchResponse,
+    )}`,
+  );
   if (
     !cmsResponse ||
     !cmsResponse.success ||
@@ -97,7 +118,7 @@ export function mergeWebHomePageResponses(
     mergedData.pendingDispatchQuantity = pendingDispatchResponse.data;
   } else if (pendingDispatchResponse && !pendingDispatchResponse.success) {
     Logger.warn(
-      `Warning for Web Home Page API method: mergeWebHomePageResponses ${getFormattedTracingContext()} pending-dispatch-quantity response failed.`,
+      `Warning for Web Home Page API method: mergeWebHomePageResponses pending-dispatch-quantity response failed.`,
       pendingDispatchResponse.error ?? 'Unknown error',
     );
   }

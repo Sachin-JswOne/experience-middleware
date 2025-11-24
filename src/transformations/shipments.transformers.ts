@@ -28,6 +28,18 @@ export function mergeInvoiceAndShipmentsResponse(
 
     const shipmentsResponse = responses['app-shipment'];
     const invoiceAndDocumentsResponse = responses['app-invoice-and-documents'];
+
+    Logger.debug(
+      ` Shipments Api response from method: mergeInvoiceAndShipmentResponse : ${JSON.stringify(
+        shipmentsResponse,
+      )}`,
+    );
+
+    Logger.debug(
+      `Invoice and Documents Api response from method: mergeInvoiceAndShipmentResponse : ${JSON.stringify(
+        invoiceAndDocumentsResponse,
+      )}`,
+    );
     const data = shipmentsResponse?.data;
 
     const orderShipmentDetailsSRO =

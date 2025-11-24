@@ -842,7 +842,7 @@
     "targets": [
       {
         "name": "app-categories",
-        "url": "{CMS_MSME_URL}/app-product-categories?fields[0]=displayName&fields[1]=webUrl&fields[2]=webCategoryId&fields[3]=itemsToShow",
+        "url": "${CMS_MSME_URL}/app-product-categories?fields[0]=displayName&fields[1]=webUrl&fields[2]=webCategoryId&fields[3]=itemsToShow",
         "method": "GET",
         "timeout": {
           "request": 5000,

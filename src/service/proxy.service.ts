@@ -48,14 +48,8 @@ export class ProxyService {
           spanId: spanContext.spanId,
         }
         : {};
-      console.log('result', activeSpan);
       this.logger.error(
-        `Handling request for route: ${req.method} ${req.path} trace_id: ${inspect(this.result.traceId)} span_id: ${inspect(this.result.spanId)} `,
-      );
-      this.result = JSON.stringify(activeSpan);
-      console.log('result', activeSpan);
-      this.logger.error(
-        `Handling request for route: ${req.method} ${req.path} trace_id: ${inspect(this.result.traceId)} span_id: ${inspect(this.result.spanId)} `,
+        `Route config not found for ${req.method} ${req.path} trace_id: ${inspect(this.result.traceId)} span_id: ${inspect(this.result.spanId)} `,
       );
       throw new Error('Route config not found');
     }
