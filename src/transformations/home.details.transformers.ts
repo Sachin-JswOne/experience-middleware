@@ -183,30 +183,33 @@ export function mergeProjectDetailsAndTrackerResponses(
   let currentprojectStage: string[] = [];
   const homesDesignStage = homesData?.projectStepperResponse?.stages.find(
     (stage) => stage.stageName === 'designStage',
-  );
+  ) ?? null;
 
   const homesPreConstructionStage =
     homesData?.projectStepperResponse?.stages?.find(
       (stage) => stage.stageName === 'preConstructionStage',
-    );
+    ) ?? null;
 
   strapiData.data.projectTracker.activeStage = activeStage;
 
   // ------ DESIGN TRACKER ------
   strapiData.data.projectTracker.designStage.active = homesDesignStage?.active;
-  strapiData.data.projectTracker.designStage.completed =
-    homesDesignStage?.completed;
+  strapiData.data.projectTracker.designStage.completed = homesDesignStage?.completed;
 
   const designStage =
     strapiData?.data?.projectTracker?.designStage?.subSteps?.map(
       (member: any) => {
         const milestoneName = member.fieldName;
+        const milestone = homesDesignStage?.milestones?.[milestoneName];
         if (
           homesDesignStage?.milestones?.[milestoneName]?.status
             ?.toLowerCase()
             .includes('progress')
         ) {
           currentprojectStage = [member?.title];
+        }
+        if(!milestone){
+          return null;
         }
         return {
           ...member,
@@ -215,7 +218,7 @@ export function mergeProjectDetailsAndTrackerResponses(
           date: homesDesignStage?.milestones?.[milestoneName]?.date ?? '',
         };
       },
-    ) ?? [];
+    ).filter(Boolean) ?? [];
 
   // ------ PRE-CONSTRUCTION TRACKER ------
   strapiData.data.projectTracker.preConstructionStage.active =
@@ -234,14 +237,13 @@ export function mergeProjectDetailsAndTrackerResponses(
         if (milestone?.status?.toLowerCase().includes("progress")) {
           currentprojectStage = [strapiStep.title];
         }
-
         return {
           ...strapiStep,
           currentStatus: milestone.status ?? "",
           date: milestone.date ?? "",
         };
       })
-      .filter(Boolean);
+      .filter(Boolean) ?? [];
 
   if (activeStage == 'Construction') {
     const constructionStageStepper = strapiData?.data?.projectTracker?.constructionStage;
