@@ -42,17 +42,19 @@ export function mergeGlobalAndSlcCartResponses(
     if (appGlobalPageResponse.success && appSlcCartDetailsResponse.success) {
       const responseData = { ...appGlobalPageResponse.data };
 
-      const slcCartComponent = responseData.data.footer.find(
-        (footer) => footer.__component === 'app-components.app-slc-cart',
-      );
-      if (slcCartComponent) {
-        slcCartComponent.cartSummary = {
-          numberOfItems: appSlcCartDetailsResponse?.data?.numberOfItems,
-          totalPrice: appSlcCartDetailsResponse?.data?.totalPrice,
-        };
+      if (responseData.data.footer && Array.isArray(responseData.data.footer)) {
+        const slcCartComponent = responseData.data.footer.find(
+          (footer) => footer.__component === 'app-components.app-slc-cart',
+        );
+        if (slcCartComponent) {
+          slcCartComponent.cartSummary = {
+            numberOfItems: appSlcCartDetailsResponse?.data?.numberOfItems,
+            totalPrice: appSlcCartDetailsResponse?.data?.totalPrice,
+          };
+          return responseData;
+        }
         return responseData;
       }
-      return responseData;
     }
   }
   return { data: {}, meta: {} };
