@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { AggregatedResponse } from 'src/models/aggregated-response.model';
@@ -40,17 +41,19 @@ export function mergeGlobalAndSlcCartResponses(
 
     if (appGlobalPageResponse.success && appSlcCartDetailsResponse.success) {
       const responseData = { ...appGlobalPageResponse.data };
-      if (responseData.data.slcCart) {
-        responseData.data.slcCart = {
-          ...responseData.data.slcCart,
-          cartSummary: {
-            numberOfItems: appSlcCartDetailsResponse?.data?.numberOfItems,
-            totalPrice: appSlcCartDetailsResponse?.data?.totalPrice,
-          },
+
+      const slcCartComponent = responseData.data.footer.find(
+        (footer) => footer.__component === 'app-components.app-slc-cart',
+      );
+      if (slcCartComponent) {
+        slcCartComponent.cartSummary = {
+          numberOfItems: appSlcCartDetailsResponse?.data?.numberOfItems,
+          totalPrice: appSlcCartDetailsResponse?.data?.totalPrice,
         };
         return responseData;
       }
       return responseData;
     }
   }
+  return { data: {}, meta: {} };
 }
