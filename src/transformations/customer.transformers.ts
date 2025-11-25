@@ -3,6 +3,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 import { AggregatedResponse } from 'src/models/aggregated-response.model';
 import { Logger } from '@nestjs/common';
+import { safeDebug } from 'src/utils/common-functions.util';
 
 /**
  * Transforms aggregated customer profile responses to ensure they are JSON-serializable
@@ -12,11 +13,9 @@ import { Logger } from '@nestjs/common';
 export function transformCustomerProfileResponses(
   aggregatedResponses: AggregatedResponse[],
 ): any {
-  Logger.debug(
-    ` Customer Profile Api response from method: transformCustomerProfileResponses : ${JSON.stringify(
-      aggregatedResponses,
-    )}`,
-  );
+  safeDebug(Logger, () => ` Customer Profile Api response from method: transformCustomerProfileResponses : ${JSON.stringify(
+    aggregatedResponses,
+  )}`);
   const result: any = {};
 
   aggregatedResponses.forEach((response) => {

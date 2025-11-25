@@ -9,6 +9,7 @@ import { AggregatedResponse } from 'src/models/aggregated-response.model';
 import { CustomError } from 'src/utils/CustomError';
 import { HttpStatus } from '@nestjs/common';
 import { Logger } from '@nestjs/common';
+import { safeDebug } from 'src/utils/common-functions.util';
 import * as jwt from 'jsonwebtoken';
 
 export function createAddress(
@@ -125,9 +126,7 @@ export function getSfIdFromHeaders(request) {
 }
 
 export function getAddressResponse(response) {
-  Logger.debug(
-    `GET Address Api response from method: getAddressResponse : ${JSON.stringify(response)}`,
-  );
+  safeDebug(Logger, () => `GET Address Api response from method: getAddressResponse : ${JSON.stringify(response)}`);
   if (response && response.length > 0) {
     const failedRequest = response.find((item) => item.success === false);
     if (failedRequest) {

@@ -5,16 +5,15 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { formatDate, toTitleCase } from 'src/utils/common-functions.util';
 import { Logger } from '@nestjs/common';
+import { safeDebug } from 'src/utils/common-functions.util';
 
 export function transformInvoiceAndDocuments(response: any): {
   listOfDocuments;
 } {
   try {
-    Logger.debug(
-      `Invoice and Documents Api response from method: transformInvoiceAndDocuments : ${JSON.stringify(
-        response,
-      )}`,
-    );
+    safeDebug(Logger, () => `Invoice and Documents Api response from method: transformInvoiceAndDocuments : ${JSON.stringify(
+      response,
+    )}`);
     if (!response || typeof response !== 'object') {
       return { listOfDocuments: [] };
     }

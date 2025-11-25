@@ -13,6 +13,7 @@ import { formatDate } from 'src/utils/common-functions.util';
 import { CustomError } from 'src/utils/CustomError';
 import { HttpStatus } from '@nestjs/common';
 import { Logger } from '@nestjs/common';
+import { safeDebug } from 'src/utils/common-functions.util';
 
 export function mergeInvoiceAndShipmentsResponse(
   aggregatedResponses: AggregatedResponse[],
@@ -29,17 +30,13 @@ export function mergeInvoiceAndShipmentsResponse(
     const shipmentsResponse = responses['app-shipment'];
     const invoiceAndDocumentsResponse = responses['app-invoice-and-documents'];
 
-    Logger.debug(
-      ` Shipments Api response from method: mergeInvoiceAndShipmentResponse : ${JSON.stringify(
-        shipmentsResponse,
-      )}`,
-    );
+    safeDebug(Logger, () => ` Shipments Api response from method: mergeInvoiceAndShipmentResponse : ${JSON.stringify(
+      shipmentsResponse,
+    )}`);
 
-    Logger.debug(
-      `Invoice and Documents Api response from method: mergeInvoiceAndShipmentResponse : ${JSON.stringify(
-        invoiceAndDocumentsResponse,
-      )}`,
-    );
+    safeDebug(Logger, () => `Invoice and Documents Api response from method: mergeInvoiceAndShipmentResponse : ${JSON.stringify(
+      invoiceAndDocumentsResponse,
+    )}`);
     const data = shipmentsResponse?.data;
 
     const orderShipmentDetailsSRO =

@@ -6,6 +6,7 @@ import { BaseRequest } from 'src/models/base-request.model';
 import { CustomError } from 'src/utils/CustomError';
 import { HttpStatus } from '@nestjs/common';
 import { Logger } from '@nestjs/common';
+import { safeDebug } from 'src/utils/common-functions.util';
 
 export function verifyGstin(request: BaseRequest): BaseRequest {
   const { gstin } = request.body;
@@ -21,11 +22,9 @@ export function verifyGstin(request: BaseRequest): BaseRequest {
 }
 
 export function verifyGstinResponse(response: any) {
-   Logger.debug(
-    ` Verify GSTIN Api response from method: verifyGstinResponse : ${JSON.stringify(
-      response,
-    )}`,
-  );
+  safeDebug(Logger, () => ` Verify GSTIN Api response from method: verifyGstinResponse : ${JSON.stringify(
+    response,
+  )}`);
   const resData = response?.data;
   const error = response?.error;
   const finalResult = {

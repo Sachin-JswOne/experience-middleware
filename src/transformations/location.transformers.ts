@@ -6,6 +6,7 @@ import { BaseRequest } from 'src/models/base-request.model';
 import { AggregatedResponse } from 'src/models/aggregated-response.model';
 import { CustomError } from 'src/utils/CustomError';
 import { HttpStatus, Logger } from '@nestjs/common';
+import { safeDebug } from 'src/utils/common-functions.util';
 
 const TARGET_NAMES = {
   GOOGLE_GEOCODE: 'google-geocode',
@@ -40,11 +41,9 @@ function extractPincodeFromGeocodeResponse(
     .find((component) => component.types?.includes('postal_code'));
 
   const pincode = pincodeComponent?.long_name;
-  Logger.debug(
-    `Extracted pincode from Google Maps Geocoding API response from method: extractPincodeFromGeocodeResponse : ${JSON.stringify(
-      pincode,
-    )}`,
-  );
+  safeDebug(Logger, () => `Extracted pincode from Google Maps Geocoding API response from method: extractPincodeFromGeocodeResponse : ${JSON.stringify(
+    pincode,
+  )}`);
   return pincode;
 }
 
@@ -68,11 +67,9 @@ function getValidatedGeocodeData(
 
   const geocodeData = geocodeResponse.data as unknown as GoogleGeocodeResponse;
 
-  Logger.debug(
-    `Google Maps Geocoding API response from method: getValidatedGeocodeData : ${JSON.stringify(
-      geocodeData,
-    )}`,
-  );
+  safeDebug(Logger, () => `Google Maps Geocoding API response from method: getValidatedGeocodeData : ${JSON.stringify(
+    geocodeData,
+  )}`);
 
   if (geocodeData?.status !== 'OK') {
     Logger.error(
@@ -169,22 +166,18 @@ export function transformCustomerLocationResponse(
   const geocodeData = geocodeResponse.data as unknown as GoogleGeocodeResponse;
   const pincode = extractPincodeFromGeocodeResponse(geocodeData);
 
-  Logger.debug(
-    `Locality data response from method: transformCustomerLocationResponse : ${JSON.stringify(
-      localityResponse.data,
-    )}`,
-  );
+  safeDebug(Logger, () => `Locality data response from method: transformCustomerLocationResponse : ${JSON.stringify(
+    localityResponse.data,
+  )}`);
 
   const finalResponse = {
     ...(localityResponse.data as Record<string, unknown>),
     pinCode: pincode,
   };
 
-  Logger.debug(
-    `Final response from method: transformCustomerLocationResponse : ${JSON.stringify(
-      finalResponse,
-    )}`,
-  );
+  safeDebug(Logger, () => `Final response from method: transformCustomerLocationResponse : ${JSON.stringify(
+    finalResponse,
+  )}`);
 
   return finalResponse;
 }

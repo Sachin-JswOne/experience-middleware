@@ -4,6 +4,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { Logger } from '@nestjs/common';
+import { safeDebug } from 'src/utils/common-functions.util';
 import {
   CONNECTOR_ORDER_TYPE_MAPPING,
   DEFAULT_CURRENCY_CODE,
@@ -47,11 +48,9 @@ export function transformOrderDetailsRequest(request: BaseRequest) {
 
 export function transformOrderDetailsResponse(response: any) {
   const orderDetailsResponse = response?.data?.data;
-  Logger.debug(
-    ` Connector Order Details Api response from method: transformOrderDetailsResponse : ${JSON.stringify(
-      orderDetailsResponse,
-    )}`,
-  );
+  safeDebug(Logger, () => ` Connector Order Details Api response from method: transformOrderDetailsResponse : ${JSON.stringify(
+    orderDetailsResponse,
+  )}`);
   if (orderDetailsResponse) {
     const orderDetails = transformOrderDetails(orderDetailsResponse);
     return { orderDetails };
@@ -148,11 +147,9 @@ export function transformOpportunityDetailsRequest(request) {
 
 export function transformOpportunityDetailsResponse(response: any) {
   const opportunityDetailsResponse = response?.data?.data;
-  Logger.debug(
-    ` Connector Opportunity Details Api response from method: transformOpportunityDetailsResponse : ${JSON.stringify(
-      opportunityDetailsResponse,
-    )}`,
-  );
+  safeDebug(Logger, () => ` Connector Opportunity Details Api response from method: transformOpportunityDetailsResponse : ${JSON.stringify(
+    opportunityDetailsResponse,
+  )}`);
   if (opportunityDetailsResponse) {
     const opportunityDetails = transformOpportunityDetails(
       opportunityDetailsResponse,
