@@ -848,6 +848,22 @@
         ]
       },
       {
+        "name": "pending-dispatch-quantity",
+        "url": "https://qa.msme.jswone.in/order-service/order/v1/material-tracking/pending-dispatch-quantity",
+        "method": "GET",
+        "timeout": {
+          "request": "${TIMEOUTS.REQUEST}",
+          "socket": "${TIMEOUTS.SOCKET}"
+        },
+        "reqTransform": "general.transformers.convertToGetRequest",
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "access_token"
+          }
+        ]
+      },
+      {
         "name": "app-blogs",
         "url": "${CMS_MSME_URL}/jsw-blogs-articless",
         "method": "GET",
