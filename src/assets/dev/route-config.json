@@ -276,7 +276,7 @@
           "request": 5000,
           "socket": 1000
         },
-        "reqTransform": "general.transformers.moveBodyToQueryParams",
+        "reqTransform": "general.transformers.transformAppHomePageRequest",
         "resTransform": "cms.transformers.replaceUriPrefix"
       },
       {

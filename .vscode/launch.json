@@ -6,16 +6,11 @@
     "configurations": [
         
         {
-        "type": "node",
+        "type": "node-terminal",
         "request": "launch",
         "name": "dev watch",
-        "runtimeExecutable": "pnpm",
-        "runtimeArgs": [
-          "run",
-          "start:dev"
-        ],
+        "command": "nvm use 20 && pnpm run start:dev",
         "cwd": "${workspaceFolder}",
-        "console": "integratedTerminal"
       }
     ]
 }
