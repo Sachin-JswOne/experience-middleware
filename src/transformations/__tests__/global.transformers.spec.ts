@@ -62,9 +62,9 @@ describe('mergeGlobalAndSlcCartResponses', () => {
     const result = mergeGlobalAndSlcCartResponses(aggregatedResponses);
 
     expect(result).toBeDefined();
-    expect(result.data.slcCart).toBeDefined();
-    expect(result.data.slcCart.numberOfItems).toBe(2);
-    expect(result.data.slcCart.totalPrice).toBe('11,668.78');
+    expect(result.data.slcCart.cartSummary).toBeDefined();
+    expect(result.data.slcCart.cartSummary.numberOfItems).toBe(2);
+    expect(result.data.slcCart.cartSummary.totalPrice).toBe('11,668.78');
     expect(result.data.id).toBe(87);
   });
 

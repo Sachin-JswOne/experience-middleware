@@ -43,8 +43,10 @@ export function mergeGlobalAndSlcCartResponses(
       if (responseData.data.slcCart) {
         responseData.data.slcCart = {
           ...responseData.data.slcCart,
-          numberOfItems: appSlcCartDetailsResponse?.data?.numberOfItems,
-          totalPrice: appSlcCartDetailsResponse?.data?.totalPrice,
+          cartSummary: {
+            numberOfItems: appSlcCartDetailsResponse?.data?.numberOfItems,
+            totalPrice: appSlcCartDetailsResponse?.data?.totalPrice,
+          },
         };
         return responseData;
       }
