@@ -1137,7 +1137,7 @@
     "isCacheRequired": false,
     "target": {
       "name": "webView",
-      "url": "https://cms-msme-ext.qa.jswone.in/api/app-web-view-configurations?populate=*",
+      "url": "${CMS_MSME_URL}/app-web-view-configurations?populate=*",
       "method": "GET",
       "timeout": {
         "request": 5000,
