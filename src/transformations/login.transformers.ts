@@ -9,6 +9,7 @@ import { MSME, MSME_ERRORS_MAPPING } from 'src/config/app.config';
 import { BaseRequest } from 'src/models/base-request.model';
 import { CustomError } from 'src/utils/CustomError';
 import { Logger } from '@nestjs/common';
+import { safeDebug } from 'src/utils/common-functions.util';
 
 export function transformResetPasswordRequest(
   request: BaseRequest,
@@ -33,11 +34,9 @@ export function transformResetPasswordRequest(
 export function transformResetPasswordResponse(response: any) {
   const responseData = response?.data;
 
-  Logger.debug(
-    `CCP Reset Password Api response from method: transformResetPasswordResponse : ${JSON.stringify(
-      responseData,
-    )}`,
-  );
+  safeDebug(Logger, () => `CCP Reset Password Api response from method: transformResetPasswordResponse : ${JSON.stringify(
+    responseData,
+  )}`);
 
   if (!responseData) {
     Logger.error(
@@ -93,11 +92,9 @@ export function transformVerifyMobileNumberRequest(
 
 export function transformVerifyMobileNumberResponse(response: any) {
   const responseData = response;
-  Logger.debug(
-    ` CCP Verify Mobile Number Api response from method: transformVerifyMobileNumberResponse : ${JSON.stringify(
-      responseData,
-    )}`,
-  );
+  safeDebug(Logger, () => ` CCP Verify Mobile Number Api response from method: transformVerifyMobileNumberResponse : ${JSON.stringify(
+    responseData,
+  )}`);
   if (!responseData) {
     Logger.error(
       `Error for Verify Mobile Number API method: transformVerifyMobileNumberResponse CCP Verify Mobile Number API is failing`,
@@ -180,11 +177,9 @@ export function validateVerifyMobileNumberWithOtpData(data) {
 export function transformVerifyMobileNumberOtpResponse(response: any) {
   const responseData = response;
 
-  Logger.debug(
-    ` CCP Verify Mobile Number With OTP Api response from method: transformVerifyMobileNumberOtpResponse : ${JSON.stringify(
-      responseData,
-    )}`,
-  );
+  safeDebug(Logger, () => ` CCP Verify Mobile Number With OTP Api response from method: transformVerifyMobileNumberOtpResponse : ${JSON.stringify(
+    responseData,
+  )}`);
 
   if (!responseData) {
     Logger.error(
@@ -263,11 +258,9 @@ export function validateEmailAndPhoneNumber(
 export function transformOtpLoginResponse(response: any) {
   const responseData = response;
 
-  Logger.debug(
-    ` CCP Sent Otp Api response from method: transformOtpLoginResponse : ${JSON.stringify(
-      responseData,
-    )}`,
-  );
+  safeDebug(Logger, () => ` CCP Sent Otp Api response from method: transformOtpLoginResponse : ${JSON.stringify(
+    responseData,
+  )}`);
   if (!responseData) {
     Logger.error(
       `Error for Sent Otp API method: transformOtpLoginResponse CCP Sent Otp API is failing`,
@@ -315,11 +308,9 @@ export function transformEmailLoginRequest(request) {
 export function transformEmailLoginResponse(response) {
   const responseData = response;
 
-  Logger.debug(
-    ` CCP Email Login Api response from method: transformEmailLoginResponse : ${JSON.stringify(
-      responseData,
-    )}`,
-  );
+  safeDebug(Logger, () => ` CCP Email Login Api response from method: transformEmailLoginResponse : ${JSON.stringify(
+    responseData,
+  )}`);
 
   if (!responseData) {
     Logger.error(

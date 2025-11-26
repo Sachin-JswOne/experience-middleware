@@ -6,6 +6,7 @@ import {
 import { BaseRequest } from 'src/models/base-request.model';
 import { priceRequest, priceResponse } from 'src/models/price.model';
 import { Logger } from '@nestjs/common';
+import { safeDebug } from 'src/utils/common-functions.util';
 
 export function transformLineItemPriceRequest(
   request: BaseRequest,
@@ -97,11 +98,9 @@ export function getVariantMMID(category: string, productMMID: string): string {
 }
 
 export function transformLineItemPriceResponse(response: priceResponse) {
-  Logger.debug(
-    ` Line Item Price Api response from method: transformLineItemPriceResponse : ${JSON.stringify(
-      response,
-    )}`,
-  );
+  safeDebug(Logger, () => ` Line Item Price Api response from method: transformLineItemPriceResponse : ${JSON.stringify(
+    response,
+  )}`);
   if (response.success && response?.price) {
     return {
       price: response?.price?.displayVariantLineItemPrice || 0,

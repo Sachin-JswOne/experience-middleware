@@ -1,5 +1,6 @@
 import { AggregatedResponse } from 'src/models/aggregated-response.model';
 import { Logger } from '@nestjs/common';
+import { safeDebug } from 'src/utils/common-functions.util';
 
 export function mergeUserDetailsResponses(
   aggregatedResponses: AggregatedResponse[],
@@ -15,17 +16,13 @@ export function mergeUserDetailsResponses(
   const strapiUserResponse = responses['strapi-user-detail'];
   const homesUserResponse = responses['homes-user-details'];
 
-  Logger.debug(
-    ` Strapi User Details Api response from method: mergeUserDetailsResponses : ${JSON.stringify(
-      strapiUserResponse,
-    )}`,
-  );
+  safeDebug(Logger, () => ` Strapi User Details Api response from method: mergeUserDetailsResponses : ${JSON.stringify(
+    strapiUserResponse,
+  )}`);
 
-  Logger.debug(
-    ` Homes User Details Api response from method: mergeUserDetailsResponses : ${JSON.stringify(
-      homesUserResponse,
-    )}`,
-  );
+  safeDebug(Logger, () => ` Homes User Details Api response from method: mergeUserDetailsResponses : ${JSON.stringify(
+    homesUserResponse,
+  )}`);
 
   if (!homesUserResponse?.success) {
     handleHomesError(homesUserResponse, 'User Details');
@@ -82,17 +79,13 @@ export function mergeProjectDetailsAndTrackerResponses(
   const strapiResponse = responses['strapi-project-detail'];
   const homesDashboardResponse = responses['homes-project-details'];
 
-  Logger.debug(
-    ` Strapi Project Details Api response from method: mergeProjectDetailsAndTrackerResponses : ${JSON.stringify(
-      strapiResponse,
-    )}`,
-  );
+  safeDebug(Logger, () => ` Strapi Project Details Api response from method: mergeProjectDetailsAndTrackerResponses : ${JSON.stringify(
+    strapiResponse,
+  )}`);
 
-  Logger.debug(
-    ` Homes Project Details Api response from method: mergeProjectDetailsAndTrackerResponses : ${JSON.stringify(
-      homesDashboardResponse,
-    )}`,
-  );
+  safeDebug(Logger, () => ` Homes Project Details Api response from method: mergeProjectDetailsAndTrackerResponses : ${JSON.stringify(
+    homesDashboardResponse,
+  )}`);
 
   if (!homesDashboardResponse?.success) {
     handleHomesError(homesDashboardResponse, 'Project Details');
@@ -121,12 +114,13 @@ export function mergeProjectDetailsAndTrackerResponses(
       })) ?? [];
 
   const mergedConstructionItems =
-    strapiData?.data?.projectDetailsConstruction?.projectItems?.map(
-      (item: any) => ({
+    strapiData?.data?.projectDetailsConstruction?.projectItems
+      ?.filter((item: any) => item.key in homesData)
+      ?.map((item: any) => ({
         ...item,
         value: homesData[item.key],
       }),
-    ) ?? [];
+      ) ?? [];
 
   let finalProjectDetails = {
     projectDetails: { ...strapiData.data.projectDetails, projectItems: [] },
@@ -183,30 +177,33 @@ export function mergeProjectDetailsAndTrackerResponses(
   let currentprojectStage: string[] = [];
   const homesDesignStage = homesData?.projectStepperResponse?.stages.find(
     (stage) => stage.stageName === 'designStage',
-  );
+  ) ?? null;
 
   const homesPreConstructionStage =
     homesData?.projectStepperResponse?.stages?.find(
       (stage) => stage.stageName === 'preConstructionStage',
-    );
+    ) ?? null;
 
   strapiData.data.projectTracker.activeStage = activeStage;
 
   // ------ DESIGN TRACKER ------
   strapiData.data.projectTracker.designStage.active = homesDesignStage?.active;
-  strapiData.data.projectTracker.designStage.completed =
-    homesDesignStage?.completed;
+  strapiData.data.projectTracker.designStage.completed = homesDesignStage?.completed;
 
   const designStage =
     strapiData?.data?.projectTracker?.designStage?.subSteps?.map(
       (member: any) => {
         const milestoneName = member.fieldName;
+        const milestone = homesDesignStage?.milestones?.[milestoneName];
         if (
           homesDesignStage?.milestones?.[milestoneName]?.status
             ?.toLowerCase()
             .includes('progress')
         ) {
           currentprojectStage = [member?.title];
+        }
+        if (!milestone) {
+          return null;
         }
         return {
           ...member,
@@ -215,7 +212,7 @@ export function mergeProjectDetailsAndTrackerResponses(
           date: homesDesignStage?.milestones?.[milestoneName]?.date ?? '',
         };
       },
-    ) ?? [];
+    ).filter(Boolean) ?? [];
 
   // ------ PRE-CONSTRUCTION TRACKER ------
   strapiData.data.projectTracker.preConstructionStage.active =
@@ -234,14 +231,13 @@ export function mergeProjectDetailsAndTrackerResponses(
         if (milestone?.status?.toLowerCase().includes("progress")) {
           currentprojectStage = [strapiStep.title];
         }
-
         return {
           ...strapiStep,
           currentStatus: milestone.status ?? "",
           date: milestone.date ?? "",
         };
       })
-      .filter(Boolean);
+      .filter(Boolean) ?? [];
 
   if (activeStage == 'Construction') {
     const constructionStageStepper = strapiData?.data?.projectTracker?.constructionStage;

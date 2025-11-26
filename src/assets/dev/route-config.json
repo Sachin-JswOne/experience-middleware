@@ -3,6 +3,7 @@
     "path": "/xp-mi/public/v1/app-home-page",
     "method": "GET",
     "routeHandler": "TRANSFORM",
+    "isCacheRequired": false,
     "target": {
       "name": "appHomePage",
       "url": "https://qa-cms-ext.msme.jswone.in/api/app-home-page",
@@ -17,6 +18,7 @@
   {
     "path": "/xp-mi/public/v1/app-home-page",
     "method": "POST",
+    "isCacheRequired": false,
     "routeHandler": "TRANSFORM",
     "target": {
       "name": "appHomePage",
@@ -35,6 +37,7 @@
     "method": "POST",
     "routeHandler": "AGGREGATE",
     "aggregationType": "PARALLEL",
+    "isCacheRequired": false,
     "targets": [
       {
         "name": "app-home-page",
@@ -121,6 +124,7 @@
     "path": "/xp-mi/public/v1/app-global",
     "method": "POST",
     "routeHandler": "TRANSFORM",
+    "isCacheRequired": false,
     "target": {
       "name": "appGlobalPage",
       "url": "https://qa-cms-ext.msme.jswone.in/api/app-global",
@@ -176,6 +180,7 @@
     "method": "GET",
     "routeHandler": "AGGREGATE",
     "aggregationType": "PARALLEL",
+    "isCacheRequired": false,
     "targets": [
       {
         "name": "ccp-buy-again-with-prices",
@@ -215,6 +220,7 @@
     "path": "/xp-mi/public/v1/app-pdp-pages",
     "method": "POST",
     "routeHandler": "TRANSFORM",
+    "isCacheRequired": false,
     "target": {
       "name": "appPdpPageChanges",
       "url": "https://qa-cms-ext.msme.jswone.in/api/app-pdp-pages",
@@ -232,6 +238,7 @@
     "method": "POST",
     "routeHandler": "AGGREGATE",
     "aggregationType": "PARALLEL",
+    "isCacheRequired": false,
     "targets": [
       {
         "name": "app-top-brands-page",
@@ -276,7 +283,7 @@
           "request": 5000,
           "socket": 1000
         },
-        "reqTransform": "general.transformers.moveBodyToQueryParams",
+        "reqTransform": "general.transformers.transformAppHomePageRequest",
         "resTransform": "cms.transformers.replaceUriPrefix"
       },
       {
@@ -421,6 +428,7 @@
     "method": "GET",
     "routeHandler": "AGGREGATE",
     "aggregationType": "PARALLEL",
+    "isCacheRequired": false,
     "targets": [
       {
         "name": "app-shipment",
@@ -457,6 +465,7 @@
     "path": "/xp-mi/public/v1/verify-gst",
     "method": "POST",
     "routeHandler": "TRANSFORM",
+    "isCacheRequired": false,
     "target": {
       "name": "verify-gstin",
       "url": "${VERIFY_GSTIN_URL}",
@@ -619,6 +628,7 @@
     "method": "POST",
     "routeHandler": "AGGREGATE",
     "aggregationType": "SEQUENTIAL",
+    "isCacheRequired": false,
     "targets": [
       {
         "name": "get-sf-tokens",
@@ -655,6 +665,7 @@
     "method": "GET",
     "routeHandler": "AGGREGATE",
     "aggregationType": "SEQUENTIAL",
+    "isCacheRequired": false,
     "targets": [
       {
         "name": "get-sf-tokens",
@@ -709,6 +720,7 @@
     "method": "POST",
     "routeHandler": "AGGREGATE",
     "aggregationType": "PARALLEL",
+    "isCacheRequired": false,
     "targets": [
       {
         "name": "app-material-tracking",
@@ -784,6 +796,7 @@
     "path": "/xp-mi/public/v1/paymentsdue",
     "method": "GET",
     "routeHandler": "TRANSFORM",
+    "isCacheRequired": false,
     "target": {
       "name": "payments-due",
       "url": "${PAYMENTS_DUE_URI}",
@@ -838,6 +851,22 @@
         "timeout": {
           "request": 5000,
           "socket": 1000
+        },
+        "reqTransform": "general.transformers.convertToGetRequest",
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "access_token"
+          }
+        ]
+      },
+      {
+        "name": "pending-dispatch-quantity",
+        "url": "https://qa.msme.jswone.in/order-service/order/v1/material-tracking/pending-dispatch-quantity",
+        "method": "GET",
+        "timeout": {
+          "request": "${TIMEOUTS.REQUEST}",
+          "socket": "${TIMEOUTS.SOCKET}"
         },
         "reqTransform": "general.transformers.convertToGetRequest",
         "headersToPass": [
@@ -915,6 +944,7 @@
     "path": "/xp-mi/public/v1/otp-implicit-consent",
     "method": "POST",
     "routeHandler": "TRANSFORM",
+    "isCacheRequired": false,
     "target": {
       "name": "otp-implicit-consent",
       "url": "https://qa.msme.jswone.in/customer/v1/privacy/consent",

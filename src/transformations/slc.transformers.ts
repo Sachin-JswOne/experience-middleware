@@ -2,15 +2,14 @@
 
 import { SlcResponse } from 'src/models/slc-response.model';
 import { Logger } from '@nestjs/common';
+import { safeDebug } from 'src/utils/common-functions.util';
 
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 export function convertSlcResponse(response: any): any {
   try {
-    Logger.debug(
-      ` SLC Api response from method: convertSlcResponse : ${JSON.stringify(
-        response,
-      )}`,
-    );
+    safeDebug(Logger, () => ` SLC Api response from method: convertSlcResponse : ${JSON.stringify(
+      response,
+    )}`);
     if (!response || typeof response !== 'object') {
       Logger.error(
         `Error for SLC API method: convertSlcResponse Response is not an object`,

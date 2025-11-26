@@ -92,3 +92,47 @@ export function successOnly(results: AggregatedResponse[]): any {
   // If all targets succeeded
   return { success: true };
 }
+
+export function transformAppHomePageRequest(request: BaseRequest): BaseRequest {
+  const transformedRequest: BaseRequest = {
+    ...request
+  };
+  addChannelFilter(transformedRequest.body);
+  return moveBodyToQueryParams(transformedRequest);
+}
+
+const addChannelFilter = (query) => {
+  if (Array.isArray(query)) {
+    query.forEach(addChannelFilter);
+    return;
+  }
+
+  if (typeof query === "object" && query !== null) {
+    // Check if this object has $and array
+    if (query.$and && Array.isArray(query.$and)) {
+
+      const hasCustomerType = query.$and.some(item =>
+        item?.customer_types || item?.app_customer_types ||
+        (item?.$or && checkForOrArray(item.$or, ['customer_types', 'app_customer_types']))
+      );
+
+      const hasChannelFilter = query.$and.some(item =>
+        item?.channel ||
+        (item?.$or && checkForOrArray(item.$or, ['channel']))
+      );
+
+      if (hasCustomerType && !hasChannelFilter) {
+        query.$and.push({
+          channels: { "name": { "$eqi": "App" } }
+        });
+      }
+    }
+
+    // Recurse deeper
+    Object.values(query).forEach(addChannelFilter);
+  }
+}
+const checkForOrArray = (item: any[], keys: string[]): boolean => {
+  return item.some(item => keys.some(key => item[key]))
+}
+

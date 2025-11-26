@@ -94,3 +94,9 @@ export function getUserIdentifiers(headers: any): {
     return { sfId: null, ctId: null };
   }
 }
+
+export const safeDebug = (logger, msgFn) => {
+  if (logger.isDebugEnabled && logger.isDebugEnabled()) {
+    logger.debug(msgFn());
+  }
+};

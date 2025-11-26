@@ -26,6 +26,7 @@ import { HttpStatusCode } from 'axios';
 import { CustomError } from 'src/utils/CustomError';
 import { AggregatedResponse } from 'src/models/aggregated-response.model';
 import { Logger } from '@nestjs/common';
+import { safeDebug } from 'src/utils/common-functions.util';
 
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 export function transformOrderListingRequest(request) {
@@ -54,11 +55,9 @@ export function getDeveloperName(customerType) {
 
 export function transformOrderListingResponse(response) {
   const orderListingResult = response?.data?.data;
-  Logger.debug(
-    ` Connector Order Listing Api response from method: transformOrderListingResponse : ${JSON.stringify(
-      orderListingResult,
-    )}`,
-  );
+  safeDebug(Logger, () => ` Connector Order Listing Api response from method: transformOrderListingResponse : ${JSON.stringify(
+    orderListingResult,
+  )}`);
   if (orderListingResult) {
     const OrderListResponse =
       sortProductsArrayBasedOnCreatedDate(orderListingResult);
@@ -385,7 +384,7 @@ export function getAppStatusFromOpportunities(order) {
     ) {
       return (
         APP_STATUS_PB_WHEN_NO_FULLFILLEDBY_PRESENT[
-          order.orderStatus.toLowerCase()
+        order.orderStatus.toLowerCase()
         ] ?? ''
       );
     }
@@ -393,7 +392,7 @@ export function getAppStatusFromOpportunities(order) {
     if (fullfilledBy === 'JSW One') {
       return (
         APP_STATUS_PB_WHEN__FULLFILLEDBY_JSW_ONE[
-          order.orderStatus.toLowerCase()
+        order.orderStatus.toLowerCase()
         ] ?? ''
       );
     }
@@ -401,7 +400,7 @@ export function getAppStatusFromOpportunities(order) {
     if (fullfilledBy === 'Warehouse') {
       return (
         APP_STATUS_PB_WHEN__FULLFILLEDBY_JSW_ONE_DISTRIBUTOR[
-          order.orderStatus.toLowerCase()
+        order.orderStatus.toLowerCase()
         ] ?? ''
       );
     }
@@ -450,17 +449,13 @@ export function mergeMaterialTrackingAndOrderListingResponses(
     const materialTrackingResponse = responses['app-material-tracking'];
     const orderListingResponse = responses['app-order-listing'];
 
-    Logger.debug(
-      `Strapi Material Tracking Api response from method: mergeMaterialTrackingAndOrderListingResponses : ${JSON.stringify(
-        materialTrackingResponse,
-      )}`,
-    );
+    safeDebug(Logger, () => `Strapi Material Tracking Api response from method: mergeMaterialTrackingAndOrderListingResponses : ${JSON.stringify(
+      materialTrackingResponse,
+    )}`);
 
-    Logger.debug(
-      ` Connector Order And Opportunity Listing Api response from method: mergeMaterialTrackingAndOrderListingResponses : ${JSON.stringify(
-        orderListingResponse,
-      )}`,
-    );
+    safeDebug(Logger, () => ` Connector Order And Opportunity Listing Api response from method: mergeMaterialTrackingAndOrderListingResponses : ${JSON.stringify(
+      orderListingResponse,
+    )}`);
 
     if (
       !materialTrackingResponse ||

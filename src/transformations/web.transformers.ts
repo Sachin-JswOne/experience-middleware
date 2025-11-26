@@ -5,6 +5,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { AggregatedResponse } from 'src/models/aggregated-response.model';
 import { Logger } from '@nestjs/common';
+import { safeDebug } from 'src/utils/common-functions.util';
 import { getFormattedTracingContext } from 'src/utils/tracing.util';
 import { BaseRequest } from 'src/models/base-request.model';
 import { CustomError } from 'src/utils/CustomError';
@@ -26,26 +27,18 @@ export function mergeWebHomePageResponses(
   const pendingDispatchResponse = responses['pending-dispatch-quantity'];
   const webProductsResponse = responses['web-homepage-products'];
 
-  Logger.debug(
-    ` CMS Home Page Api response from method: mergeWebHomePageResponses : ${JSON.stringify(
-      cmsResponse,
-    )}`,
-  );
-  Logger.debug(
-    ` Blogs Api response from method: mergeWebHomePageResponses : ${JSON.stringify(
-      blogsResponse,
-    )}`,
-  );
-  Logger.debug(
-    ` CCP Buy Again With Price Api response from method: mergeWebHomePageResponses : ${JSON.stringify(
-      buyAgainResponse,
-    )}`,
-  );
-  Logger.debug(
-    ` Pending Dispatch Quantity Api response from method: mergeWebHomePageResponses : ${JSON.stringify(
-      pendingDispatchResponse,
-    )}`,
-  );
+  safeDebug(Logger, () => ` CMS Home Page Api response from method: mergeWebHomePageResponses : ${JSON.stringify(
+    cmsResponse,
+  )}`);
+  safeDebug(Logger, () => ` Blogs Api response from method: mergeWebHomePageResponses : ${JSON.stringify(
+    blogsResponse,
+  )}`);
+  safeDebug(Logger, () => ` CCP Buy Again With Price Api response from method: mergeWebHomePageResponses : ${JSON.stringify(
+    buyAgainResponse,
+  )}`);
+  safeDebug(Logger, () => ` Pending Dispatch Quantity Api response from method: mergeWebHomePageResponses : ${JSON.stringify(
+    pendingDispatchResponse,
+  )}`);
   if (
     !cmsResponse ||
     !cmsResponse.success ||
@@ -186,10 +179,18 @@ export function catlougeByCategories(request: BaseRequest, aggregatedResponses: 
 
   const categories = categoriesResponse.data.data;
 
-  const filterRequests = categories.filter((category: any) => category.webCategoryId && category.itemsToShow > 0)
-    .map((category) => {
-      return transformCategoryToFilterRequest(category);
-    });
+  // Remove duplicates based on webCategoryId
+  const uniqueCategories = Array.from(
+    new Map(
+      categories
+        .filter((category: any) => category.webCategoryId && category.itemsToShow > 0)
+        .map((category: any) => [category.webCategoryId, category])
+    ).values()
+  );
+
+  const filterRequests = uniqueCategories.map((category: any) => {
+    return transformCategoryToFilterRequest(category);
+  });
 
   transformedRequest.body = filterRequests;
 

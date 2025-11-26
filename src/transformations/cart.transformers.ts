@@ -2,6 +2,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { AggregatedResponse } from 'src/models/aggregated-response.model';
 import { Logger } from '@nestjs/common';
+import { safeDebug } from 'src/utils/common-functions.util';
 
 export function mergeCartPageResponses(
   aggregatedResponses: AggregatedResponse[],
@@ -18,23 +19,17 @@ export function mergeCartPageResponses(
   const buyAgainApiResponse = responses['app-buy-again'];
   const cartSummaryApiResponse = responses['app-cart-summary'];
 
-  Logger.debug(
-    ` Strapi Cart Page Api response from method: mergeCartPageResponses : ${JSON.stringify(
-      strapiCartPageResponse,
-    )}`,
-  );
+  safeDebug(Logger, () => ` Strapi Cart Page Api response from method: mergeCartPageResponses : ${JSON.stringify(
+    strapiCartPageResponse,
+  )}`);
 
-  Logger.debug(
-    ` Buy Again Api response from method: mergeCartPageResponses : ${JSON.stringify(
-      buyAgainApiResponse,
-    )}`,
-  );
+  safeDebug(Logger, () => ` Buy Again Api response from method: mergeCartPageResponses : ${JSON.stringify(
+    buyAgainApiResponse,
+  )}`);
 
-  Logger.debug(
-    ` Cart Summary Api response from method: mergeCartPageResponses : ${JSON.stringify(
-      cartSummaryApiResponse,
-    )}`,
-  );
+  safeDebug(Logger, () => ` Cart Summary Api response from method: mergeCartPageResponses : ${JSON.stringify(
+    cartSummaryApiResponse,
+  )}`);
 
   if (
     !strapiCartPageResponse ||
