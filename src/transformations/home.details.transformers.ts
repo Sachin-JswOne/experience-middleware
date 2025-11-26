@@ -114,12 +114,13 @@ export function mergeProjectDetailsAndTrackerResponses(
       })) ?? [];
 
   const mergedConstructionItems =
-    strapiData?.data?.projectDetailsConstruction?.projectItems?.map(
-      (item: any) => ({
+    strapiData?.data?.projectDetailsConstruction?.projectItems
+      ?.filter((item: any) => item.key in homesData)
+      ?.map((item: any) => ({
         ...item,
         value: homesData[item.key],
       }),
-    ) ?? [];
+      ) ?? [];
 
   let finalProjectDetails = {
     projectDetails: { ...strapiData.data.projectDetails, projectItems: [] },
