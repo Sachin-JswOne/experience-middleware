@@ -4,7 +4,7 @@
     "method": "POST",
     "routeHandler": "AGGREGATE",
     "aggregationType": "PARALLEL",
-    "isCacheRequired": false,    
+    "isCacheRequired": false,
     "targets": [
       {
         "name": "app-home-page",
@@ -88,7 +88,7 @@
     "path": "${PATH_URL}/v1/app-global",
     "method": "POST",
     "routeHandler": "TRANSFORM",
-    "isCacheRequired": false,     
+    "isCacheRequired": false,
     "target": {
       "name": "appGlobalPage",
       "url": "${CMS_MSME_URL}/app-global",
@@ -141,7 +141,7 @@
     "method": "GET",
     "routeHandler": "AGGREGATE",
     "aggregationType": "PARALLEL",
-    "isCacheRequired": false,     
+    "isCacheRequired": false,
     "targets": [
       {
         "name": "ccp-buy-again-with-prices",
@@ -175,7 +175,7 @@
     "path": "${PATH_URL}/v1/app-pdp-pages",
     "method": "POST",
     "routeHandler": "TRANSFORM",
-    "isCacheRequired": false, 
+    "isCacheRequired": false,
     "target": {
       "name": "appPdpPageChanges",
       "url": "${CMS_MSME_URL}/app-pdp-pages",
@@ -193,7 +193,7 @@
     "method": "POST",
     "routeHandler": "AGGREGATE",
     "aggregationType": "PARALLEL",
-    "isCacheRequired": false,     
+    "isCacheRequired": false,
     "targets": [
       {
         "name": "app-top-brands-page",
@@ -238,7 +238,7 @@
           "request": "${TIMEOUTS.REQUEST}",
           "socket": "${TIMEOUTS.SOCKET}"
         },
-        "reqTransform": "general.transformers.moveBodyToQueryParams",
+        "reqTransform": "general.transformers.transformAppHomePageRequest",
         "resTransform": "cms.transformers.replaceUriPrefix"
       },
       {
@@ -383,7 +383,7 @@
     "method": "GET",
     "routeHandler": "AGGREGATE",
     "aggregationType": "PARALLEL",
-    "isCacheRequired": false,     
+    "isCacheRequired": false,
     "targets": [
       {
         "name": "app-shipment",
@@ -420,7 +420,7 @@
     "path": "${PATH_URL}/v1/verify-gst",
     "method": "POST",
     "routeHandler": "TRANSFORM",
-    "isCacheRequired": false,     
+    "isCacheRequired": false,
     "target": {
       "name": "verify-gstin",
       "url": "${VERIFY_GSTIN_URL}",
@@ -583,7 +583,7 @@
     "method": "POST",
     "routeHandler": "AGGREGATE",
     "aggregationType": "SEQUENTIAL",
-    "isCacheRequired": false,     
+    "isCacheRequired": false,
     "targets": [
       {
         "name": "get-sf-tokens",
@@ -620,7 +620,7 @@
     "method": "GET",
     "routeHandler": "AGGREGATE",
     "aggregationType": "SEQUENTIAL",
-    "isCacheRequired": false,     
+    "isCacheRequired": false,
     "targets": [
       {
         "name": "get-sf-tokens",
@@ -705,7 +705,7 @@
     "path": "${PATH_URL}/v1/paymentsdue",
     "method": "GET",
     "routeHandler": "TRANSFORM",
-    "isCacheRequired": false,     
+    "isCacheRequired": false,
     "target": {
       "name": "payments-due",
       "url": "https://www.jswonemsme.com/customer/payment/v2/totalDueAmount",
@@ -725,7 +725,7 @@
     "method": "POST",
     "routeHandler": "AGGREGATE",
     "aggregationType": "PARALLEL",
-    "isCacheRequired": false, 
+    "isCacheRequired": false,
     "targets": [
       {
         "name": "app-material-tracking",
@@ -899,7 +899,7 @@
     "path": "${PATH_URL}/v1/otp-implicit-consent",
     "method": "POST",
     "routeHandler": "TRANSFORM",
-    "isCacheRequired": false,     
+    "isCacheRequired": false,
     "target": {
       "name": "otp-implicit-consent",
       "url": "https://www.jswonemsme.com/customer/v1/privacy/consent",
