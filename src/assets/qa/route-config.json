@@ -1131,21 +1131,6 @@
   },
   {
     "path": "/xp-mi/public/v1/webview",
-    "method": "GET",
-    "routeHandler": "TRANSFORM",
-    "isCacheRequired": false,
-    "target": {
-      "name": "webView",
-      "url": "${CMS_MSME_URL}/app-web-view-configurations?populate=*",
-      "method": "GET",
-      "timeout": {
-        "request": 5000,
-        "socket": 1000
-      }
-    }
-  },
-  {
-    "path": "/xp-mi/public/v1/webview",
     "method": "POST",
     "routeHandler": "TRANSFORM",
     "isCacheRequired": false,
