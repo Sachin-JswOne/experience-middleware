@@ -1087,17 +1087,19 @@
   },
   {
     "path": "/xp-mi/public/v1/webview",
-    "method": "GET",
+    "method": "POST",
     "routeHandler": "TRANSFORM",
     "isCacheRequired": false,
     "target": {
       "name": "webView",
-      "url": "${CMS_MSME_URL}/app-web-view-configurations?populate=*",
+      "url": "${CMS_MSME_URL}/app-web-view-configurations",
       "method": "GET",
       "timeout": {
         "request": 5000,
         "socket": 1000
-      }
+      },
+      "reqTransform": "general.transformers.moveBodyToQueryParams",
+      "resTransform": "cms.transformers.replaceUriPrefix"
     }
   }
 ]
