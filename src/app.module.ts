@@ -4,12 +4,13 @@ import { ConfigModule } from '@nestjs/config';
 import { ProxyService } from './service/proxy.service';
 import { ProxyController } from './controller/proxy.controller';
 import { join } from 'path';
-// import { RedisProvider } from './redis.provider';
 import { AppService } from './app.service';
 import { WinstonModule } from 'nest-winston';
 import { winstonConfig } from './logger/winston.config';
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { RequestContextMiddleware } from './utils/request-context.middleware';
+import { RedisModule } from './redis/redis.module';
+
 
 @Module({
   imports: [
@@ -27,11 +28,10 @@ import { RequestContextMiddleware } from './utils/request-context.middleware';
     ConfigModule.forRoot({
       isGlobal: true,
     }),
+    RedisModule,
   ],
   controllers: [ProxyController],
-  // providers: [RedisProvider, AppService, ProxyService],
   providers: [AppService, ProxyService],
-  // exports: [RedisProvider, AppService]
   exports: [AppService],
 })
 export class AppModule implements NestModule {
