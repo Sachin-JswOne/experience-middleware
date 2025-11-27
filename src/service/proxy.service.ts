@@ -23,15 +23,16 @@ import { IncomingHttpHeaders } from 'http';
 import { inspect } from 'util';
 import { CustomError } from 'src/utils/CustomError';
 import { match } from 'path-to-regexp';
-import Redis from 'ioredis';
+// import Redis from 'ioredis';
 
 @Injectable()
 export class ProxyService {
   private readonly tracer = trace.getTracer('experience-middleware');
   private readonly logger = new Logger(ProxyService.name);
-  constructor(
-    @Inject('REDIS_CLIENT') private readonly redis: Redis,
-  ) {}
+  // constructor(
+  //   @Inject('REDIS_CLIENT') private readonly redis: Redis,
+  // ) {}
+  constructor() { }
 
   private getCacheKey(req: Request): string {
 
@@ -97,24 +98,24 @@ export class ProxyService {
     const isCacheRequired = (route as any).isCacheRequired === true;
     let cacheKey: string | null = null;
 
-    if (isCacheRequired) {
-      cacheKey = this.getCacheKey(req);
-      try {
-        const cached = await this.redis.get(cacheKey);
-        if (cached) {
-          console.log(`**Cache HIT for ${cacheKey}`);
-          return JSON.parse(cached);
-        }
-        console.log(`**Cache MISS for ${cacheKey}`);
-      } catch (err) {
-        // Don't break the request if Redis is unhappy; just log and continue
-        console.error('Redis GET error, bypassing cache:', err);
-      }
-    } else {
-      console.log(
-        `Caching disabled for route ${req.method} ${route.path} (isCacheRequired=false)`,
-      );
-    }
+    // if (isCacheRequired) {
+    //   cacheKey = this.getCacheKey(req);
+    //   try {
+    //     const cached = await this.redis.get(cacheKey);
+    //     if (cached) {
+    //       console.log(`**Cache HIT for ${cacheKey}`);
+    //       return JSON.parse(cached);
+    //     }
+    //     console.log(`**Cache MISS for ${cacheKey}`);
+    //   } catch (err) {
+    //     // Don't break the request if Redis is unhappy; just log and continue
+    //     console.error('Redis GET error, bypassing cache:', err);
+    //   }
+    // } else {
+    //   console.log(
+    //     `Caching disabled for route ${req.method} ${route.path} (isCacheRequired=false)`,
+    //   );
+    // }
 
     const activeSpan = trace.getSpan(context.active());
     if (activeSpan) {
@@ -161,16 +162,16 @@ export class ProxyService {
     }
 
 
-    if (isCacheRequired && cacheKey) {
-      try {
-        const ttlSeconds = process.env.CACHE_TTL_SECONDS ? parseInt(process.env.CACHE_TTL_SECONDS, 10) : 30 * 60;
+    // if (isCacheRequired && cacheKey) {
+    //   try {
+    //     const ttlSeconds = process.env.CACHE_TTL_SECONDS ? parseInt(process.env.CACHE_TTL_SECONDS, 10) : 30 * 60;
 
-        await this.redis.set(cacheKey, JSON.stringify(data), 'EX', ttlSeconds);
-        console.log(`**Cached response for ${cacheKey}`);
-      } catch (err) {
-        console.error('Redis SET error, continuing without cache:', err);
-      }
-    }
+    //     await this.redis.set(cacheKey, JSON.stringify(data), 'EX', ttlSeconds);
+    //     console.log(`**Cached response for ${cacheKey}`);
+    //   } catch (err) {
+    //     console.error('Redis SET error, continuing without cache:', err);
+    //   }
+    // }
 
     return data;
   }
@@ -333,7 +334,7 @@ export class ProxyService {
 
         try {
           console.log(`Processing SEQUENTIAL request for ${req.url}`);
-          
+
           for (const target of route.targets) {
             try {
               const responseData = await this.handleTransformRequest(
@@ -465,7 +466,7 @@ export class ProxyService {
               response.statusText || 'Unknown error',
             );
           }
-         
+
           return responseData;
         } catch (err) {
           span.recordException(err as Error);
