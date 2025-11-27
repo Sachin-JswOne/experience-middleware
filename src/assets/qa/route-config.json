@@ -490,7 +490,7 @@
     "targets": [
       {
         "name": "strapi-project-detail",
-        "url": "http://34.117.162.157/api/project-page",
+        "url": "https://cms-qa.onejswhomes.in/api/project-page",
         "method": "GET",
         "timeout": { "request": 5000, "socket": 1000 },
         "reqTransform": "general.transformers.moveBodyToQueryParams"
@@ -517,7 +517,7 @@
     "targets": [
       {
         "name": "strapi-user-detail",
-        "url": "http://34.117.162.157/api/user-info",
+        "url": "https://cms-qa.onejswhomes.in/api/user-info",
         "method": "GET",
         "timeout": { "request": 5000, "socket": 1000 },
         "reqTransform": "general.transformers.moveBodyToQueryParams"
