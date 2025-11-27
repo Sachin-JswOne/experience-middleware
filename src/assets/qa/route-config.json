@@ -1182,5 +1182,25 @@
       }
     ],
     "resTransform": "global.transformers.mergeGlobalAndSlcCartResponses"
+  },
+  {
+    "path": "/xp-mi/public/v1/total-payment-due",
+    "method": "GET",
+    "routeHandler": "TRANSFORM",
+    "isCacheRequired": false,
+    "target": {
+      "name": "payments-due",
+      "url": "https://qa.msme.jswone.in/customer/ledger/v2/totalPaymentDue",
+      "method": "GET",
+      "timeout": {
+        "request": 5000,
+        "socket": 1000
+      },
+      "headersToPass": [
+        { "source": "authorization", "destination": "access_token" }
+      ],
+      "requiredParams": ["entityName"],
+      "resTransform": "paymentdue.transformers.getPaymentDueDetails"
+    }
   }
 ]
