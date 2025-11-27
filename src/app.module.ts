@@ -1,15 +1,15 @@
-// import { PrometheusModule } from '@willsoto/nestjs-prometheus';
-import { ServeStaticModule } from '@nestjs/serve-static';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { ProxyService } from './service/proxy.service';
-import { ProxyController } from './controller/proxy.controller';
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { WinstonModule } from 'nest-winston';
 import { join } from 'path';
 import { AppService } from './app.service';
-import { WinstonModule } from 'nest-winston';
+import { ProxyController } from './controller/proxy.controller';
+import { ProxyService } from './service/proxy.service';
 import { winstonConfig } from './logger/winston.config';
-import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
-import { RequestContextMiddleware } from './utils/request-context.middleware';
 import { RedisModule } from './redis/redis.module';
+import { RequestContextMiddleware } from './utils/request-context.middleware';
+// import { PrometheusModule } from '@willsoto/nestjs-prometheus';
 
 
 @Module({
@@ -28,7 +28,7 @@ import { RedisModule } from './redis/redis.module';
     ConfigModule.forRoot({
       isGlobal: true,
     }),
-    RedisModule,
+    ...(process.env.enableRedis === 'true' ? [RedisModule] : []),
   ],
   controllers: [ProxyController],
   providers: [AppService, ProxyService],

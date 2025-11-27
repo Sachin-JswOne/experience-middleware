@@ -497,7 +497,7 @@
       },
       {
         "name": "homes-project-details",
-        "url": "http://34.100.206.209/homes-service/v1/project/project-details",
+        "url": "https://services-dev.onejswhomes.in/homes-service/v1/project/project-details",
         "method": "GET",
         "timeout": { "request": 5000, "socket": 1000 },
         "headersToPass": [
@@ -524,7 +524,7 @@
       },
       {
         "name": "homes-user-details",
-        "url": "http://34.100.206.209/homes-service/v1/user/details",
+        "url": "https://services-dev.onejswhomes.in/homes-service/v1/user/details",
         "method": "GET",
         "timeout": { "request": 5000, "socket": 1000 },
         "headersToPass": [
@@ -541,7 +541,7 @@
     "routeHandler": "TRANSFORM",
     "target": {
       "name": "homes-progress-report",
-      "url": "http://34.100.206.209/homes-service/v1/project/progress-reports",
+      "url": "https://services-dev.onejswhomes.in/homes-service/v1/project/progress-reports",
       "method": "GET",
       "timeout": { "request": 5000, "socket": 1000 },
       "headersToPass": [
@@ -706,7 +706,7 @@
     "routeHandler": "TRANSFORM",
     "target": {
       "name": "homes-design-documents",
-      "url": "http://34.100.206.209/homes-service/v1/project/design-documents",
+      "url": "https://services-dev.onejswhomes.in/homes-service/v1/project/design-documents",
       "method": "GET",
       "timeout": { "request": 5000, "socket": 1000 },
       "headersToPass": [
@@ -783,7 +783,7 @@
     "routeHandler": "TRANSFORM",
     "target": {
       "name": "homes-construction-documents",
-      "url": "http://34.100.206.209/homes-service/v1/project/construction-documents",
+      "url": "https://services-dev.onejswhomes.in/homes-service/v1/project/construction-documents",
       "method": "GET",
       "timeout": { "request": 5000, "socket": 1000 },
       "headersToPass": [
