@@ -4,6 +4,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { Logger } from '@nestjs/common';
+import { safeDebug } from 'src/utils/common-functions.util';
 import {
   CONNECTOR_ORDER_TYPE_MAPPING,
   DEFAULT_CURRENCY_CODE,
@@ -17,7 +18,6 @@ import { BaseRequest } from 'src/models/base-request.model';
 import { convertToDouble, formatDate } from 'src/utils/common-functions.util';
 import { transformSingleProduct } from './shipments.transformers';
 import { CustomError } from 'src/utils/CustomError';
-import { getFormattedTracingContext } from 'src/utils/tracing.util';
 import {
   getAppStatusFromOpportunities,
   getDeveloperName,
@@ -48,12 +48,15 @@ export function transformOrderDetailsRequest(request: BaseRequest) {
 
 export function transformOrderDetailsResponse(response: any) {
   const orderDetailsResponse = response?.data?.data;
+  safeDebug(Logger, () => ` Connector Order Details Api response from method: transformOrderDetailsResponse : ${JSON.stringify(
+    orderDetailsResponse,
+  )}`);
   if (orderDetailsResponse) {
     const orderDetails = transformOrderDetails(orderDetailsResponse);
     return { orderDetails };
   }
   Logger.error(
-    `For method: transformOrderDetailsRequest ${getFormattedTracingContext()} Connector Order Detail API Is throwing error'`,
+    `For method: transformOrderDetailsRequest Connector Order Detail API Is throwing error'`,
   );
   throw new CustomError(response.errors, response.responseCode);
 }
@@ -144,6 +147,9 @@ export function transformOpportunityDetailsRequest(request) {
 
 export function transformOpportunityDetailsResponse(response: any) {
   const opportunityDetailsResponse = response?.data?.data;
+  safeDebug(Logger, () => ` Connector Opportunity Details Api response from method: transformOpportunityDetailsResponse : ${JSON.stringify(
+    opportunityDetailsResponse,
+  )}`);
   if (opportunityDetailsResponse) {
     const opportunityDetails = transformOpportunityDetails(
       opportunityDetailsResponse,
@@ -151,7 +157,7 @@ export function transformOpportunityDetailsResponse(response: any) {
     return { orderDetails: opportunityDetails };
   }
   Logger.error(
-    `For method: transformOpportunityDetailsResponse ${getFormattedTracingContext()} Connector Opportunity Detail API Is throwing error'`,
+    `For method: transformOpportunityDetailsResponse Connector Opportunity Detail API Is throwing error'`,
   );
   throw new CustomError(response.errors, response.responseCode);
 }

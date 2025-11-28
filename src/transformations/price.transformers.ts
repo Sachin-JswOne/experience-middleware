@@ -6,7 +6,7 @@ import {
 import { BaseRequest } from 'src/models/base-request.model';
 import { priceRequest, priceResponse } from 'src/models/price.model';
 import { Logger } from '@nestjs/common';
-import { getFormattedTracingContext } from 'src/utils/tracing.util';
+import { safeDebug } from 'src/utils/common-functions.util';
 
 export function transformLineItemPriceRequest(
   request: BaseRequest,
@@ -44,7 +44,9 @@ export function transformLineItemPriceRequest(
     ...request,
     body: reqBody,
   };
-  Logger.log(`Transforming Line Item Price Request ${request.url} method: transformLineItemPriceRequest ${getFormattedTracingContext()}`);
+  Logger.log(
+    `Transforming Line Item Price Request ${request.url} method: transformLineItemPriceRequest`,
+  );
   return finalTransformedRequest;
 }
 
@@ -96,6 +98,9 @@ export function getVariantMMID(category: string, productMMID: string): string {
 }
 
 export function transformLineItemPriceResponse(response: priceResponse) {
+  safeDebug(Logger, () => ` Line Item Price Api response from method: transformLineItemPriceResponse : ${JSON.stringify(
+    response,
+  )}`);
   if (response.success && response?.price) {
     return {
       price: response?.price?.displayVariantLineItemPrice || 0,
