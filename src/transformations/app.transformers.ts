@@ -4,8 +4,8 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { AggregatedResponse } from 'src/models/aggregated-response.model';
 import { Logger } from '@nestjs/common';
-import { getFormattedTracingContext } from 'src/utils/tracing.util';
 import { BaseRequest } from 'src/models/base-request.model';
+import { safeDebug } from 'src/utils/common-functions.util';
 
 export function mergeHomePageResponses(
   aggregatedResponses: AggregatedResponse[],
@@ -24,13 +24,31 @@ export function mergeHomePageResponses(
   const blogResponse = responses['app-blogs'];
   const inTransitResponse = responses['app-in-transit'];
 
+  safeDebug(Logger, () => `Strapi Home Page Api response from method: mergeHomePageResponses : ${JSON.stringify(
+    strapiResponse,
+  )}`);
+  safeDebug(Logger, () => `Top Items Api response from method: mergeHomePageResponses : ${JSON.stringify(
+    topItemsResponse,
+  )}`);
+  safeDebug(Logger, () => `Buy Again Api response from method: mergeHomePageResponses : ${JSON.stringify(
+    buyAgainResponse,
+  )}`);
+  safeDebug(Logger, () => `Categories Api response from method: mergeHomePageResponses : ${JSON.stringify(
+    categoriesResponse,
+  )}`);
+  safeDebug(Logger, () => `Blog Api response from method: mergeHomePageResponses : ${JSON.stringify(
+    blogResponse,
+  )}`);
+  safeDebug(Logger, () => `In Transit Api response from method: mergeHomePageResponses : ${JSON.stringify(
+    inTransitResponse,
+  )}`);
   if (
     !strapiResponse ||
     typeof strapiResponse.data !== 'object' ||
     strapiResponse.data === null
   ) {
     Logger.error(
-      `Error for Home Page API method: mergeHomePageResponses ${getFormattedTracingContext()} Strapi response is missing or invalid`,
+      `Error for Home Page API method: mergeHomePageResponses Strapi response is missing or invalid`,
     );
     return { data: {}, meta: {} };
   }
@@ -181,6 +199,13 @@ export function mergeBuyAgainResponses(
   const buyAgainPriceApiResponse = responses['ccp-buy-again-with-prices'];
   const buyAgainRetailApiResponse = responses['app-buy-again'];
 
+  safeDebug(Logger, () => ` Buy Again Price Api response from method: mergeBuyAgainResponses : ${JSON.stringify(
+    buyAgainPriceApiResponse,
+  )}`);
+
+  safeDebug(Logger, () => `Buy Again Retail Api response from method: mergeBuyAgainResponses : ${JSON.stringify(
+    buyAgainRetailApiResponse,
+  )}`);
   if (buyAgainRetailApiResponse.success) {
     if (buyAgainPriceApiResponse.data && buyAgainRetailApiResponse.data) {
       if (buyAgainPriceApiResponse.data.length === 0) {
@@ -214,7 +239,7 @@ export function mergeBuyAgainResponses(
     }
   } else {
     Logger.error(
-      `Error for Buy Again API method: mergeBuyAgainResponses ${getFormattedTracingContext()} Buy again retail API response failed`,
+      `Error for Buy Again API method: mergeBuyAgainResponses Buy again retail API response failed`,
     );
     return {
       listOfBuyAgainProducts: [],
@@ -234,6 +259,14 @@ export function mergeTopBrandsResponses(aggregatedResponses) {
   const strapiTopBrandsData = responses['app-top-brands-page'];
   const topBrandsApiData = responses['app-top-brands'];
 
+  safeDebug(Logger, () => ` Strapi Top Brands Api response from method: mergeTopBrandsResponses : ${JSON.stringify(
+    strapiTopBrandsData,
+  )}`);
+
+  safeDebug(Logger, () => ` Top Brands Api response from method: mergeTopBrandsResponses : ${JSON.stringify(
+    topBrandsApiData,
+  )}`);
+
   const defaultResponse = {
     productBrands: [],
   };
@@ -250,7 +283,7 @@ export function mergeTopBrandsResponses(aggregatedResponses) {
 
       if (!topBrandsStrapiResponse) {
         Logger.error(
-          `Error for Top Brands API method: mergeTopBrandsResponses ${getFormattedTracingContext()} Top brands Strapi response is missing`,
+          `Error for Top Brands API method: mergeTopBrandsResponses Top brands Strapi response is missing`,
         );
         return defaultResponse;
       }
@@ -290,12 +323,12 @@ export function mergeTopBrandsResponses(aggregatedResponses) {
       }
     }
     Logger.error(
-      `Error for Top Brands API method: mergeTopBrandsResponses ${getFormattedTracingContext()} Strapi branding sections not found or invalid`,
+      `Error for Top Brands API method: mergeTopBrandsResponses Strapi branding sections not found or invalid`,
     );
     return defaultResponse;
   } else {
     Logger.error(
-      `Error for Top Brands API method: mergeTopBrandsResponses ${getFormattedTracingContext()} Strapi or API data response failed`,
+      `Error for Top Brands API method: mergeTopBrandsResponses Strapi or API data response failed`,
     );
     return defaultResponse;
   }

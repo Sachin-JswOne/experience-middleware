@@ -1,7 +1,11 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
+import * as jwt from 'jsonwebtoken';
+import { GUEST, GUEST_USER_STATE } from 'src/config/app.config';
+
 export function formatDate(opportunityCreatedDate: string) {
   const date: Date = new Date(opportunityCreatedDate);
 
@@ -32,7 +36,7 @@ export function convertToDouble(strNumber) {
 }
 
 export function getFormattedTime(): string {
-   const now = new Date();
+  const now = new Date();
   const options: Intl.DateTimeFormatOptions = {
     timeZone: 'Asia/Kolkata',
     year: 'numeric',
@@ -58,3 +62,41 @@ export function getFormattedTime(): string {
   const timestamp = `${partMap.year}-${partMap.month}-${partMap.day} ${partMap.hour}:${partMap.minute}:${partMap.second}`;
   return timestamp;
 }
+
+export function getUserIdentifiers(headers: any): {
+  sfId: string | null;
+  ctId: string | null;
+} {
+  const authHeader = headers?.authorization;
+  if (!authHeader) {
+    const userState = headers['x-user-state'];
+    if (userState && userState === GUEST_USER_STATE) {
+      return { sfId: GUEST, ctId: GUEST };
+    }
+    return { sfId: null, ctId: null };
+  }
+
+  try {
+    const token = authHeader.startsWith('Bearer ')
+      ? authHeader.substring(7)
+      : authHeader;
+
+    const decoded = jwt.decode(token) as {
+      sfCustomerId?: string;
+      userId?: string;
+    } | null;
+
+    return {
+      sfId: decoded?.sfCustomerId ?? null,
+      ctId: decoded?.userId ?? null,
+    };
+  } catch (err) {
+    return { sfId: null, ctId: null };
+  }
+}
+
+export const safeDebug = (logger, msgFn) => {
+  if (logger.isDebugEnabled && logger.isDebugEnabled()) {
+    logger.debug(msgFn());
+  }
+};

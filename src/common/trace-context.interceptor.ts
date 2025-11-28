@@ -3,6 +3,20 @@ import { context, trace, SpanStatusCode } from '@opentelemetry/api';
 import { Observable } from 'rxjs';
 import { tap, finalize } from 'rxjs/operators';
 
+// Helper function to safely stringify objects with circular references
+function safeStringify(obj: any): string {
+  const seen = new WeakSet();
+  return JSON.stringify(obj, (key, value) => {
+    if (typeof value === 'object' && value !== null) {
+      if (seen.has(value)) {
+        return '[Circular]';
+      }
+      seen.add(value);
+    }
+    return value;
+  });
+}
+
 @Injectable()
 export class TraceContextInterceptor implements NestInterceptor {
   intercept(ctx: ExecutionContext, next: CallHandler): Observable<unknown> {
@@ -45,12 +59,12 @@ export class TraceContextInterceptor implements NestInterceptor {
         next: (response) => {
           if (activeSpan && response) {
             // Add response data as span attributes
-            activeSpan.setAttribute('http.response.size', JSON.stringify(response).length);
-            
+            const responseStr = safeStringify(response);
+            activeSpan.setAttribute('http.response.size', responseStr.length);
+
             // Add response status if available
             if (typeof response === 'object' && response !== null) {
               // For large responses, you might want to truncate or sample
-              const responseStr = JSON.stringify(response);
               if (responseStr.length > 1000) {
                 activeSpan.setAttribute('http.response.preview', responseStr.substring(0, 1000) + '...');
                 activeSpan.setAttribute('http.response.truncated', true);

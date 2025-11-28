@@ -1,11 +1,17 @@
-﻿import './instrumentation';
+﻿/* eslint-disable @typescript-eslint/no-unsafe-argument */
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+import './instrumentation';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { AppService } from './app.service';
 import { TraceContextInterceptor } from './common/trace-context.interceptor';
+import { WinstonModule } from 'nest-winston';
+import { winstonConfig } from './logger/winston.config';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, {
+    logger: WinstonModule.createLogger(winstonConfig),
+  });
   app.useGlobalInterceptors(new TraceContextInterceptor());
   app.setGlobalPrefix('xp-mi');
   app.enableShutdownHooks();
@@ -13,15 +19,18 @@ async function bootstrap() {
     origin: (origin, callback) => {
       const allowedOrigins = process.env.ALLOWED_ORIGINS
         ? process.env.ALLOWED_ORIGINS.split(',').map(
-            (origin) => new RegExp(origin),
-          )
+          (origin) => new RegExp(origin),
+        )
         : [
-            /^https?:\/\/.*\.onejswhomes\.in$/,
-            /^https?:\/\/.*jswonehomes\.com$/,
-            /^https?:\/\/34\.49\.59\.50$/,
-            /^https?:\/\/localhost(?::\d+)?$/,
-            /^https?:\/\/jswonehomes\.com$/,
-          ];
+          /^https?:\/\/.*\.onejswhomes\.in$/,
+          /^https?:\/\/.*jswonehomes\.com$/,
+          /^https?:\/\/34\.49\.59\.50$/,
+          /^https?:\/\/localhost(?::\d+)?$/,
+          /^https?:\/\/jswonehomes\.com$/,
+          /^https?:\/\/34\.93\.108\.241$/,
+          /^https?:\/\/.*\.jswone\.in$/,
+          /^https?:\/\/.*\.jswonemsme\.com$/
+        ];
 
       if (!origin) return callback(null, true); // Allow server-to-server or curl requests
 

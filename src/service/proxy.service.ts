@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unnecessary-type-assertion */
+﻿/* eslint-disable @typescript-eslint/no-unnecessary-type-assertion */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
@@ -29,7 +29,48 @@ import { match } from 'path-to-regexp';
 export class ProxyService {
   private readonly tracer = trace.getTracer('experience-middleware');
   private readonly logger = new Logger(ProxyService.name);
-  // private readonly redisClient = new Redis({ host: 'localhost', port: 6379 });
+  // constructor(
+  //   @Inject('REDIS_CLIENT') private readonly redis: Redis,
+  // ) {}
+  constructor() { }
+
+  private getCacheKey(req: Request): string {
+
+    const explicitKey =
+      (req.headers['x-cache-key'] as string | undefined) ??
+      (req.headers['x-cachekey'] as string | undefined);
+
+    if (explicitKey && explicitKey.trim().length > 0) {
+      return `:${explicitKey.trim()}`;
+    }
+
+    const methodPart = req.method;
+    const pathPart = req.path;
+
+    const query = (req.query ?? {}) as Record<string, unknown>;
+    const queryEntries = Object.entries(query).sort(([a], [b]) =>
+      String(a).localeCompare(String(b)),
+    );
+
+    const queryString = queryEntries
+      .map(([key, value]) => {
+        if (Array.isArray(value)) {
+          // sort array values for stability
+          return value
+            .slice()
+            .sort()
+            .map((v) => `${key}=${v}`)
+            .join('&');
+        }
+        return `${key}=${value}`;
+      })
+      .join('&');
+
+    const queryPart = queryString ? `q:${queryString}` : 'q:';
+
+    return `:m:${methodPart}|p:${pathPart}|${queryPart}`;
+  }
+
   public result: any = '';
   async handleRequest(req: Request) {
     console.log(`Incoming ${req.method} request: ${req.url}`);
@@ -44,21 +85,37 @@ export class ProxyService {
       const spanContext = activeSpan?.spanContext();
       this.result = spanContext
         ? {
-            traceId: spanContext.traceId,
-            spanId: spanContext.spanId,
-          }
+          traceId: spanContext.traceId,
+          spanId: spanContext.spanId,
+        }
         : {};
-      console.log('result', activeSpan);
       this.logger.error(
-        `Handling request for route: ${req.method} ${req.path} trace_id: ${inspect(this.result.traceId)} span_id: ${inspect(this.result.spanId)} `,
-      );
-      this.result = JSON.stringify(activeSpan);
-      console.log('result', activeSpan);
-      this.logger.error(
-        `Handling request for route: ${req.method} ${req.path} trace_id: ${inspect(this.result.traceId)} span_id: ${inspect(this.result.spanId)} `,
+        `Route config not found for ${req.method} ${req.path} trace_id: ${inspect(this.result.traceId)} span_id: ${inspect(this.result.spanId)} `,
       );
       throw new Error('Route config not found');
     }
+
+    const isCacheRequired = (route as any).isCacheRequired === true;
+    let cacheKey: string | null = null;
+
+    // if (isCacheRequired) {
+    //   cacheKey = this.getCacheKey(req);
+    //   try {
+    //     const cached = await this.redis.get(cacheKey);
+    //     if (cached) {
+    //       console.log(`**Cache HIT for ${cacheKey}`);
+    //       return JSON.parse(cached);
+    //     }
+    //     console.log(`**Cache MISS for ${cacheKey}`);
+    //   } catch (err) {
+    //     // Don't break the request if Redis is unhappy; just log and continue
+    //     console.error('Redis GET error, bypassing cache:', err);
+    //   }
+    // } else {
+    //   console.log(
+    //     `Caching disabled for route ${req.method} ${route.path} (isCacheRequired=false)`,
+    //   );
+    // }
 
     const activeSpan = trace.getSpan(context.active());
     if (activeSpan) {
@@ -82,16 +139,41 @@ export class ProxyService {
       );
     }
 
+    let data: any;
+
     switch (route.routeHandler) {
       case RouteHandler.TRANSFORM:
-        return await this.handleTransformRequest(route.target, req);
+        data = await this.handleTransformRequest(route.target, req);
+        break;
       case RouteHandler.AGGREGATE:
-        return await this.handleAggregateRequest(route, req);
+        data = await this.handleAggregateRequest(
+          route as AggregateRouteConfig,
+          req,
+        );
+        break;
       case RouteHandler.CONDITIONAL:
-        return this.handleConditionalRequest(route, req);
+        data = await this.handleConditionalRequest(
+          route as ConditionalRouteConfig,
+          req,
+        );
+        break;
       default:
         throw new Error('Unsupported route handler');
     }
+
+
+    // if (isCacheRequired && cacheKey) {
+    //   try {
+    //     const ttlSeconds = process.env.CACHE_TTL_SECONDS ? parseInt(process.env.CACHE_TTL_SECONDS, 10) : 30 * 60;
+
+    //     await this.redis.set(cacheKey, JSON.stringify(data), 'EX', ttlSeconds);
+    //     console.log(`**Cached response for ${cacheKey}`);
+    //   } catch (err) {
+    //     console.error('Redis SET error, continuing without cache:', err);
+    //   }
+    // }
+
+    return data;
   }
 
   private findRoute(req: Request) {
@@ -164,29 +246,6 @@ export class ProxyService {
 
         try {
           console.log(`Processing PARALLEL request for ${req.url}`);
-          // Check for cached data first
-          // try {
-          //   // const cached = await this.redisClient.get(`${req.url}`);
-          //   // if (cached) {
-          //   //   console.log(`Returning Cached Response for ${req.url}`);
-          //     // Create span for cached response to maintain visibility in Coroot
-          //     return await this.tracer.startActiveSpan(
-          //       `aggregate.parallel.cached ${route.path}`,
-          //       async (span) => {
-          //         span.setAttribute('proxy.route', route.path);
-          //         span.setAttribute('proxy.aggregation_type', 'PARALLEL');
-          //         span.setAttribute('http.method', req.method);
-          //         span.setAttribute('cache.hit', true);
-          //         span.setAttribute('api.response.data', cached);
-          //         span.setAttribute('api.response.size', cached.length);
-          //         span.setAttribute('http.status_code', 200); // Cached responses are treated as successful
-          //         return JSON.parse(cached);
-          //       },
-          //     );
-          //   }
-          // } catch (cacheGetError) {
-          //   console.error('Cache Get Error:', cacheGetError);
-          // }
           const results = await Promise.allSettled<AggregatedResponse>(
             route.targets.map(
               async (target: TargetConfig): Promise<AggregatedResponse> => {
@@ -218,9 +277,9 @@ export class ProxyService {
             res.status === 'fulfilled'
               ? res.value
               : {
-                  success: false,
-                  error: 'Unexpected failure',
-                },
+                success: false,
+                error: 'Unexpected failure',
+              },
           );
           const isAggregatedResponse = (r: any): r is AggregatedResponse =>
             'target' in r && 'success' in r;
@@ -246,19 +305,6 @@ export class ProxyService {
             ? await applyTransform(route.resTransform, normalizedResults)
             : normalizedResults;
 
-          // Cache the final result using direct Redis
-          // try {
-          //   await this.redisClient.setex(
-          //     `${req.url}`,
-          //     process.env.REDIS_TTL_SECONDS
-          //       ? parseInt(process.env.REDIS_TTL_SECONDS)
-          //       : 300,
-          //     JSON.stringify(finalResult),
-          //   );
-          //   console.log(`Caching Data for ${req.url}`);
-          // } catch (cacheError) {
-          //   console.error('Cache Storage Error:', cacheError);
-          // }
           return finalResult;
         } catch (err) {
           span.recordException(err as Error);
@@ -288,29 +334,7 @@ export class ProxyService {
 
         try {
           console.log(`Processing SEQUENTIAL request for ${req.url}`);
-          // Check for cached data first
-          // try {
-          //   const cached = await this.redisClient.get(`${req.url}`);
-          //   if (cached) {
-          //     console.log(`Returning Cached Response for ${req.url}`);
-          //     // Create span for cached response to maintain visibility in Coroot
-          //     return await this.tracer.startActiveSpan(
-          //       `aggregate.sequential.cached ${route.path}`,
-          //       async (span) => {
-          //         span.setAttribute('proxy.route', route.path);
-          //         span.setAttribute('proxy.aggregation_type', 'SEQUENTIAL');
-          //         span.setAttribute('http.method', req.method);
-          //         span.setAttribute('cache.hit', true);
-          //         span.setAttribute('api.response.data', cached);
-          //         span.setAttribute('api.response.size', cached.length);
-          //         span.setAttribute('http.status_code', 200); // Cached responses are treated as successful
-          //         return JSON.parse(cached);
-          //       },
-          //     );
-          //   }
-          // } catch (cacheGetError) {
-          //   console.error('Cache Get Error:', cacheGetError);
-          // }
+
           for (const target of route.targets) {
             try {
               const responseData = await this.handleTransformRequest(
@@ -344,19 +368,6 @@ export class ProxyService {
             ? await applyTransform(route.resTransform, results)
             : results;
 
-          // Cache the final result using direct Redis
-          // try {
-          //   await this.redisClient.setex(
-          //     `${req.url}`,
-          //     process.env.REDIS_TTL_SECONDS
-          //       ? parseInt(process.env.REDIS_TTL_SECONDS)
-          //       : 300,
-          //     JSON.stringify(finalResult),
-          //   );
-          //   console.log(`Caching Data for ${req.url}`);
-          // } catch (cacheError) {
-          //   console.error('Cache Storage Error:', cacheError);
-          // }
           return finalResult;
         } catch (err) {
           span.recordException(err as Error);
@@ -375,29 +386,6 @@ export class ProxyService {
     req: Request,
     prevResponses?: AggregatedResponse[],
   ) {
-    // Check for cached data first
-    // try {
-    //   const cached = await this.redisClient.get(`${req.url}`);
-    //   if (cached) {
-    //     console.log(`Returning Cached Response for ${req.url}`);
-    //     // Create span for cached response to maintain visibility in Coroot
-    //     return await this.tracer.startActiveSpan(
-    //       `proxy.transform.cached ${target.name || target.url}`,
-    //       async (span) => {
-    //         span.setAttribute('proxy.route', req.path);
-    //         span.setAttribute('proxy.target', target.name || target.url);
-    //         span.setAttribute('http.method', target.method);
-    //         span.setAttribute('cache.hit', true);
-    //         span.setAttribute('api.response.data', cached);
-    //         span.setAttribute('api.response.size', cached.length);
-    //         span.setAttribute('http.status_code', 200); // Cached responses are treated as successful
-    //         return JSON.parse(cached);
-    //       },
-    //     );
-    //   }
-    // } catch (cacheGetError) {
-    //   console.error('Cache Get Error:', cacheGetError);
-    // }
 
     return await this.tracer.startActiveSpan(
       `proxy.transform ${target.name || target.url}`,
@@ -478,19 +466,7 @@ export class ProxyService {
               response.statusText || 'Unknown error',
             );
           }
-          // Cache the response data using direct Redis
-          // try {
-          //   await this.redisClient.setex(
-          //     `${req.url}`,
-          //     process.env.REDIS_TTL_SECONDS
-          //       ? parseInt(process.env.REDIS_TTL_SECONDS)
-          //       : 300,
-          //     JSON.stringify(responseData),
-          //   );
-          //   console.log(`Caching Data for ${req.url}`);
-          // } catch (cacheError) {
-          //   console.error('Cache Storage Error:', cacheError);
-          // }
+
           return responseData;
         } catch (err) {
           span.recordException(err as Error);
