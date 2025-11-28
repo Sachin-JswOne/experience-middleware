@@ -46,39 +46,30 @@ export function getPaymentDueDetails(
     Logger,
     () =>
       `Payment Due API → transform: getPaymentDueDetails → raw response: ${JSON.stringify(
-        response.data,
+        response.data
       )}`,
   );
 
   try {
-    const apiData = response?.data;
+    const data = response?.data;
 
-    if (!apiData) {
+    if (!data) {
       return {
         success: false,
         error: 'Missing data from Payment Due API',
-        httpStatus: response?.status,
+        httpStatus: response?.status
       };
     }
 
-    // Deep clone
-    const cloned: PaymentDueApiResponse = JSON.parse(JSON.stringify(apiData));
-
     return {
-      totalDue: cloned.totalDueAmount,
-      dueLater: cloned.dueLaterAmount,
-      todayDue: cloned.todayDueAmount,
-      overdue: {
-        status: cloned.paymentOverDueResponse.dueStatusDays,
-        amount: cloned.paymentOverDueResponse.overdueAmount,
-      },
+      ...data
     };
   } catch (error) {
     return {
       success: false,
       error: 'Failed to transform Payment Due API response',
       exception: (error as Error)?.message,
-      httpStatus: response?.status,
+      httpStatus: response?.status
     };
   }
 }
