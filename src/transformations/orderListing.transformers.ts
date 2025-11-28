@@ -26,7 +26,7 @@ import { HttpStatusCode } from 'axios';
 import { CustomError } from 'src/utils/CustomError';
 import { AggregatedResponse } from 'src/models/aggregated-response.model';
 import { Logger } from '@nestjs/common';
-import { getFormattedTracingContext } from 'src/utils/tracing.util';
+import { safeDebug } from 'src/utils/common-functions.util';
 
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 export function transformOrderListingRequest(request) {
@@ -55,6 +55,9 @@ export function getDeveloperName(customerType) {
 
 export function transformOrderListingResponse(response) {
   const orderListingResult = response?.data?.data;
+  safeDebug(Logger, () => ` Connector Order Listing Api response from method: transformOrderListingResponse : ${JSON.stringify(
+    orderListingResult,
+  )}`);
   if (orderListingResult) {
     const OrderListResponse =
       sortProductsArrayBasedOnCreatedDate(orderListingResult);
@@ -381,7 +384,7 @@ export function getAppStatusFromOpportunities(order) {
     ) {
       return (
         APP_STATUS_PB_WHEN_NO_FULLFILLEDBY_PRESENT[
-          order.orderStatus.toLowerCase()
+        order.orderStatus.toLowerCase()
         ] ?? ''
       );
     }
@@ -389,7 +392,7 @@ export function getAppStatusFromOpportunities(order) {
     if (fullfilledBy === 'JSW One') {
       return (
         APP_STATUS_PB_WHEN__FULLFILLEDBY_JSW_ONE[
-          order.orderStatus.toLowerCase()
+        order.orderStatus.toLowerCase()
         ] ?? ''
       );
     }
@@ -397,7 +400,7 @@ export function getAppStatusFromOpportunities(order) {
     if (fullfilledBy === 'Warehouse') {
       return (
         APP_STATUS_PB_WHEN__FULLFILLEDBY_JSW_ONE_DISTRIBUTOR[
-          order.orderStatus.toLowerCase()
+        order.orderStatus.toLowerCase()
         ] ?? ''
       );
     }
@@ -446,13 +449,21 @@ export function mergeMaterialTrackingAndOrderListingResponses(
     const materialTrackingResponse = responses['app-material-tracking'];
     const orderListingResponse = responses['app-order-listing'];
 
+    safeDebug(Logger, () => `Strapi Material Tracking Api response from method: mergeMaterialTrackingAndOrderListingResponses : ${JSON.stringify(
+      materialTrackingResponse,
+    )}`);
+
+    safeDebug(Logger, () => ` Connector Order And Opportunity Listing Api response from method: mergeMaterialTrackingAndOrderListingResponses : ${JSON.stringify(
+      orderListingResponse,
+    )}`);
+
     if (
       !materialTrackingResponse ||
       typeof materialTrackingResponse.data !== 'object' ||
       materialTrackingResponse.data === null
     ) {
       Logger.error(
-        `Error for Orders Page API method: mergeMaterialTrackingAndOrderListingResponses ${getFormattedTracingContext()} Strapi response is missing or invalid`,
+        `Error for Orders Page API method: mergeMaterialTrackingAndOrderListingResponses Strapi response is missing or invalid`,
       );
       return { data: {}, meta: {} };
     }
@@ -496,7 +507,7 @@ export function mergeMaterialTrackingAndOrderListingResponses(
     };
   } catch (error) {
     Logger.log(
-      `Transforming Shipment Request  method: mergeMaterialTrackingAndOrderListingResponses ${getFormattedTracingContext()}`,
+      `Transforming Shipment Request  method: mergeMaterialTrackingAndOrderListingResponses`,
     );
     console.error(
       'Error in mergeMaterialTrackingAndOrderListingResponses:',

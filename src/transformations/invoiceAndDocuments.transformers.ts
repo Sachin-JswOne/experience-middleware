@@ -5,12 +5,15 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { formatDate, toTitleCase } from 'src/utils/common-functions.util';
 import { Logger } from '@nestjs/common';
-import { getFormattedTracingContext } from 'src/utils/tracing.util';
+import { safeDebug } from 'src/utils/common-functions.util';
 
 export function transformInvoiceAndDocuments(response: any): {
   listOfDocuments;
 } {
   try {
+    safeDebug(Logger, () => `Invoice and Documents Api response from method: transformInvoiceAndDocuments : ${JSON.stringify(
+      response,
+    )}`);
     if (!response || typeof response !== 'object') {
       return { listOfDocuments: [] };
     }
@@ -28,7 +31,9 @@ export function transformInvoiceAndDocuments(response: any): {
       return { listOfDocuments: [] };
     }
   } catch (error) {
-    Logger.error(`Error for Invoice and Documents API method: transformInvoiceAndDocuments ${getFormattedTracingContext()} ${error}`);
+    Logger.error(
+      `Error for Invoice and Documents API method: transformInvoiceAndDocuments ${error}`,
+    );
     return { listOfDocuments: [] };
   }
 }
