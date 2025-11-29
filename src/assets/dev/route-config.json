@@ -1203,5 +1203,49 @@
       "requiredParams": ["entityName"],
       "resTransform": "paymentdue.transformers.getPaymentDueDetails"
     }
+  },
+  {
+    "path": "/xp-mi/public/v1/add-to-cart",
+    "method": "POST",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "cart-add",
+      "url": "https://qa.msme.jswone.in/v2/cart/add",
+      "method": "POST",
+      "timeout": {
+        "request": 5000,
+        "socket": 1000
+      },
+      "headersToPass": [
+        {
+          "source": "authorization",
+          "destination": "access_token"
+        }
+      ],
+      "staticHeaders": {
+        "content-type": "application/json"
+      },
+      "requiredParams": ["*"]
+    }
+  },
+  {
+    "path": "/xp-mi/public/v1/get-cart-size",
+    "method": "GET",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "cart-size",
+      "url": "https://qa.msme.jswone.in/v2/cart/size",
+      "method": "GET",
+      "timeout": {
+        "request": 5000,
+        "socket": 1000
+      },
+      "headersToPass": [
+        {
+          "source": "authorization",
+          "destination": "access_token"
+        }
+      ]
+    }
   }
 ]
