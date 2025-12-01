@@ -1143,10 +1143,10 @@
     "path": "/xp-mi/public/v1/total-payment-due",
     "method": "GET",
     "routeHandler": "TRANSFORM",
-    "isCacheRequired": false,
+    "isCacheRequired": true,
     "target": {
       "name": "payments-due",
-      "url": "https://www.jswonemsme.com/customer/ledger/v2/totalPaymentDue",
+      "url": "https://www.jswonemsme.com/customer/payment/v2/totalDueAmount",
       "method": "GET",
       "timeout": {
         "request": 5000,
@@ -1156,6 +1156,7 @@
         { "source": "authorization", "destination": "access_token" }
       ],
       "requiredParams": ["entityName"],
+      "appendParams": true,
       "resTransform": "paymentdue.transformers.getPaymentDueDetails"
     }
   },
