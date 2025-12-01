@@ -1159,5 +1159,97 @@
       "appendParams": true,
       "resTransform": "paymentdue.transformers.getPaymentDueDetails"
     }
+  },
+  {
+    "path": "${PATH_URL}/v2/app-cart-page-v2",
+    "method": "POST",
+    "routeHandler": "AGGREGATE",
+    "aggregationType": "PARALLEL",
+    "targets": [
+      {
+        "name": "app-cart-page",
+        "url": "https://internal-cms-ext.jswonemsme.com/api/app-cart-page-v2",
+        "method": "GET",
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
+        "reqTransform": "general.transformers.moveBodyToQueryParams",
+        "resTransform": "cms.transformers.replaceUriPrefix"
+      },
+      {
+        "name": "app-buy-again",
+        "url": "https://jswoneconstruct.com/jswretail/v1/seller/buy-again",
+        "method": "GET",
+        "timeout": {
+          "request": 15000,
+          "socket": 1000
+        },
+        "reqTransform": "general.transformers.convertToGetRequest",
+        "headersToPass": [
+          { "source": "authorization", "destination": "authorization" }
+        ],
+        "requiredParams": ["pincode"]
+      },
+      {
+        "name": "app-cart-summary",
+        "url": "https://jswoneconstruct.com/jswretail/v3/seller/cart",
+        "method": "GET",
+        "timeout": {
+          "request": 15000,
+          "socket": 1000
+        },
+        "reqTransform": "general.transformers.convertToGetRequest",
+        "headersToPass": [
+          { "source": "authorization", "destination": "authorization" }
+        ],
+        "requiredParams": ["pincode"]
+      }
+    ],
+    "resTransform": "cart.transformers.mergeCartPageResponses"
+  },
+  {
+    "path": "${PATH_URL}/v1/add-to-cart",
+    "method": "POST",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "cart-add",
+      "url": "https://www.jswonemsme.com/v2/cart/add",
+      "method": "POST",
+      "timeout": {
+        "request": 5000,
+        "socket": 1000
+      },
+      "headersToPass": [
+        {
+          "source": "authorization",
+          "destination": "access_token"
+        }
+      ],
+      "staticHeaders": {
+        "content-type": "application/json"
+      },
+      "requiredParams": ["*"]
+    }
+  },
+  {
+    "path": "${PATH_URL}/v1/get-cart-size",
+    "method": "GET",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "cart-size",
+      "url": "https://www.jswonemsme.com/v2/cart/size",
+      "method": "GET",
+      "timeout": {
+        "request": 5000,
+        "socket": 1000
+      },
+      "headersToPass": [
+        {
+          "source": "authorization",
+          "destination": "access_token"
+        }
+      ]
+    }
   }
 ]
