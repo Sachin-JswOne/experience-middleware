@@ -667,7 +667,7 @@
     "routeHandler": "TRANSFORM",
     "target": {
       "name": "homes-construction-documents",
-      "url": "http://service.jswonehomes.com/homes-service/v1/project/construction-documents",
+      "url": "https://service.jswonehomes.com/homes-service/v1/project/construction-documents",
       "method": "GET",
       "timeout": { "request": 5000, "socket": 1000 },
       "headersToPass": [
