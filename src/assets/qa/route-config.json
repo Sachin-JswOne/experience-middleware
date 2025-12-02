@@ -1203,5 +1203,23 @@
       "requiredParams": ["entityName"],
       "resTransform": "paymentdue.transformers.getPaymentDueDetails"
     }
+  },
+  {
+    "path": "/xp-mi/public/v1/web-search-page",
+    "method": "POST",
+    "routeHandler": "TRANSFORM",
+    "isCacheRequired": false,
+    "target": {
+        "name": "app-search-page",
+        "url": "${CMS_MSME_URL}/app-search-page",
+        "method": "GET",
+        "timeout": {
+          "request": 10000,
+          "socket": 1000
+        },
+        "reqTransform": "general.transformers.moveBodyToQueryParams",
+        "resTransform": "cms.transformers.replaceUriPrefix"
+    },
+    "resTransform": "searchPage.transformers.getSearchPageDetails"
   }
 ]
