@@ -1332,5 +1332,26 @@
       }
     ],
     "resTransform": "searchPage.transformers.getSearchPageDetails"
+  },
+  {
+    "path": "/xp-mi/public/v1/central_commerce/line-item/price",
+    "method": "POST",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "msmeLineItemPrice",
+      "url": "https://qa.msme.jswone.in/central_commerce/line-item/price",
+      "method": "POST",
+      "timeout": {
+        "request": "${TIMEOUTS.REQUEST}",
+        "socket": "${TIMEOUTS.SOCKET}"
+      },
+      "headersToPass": [
+        {
+          "source": "access_token",
+          "destination": "access_token"
+        }
+      ],
+      "requiredParams": ["*"]
+    }
   }
 ]
