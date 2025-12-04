@@ -846,7 +846,7 @@
       },
       {
         "name": "ccp-buy-again-with-prices",
-        "url": "https://qa.msme.jswone.in/buy-again/list",
+        "url": "https://qa.msme.jswone.in/central_commerce/buy-again-list",
         "method": "GET",
         "timeout": {
           "request": 5000,
@@ -1316,7 +1316,7 @@
       },
       {
         "name": "ccp-buy-again-with-prices",
-        "url": "https://qa.msme.jswone.in/buy-again/list",
+        "url": "https://qa.msme.jswone.in/central_commerce/buy-again-list",
         "method": "GET",
         "timeout": {
           "request": 5000,

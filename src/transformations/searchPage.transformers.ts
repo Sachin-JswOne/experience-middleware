@@ -17,7 +17,7 @@ export function getSearchPageDetails(
   );
 
   const cmsResponse = responses['app-search-page'];
-  const buyAgainResponse = responses['ccp-buy-again-with-prices'];
+  const buyAgainResponse = responses['ccp-buy-again-with-prices']?.data;
 
   safeDebug(Logger, () => `Search Page CMS → ${JSON.stringify(cmsResponse?.data)}`);
   safeDebug(Logger, () => `Buy Again → ${JSON.stringify(buyAgainResponse?.data)}`);

@@ -23,7 +23,7 @@ export function mergeWebHomePageResponses(
 
   const cmsResponse = responses['app-home-page'];
   const blogsResponse = responses['app-blogs'];
-  const buyAgainResponse = responses['ccp-buy-again-with-prices'];
+  const buyAgainResponse = responses['ccp-buy-again-with-prices']?.data;
   const pendingDispatchResponse = responses['pending-dispatch-quantity'];
   const webProductsResponse = responses['web-homepage-products'];
 
