@@ -1293,7 +1293,7 @@
     "method": "POST",
     "routeHandler": "TRANSFORM",
     "target": {
-      "name": "msmeProductSelector",
+      "name": "msmeLineItemPrice",
       "url": "https://www.jswonemsme.com/central_commerce/line-item/price",
       "method": "POST",
       "timeout": {
