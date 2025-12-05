@@ -1316,7 +1316,7 @@
     "target": {
       "name": "msmeBuyAgainList",
       "url": "https://www.jswonemsme.com/central_commerce/buy-again-list",
-      "method": "POST",
+      "method": "GET",
       "timeout": {
         "request": "${TIMEOUTS.REQUEST}",
         "socket": "${TIMEOUTS.SOCKET}"
