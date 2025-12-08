@@ -394,7 +394,7 @@
       },
       {
         "name": "app-buy-again",
-        "url": "https://jswoneconstruct.in/v1/seller/buy-again",
+        "url": "https://jswoneconstruct.in/jswretail/v1/seller/buy-again",
         "method": "GET",
         "timeout": {
           "request": 15000,
@@ -408,7 +408,7 @@
       },
       {
         "name": "app-cart-summary",
-        "url": "https://jswoneconstruct.in/v3/seller/cart",
+        "url": "https://jswoneconstruct.in/jswretail/v3/seller/cart",
         "method": "GET",
         "timeout": {
           "request": 15000,
@@ -1224,7 +1224,7 @@
       },
       {
         "name": "app-buy-again",
-        "url": "https://jswoneconstruct.in/v1/seller/buy-again",
+        "url": "https://jswoneconstruct.in/jswretail/v1/seller/buy-again",
         "method": "GET",
         "timeout": {
           "request": 15000,
@@ -1238,7 +1238,7 @@
       },
       {
         "name": "app-cart-summary",
-        "url": "https://jswoneconstruct.in/v3/seller/cart",
+        "url": "https://jswoneconstruct.in/jswretail/v3/seller/cart",
         "method": "GET",
         "timeout": {
           "request": 15000,
