@@ -801,7 +801,7 @@
       },
       {
         "name": "ccp-buy-again-with-prices",
-        "url": "https://www.jswonemsme.com/buy-again/list",
+        "url": "http://127.0.0.1:3000/xp-mi/public/v1/central_commerce/buy-again-list",
         "method": "GET",
         "timeout": {
           "request": 5000,
@@ -1271,7 +1271,7 @@
       },
       {
         "name": "ccp-buy-again-with-prices",
-        "url": "https://www.jswonemsme.com/buy-again/list",
+        "url": "http://127.0.0.1:3000/xp-mi/public/v1/central_commerce/buy-again-list",
         "method": "GET",
         "timeout": {
           "request": 5000,
@@ -1328,6 +1328,28 @@
         }
       ],
       "requiredParams": ["*"]
+    }
+  },
+  {
+    "path": "/xp-mi/public/v1/customer/set-default-address",
+    "method": "POST",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "setDefaultAddress",
+      "url": "https://www.jswonemsme.com/customer/address/setDefaultShippingAddress",
+      "method": "POST",
+      "timeout": {
+        "request": "${TIMEOUTS.REQUEST}",
+        "socket": "${TIMEOUTS.SOCKET}"
+      },
+      "headersToPass": [
+        {
+          "source": "access_token",
+          "destination": "access_token"
+        }
+      ],
+      "requiredParams": ["addressId"],
+      "resTransform": "setDefaultAddress.transformers.setDefaultAddress"
     }
   }
 ]

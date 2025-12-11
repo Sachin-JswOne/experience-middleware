@@ -96,7 +96,7 @@ export function getUserIdentifiers(headers: any): {
 }
 
 export const safeDebug = (logger, msgFn) => {
-  if (logger.isDebugEnabled && logger.isDebugEnabled()) {
+  if (process.env.LOG_LEVEL === 'debug') {
     logger.debug(msgFn());
   }
 };
