@@ -1351,5 +1351,20 @@
       "requiredParams": ["addressId"],
       "resTransform": "setDefaultAddress.transformers.setDefaultAddress"
     }
+  },
+    {
+    "path": "/xp-mi/public/v1/homes/project/progress-gallery",
+    "method": "POST",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "homes-design-documents",
+      "url": "https://service.jswonehomes.com/homes-service/v1/project/progress-gallery",
+      "method": "GET",
+      "timeout": { "request": 5000, "socket": 1000 },
+      "headersToPass": [
+        { "source": "authorization", "destination": "Authorization" }
+      ],
+      "requiredParams": ["project_id"]
+    }
   }
 ]
