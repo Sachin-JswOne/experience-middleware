@@ -23,19 +23,16 @@ import { IncomingHttpHeaders } from 'http';
 import { inspect } from 'util';
 import { CustomError } from 'src/utils/CustomError';
 import { match } from 'path-to-regexp';
-// import Redis from 'ioredis';
+import Redis from 'ioredis';
 
 @Injectable()
 export class ProxyService {
   private readonly tracer = trace.getTracer('experience-middleware');
   private readonly logger = new Logger(ProxyService.name);
-  // constructor(
-  //   @Inject('REDIS_CLIENT') private readonly redis: Redis,
-  // ) {}
-  constructor() { }
+  constructor(@Inject('REDIS_CLIENT') private readonly redis: Redis) {}
+  // constructor() { }
 
   private getCacheKey(req: Request): string {
-
     const explicitKey =
       (req.headers['x-cache-key'] as string | undefined) ??
       (req.headers['x-cachekey'] as string | undefined);
@@ -85,9 +82,9 @@ export class ProxyService {
       const spanContext = activeSpan?.spanContext();
       this.result = spanContext
         ? {
-          traceId: spanContext.traceId,
-          spanId: spanContext.spanId,
-        }
+            traceId: spanContext.traceId,
+            spanId: spanContext.spanId,
+          }
         : {};
       this.logger.error(
         `Route config not found for ${req.method} ${req.path} trace_id: ${inspect(this.result.traceId)} span_id: ${inspect(this.result.spanId)} `,
@@ -98,24 +95,24 @@ export class ProxyService {
     const isCacheRequired = (route as any).isCacheRequired === true;
     let cacheKey: string | null = null;
 
-    // if (isCacheRequired) {
-    //   cacheKey = this.getCacheKey(req);
-    //   try {
-    //     const cached = await this.redis.get(cacheKey);
-    //     if (cached) {
-    //       console.log(`**Cache HIT for ${cacheKey}`);
-    //       return JSON.parse(cached);
-    //     }
-    //     console.log(`**Cache MISS for ${cacheKey}`);
-    //   } catch (err) {
-    //     // Don't break the request if Redis is unhappy; just log and continue
-    //     console.error('Redis GET error, bypassing cache:', err);
-    //   }
-    // } else {
-    //   console.log(
-    //     `Caching disabled for route ${req.method} ${route.path} (isCacheRequired=false)`,
-    //   );
-    // }
+    if (isCacheRequired) {
+      cacheKey = this.getCacheKey(req);
+      try {
+        const cached = await this.redis.get(cacheKey);
+        if (cached) {
+          console.log(`**Cache HIT for ${cacheKey}`);
+          return JSON.parse(cached);
+        }
+        console.log(`**Cache MISS for ${cacheKey}`);
+      } catch (err) {
+        // Don't break the request if Redis is unhappy; just log and continue
+        console.error('Redis GET error, bypassing cache:', err);
+      }
+    } else {
+      console.log(
+        `Caching disabled for route ${req.method} ${route.path} (isCacheRequired=false)`,
+      );
+    }
 
     const activeSpan = trace.getSpan(context.active());
     if (activeSpan) {
@@ -161,17 +158,16 @@ export class ProxyService {
         throw new Error('Unsupported route handler');
     }
 
+    if (isCacheRequired && cacheKey) {
+      try {
+        const ttlSeconds = process.env.CACHE_TTL_SECONDS ? parseInt(process.env.CACHE_TTL_SECONDS, 10) : 30 * 60;
 
-    // if (isCacheRequired && cacheKey) {
-    //   try {
-    //     const ttlSeconds = process.env.CACHE_TTL_SECONDS ? parseInt(process.env.CACHE_TTL_SECONDS, 10) : 30 * 60;
-
-    //     await this.redis.set(cacheKey, JSON.stringify(data), 'EX', ttlSeconds);
-    //     console.log(`**Cached response for ${cacheKey}`);
-    //   } catch (err) {
-    //     console.error('Redis SET error, continuing without cache:', err);
-    //   }
-    // }
+        await this.redis.set(cacheKey, JSON.stringify(data), 'EX', ttlSeconds);
+        console.log(`**Cached response for ${cacheKey}`);
+      } catch (err) {
+        console.error('Redis SET error, continuing without cache:', err);
+      }
+    }
 
     return data;
   }
@@ -277,9 +273,9 @@ export class ProxyService {
             res.status === 'fulfilled'
               ? res.value
               : {
-                success: false,
-                error: 'Unexpected failure',
-              },
+                  success: false,
+                  error: 'Unexpected failure',
+                },
           );
           const isAggregatedResponse = (r: any): r is AggregatedResponse =>
             'target' in r && 'success' in r;
@@ -386,7 +382,6 @@ export class ProxyService {
     req: Request,
     prevResponses?: AggregatedResponse[],
   ) {
-
     return await this.tracer.startActiveSpan(
       `proxy.transform ${target.name || target.url}`,
       async (span) => {
