@@ -9,7 +9,7 @@ import { WinstonModule } from 'nest-winston';
 import { winstonConfig } from './logger/winston.config';
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { RequestContextMiddleware } from './utils/request-context.middleware';
-// import { RedisModule } from './redis/redis.module';
+import { RedisModule } from './redis/redis.module';
 
 
 @Module({
@@ -28,7 +28,7 @@ import { RequestContextMiddleware } from './utils/request-context.middleware';
     ConfigModule.forRoot({
       isGlobal: true,
     }),
-    // RedisModule,
+    RedisModule,
   ],
   controllers: [ProxyController],
   providers: [AppService, ProxyService],

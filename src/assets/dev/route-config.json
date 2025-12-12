@@ -380,6 +380,7 @@
     "method": "POST",
     "routeHandler": "AGGREGATE",
     "aggregationType": "PARALLEL",
+    "isCacheRequired": true,
     "targets": [
       {
         "name": "app-cart-page",
