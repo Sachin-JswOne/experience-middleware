@@ -53,7 +53,7 @@ steps:
 # Substitution variables with defaults
 substitutions:
   _REGION: "asia-south1"
-  _REPOSITORY: "experience-middleware"
+  _REPOSITORY: "asia.gcr.io"
   _SERVICE_NAME: "experience-middleware"
   _MEMORY: "512Mi"
   _CPU: "1"
