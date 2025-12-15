@@ -46,7 +46,7 @@ steps:
       - "--concurrency"
       - "${_CONCURRENCY}"
       - "--set-env-vars"
-      - "NODE_ENV=production"
+      - "NODE_ENV=production,APP_ENV=prod,PATH_URL=/xp-mi/public,CMS_MSME_URL=https://internal-cms-ext.jswonemsme.com/api,RETAIL_URL=https://jswoneconstruct.com/jswretail,APP_SLC_CART_URL=https://www.jswonemsme.com/v2/cart/get?onlySlc=true,LINE_ITEM_PRICE_URL=https://www.jswonemsme.com/catalog/price/forreguser/line-item-price/v2,BUY_AGAIN_PRICE_URL=https://www.jswonemsme.com/buy-again/prices-list,ERP_BASE_URI=https://oms.jswonemsme.com/external-connector-inbound/api/internal/v1/retail,MSME_BASE_URI_REGISTRATION=https://www.jswonemsme.com/internal/construct/v1,MSME_BASE_URI=https://www.jswonemsme.com/auth/api/v1/construct,REQUEST_TIMEOUT=5000,REQUEST_TIMEOUT_MIN=3000,SOCKET_TIMEOUT=1000,CMS_ASSETS_BUCKET_URL=${_CMS_ASSETS_BUCKET_URL},CMS_ASSETS_CDN_URL=${_CMS_ASSETS_CDN_URL}"
       - "--set-secrets"
       - "X_API_KEY_FOR_ORDER_LISTING=X_API_KEY_FOR_ORDER_LISTING:latest,ERP_CLIENT_ID=ERP_CLIENT_ID:latest,GSTIN_X_API_KEY=GSTIN_X_API_KEY:latest,X_API_KEY_FOR_REGISTRATION=X_API_KEY_FOR_REGISTRATION:latest,X_API_KEY_FOR_LOGIN=X_API_KEY_FOR_LOGIN:latest"
 
