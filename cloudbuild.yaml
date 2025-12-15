@@ -4,9 +4,9 @@ steps:
     args:
       - "build"
       - "-t"
-      - "${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/${_SERVICE_NAME}:$COMMIT_SHA"
+      - "gcr.io/$PROJECT_ID/${_SERVICE_NAME}:$COMMIT_SHA"
       - "-t"
-      - "${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/${_SERVICE_NAME}:latest"
+      - "gcr.io/$PROJECT_ID/${_SERVICE_NAME}:latest"
       - "-f"
       - "dockerfile"
       - "."
@@ -16,7 +16,7 @@ steps:
     args:
       - "push"
       - "--all-tags"
-      - "${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/${_SERVICE_NAME}"
+      - "gcr.io/$PROJECT_ID/${_SERVICE_NAME}"
 
   # Deploy to Cloud Run
   - name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
@@ -26,7 +26,7 @@ steps:
       - "deploy"
       - "${_SERVICE_NAME}"
       - "--image"
-      - "${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/${_SERVICE_NAME}:$COMMIT_SHA"
+      - "gcr.io/$PROJECT_ID/${_SERVICE_NAME}:$COMMIT_SHA"
       - "--region"
       - "${_REGION}"
       - "--platform"
@@ -53,7 +53,6 @@ steps:
 # Substitution variables with defaults
 substitutions:
   _REGION: "asia-south1"
-  _REPOSITORY: "asia.gcr.io"
   _SERVICE_NAME: "experience-middleware"
   _MEMORY: "512Mi"
   _CPU: "1"
@@ -66,8 +65,8 @@ substitutions:
 
 # Images to be pushed to Artifact Registry
 images:
-  - "${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/${_SERVICE_NAME}:$COMMIT_SHA"
-  - "${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/${_SERVICE_NAME}:latest"
+  - "gcr.io/$PROJECT_ID/${_SERVICE_NAME}:$COMMIT_SHA"
+  - "gcr.io/$PROJECT_ID/${_SERVICE_NAME}:latest"
 
 options:
   logging: CLOUD_LOGGING_ONLY
