@@ -8,7 +8,7 @@
     "targets": [
       {
         "name": "app-home-page",
-        "url": "https://internal-cms-ext.jswonemsme.com/api/v1/app-home-page",
+        "url": "https://cms-ext.jswonemsme.com/api/v1/app-home-page",
         "method": "GET",
         "timeout": {
           "request": "5000",
@@ -91,7 +91,7 @@
     "isCacheRequired": false,
     "target": {
       "name": "appGlobalPage",
-      "url": "https://internal-cms-ext.jswonemsme.com/api/app-global",
+      "url": "https://cms-ext.jswonemsme.com/api/app-global",
       "method": "GET",
       "timeout": {
         "request": "5000",
@@ -107,7 +107,7 @@
     "routeHandler": "TRANSFORM",
     "target": {
       "name": "app-product-categories",
-      "url": "https://internal-cms-ext.jswonemsme.com/api/app-product-categories",
+      "url": "https://cms-ext.jswonemsme.com/api/app-product-categories",
       "method": "GET",
       "timeout": {
         "request": "5000",
@@ -178,7 +178,7 @@
     "isCacheRequired": false,
     "target": {
       "name": "appPdpPageChanges",
-      "url": "https://internal-cms-ext.jswonemsme.com/api/app-pdp-pages",
+      "url": "https://cms-ext.jswonemsme.com/api/app-pdp-pages",
       "method": "GET",
       "timeout": {
         "request": "5000",
@@ -197,7 +197,7 @@
     "targets": [
       {
         "name": "app-top-brands-page",
-        "url": "https://internal-cms-ext.jswonemsme.com/api/app-branding-listing-page",
+        "url": "https://cms-ext.jswonemsme.com/api/app-branding-listing-page",
         "method": "GET",
         "timeout": {
           "request": "5000",
@@ -232,7 +232,7 @@
     "targets": [
       {
         "name": "app-home-page",
-        "url": "https://internal-cms-ext.jswonemsme.com/api/app-home-page-v2",
+        "url": "https://cms-ext.jswonemsme.com/api/app-home-page-v2",
         "method": "GET",
         "timeout": {
           "request": "5000",
@@ -288,7 +288,7 @@
       },
       {
         "name": "app-blogs",
-        "url": "https://internal-cms-ext.jswonemsme.com/api/jsw-blogs-articless",
+        "url": "https://cms-ext.jswonemsme.com/api/jsw-blogs-articless",
         "method": "GET",
         "timeout": {
           "request": "5000",
@@ -338,7 +338,7 @@
     "targets": [
       {
         "name": "app-cart-page",
-        "url": "https://internal-cms-ext.jswonemsme.com/api/app-cart-page",
+        "url": "https://cms-ext.jswonemsme.com/api/app-cart-page",
         "method": "GET",
         "timeout": {
           "request": "5000",
@@ -549,7 +549,7 @@
     "routeHandler": "TRANSFORM",
     "target": {
       "name": "appLoginPage",
-      "url": "https://internal-cms-ext.jswonemsme.com/api/app-login-page",
+      "url": "https://cms-ext.jswonemsme.com/api/app-login-page",
       "method": "GET",
       "timeout": {
         "request": "5000",
@@ -691,7 +691,7 @@
     "routeHandler": "TRANSFORM",
     "target": {
       "name": "cmsFeatureFlag",
-      "url": "https://internal-cms-ext.jswonemsme.com/api/ccp-feature-flags",
+      "url": "https://cms-ext.jswonemsme.com/api/ccp-feature-flags",
       "method": "GET",
       "timeout": {
         "request": "5000",
@@ -729,7 +729,7 @@
     "targets": [
       {
         "name": "app-material-tracking",
-        "url": "https://internal-cms-ext.jswonemsme.com/api/app-order-page",
+        "url": "https://cms-ext.jswonemsme.com/api/app-order-page",
         "method": "GET",
         "timeout": { "request": 5000, "socket": 1000 },
         "reqTransform": "general.transformers.moveBodyToQueryParams"
@@ -790,7 +790,7 @@
     "targets": [
       {
         "name": "app-home-page",
-        "url": "https://internal-cms-ext.jswonemsme.com/api/app-home-page-v2",
+        "url": "https://cms-ext.jswonemsme.com/api/app-home-page-v2",
         "method": "GET",
         "timeout": {
           "request": 5000,
@@ -833,7 +833,7 @@
       },
       {
         "name": "app-blogs",
-        "url": "https://internal-cms-ext.jswonemsme.com/api/jsw-blogs-articless",
+        "url": "https://cms-ext.jswonemsme.com/api/jsw-blogs-articless",
         "method": "GET",
         "timeout": {
           "request": 5000,
@@ -869,7 +869,7 @@
     "targets": [
       {
         "name": "app-categories",
-        "url": "https://internal-cms-ext.jswonemsme.com/api/app-product-categories?fields[0]=displayName&fields[1]=webUrl&fields[2]=webCategoryId&fields[3]=itemsToShow",
+        "url": "https://cms-ext.jswonemsme.com/api/app-product-categories?fields[0]=displayName&fields[1]=webUrl&fields[2]=webCategoryId&fields[3]=itemsToShow",
         "method": "GET",
         "timeout": {
           "request": 5000,
@@ -954,7 +954,7 @@
     "routeHandler": "TRANSFORM",
     "target": {
       "name": "webGlobalPage",
-      "url": "https://internal-cms-ext.jswonemsme.com/api/app-global",
+      "url": "https://cms-ext.jswonemsme.com/api/app-global",
       "method": "GET",
       "timeout": {
         "request": "5000",
@@ -1092,7 +1092,7 @@
     "isCacheRequired": false,
     "target": {
       "name": "webView",
-      "url": "https://internal-cms-ext.jswonemsme.com/api/app-web-view-configurations",
+      "url": "https://cms-ext.jswonemsme.com/api/app-web-view-configurations",
       "method": "GET",
       "timeout": {
         "request": 5000,
@@ -1110,7 +1110,7 @@
     "targets": [
       {
         "name": "app-global-page-v2",
-        "url": "https://internal-cms-ext.jswonemsme.com/api/app-global-v2",
+        "url": "https://cms-ext.jswonemsme.com/api/app-global-v2",
         "method": "GET",
         "timeout": {
           "request": 5000,
@@ -1168,7 +1168,7 @@
     "targets": [
       {
         "name": "app-cart-page",
-        "url": "https://internal-cms-ext.jswonemsme.com/api/app-cart-page-v2",
+        "url": "https://cms-ext.jswonemsme.com/api/app-cart-page-v2",
         "method": "GET",
         "timeout": {
           "request": 5000,
@@ -1260,7 +1260,7 @@
     "targets": [
       {
         "name": "app-search-page",
-        "url": "https://internal-cms-ext.jswonemsme.com/api/app-search-page",
+        "url": "https://cms-ext.jswonemsme.com/api/app-search-page",
         "method": "GET",
         "timeout": {
           "request": 10000,
