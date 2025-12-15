@@ -1352,7 +1352,7 @@
       "resTransform": "setDefaultAddress.transformers.setDefaultAddress"
     }
   },
-    {
+  {
     "path": "/xp-mi/public/v1/homes/project/progress-gallery",
     "method": "POST",
     "routeHandler": "TRANSFORM",
@@ -1365,6 +1365,28 @@
         { "source": "authorization", "destination": "Authorization" }
       ],
       "requiredParams": ["project_id"]
+    }
+  },
+  {
+    "path": "/xp-mi/public/v1/categories/tree",
+    "method": "GET",
+    "routeHandler": "TRANSFORM",
+    "isCacheRequired": true,
+    "target": {
+      "name": "categories-tree",
+      "url": "https://www.jswonemsme.com/central_commerce/categories/tree",
+      "method": "GET",
+      "timeout": {
+        "request": 5000,
+        "socket": 1000
+      },
+      "headersToPass": [
+        {
+          "source": "access_token",
+          "destination": "access_token"
+        }
+      ],
+      "requiredParams": ["*"]
     }
   }
 ]
