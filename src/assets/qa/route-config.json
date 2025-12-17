@@ -1189,7 +1189,7 @@
     "path": "/xp-mi/public/v1/total-payment-due",
     "method": "GET",
     "routeHandler": "TRANSFORM",
-    "isCacheRequired": true,
+    "isCacheRequired": false,
     "target": {
       "name": "payments-due",
       "url": "https://qa.msme.jswone.in/customer/payment/v2/totalDueAmount",
