@@ -1,16 +1,8 @@
-/* eslint-disable @typescript-eslint/no-unnecessary-type-assertion */
-/* eslint-disable @typescript-eslint/no-unsafe-return */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-
 import { Logger } from '@nestjs/common';
 import { safeDebug } from 'src/utils/common-functions.util';
 import { AggregatedResponse } from 'src/models/aggregated-response.model';
 
-export function getSearchPageDetails(
-  aggregatedResponses: AggregatedResponse[],
-): any {
+export function getSearchPageDetails(aggregatedResponses: AggregatedResponse[]): any {
   const responses = aggregatedResponses.reduce(
     (acc, r) => ((acc[r.target] = r), acc),
     {} as Record<string, AggregatedResponse>,
@@ -35,31 +27,25 @@ export function getSearchPageDetails(
 
   const cmsData = cmsResponse.data.data as { blocks?: any[] };
 
-  const blocks: any[] = Array.isArray(cmsData?.blocks)
-    ? [...cmsData.blocks]
-    : [];
+  const blocks: any[] = Array.isArray(cmsData?.blocks) ? [...cmsData.blocks] : [];
 
   //BUY AGAIN → UPDATE EXISTING BLOCK
   if (buyAgainResponse?.success) {
     const rawData = buyAgainResponse.data ?? {};
-    const { listOfBuyAgainProducts, variantList, skuSize } = rawData as any;
+    const { listOfBuyAgainProducts, variantList, skuSize } = rawData;
 
     const products =
-      listOfBuyAgainProducts ??
-      variantList ??
-      (Array.isArray(rawData) ? rawData : []);
+      listOfBuyAgainProducts ?? variantList ?? (Array.isArray(rawData) ? rawData : []);
 
     if (products.length > 0) {
       // Remove search top items block
       const filteredBlocks = blocks.filter(
-        (b) => b.__component !== 'app-components.app-search-top-items'
+        (b) => b.__component !== 'app-components.app-search-top-items',
       );
 
       // Find buy-again block (from CMS)
       const buyAgainBlock = filteredBlocks.find(
-        (b) =>
-          b.type === 'buy-again' ||
-          b.__component === 'app-components.app-buy-again',
+        (b) => b.type === 'buy-again' || b.__component === 'app-components.app-buy-again',
       );
 
       if (buyAgainBlock) {

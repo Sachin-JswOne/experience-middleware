@@ -1,9 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-/* eslint-disable @typescript-eslint/no-unsafe-return */
-
 import {
   APP_STATUS_FOR_MSME,
   APP_STATUS_PB_WHEN__FULLFILLEDBY_JSW_ONE,
@@ -28,7 +22,6 @@ import { AggregatedResponse } from 'src/models/aggregated-response.model';
 import { Logger } from '@nestjs/common';
 import { safeDebug } from 'src/utils/common-functions.util';
 
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 export function transformOrderListingRequest(request) {
   if (request.url.searchParams) {
     const customerType = request.url.searchParams.get('customerType');
@@ -55,12 +48,15 @@ export function getDeveloperName(customerType) {
 
 export function transformOrderListingResponse(response) {
   const orderListingResult = response?.data?.data;
-  safeDebug(Logger, () => ` Connector Order Listing Api response from method: transformOrderListingResponse : ${JSON.stringify(
-    orderListingResult,
-  )}`);
+  safeDebug(
+    Logger,
+    () =>
+      ` Connector Order Listing Api response from method: transformOrderListingResponse : ${JSON.stringify(
+        orderListingResult,
+      )}`,
+  );
   if (orderListingResult) {
-    const OrderListResponse =
-      sortProductsArrayBasedOnCreatedDate(orderListingResult);
+    const OrderListResponse = sortProductsArrayBasedOnCreatedDate(orderListingResult);
     const orderList = transformV2OrderListResponse(OrderListResponse);
 
     return { orderList: orderList };
@@ -70,10 +66,7 @@ export function transformOrderListingResponse(response) {
 
 export function sortProductsArrayBasedOnCreatedDate(products) {
   const sortedProductsArray = [...products].sort((productA, productB) => {
-    return (
-      new Date(productB.createdDate).getTime() -
-      new Date(productA.createdDate).getTime()
-    );
+    return new Date(productB.createdDate).getTime() - new Date(productA.createdDate).getTime();
   });
   return sortedProductsArray;
 }
@@ -136,9 +129,7 @@ export function transformOrderListProducts(order) {
 }
 
 export function transformOpportunityListProducts(order) {
-  return order.itemDetails.map((item) =>
-    transformSingleOpportunityProduct(item, order.orderType),
-  );
+  return order.itemDetails.map((item) => transformSingleOpportunityProduct(item, order.orderType));
 }
 
 export function transformSingleOpportunityProduct(item, orderType: string) {
@@ -176,18 +167,12 @@ export function createAttributesForOpportunities(item, orderType: string) {
   let attributes: any[] | [] = [];
   if (orderType === ERP_ORDER_TYPE_MAPPING.MSME) {
     if (item.productName.includes('TMT')) {
-      const [productName, diameter] = item.productName
-        .split('-')
-        .map((name) => name.trim());
+      const [productName, diameter] = item.productName.split('-').map((name) => name.trim());
       item.productName = productName || '';
 
       const itemAttributes = item.attributes;
 
-      if (
-        itemAttributes &&
-        typeof itemAttributes === 'object' &&
-        'keys' in itemAttributes
-      ) {
+      if (itemAttributes && typeof itemAttributes === 'object' && 'keys' in itemAttributes) {
         if (itemAttributes.keys === '') {
           const key = 'Dia (mm)';
           const value = `${diameter}`;
@@ -219,16 +204,13 @@ export function transformOpportunityAttributes({ keys, values }) {
   const keyParts = keys.split(' x ').map((k) => k.trim());
   const valueParts = values.split(' x ').map((v) => v.trim());
 
-  const getFieldName = (key: string): string =>
-    key.replace(/\s*\(.*?\)/, '').trim();
+  const getFieldName = (key: string): string => key.replace(/\s*\(.*?\)/, '').trim();
 
   const simplifiedKey = keyParts.map(getFieldName).join(' x ');
 
   switch (simplifiedKey) {
     case 'Dia':
-      return [
-        buildAttribute('Diameter', valueParts[0], extractUOM(keyParts[0])),
-      ];
+      return [buildAttribute('Diameter', valueParts[0], extractUOM(keyParts[0]))];
 
     case 'Dia x TMT Form':
       return [
@@ -264,11 +246,7 @@ export function transformOpportunityAttributes({ keys, values }) {
       return [
         buildAttribute('Web Depth', valueParts[0], extractUOM(keyParts[0])),
         buildAttribute('Flange Width', valueParts[1], extractUOM(keyParts[1])),
-        buildAttribute(
-          'Sectional Weight',
-          valueParts[2],
-          extractUOM(keyParts[2]),
-        ),
+        buildAttribute('Sectional Weight', valueParts[2], extractUOM(keyParts[2])),
       ];
 
     case 'TH x WD x Spangle type x Coating grade':
@@ -377,31 +355,17 @@ export function getAppStatusFromOpportunities(order) {
   if (order.orderType === CONNECTOR_ORDER_TYPE_MAPPING.PRIVATE_BRAND) {
     const fullfilledBy = order.fulfilledBy?.trim() ?? '';
 
-    if (
-      fullfilledBy === '' ||
-      fullfilledBy === null ||
-      fullfilledBy === undefined
-    ) {
-      return (
-        APP_STATUS_PB_WHEN_NO_FULLFILLEDBY_PRESENT[
-        order.orderStatus.toLowerCase()
-        ] ?? ''
-      );
+    if (fullfilledBy === '' || fullfilledBy === null || fullfilledBy === undefined) {
+      return APP_STATUS_PB_WHEN_NO_FULLFILLEDBY_PRESENT[order.orderStatus.toLowerCase()] ?? '';
     }
 
     if (fullfilledBy === 'JSW One') {
-      return (
-        APP_STATUS_PB_WHEN__FULLFILLEDBY_JSW_ONE[
-        order.orderStatus.toLowerCase()
-        ] ?? ''
-      );
+      return APP_STATUS_PB_WHEN__FULLFILLEDBY_JSW_ONE[order.orderStatus.toLowerCase()] ?? '';
     }
 
     if (fullfilledBy === 'Warehouse') {
       return (
-        APP_STATUS_PB_WHEN__FULLFILLEDBY_JSW_ONE_DISTRIBUTOR[
-        order.orderStatus.toLowerCase()
-        ] ?? ''
+        APP_STATUS_PB_WHEN__FULLFILLEDBY_JSW_ONE_DISTRIBUTOR[order.orderStatus.toLowerCase()] ?? ''
       );
     }
   }
@@ -423,10 +387,7 @@ export function getOrderTag(order) {
 
 export function getOrderType(pbOrderType) {
   let orderType = '';
-  if (
-    pbOrderType &&
-    pbOrderType === CONNECTOR_ORDER_TYPE_MAPPING.PRIVATE_BRAND
-  ) {
+  if (pbOrderType && pbOrderType === CONNECTOR_ORDER_TYPE_MAPPING.PRIVATE_BRAND) {
     orderType = ERP_ORDER_TYPE_MAPPING.PRIVATE_BRAND;
   } else {
     orderType = pbOrderType;
@@ -449,13 +410,21 @@ export function mergeMaterialTrackingAndOrderListingResponses(
     const materialTrackingResponse = responses['app-material-tracking'];
     const orderListingResponse = responses['app-order-listing'];
 
-    safeDebug(Logger, () => `Strapi Material Tracking Api response from method: mergeMaterialTrackingAndOrderListingResponses : ${JSON.stringify(
-      materialTrackingResponse,
-    )}`);
+    safeDebug(
+      Logger,
+      () =>
+        `Strapi Material Tracking Api response from method: mergeMaterialTrackingAndOrderListingResponses : ${JSON.stringify(
+          materialTrackingResponse,
+        )}`,
+    );
 
-    safeDebug(Logger, () => ` Connector Order And Opportunity Listing Api response from method: mergeMaterialTrackingAndOrderListingResponses : ${JSON.stringify(
-      orderListingResponse,
-    )}`);
+    safeDebug(
+      Logger,
+      () =>
+        ` Connector Order And Opportunity Listing Api response from method: mergeMaterialTrackingAndOrderListingResponses : ${JSON.stringify(
+          orderListingResponse,
+        )}`,
+    );
 
     if (
       !materialTrackingResponse ||
@@ -476,13 +445,10 @@ export function mergeMaterialTrackingAndOrderListingResponses(
     if (
       typeof materialTrackingResponse.data === 'object' &&
       materialTrackingResponse.data.data !== null &&
-      Array.isArray(
-        (materialTrackingResponse.data.data as { blocks?: unknown[] }).blocks,
-      )
+      Array.isArray((materialTrackingResponse.data.data as { blocks?: unknown[] }).blocks)
     ) {
       originalBlocks = [
-        ...((materialTrackingResponse.data.data as { blocks?: unknown[] })
-          .blocks as unknown[]),
+        ...((materialTrackingResponse.data.data as { blocks?: unknown[] }).blocks as unknown[]),
       ];
     }
     const blocks: any[] = originalBlocks;
@@ -509,10 +475,7 @@ export function mergeMaterialTrackingAndOrderListingResponses(
     Logger.log(
       `Transforming Shipment Request  method: mergeMaterialTrackingAndOrderListingResponses`,
     );
-    console.error(
-      'Error in mergeMaterialTrackingAndOrderListingResponses:',
-      error,
-    );
+    console.error('Error in mergeMaterialTrackingAndOrderListingResponses:', error);
     throw error;
   }
 }

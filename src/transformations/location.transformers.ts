@@ -1,7 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-return */
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
 import { BaseRequest } from 'src/models/base-request.model';
 import { AggregatedResponse } from 'src/models/aggregated-response.model';
 import { CustomError } from 'src/utils/CustomError';
@@ -29,9 +25,7 @@ interface GoogleGeocodeResponse {
   results: GeocodeResult[];
 }
 
-function extractPincodeFromGeocodeResponse(
-  geocodeData: GoogleGeocodeResponse,
-): string | undefined {
+function extractPincodeFromGeocodeResponse(geocodeData: GoogleGeocodeResponse): string | undefined {
   if (geocodeData?.status !== 'OK' || !geocodeData.results) {
     return undefined;
   }
@@ -41,9 +35,13 @@ function extractPincodeFromGeocodeResponse(
     .find((component) => component.types?.includes('postal_code'));
 
   const pincode = pincodeComponent?.long_name;
-  safeDebug(Logger, () => `Extracted pincode from Google Maps Geocoding API response from method: extractPincodeFromGeocodeResponse : ${JSON.stringify(
-    pincode,
-  )}`);
+  safeDebug(
+    Logger,
+    () =>
+      `Extracted pincode from Google Maps Geocoding API response from method: extractPincodeFromGeocodeResponse : ${JSON.stringify(
+        pincode,
+      )}`,
+  );
   return pincode;
 }
 
@@ -51,9 +49,7 @@ function getValidatedGeocodeData(
   aggregatedResponses: AggregatedResponse[],
   requestUrl: URL,
 ): GoogleGeocodeResponse {
-  const geocodeResponse = aggregatedResponses.find(
-    (r) => r.target === TARGET_NAMES.GOOGLE_GEOCODE,
-  );
+  const geocodeResponse = aggregatedResponses.find((r) => r.target === TARGET_NAMES.GOOGLE_GEOCODE);
 
   if (!geocodeResponse || !geocodeResponse.success) {
     Logger.error(
@@ -67,9 +63,13 @@ function getValidatedGeocodeData(
 
   const geocodeData = geocodeResponse.data as unknown as GoogleGeocodeResponse;
 
-  safeDebug(Logger, () => `Google Maps Geocoding API response from method: getValidatedGeocodeData : ${JSON.stringify(
-    geocodeData,
-  )}`);
+  safeDebug(
+    Logger,
+    () =>
+      `Google Maps Geocoding API response from method: getValidatedGeocodeData : ${JSON.stringify(
+        geocodeData,
+      )}`,
+  );
 
   if (geocodeData?.status !== 'OK') {
     Logger.error(
@@ -92,10 +92,7 @@ export function getLocalityDataRequest(
     Logger.error(
       `Error for ${request.url} method: getLocalityDataRequest - No previous responses available.`,
     );
-    throw new CustomError(
-      'No previous API responses available',
-      HttpStatus.BAD_REQUEST,
-    );
+    throw new CustomError('No previous API responses available', HttpStatus.BAD_REQUEST);
   }
 
   const geocodeData = getValidatedGeocodeData(prevResponses, request.url);
@@ -105,10 +102,7 @@ export function getLocalityDataRequest(
     Logger.error(
       `Error for ${request.url} method: getLocalityDataRequest - Pincode not found in Google Maps Geocoding API response.`,
     );
-    throw new CustomError(
-      'Pincode not found in geocoding response',
-      HttpStatus.BAD_REQUEST,
-    );
+    throw new CustomError('Pincode not found in geocoding response', HttpStatus.BAD_REQUEST);
   }
 
   const url = new URL(request.url.href);
@@ -124,9 +118,7 @@ export function getLocalityDataRequest(
 export function transformCustomerLocationResponse(
   aggregatedResponses: AggregatedResponse[],
 ): unknown {
-  const geocodeResponse = aggregatedResponses.find(
-    (r) => r.target === TARGET_NAMES.GOOGLE_GEOCODE,
-  );
+  const geocodeResponse = aggregatedResponses.find((r) => r.target === TARGET_NAMES.GOOGLE_GEOCODE);
 
   if (!geocodeResponse || !geocodeResponse.success) {
     Logger.error(
@@ -147,10 +139,7 @@ export function transformCustomerLocationResponse(
     Logger.error(
       `Error in transformCustomerLocationResponse: Locality data response not found. Available targets: ${JSON.stringify(availableTargets)}`,
     );
-    throw new CustomError(
-      'Locality data response not found',
-      HttpStatus.INTERNAL_SERVER_ERROR,
-    );
+    throw new CustomError('Locality data response not found', HttpStatus.INTERNAL_SERVER_ERROR);
   }
 
   if (!localityResponse.success) {
@@ -166,18 +155,26 @@ export function transformCustomerLocationResponse(
   const geocodeData = geocodeResponse.data as unknown as GoogleGeocodeResponse;
   const pincode = extractPincodeFromGeocodeResponse(geocodeData);
 
-  safeDebug(Logger, () => `Locality data response from method: transformCustomerLocationResponse : ${JSON.stringify(
-    localityResponse.data,
-  )}`);
+  safeDebug(
+    Logger,
+    () =>
+      `Locality data response from method: transformCustomerLocationResponse : ${JSON.stringify(
+        localityResponse.data,
+      )}`,
+  );
 
   const finalResponse = {
     ...(localityResponse.data as Record<string, unknown>),
     pinCode: pincode,
   };
 
-  safeDebug(Logger, () => `Final response from method: transformCustomerLocationResponse : ${JSON.stringify(
-    finalResponse,
-  )}`);
+  safeDebug(
+    Logger,
+    () =>
+      `Final response from method: transformCustomerLocationResponse : ${JSON.stringify(
+        finalResponse,
+      )}`,
+  );
 
   return finalResponse;
 }
@@ -188,10 +185,7 @@ export function addGoogleMapsApiKeyRequest(request: BaseRequest): BaseRequest {
     Logger.error(
       `Error for ${request.url} method: addGoogleMapsApiKeyRequest - GOOGLE_MAPS_API_KEY environment variable is not set.`,
     );
-    throw new CustomError(
-      'Google Maps API key not configured',
-      HttpStatus.INTERNAL_SERVER_ERROR,
-    );
+    throw new CustomError('Google Maps API key not configured', HttpStatus.INTERNAL_SERVER_ERROR);
   }
 
   const requestBody = request.body as Record<string, unknown> | null;

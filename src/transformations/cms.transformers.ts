@@ -1,11 +1,7 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-
 import { CMS_ASSETS_URLS } from 'src/config/app.config';
 import * as qs from 'qs';
 import { BaseRequest } from 'src/models/base-request.model';
 
-/* eslint-disable @typescript-eslint/no-unsafe-return */
 export function replaceUriPrefix(response: any): any {
   if (Array.isArray(response)) {
     return response.map((item) => replaceUriPrefix(item));

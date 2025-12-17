@@ -1,21 +1,14 @@
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { AxiosRequestConfig } from 'axios';
 import * as jwt from 'jsonwebtoken';
 import { GUEST, GUEST_USER_STATE } from 'src/config/app.config';
 
-export function decryptAndAddUserDetails(
-  config: AxiosRequestConfig,
-): AxiosRequestConfig {
+export function decryptAndAddUserDetails(config: AxiosRequestConfig): AxiosRequestConfig {
   config.headers = config.headers ?? {};
 
   const authHeader = config.headers.authorization as string | undefined;
 
   if (authHeader) {
-    const token = authHeader.startsWith('Bearer ')
-      ? authHeader.slice(7)
-      : authHeader;
+    const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : authHeader;
 
     if (token) {
       try {
@@ -31,10 +24,7 @@ export function decryptAndAddUserDetails(
 
         return config;
       } catch (error) {
-        console.error(
-          'Failed to decode/decrypt token and add user details to headers',
-          error,
-        );
+        console.error('Failed to decode/decrypt token and add user details to headers', error);
         throw new Error('Token decryption failed');
       }
     }

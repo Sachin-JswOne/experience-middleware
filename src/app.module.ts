@@ -11,7 +11,6 @@ import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { RequestContextMiddleware } from './utils/request-context.middleware';
 import { RedisModule } from './redis/redis.module';
 
-
 @Module({
   imports: [
     // PrometheusModule.register({

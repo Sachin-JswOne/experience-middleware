@@ -347,9 +347,7 @@
         "url": "https://qa-ssr.msme.jswone.in/order-service/order/v1/material-tracking/dispatched-shipments",
         "method": "GET",
         "timeout": { "request": 5000, "socket": 1000 },
-        "headersToPass": [
-          { "source": "authorization", "destination": "access_token" }
-        ],
+        "headersToPass": [{ "source": "authorization", "destination": "access_token" }],
         "reqTransform": "app.transformers.transformInTransitRequest"
       }
     ],
@@ -402,9 +400,7 @@
           "socket": "${TIMEOUTS.SOCKET}"
         },
         "reqTransform": "general.transformers.convertToGetRequest",
-        "headersToPass": [
-          { "source": "authorization", "destination": "authorization" }
-        ],
+        "headersToPass": [{ "source": "authorization", "destination": "authorization" }],
         "requiredParams": ["pincode"]
       },
       {
@@ -416,9 +412,7 @@
           "socket": "${TIMEOUTS.SOCKET}"
         },
         "reqTransform": "general.transformers.convertToGetRequest",
-        "headersToPass": [
-          { "source": "authorization", "destination": "authorization" }
-        ],
+        "headersToPass": [{ "source": "authorization", "destination": "authorization" }],
         "requiredParams": ["pincode"]
       }
     ],
@@ -501,9 +495,7 @@
         "url": "https://services-dev.onejswhomes.in/homes-service/v1/project/project-details",
         "method": "GET",
         "timeout": { "request": 5000, "socket": 1000 },
-        "headersToPass": [
-          { "source": "authorization", "destination": "Authorization" }
-        ],
+        "headersToPass": [{ "source": "authorization", "destination": "Authorization" }],
         "reqTransform": "general.transformers.convertToGetRequest",
         "requiredParams": ["project_id"]
       }
@@ -528,9 +520,7 @@
         "url": "https://services-dev.onejswhomes.in/homes-service/v1/user/details",
         "method": "GET",
         "timeout": { "request": 5000, "socket": 1000 },
-        "headersToPass": [
-          { "source": "authorization", "destination": "Authorization" }
-        ],
+        "headersToPass": [{ "source": "authorization", "destination": "Authorization" }],
         "reqTransform": "general.transformers.convertToGetRequest"
       }
     ],
@@ -545,9 +535,7 @@
       "url": "https://services-dev.onejswhomes.in/homes-service/v1/project/progress-reports",
       "method": "GET",
       "timeout": { "request": 5000, "socket": 1000 },
-      "headersToPass": [
-        { "source": "authorization", "destination": "Authorization" }
-      ],
+      "headersToPass": [{ "source": "authorization", "destination": "Authorization" }],
       "requiredParams": ["project_id"]
     }
   },
@@ -710,9 +698,7 @@
       "url": "https://services-dev.onejswhomes.in/homes-service/v1/project/design-documents",
       "method": "GET",
       "timeout": { "request": 5000, "socket": 1000 },
-      "headersToPass": [
-        { "source": "authorization", "destination": "Authorization" }
-      ],
+      "headersToPass": [{ "source": "authorization", "destination": "Authorization" }],
       "requiredParams": ["project_id"]
     }
   },
@@ -725,9 +711,7 @@
       "url": "https://services-dev.onejswhomes.in/homes-service/v1/project/construction-documents",
       "method": "GET",
       "timeout": { "request": 5000, "socket": 1000 },
-      "headersToPass": [
-        { "source": "authorization", "destination": "Authorization" }
-      ],
+      "headersToPass": [{ "source": "authorization", "destination": "Authorization" }],
       "requiredParams": ["project_id"]
     }
   },
@@ -744,9 +728,7 @@
         "request": "${TIMEOUTS.REQUEST}",
         "socket": "${TIMEOUTS.SOCKET}"
       },
-      "headersToPass": [
-        { "source": "authorization", "destination": "access_token" }
-      ],
+      "headersToPass": [{ "source": "authorization", "destination": "access_token" }],
       "requiredParams": ["entityName"]
     }
   },
@@ -1198,9 +1180,7 @@
         "request": 5000,
         "socket": 1000
       },
-      "headersToPass": [
-        { "source": "authorization", "destination": "access_token" }
-      ],
+      "headersToPass": [{ "source": "authorization", "destination": "access_token" }],
       "requiredParams": ["entityName"],
       "appendParams": true,
       "resTransform": "paymentdue.transformers.getPaymentDueDetails"
@@ -1232,9 +1212,7 @@
           "socket": 1000
         },
         "reqTransform": "general.transformers.convertToGetRequest",
-        "headersToPass": [
-          { "source": "authorization", "destination": "authorization" }
-        ],
+        "headersToPass": [{ "source": "authorization", "destination": "authorization" }],
         "requiredParams": ["pincode"]
       },
       {
@@ -1246,9 +1224,7 @@
           "socket": 1000
         },
         "reqTransform": "general.transformers.convertToGetRequest",
-        "headersToPass": [
-          { "source": "authorization", "destination": "authorization" }
-        ],
+        "headersToPass": [{ "source": "authorization", "destination": "authorization" }],
         "requiredParams": ["pincode"]
       }
     ],
@@ -1407,9 +1383,7 @@
       "url": "https://services-dev.onejswhomes.in/homes-service/v1/project/progress-gallery",
       "method": "GET",
       "timeout": { "request": 5000, "socket": 1000 },
-      "headersToPass": [
-        { "source": "authorization", "destination": "Authorization" }
-      ],
+      "headersToPass": [{ "source": "authorization", "destination": "Authorization" }],
       "requiredParams": ["project_id"]
     }
   },

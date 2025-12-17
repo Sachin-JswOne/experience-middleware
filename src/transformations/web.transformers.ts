@@ -1,17 +1,10 @@
-/* eslint-disable @typescript-eslint/no-unnecessary-type-assertion */
-/* eslint-disable @typescript-eslint/no-unsafe-return */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { AggregatedResponse } from 'src/models/aggregated-response.model';
 import { Logger } from '@nestjs/common';
 import { safeDebug } from 'src/utils/common-functions.util';
 import { BaseRequest } from 'src/models/base-request.model';
 import { CustomError } from 'src/utils/CustomError';
 
-export function mergeWebHomePageResponses(
-  aggregatedResponses: AggregatedResponse[],
-): any {
+export function mergeWebHomePageResponses(aggregatedResponses: AggregatedResponse[]): any {
   const responses = aggregatedResponses.reduce(
     (acc, response) => {
       acc[response.target] = response;
@@ -26,18 +19,34 @@ export function mergeWebHomePageResponses(
   const pendingDispatchResponse = responses['pending-dispatch-quantity'];
   const webProductsResponse = responses['web-homepage-products'];
 
-  safeDebug(Logger, () => ` CMS Home Page Api response from method: mergeWebHomePageResponses : ${JSON.stringify(
-    cmsResponse,
-  )}`);
-  safeDebug(Logger, () => ` Blogs Api response from method: mergeWebHomePageResponses : ${JSON.stringify(
-    blogsResponse,
-  )}`);
-  safeDebug(Logger, () => ` CCP Buy Again With Price Api response from method: mergeWebHomePageResponses : ${JSON.stringify(
-    buyAgainResponse,
-  )}`);
-  safeDebug(Logger, () => ` Pending Dispatch Quantity Api response from method: mergeWebHomePageResponses : ${JSON.stringify(
-    pendingDispatchResponse,
-  )}`);
+  safeDebug(
+    Logger,
+    () =>
+      ` CMS Home Page Api response from method: mergeWebHomePageResponses : ${JSON.stringify(
+        cmsResponse,
+      )}`,
+  );
+  safeDebug(
+    Logger,
+    () =>
+      ` Blogs Api response from method: mergeWebHomePageResponses : ${JSON.stringify(
+        blogsResponse,
+      )}`,
+  );
+  safeDebug(
+    Logger,
+    () =>
+      ` CCP Buy Again With Price Api response from method: mergeWebHomePageResponses : ${JSON.stringify(
+        buyAgainResponse,
+      )}`,
+  );
+  safeDebug(
+    Logger,
+    () =>
+      ` Pending Dispatch Quantity Api response from method: mergeWebHomePageResponses : ${JSON.stringify(
+        pendingDispatchResponse,
+      )}`,
+  );
   if (
     !cmsResponse ||
     !cmsResponse.success ||
@@ -60,25 +69,19 @@ export function mergeWebHomePageResponses(
     blocks?: any[];
   };
 
-  const blocks: any[] = Array.isArray(cmsData?.blocks)
-    ? [...cmsData.blocks]
-    : [];
+  const blocks: any[] = Array.isArray(cmsData?.blocks) ? [...cmsData.blocks] : [];
 
   // Inject buy again data
   if (buyAgainResponse?.success) {
     const rawData = buyAgainResponse.data ?? {};
-    const { listOfBuyAgainProducts, variantList, skuSize } = rawData as any;
+    const { listOfBuyAgainProducts, variantList, skuSize } = rawData;
 
     const products =
-      listOfBuyAgainProducts ??
-      variantList ??
-      (Array.isArray(rawData) ? rawData : []);
+      listOfBuyAgainProducts ?? variantList ?? (Array.isArray(rawData) ? rawData : []);
 
     if (products.length > 0) {
       const block = blocks.find(
-        (b: any) =>
-          b.type === 'buy-again' ||
-          b.__component === 'app-components.app-buy-again',
+        (b: any) => b.type === 'buy-again' || b.__component === 'app-components.app-buy-again',
       );
 
       if (block) {
@@ -98,8 +101,7 @@ export function mergeWebHomePageResponses(
   const blogs = blogsResponse?.data?.data || [];
   const blogsBlock = blocks.find(
     (block: any) =>
-      block.type === 'blogs' ||
-      block.__component === 'app-components.app-blog-list-component',
+      block.type === 'blogs' || block.__component === 'app-components.app-blog-list-component',
   );
   if (blogsBlock) {
     blogsBlock.blogs = blogs;
@@ -117,12 +119,13 @@ export function mergeWebHomePageResponses(
 
   if (webProductsResponse?.success) {
     const productsData = webProductsResponse.data.data ?? {};
-    const block = blocks.find(
-      (b: any) =>
-        b.__component === 'app-components.app-product-category',
-    );
-    block?.app_product_categories?.filter(categoryProducts => categoryProducts.webCategoryId && categoryProducts.itemsToShow)
-      .map(categoryProducts => categoryProducts.productsList = productsData[categoryProducts.webCategoryId]);
+    const block = blocks.find((b: any) => b.__component === 'app-components.app-product-category');
+    block?.app_product_categories
+      ?.filter((categoryProducts) => categoryProducts.webCategoryId && categoryProducts.itemsToShow)
+      .map(
+        (categoryProducts) =>
+          (categoryProducts.productsList = productsData[categoryProducts.webCategoryId]),
+      );
   }
 
   // Update merged data with blocks
@@ -156,9 +159,12 @@ export function transformCategoryToFilterRequest(categoryData: {
   };
 }
 
-export function catlougeByCategories(request: BaseRequest, aggregatedResponses: AggregatedResponse[]): BaseRequest {
+export function catlougeByCategories(
+  request: BaseRequest,
+  aggregatedResponses: AggregatedResponse[],
+): BaseRequest {
   const transformedRequest: BaseRequest = {
-    ...request
+    ...request,
   };
 
   const responses = aggregatedResponses.reduce(
@@ -173,7 +179,10 @@ export function catlougeByCategories(request: BaseRequest, aggregatedResponses: 
 
   if (!categoriesResponse || !categoriesResponse.success) {
     Logger.error(`Error from Strapi for categories response`, categoriesResponse.error);
-    throw new CustomError(categoriesResponse.downstreamResponse, categoriesResponse.httpStatus ?? 500);
+    throw new CustomError(
+      categoriesResponse.downstreamResponse,
+      categoriesResponse.httpStatus ?? 500,
+    );
   }
 
   const categories = categoriesResponse.data.data;
@@ -183,8 +192,8 @@ export function catlougeByCategories(request: BaseRequest, aggregatedResponses: 
     new Map(
       categories
         .filter((category: any) => category.webCategoryId && category.itemsToShow > 0)
-        .map((category: any) => [category.webCategoryId, category])
-    ).values()
+        .map((category: any) => [category.webCategoryId, category]),
+    ).values(),
   );
 
   const filterRequests = uniqueCategories.map((category: any) => {
@@ -196,9 +205,7 @@ export function catlougeByCategories(request: BaseRequest, aggregatedResponses: 
   return transformedRequest;
 }
 
-export function handleProductResponse(
-  aggregatedResponses: AggregatedResponse[],
-): any {
+export function handleProductResponse(aggregatedResponses: AggregatedResponse[]): any {
   const responses = aggregatedResponses.reduce(
     (acc, response) => {
       acc[response.target] = response;
@@ -213,9 +220,9 @@ export function handleProductResponse(
     throw new CustomError(productsResponse.downstreamResponse, productsResponse.httpStatus ?? 500);
   }
 
-  Object.values(productsResponse.data)
-    .forEach((catProductData: any) => delete catProductData.filterConditions);
+  Object.values(productsResponse.data).forEach(
+    (catProductData: any) => delete catProductData.filterConditions,
+  );
 
   return productsResponse;
-
 }

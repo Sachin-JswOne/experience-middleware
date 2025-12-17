@@ -1,7 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-return */
-
 import { Logger } from '@nestjs/common';
 import { safeDebug } from 'src/utils/common-functions.util';
 
@@ -87,7 +83,7 @@ interface UserProfileResponse {
 
 export function setDefaultAddress(
   response: UserProfileResponse,
-): UserProfileResponse & { success: boolean } | { status: boolean; message: string } {
+): (UserProfileResponse & { success: boolean }) | { status: boolean; message: string } {
   safeDebug(
     Logger,
     () =>

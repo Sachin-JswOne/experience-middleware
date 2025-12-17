@@ -7,17 +7,20 @@
   "license": "UNLICENSED",
   "scripts": {
     "build": "nest build",
-    "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",
-    "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "jest --config ./test/jest-e2e.json"
+    "test:e2e": "jest --config ./test/jest-e2e.json",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "lint-staged": "lint-staged",
+    "cleanup": "npm run lint:fix && npm run format"
   },
   "dependencies": {
     "@nestjs/axios": "^4.0.0",
@@ -47,6 +50,7 @@
     "qs": "^6.14.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
+    "typescript-eslint": "^8.49.0",
     "winston": "^3.18.3"
   },
   "devDependencies": {
@@ -63,20 +67,21 @@
     "@types/qs": "^6.14.0",
     "@types/supertest": "^6.0.2",
     "@types/winston": "^2.4.4",
-    "eslint": "^9.18.0",
-    "eslint-config-prettier": "^10.0.1",
-    "eslint-plugin-prettier": "^5.2.2",
+    "eslint": "^9.39.2",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.4",
     "globals": "^16.0.0",
+    "husky": "^9.1.7",
     "jest": "^29.7.0",
-    "prettier": "^3.4.2",
+    "lint-staged": "^16.2.7",
+    "prettier": "^3.7.4",
     "source-map-support": "^0.5.21",
     "supertest": "^7.0.0",
     "ts-jest": "^29.2.5",
     "ts-loader": "^9.5.2",
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
-    "typescript": "^5.7.3",
-    "typescript-eslint": "^8.20.0"
+    "typescript": "^5.7.3"
   },
   "jest": {
     "moduleFileExtensions": [
@@ -97,5 +102,14 @@
     ],
     "coverageDirectory": "../coverage",
     "testEnvironment": "node"
+  },
+  "lint-staged": {
+    "*.{ts,js}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,md,yml,yaml}": [
+      "prettier --write"
+    ]
   }
 }

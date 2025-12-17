@@ -1,8 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-return */
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { formatDate, toTitleCase } from 'src/utils/common-functions.util';
 import { Logger } from '@nestjs/common';
 import { safeDebug } from 'src/utils/common-functions.util';
@@ -11,9 +6,13 @@ export function transformInvoiceAndDocuments(response: any): {
   listOfDocuments;
 } {
   try {
-    safeDebug(Logger, () => `Invoice and Documents Api response from method: transformInvoiceAndDocuments : ${JSON.stringify(
-      response,
-    )}`);
+    safeDebug(
+      Logger,
+      () =>
+        `Invoice and Documents Api response from method: transformInvoiceAndDocuments : ${JSON.stringify(
+          response,
+        )}`,
+    );
     if (!response || typeof response !== 'object') {
       return { listOfDocuments: [] };
     }
@@ -39,27 +38,23 @@ export function transformInvoiceAndDocuments(response: any): {
 }
 
 export function getListOfDocuments(invoiceDocumentsResponse) {
-  const listOfDocuments = invoiceDocumentsResponse.orderShipmentSummaryList.map(
-    (orderShipment) => {
-      const documents = transformDocuments(orderShipment);
+  const listOfDocuments = invoiceDocumentsResponse.orderShipmentSummaryList.map((orderShipment) => {
+    const documents = transformDocuments(orderShipment);
 
-      return {
-        shipmentNumber: orderShipment.shipmentNumber || '',
-        dispatchedOn: formatDate(orderShipment.dispatchedOn) || '',
-        documents: documents,
-        pbOrder: orderShipment.pbOrder,
-      };
-    },
-  );
+    return {
+      shipmentNumber: orderShipment.shipmentNumber || '',
+      dispatchedOn: formatDate(orderShipment.dispatchedOn) || '',
+      documents: documents,
+      pbOrder: orderShipment.pbOrder,
+    };
+  });
   return listOfDocuments;
 }
 
 export function transformDocuments(orderShipment) {
   const documentTypes = ['invoice', 'testCertificate', 'other'];
 
-  return documentTypes.map((type) =>
-    transformDocumentType(orderShipment, type),
-  );
+  return documentTypes.map((type) => transformDocumentType(orderShipment, type));
 }
 
 export function transformDocumentType(orderShipment, type: string) {

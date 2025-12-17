@@ -1,6 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { mergeCartPageResponses } from '../cart.transformers';
 import { AggregatedResponse } from 'src/models/aggregated-response.model';
 
@@ -94,9 +91,7 @@ describe('mergeCartPageResponses', () => {
     expect(buyAgainBlock.listOfBuyAgainProducts).toEqual(
       mockBuyAgainApiResponse.data.listOfBuyAgainProducts,
     );
-    expect(cartProductBlock.cartSummary).toEqual(
-      mockCartSummaryApiResponse.data,
-    );
+    expect(cartProductBlock.cartSummary).toEqual(mockCartSummaryApiResponse.data);
     expect(result.data.id).toBe(4);
   });
 
@@ -114,9 +109,7 @@ describe('mergeCartPageResponses', () => {
       ...mockStrapiCartPageResponse,
       data: null,
     };
-    const aggregatedResponses: AggregatedResponse[] = [
-      invalidStrapiResponse as any,
-    ];
+    const aggregatedResponses: AggregatedResponse[] = [invalidStrapiResponse as any];
     const result = mergeCartPageResponses(aggregatedResponses);
     expect(result).toEqual({ data: {}, meta: {} });
   });
@@ -149,9 +142,7 @@ describe('mergeCartPageResponses', () => {
   });
 
   it('should handle missing blocks array in strapi response', () => {
-    const strapiResponseWithoutBlocks = JSON.parse(
-      JSON.stringify(mockStrapiCartPageResponse),
-    );
+    const strapiResponseWithoutBlocks = JSON.parse(JSON.stringify(mockStrapiCartPageResponse));
     delete strapiResponseWithoutBlocks.data.data.blocks;
 
     const aggregatedResponses: AggregatedResponse[] = [
@@ -187,9 +178,7 @@ describe('mergeCartPageResponses', () => {
     const cartProductBlock = result.data.blocks.find(
       (b: any) => b.__component === 'app-components.app-cart-product',
     );
-    expect(cartProductBlock.cartSummary).toEqual(
-      mockCartSummaryApiResponse.data,
-    );
+    expect(cartProductBlock.cartSummary).toEqual(mockCartSummaryApiResponse.data);
   });
 
   it('should handle missing cart product block in strapi response', () => {
