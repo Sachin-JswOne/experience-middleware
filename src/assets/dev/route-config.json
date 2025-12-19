@@ -1465,8 +1465,8 @@
       "url": "https://qa.msme.jswone.in/central_commerce/products/listing",
       "method": "POST",
       "timeout": {
-        "request": "${TIMEOUTS.REQUEST}",
-        "socket": "${TIMEOUTS.SOCKET}"
+        "request": 5000,
+        "socket": 1000
       },
       "headersToPass": [
         {
