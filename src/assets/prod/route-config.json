@@ -1409,5 +1409,26 @@
       ],
       "requiredParams": ["*"]
     }
+  },
+  {
+    "path": "/xp-mi/public/v1/central_commerce/products/listing",
+    "method": "POST",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "products-listing",
+      "url": "https://www.jswonemsme.com/central_commerce/products/listing",
+      "method": "POST",
+      "timeout": {
+        "request": "${TIMEOUTS.REQUEST}",
+        "socket": "${TIMEOUTS.SOCKET}"
+      },
+      "headersToPass": [
+        {
+          "source": "access_token",
+          "destination": "access_token"
+        }
+      ],
+      "requiredParams": ["*"]
+    }
   }
 ]
