@@ -1425,5 +1425,26 @@
       ],
       "requiredParams": ["*"]
     }
+  },
+  {
+    "path": "/xp-mi/public/v1/central_commerce/recent-search",
+    "method": "GET",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "get-recent-search",
+      "url": "https://www.jswonemsme.com/central_commerce/recent-search",
+      "method": "GET",
+      "timeout": {
+        "request": "${TIMEOUTS.REQUEST}",
+        "socket": "${TIMEOUTS.SOCKET}"
+      },
+      "headersToPass": [
+        {
+          "source": "access_token",
+          "destination": "access_token"
+        }
+      ],
+      "requiredParams": ["*"]
+    }
   }
 ]
