@@ -1,8 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+
 import * as jwt from 'jsonwebtoken';
 import { GUEST, GUEST_USER_STATE } from 'src/config/app.config';
 
@@ -77,9 +74,7 @@ export function getUserIdentifiers(headers: any): {
   }
 
   try {
-    const token = authHeader.startsWith('Bearer ')
-      ? authHeader.substring(7)
-      : authHeader;
+    const token = authHeader.startsWith('Bearer ') ? authHeader.substring(7) : authHeader;
 
     const decoded = jwt.decode(token) as {
       sfCustomerId?: string;

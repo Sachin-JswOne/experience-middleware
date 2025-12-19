@@ -12,7 +12,6 @@ import { RequestContextMiddleware } from './utils/request-context.middleware';
 import { RedisModule } from './redis/redis.module';
 import { APP_ENV } from './config/app.config';
 
-
 @Module({
   imports: [
     // PrometheusModule.register({

@@ -1,18 +1,11 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { BaseRequest } from 'src/models/base-request.model';
-import {
-  CONSENT_EVENT_NAME,
-  CONSENT_REGISTRATION_SOURCE,
-} from 'src/config/app.config';
+import { CONSENT_EVENT_NAME, CONSENT_REGISTRATION_SOURCE } from 'src/config/app.config';
 import { Logger } from '@nestjs/common';
 import { getFormattedTime } from 'src/utils/common-functions.util';
 
 export function implictConsent(request: BaseRequest): BaseRequest {
   const requestBody: any = request?.body;
-  Logger.log(
-    `Transforming Implicit-Consent Request  ${request.url} method: implictConsent`,
-  );
+  Logger.log(`Transforming Implicit-Consent Request  ${request.url} method: implictConsent`);
   const requestData = transformMsmeRegistrationPayload(requestBody);
 
   const consentIp = request.headers['x-forwarded-for'];

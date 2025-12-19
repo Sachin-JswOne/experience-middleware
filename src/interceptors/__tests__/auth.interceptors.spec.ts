@@ -1,6 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { AxiosRequestConfig } from 'axios';
 import * as jwt from 'jsonwebtoken';
 import { GUEST, GUEST_USER_STATE } from 'src/config/app.config';
@@ -88,13 +85,9 @@ describe('decryptAndAddUserDetails', () => {
     mockJwt.decode.mockImplementation(() => {
       throw decodeError;
     });
-    const consoleErrorSpy = jest
-      .spyOn(console, 'error')
-      .mockImplementation(() => {});
+    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
 
-    expect(() => decryptAndAddUserDetails(mockConfig)).toThrow(
-      'Token decryption failed',
-    );
+    expect(() => decryptAndAddUserDetails(mockConfig)).toThrow('Token decryption failed');
     expect(consoleErrorSpy).toHaveBeenCalledWith(
       'Failed to decode/decrypt token and add user details to headers',
       decodeError,

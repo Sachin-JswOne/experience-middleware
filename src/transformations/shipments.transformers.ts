@@ -1,23 +1,13 @@
-/* eslint-disable @typescript-eslint/no-unsafe-return */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { AggregatedResponse } from 'src/models/aggregated-response.model';
 import { getListOfDocuments } from './invoiceAndDocuments.transformers';
-import {
-  DEFAULT_CURRENCY_CODE,
-  ORDER_TAG,
-  SHIPMENT_STATUS,
-} from 'src/config/app.config';
+import { DEFAULT_CURRENCY_CODE, ORDER_TAG, SHIPMENT_STATUS } from 'src/config/app.config';
 import { formatDate } from 'src/utils/common-functions.util';
 import { CustomError } from 'src/utils/CustomError';
 import { HttpStatus } from '@nestjs/common';
 import { Logger } from '@nestjs/common';
 import { safeDebug } from 'src/utils/common-functions.util';
 
-export function mergeInvoiceAndShipmentsResponse(
-  aggregatedResponses: AggregatedResponse[],
-) {
+export function mergeInvoiceAndShipmentsResponse(aggregatedResponses: AggregatedResponse[]) {
   try {
     const responses = aggregatedResponses.reduce(
       (acc, response) => {
@@ -30,24 +20,30 @@ export function mergeInvoiceAndShipmentsResponse(
     const shipmentsResponse = responses['app-shipment'];
     const invoiceAndDocumentsResponse = responses['app-invoice-and-documents'];
 
-    safeDebug(Logger, () => ` Shipments Api response from method: mergeInvoiceAndShipmentResponse : ${JSON.stringify(
-      shipmentsResponse,
-    )}`);
+    safeDebug(
+      Logger,
+      () =>
+        ` Shipments Api response from method: mergeInvoiceAndShipmentResponse : ${JSON.stringify(
+          shipmentsResponse,
+        )}`,
+    );
 
-    safeDebug(Logger, () => `Invoice and Documents Api response from method: mergeInvoiceAndShipmentResponse : ${JSON.stringify(
-      invoiceAndDocumentsResponse,
-    )}`);
+    safeDebug(
+      Logger,
+      () =>
+        `Invoice and Documents Api response from method: mergeInvoiceAndShipmentResponse : ${JSON.stringify(
+          invoiceAndDocumentsResponse,
+        )}`,
+    );
     const data = shipmentsResponse?.data;
 
-    const orderShipmentDetailsSRO =
-      data?.data?.orderShipmentDetailsSRO?.orderShipmentDetailsList;
+    const orderShipmentDetailsSRO = data?.data?.orderShipmentDetailsSRO?.orderShipmentDetailsList;
 
     if (!data || !orderShipmentDetailsSRO) {
       throw new CustomError('No shipment found', HttpStatus.NOT_FOUND);
     }
 
-    const invoiceDocumentsResponse =
-      invoiceAndDocumentsResponse?.data?.data?.data;
+    const invoiceDocumentsResponse = invoiceAndDocumentsResponse?.data?.data?.data;
 
     let listOfDocuments: any[] = [];
 
@@ -55,30 +51,20 @@ export function mergeInvoiceAndShipmentsResponse(
       listOfDocuments = getListOfDocuments(invoiceDocumentsResponse);
     }
 
-    const shipments = transformShipmentDetails(
-      orderShipmentDetailsSRO,
-      listOfDocuments,
-    );
+    const shipments = transformShipmentDetails(orderShipmentDetailsSRO, listOfDocuments);
     return { listOfShipments: shipments };
   } catch (error) {
-    Logger.log(
-      `Transforming Shipment Request  method: mergeInvoiceAndShipmentResponse`,
-    );
+    Logger.log(`Transforming Shipment Request  method: mergeInvoiceAndShipmentResponse`);
     console.error('Error in mergeInvoiceAndShipmentsResponse:', error);
     throw error;
   }
 }
 
-export function transformShipmentDetails(
-  orderShipmentDetailsSRO,
-  listOfDocuments,
-) {
+export function transformShipmentDetails(orderShipmentDetailsSRO, listOfDocuments) {
   return orderShipmentDetailsSRO
     .map((val) => {
       if (SHIPMENT_STATUS[val.shipmentState]) {
-        const documents = listOfDocuments.find(
-          (obj) => obj.shipmentNumber === val.shipmentNumber,
-        );
+        const documents = listOfDocuments.find((obj) => obj.shipmentNumber === val.shipmentNumber);
         const downloadInvoiceAndDocumentDetails: any = [];
         if (documents?.shipmentNumber) {
           downloadInvoiceAndDocumentDetails.push(documents);
@@ -100,9 +86,7 @@ export function transformShipmentDetails(
           downloadInvoiceAndDocumentDetails,
           pbOrder: val.pbOrder,
           orderTag: ORDER_TAG,
-          trackingUrl: preProcessTrackingUrl(
-            val.trackingUrl as string | null | undefined,
-          ),
+          trackingUrl: preProcessTrackingUrl(val.trackingUrl as string | null | undefined),
         };
       }
       return null;

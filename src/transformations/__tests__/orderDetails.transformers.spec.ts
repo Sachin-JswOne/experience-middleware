@@ -1,8 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-/* eslint-disable @typescript-eslint/unbound-method */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-
 import { BaseRequest } from 'src/models/base-request.model';
 import { CustomError } from 'src/utils/CustomError';
 import { Logger } from '@nestjs/common';
@@ -152,9 +147,7 @@ describe('orderDetails.transformers', () => {
         errors: 'Some error',
         responseCode: '500',
       };
-      expect(() => transformOrderDetailsResponse(errorResponse)).toThrow(
-        CustomError,
-      );
+      expect(() => transformOrderDetailsResponse(errorResponse)).toThrow(CustomError);
       expect(Logger.error).toHaveBeenCalled();
     });
 
@@ -163,13 +156,8 @@ describe('orderDetails.transformers', () => {
         errors: { message: 'Internal Server Error' },
         responseCode: '500',
       };
-      expect(() => transformOrderDetailsResponse(errorResponse)).toThrow(
-        CustomError,
-      );
-      expect(CustomError).toHaveBeenCalledWith(
-        errorResponse.errors,
-        errorResponse.responseCode,
-      );
+      expect(() => transformOrderDetailsResponse(errorResponse)).toThrow(CustomError);
+      expect(CustomError).toHaveBeenCalledWith(errorResponse.errors, errorResponse.responseCode);
     });
   });
 
@@ -180,9 +168,7 @@ describe('orderDetails.transformers', () => {
         url: url,
         params: { id: 'OPP-123' },
       };
-      jest
-        .spyOn(orderListingTransformers, 'getDeveloperName')
-        .mockReturnValue('MSME');
+      jest.spyOn(orderListingTransformers, 'getDeveloperName').mockReturnValue('MSME');
 
       const transformed = transformOpportunityDetailsRequest(request);
 
@@ -209,21 +195,15 @@ describe('orderDetails.transformers', () => {
       jest
         .spyOn(orderListingTransformers, 'getAppStatusFromOpportunities')
         .mockReturnValue('Follow Up');
-      jest
-        .spyOn(orderListingTransformers, 'getOrderTag')
-        .mockReturnValue('Lead');
-      jest
-        .spyOn(orderListingTransformers, 'transformSingleOpportunityProduct')
-        .mockReturnValue({
-          displayName: 'TMT',
-          uomLabel: '',
-          quantity: '',
-          attributes: [],
-        });
+      jest.spyOn(orderListingTransformers, 'getOrderTag').mockReturnValue('Lead');
+      jest.spyOn(orderListingTransformers, 'transformSingleOpportunityProduct').mockReturnValue({
+        displayName: 'TMT',
+        uomLabel: '',
+        quantity: '',
+        attributes: [],
+      });
 
-      const result = transformOpportunityDetailsResponse(
-        mockOpportunityResponse,
-      );
+      const result = transformOpportunityDetailsResponse(mockOpportunityResponse);
       const { orderDetails } = result;
 
       expect(orderDetails.orderStatus).toBe('Follow Up');
@@ -239,9 +219,7 @@ describe('orderDetails.transformers', () => {
         errors: 'Some error',
         responseCode: '500',
       };
-      expect(() => transformOpportunityDetailsResponse(errorResponse)).toThrow(
-        CustomError,
-      );
+      expect(() => transformOpportunityDetailsResponse(errorResponse)).toThrow(CustomError);
       expect(Logger.error).toHaveBeenCalled();
     });
   });
@@ -253,20 +231,14 @@ describe('orderDetails.transformers', () => {
         orderType: 'Standard',
         itemDetails: [{}],
       };
-      jest
-        .spyOn(orderListingTransformers, 'getAppStatusFromOpportunities')
-        .mockReturnValue('New');
-      jest
-        .spyOn(orderListingTransformers, 'getOrderTag')
-        .mockReturnValue('Lead');
-      jest
-        .spyOn(orderListingTransformers, 'transformSingleOpportunityProduct')
-        .mockReturnValue({
-          displayName: undefined,
-          uomLabel: '',
-          quantity: '',
-          attributes: [],
-        });
+      jest.spyOn(orderListingTransformers, 'getAppStatusFromOpportunities').mockReturnValue('New');
+      jest.spyOn(orderListingTransformers, 'getOrderTag').mockReturnValue('Lead');
+      jest.spyOn(orderListingTransformers, 'transformSingleOpportunityProduct').mockReturnValue({
+        displayName: undefined,
+        uomLabel: '',
+        quantity: '',
+        attributes: [],
+      });
 
       const result = transformOpportunityDetails(data);
       expect(result.pbOrder).toBe(false);

@@ -51,11 +51,9 @@ export const slcMockData = {
     appliedDiscountsV2: [],
     shippingAddress: {
       id: null,
-      streetLine:
-        'PLOT NO.989/1, ELWALA HOBLI, 21 KMS HUNSURU ROAD, NAGAWALA, MYSURU',
+      streetLine: 'PLOT NO.989/1, ELWALA HOBLI, 21 KMS HUNSURU ROAD, NAGAWALA, MYSURU',
       streetLine2: null,
-      streetLineAddress:
-        'PLOT NO.989/1, ELWALA HOBLI, 21 KMS HUNSURU ROAD, NAGAWALA, MYSURU',
+      streetLineAddress: 'PLOT NO.989/1, ELWALA HOBLI, 21 KMS HUNSURU ROAD, NAGAWALA, MYSURU',
       postalCode: '571130',
       city: 'NAGAWALA',
       region: 'MYSURU',
@@ -66,11 +64,9 @@ export const slcMockData = {
     },
     billingAddress: {
       id: null,
-      streetLine:
-        'PLOT NO.989/1, ELWALA HOBLI, 21 KMS HUNSURU ROAD, NAGAWALA, MYSURU',
+      streetLine: 'PLOT NO.989/1, ELWALA HOBLI, 21 KMS HUNSURU ROAD, NAGAWALA, MYSURU',
       streetLine2: null,
-      streetLineAddress:
-        'PLOT NO.989/1, ELWALA HOBLI, 21 KMS HUNSURU ROAD, NAGAWALA, MYSURU',
+      streetLineAddress: 'PLOT NO.989/1, ELWALA HOBLI, 21 KMS HUNSURU ROAD, NAGAWALA, MYSURU',
       postalCode: '571130',
       city: 'NAGAWALA',
       region: 'MYSURU',

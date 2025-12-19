@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import * as qs from 'qs';
 import {
   moveBodyToQueryParams,
