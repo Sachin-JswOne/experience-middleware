@@ -1284,6 +1284,22 @@
             "destination": "access_token"
           }
         ]
+      },
+      {
+        "name": "ccp-recent-search",
+        "url": "https://www.jswonemsme.com/central_commerce/recent-search",
+        "method": "GET",
+        "timeout": {
+            "request": 5000,
+            "socket": 1000
+          },
+        "reqTransform": "general.transformers.convertToGetRequest",
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "access_token"
+          }
+        ]
       }
     ],
     "resTransform": "searchPage.transformers.getSearchPageDetails"

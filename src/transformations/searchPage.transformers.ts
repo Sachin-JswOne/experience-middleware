@@ -18,6 +18,8 @@ export function getSearchPageDetails(
 
   const cmsResponse = responses['app-search-page'];
   const buyAgainResponse = responses['ccp-buy-again-with-prices']?.data;
+  const recentSearchResponse = responses['ccp-recent-search']?.data;
+
 
   safeDebug(Logger, () => `Search Page CMS → ${JSON.stringify(cmsResponse?.data)}`);
   safeDebug(Logger, () => `Buy Again → ${JSON.stringify(buyAgainResponse?.data)}`);
@@ -38,6 +40,11 @@ export function getSearchPageDetails(
   const blocks: any[] = Array.isArray(cmsData?.blocks)
     ? [...cmsData.blocks]
     : [];
+
+  const recentSearches =
+    recentSearchResponse?.success && Array.isArray(recentSearchResponse.data)
+      ? recentSearchResponse.data
+      : [];
 
   //BUY AGAIN → UPDATE EXISTING BLOCK
   if (buyAgainResponse?.success) {
@@ -74,6 +81,7 @@ export function getSearchPageDetails(
         data: {
           ...cmsData,
           blocks: filteredBlocks,
+          recentSearches,
         },
         meta: {
           timestamp: new Date().toISOString(),
@@ -87,6 +95,7 @@ export function getSearchPageDetails(
     data: {
       ...cmsData,
       blocks,
+      recentSearches,
     },
     meta: {
       timestamp: new Date().toISOString(),
