@@ -1333,7 +1333,7 @@
       },
       {
         "name": "ccp-recent-search",
-        "url": "https://qa.msme.jswone.in/central_commerce/recent-search",
+        "url": "http://127.0.0.1:3000/xp-mi/public/v1/central_commerce/recent-search",
         "method": "GET",
         "timeout": {
             "request": 5000,
@@ -1478,7 +1478,7 @@
     "routeHandler": "TRANSFORM",
     "target": {
       "name": "get-recent-search",
-      "url": "http://127.0.0.1:3000/xp-mi/public/v1/central_commerce/recent-search",
+      "url": "https://qa.msme.jswone.in/central_commerce/recent-search",
       "method": "GET",
       "timeout": {
         "request": "${TIMEOUTS.REQUEST}",
