@@ -1330,6 +1330,22 @@
             "destination": "access_token"
           }
         ]
+      },
+      {
+        "name": "ccp-recent-search",
+        "url": "http://127.0.0.1:3000/xp-mi/public/v1/central_commerce/recent-search",
+        "method": "GET",
+        "timeout": {
+            "request": 5000,
+            "socket": 1000
+          },
+        "reqTransform": "general.transformers.convertToGetRequest",
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "access_token"
+          }
+        ]
       }
     ],
     "resTransform": "searchPage.transformers.getSearchPageDetails"
