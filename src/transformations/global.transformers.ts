@@ -1,12 +1,7 @@
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { AggregatedResponse } from 'src/models/aggregated-response.model';
 import { Logger } from '@nestjs/common';
 
-export function mergeGlobalAndSlcCartResponses(
-  aggregatedResponses: AggregatedResponse[],
-): any {
+export function mergeGlobalAndSlcCartResponses(aggregatedResponses: AggregatedResponse[]): any {
   const responses = aggregatedResponses.reduce(
     (acc, response) => {
       acc[response.target] = response;

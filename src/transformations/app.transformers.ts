@@ -1,15 +1,9 @@
-/* eslint-disable @typescript-eslint/no-unsafe-return */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { AggregatedResponse } from 'src/models/aggregated-response.model';
 import { Logger } from '@nestjs/common';
 import { BaseRequest } from 'src/models/base-request.model';
 import { safeDebug } from 'src/utils/common-functions.util';
 
-export function mergeHomePageResponses(
-  aggregatedResponses: AggregatedResponse[],
-): any {
+export function mergeHomePageResponses(aggregatedResponses: AggregatedResponse[]): any {
   const responses = aggregatedResponses.reduce(
     (acc, response) => {
       acc[response.target] = response;
@@ -24,29 +18,46 @@ export function mergeHomePageResponses(
   const blogResponse = responses['app-blogs'];
   const inTransitResponse = responses['app-in-transit'];
 
-  safeDebug(Logger, () => `Strapi Home Page Api response from method: mergeHomePageResponses : ${JSON.stringify(
-    strapiResponse,
-  )}`);
-  safeDebug(Logger, () => `Top Items Api response from method: mergeHomePageResponses : ${JSON.stringify(
-    topItemsResponse,
-  )}`);
-  safeDebug(Logger, () => `Buy Again Api response from method: mergeHomePageResponses : ${JSON.stringify(
-    buyAgainResponse,
-  )}`);
-  safeDebug(Logger, () => `Categories Api response from method: mergeHomePageResponses : ${JSON.stringify(
-    categoriesResponse,
-  )}`);
-  safeDebug(Logger, () => `Blog Api response from method: mergeHomePageResponses : ${JSON.stringify(
-    blogResponse,
-  )}`);
-  safeDebug(Logger, () => `In Transit Api response from method: mergeHomePageResponses : ${JSON.stringify(
-    inTransitResponse,
-  )}`);
-  if (
-    !strapiResponse ||
-    typeof strapiResponse.data !== 'object' ||
-    strapiResponse.data === null
-  ) {
+  safeDebug(
+    Logger,
+    () =>
+      `Strapi Home Page Api response from method: mergeHomePageResponses : ${JSON.stringify(
+        strapiResponse,
+      )}`,
+  );
+  safeDebug(
+    Logger,
+    () =>
+      `Top Items Api response from method: mergeHomePageResponses : ${JSON.stringify(
+        topItemsResponse,
+      )}`,
+  );
+  safeDebug(
+    Logger,
+    () =>
+      `Buy Again Api response from method: mergeHomePageResponses : ${JSON.stringify(
+        buyAgainResponse,
+      )}`,
+  );
+  safeDebug(
+    Logger,
+    () =>
+      `Categories Api response from method: mergeHomePageResponses : ${JSON.stringify(
+        categoriesResponse,
+      )}`,
+  );
+  safeDebug(
+    Logger,
+    () => `Blog Api response from method: mergeHomePageResponses : ${JSON.stringify(blogResponse)}`,
+  );
+  safeDebug(
+    Logger,
+    () =>
+      `In Transit Api response from method: mergeHomePageResponses : ${JSON.stringify(
+        inTransitResponse,
+      )}`,
+  );
+  if (!strapiResponse || typeof strapiResponse.data !== 'object' || strapiResponse.data === null) {
     Logger.error(
       `Error for Home Page API method: mergeHomePageResponses Strapi response is missing or invalid`,
     );
@@ -64,15 +75,13 @@ export function mergeHomePageResponses(
     Array.isArray((strapiResponse.data.data as { blocks?: unknown[] }).blocks)
   ) {
     originalBlocks = [
-      ...((strapiResponse.data.data as { blocks?: unknown[] })
-        .blocks as unknown[]),
+      ...((strapiResponse.data.data as { blocks?: unknown[] }).blocks as unknown[]),
     ];
   }
   const blocks: any[] = originalBlocks;
 
-  const buyAgainProducts = (
-    buyAgainResponse?.data as { listOfBuyAgainProducts?: unknown }
-  )?.listOfBuyAgainProducts;
+  const buyAgainProducts = (buyAgainResponse?.data as { listOfBuyAgainProducts?: unknown })
+    ?.listOfBuyAgainProducts;
   if (Array.isArray(buyAgainProducts)) {
     const buyAgainBlock = blocks.find(
       (block) => block.__component === 'app-components.app-buy-again',
@@ -83,8 +92,7 @@ export function mergeHomePageResponses(
   }
 
   // Prepare top items block if available
-  const topProducts = (topItemsResponse?.data as { topProducts?: unknown })
-    ?.topProducts;
+  const topProducts = (topItemsResponse?.data as { topProducts?: unknown })?.topProducts;
   if (Array.isArray(topProducts)) {
     const topItemsBlock = blocks.find(
       (block) => block.__component === 'app-components.app-top-items',
@@ -94,26 +102,22 @@ export function mergeHomePageResponses(
     }
   }
 
-  const categories: any[] | undefined = (
-    categoriesResponse?.data as { categories?: any[] }
-  )?.categories;
+  const categories: any[] | undefined = (categoriesResponse?.data as { categories?: any[] })
+    ?.categories;
   const categoriesBlock = blocks.find(
     (block) => block.__component === 'app-components.app-category-component',
   );
   if (categoriesBlock && categoriesBlock.product_categories) {
     let filteredCategories: any[] = [];
     if (categories) {
-      filteredCategories = categoriesBlock.product_categories.filter(
-        (category) =>
-          categories.some((c: any) => c.categoryId === category.categoryId),
+      filteredCategories = categoriesBlock.product_categories.filter((category) =>
+        categories.some((c: any) => c.categoryId === category.categoryId),
       );
     }
     categoriesBlock.product_categories = filteredCategories;
   }
 
-  const topBrands: any[] | undefined = (
-    categoriesResponse?.data as { brands?: any[] }
-  )?.brands;
+  const topBrands: any[] | undefined = (categoriesResponse?.data as { brands?: any[] })?.brands;
 
   if (Array.isArray(topBrands)) {
     const topBrandsBlockIndex = blocks.findIndex(
@@ -134,9 +138,7 @@ export function mergeHomePageResponses(
         });
       }
 
-      const productBrands = brands.filter((brand) =>
-        topBrands.includes(brand.name),
-      );
+      const productBrands = brands.filter((brand) => topBrands.includes(brand.name));
 
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { product_brands, ...restOfBlock } = topBrandsBlock;
@@ -185,9 +187,7 @@ export function mergeHomePageResponses(
   };
 }
 
-export function mergeBuyAgainResponses(
-  aggregatedResponses: AggregatedResponse[],
-): any {
+export function mergeBuyAgainResponses(aggregatedResponses: AggregatedResponse[]): any {
   const responses = aggregatedResponses.reduce(
     (acc, response) => {
       acc[response.target] = response;
@@ -199,22 +199,28 @@ export function mergeBuyAgainResponses(
   const buyAgainPriceApiResponse = responses['ccp-buy-again-with-prices'];
   const buyAgainRetailApiResponse = responses['app-buy-again'];
 
-  safeDebug(Logger, () => ` Buy Again Price Api response from method: mergeBuyAgainResponses : ${JSON.stringify(
-    buyAgainPriceApiResponse,
-  )}`);
+  safeDebug(
+    Logger,
+    () =>
+      ` Buy Again Price Api response from method: mergeBuyAgainResponses : ${JSON.stringify(
+        buyAgainPriceApiResponse,
+      )}`,
+  );
 
-  safeDebug(Logger, () => `Buy Again Retail Api response from method: mergeBuyAgainResponses : ${JSON.stringify(
-    buyAgainRetailApiResponse,
-  )}`);
+  safeDebug(
+    Logger,
+    () =>
+      `Buy Again Retail Api response from method: mergeBuyAgainResponses : ${JSON.stringify(
+        buyAgainRetailApiResponse,
+      )}`,
+  );
   if (buyAgainRetailApiResponse.success) {
     if (buyAgainPriceApiResponse.data && buyAgainRetailApiResponse.data) {
       if (buyAgainPriceApiResponse.data.length === 0) {
         if (buyAgainRetailApiResponse.data.listOfBuyAgainProducts) {
-          buyAgainRetailApiResponse.data.listOfBuyAgainProducts.forEach(
-            (product: any) => {
-              product.price = '';
-            },
-          );
+          buyAgainRetailApiResponse.data.listOfBuyAgainProducts.forEach((product: any) => {
+            product.price = '';
+          });
         }
         return buyAgainRetailApiResponse.data;
       }
@@ -222,18 +228,16 @@ export function mergeBuyAgainResponses(
         Array.isArray(buyAgainPriceApiResponse.data) &&
         Array.isArray(buyAgainRetailApiResponse.data.listOfBuyAgainProducts)
       ) {
-        buyAgainRetailApiResponse.data.listOfBuyAgainProducts.forEach(
-          (product: any) => {
-            const priceProduct = buyAgainPriceApiResponse.data.find(
-              (p: any) => p.variantKey === product.variantKey,
-            );
-            if (priceProduct) {
-              product.price = priceProduct.displayVariantLineItemPrice || '';
-            } else {
-              product.price = '';
-            }
-          },
-        );
+        buyAgainRetailApiResponse.data.listOfBuyAgainProducts.forEach((product: any) => {
+          const priceProduct = buyAgainPriceApiResponse.data.find(
+            (p: any) => p.variantKey === product.variantKey,
+          );
+          if (priceProduct) {
+            product.price = priceProduct.displayVariantLineItemPrice || '';
+          } else {
+            product.price = '';
+          }
+        });
       }
       return buyAgainRetailApiResponse.data;
     }
@@ -259,13 +263,21 @@ export function mergeTopBrandsResponses(aggregatedResponses) {
   const strapiTopBrandsData = responses['app-top-brands-page'];
   const topBrandsApiData = responses['app-top-brands'];
 
-  safeDebug(Logger, () => ` Strapi Top Brands Api response from method: mergeTopBrandsResponses : ${JSON.stringify(
-    strapiTopBrandsData,
-  )}`);
+  safeDebug(
+    Logger,
+    () =>
+      ` Strapi Top Brands Api response from method: mergeTopBrandsResponses : ${JSON.stringify(
+        strapiTopBrandsData,
+      )}`,
+  );
 
-  safeDebug(Logger, () => ` Top Brands Api response from method: mergeTopBrandsResponses : ${JSON.stringify(
-    topBrandsApiData,
-  )}`);
+  safeDebug(
+    Logger,
+    () =>
+      ` Top Brands Api response from method: mergeTopBrandsResponses : ${JSON.stringify(
+        topBrandsApiData,
+      )}`,
+  );
 
   const defaultResponse = {
     productBrands: [],
@@ -303,9 +315,7 @@ export function mergeTopBrandsResponses(aggregatedResponses) {
       if (topBrandsApiResponse && topBrandsApiResponse.length > 0) {
         const topBrands: string[] = topBrandsApiResponse;
 
-        const productBrands = brands.filter((brand) =>
-          topBrands.includes(brand.name),
-        );
+        const productBrands = brands.filter((brand) => topBrands.includes(brand.name));
         const response = {
           __component: topBrandsStrapiResponse.__component,
           id: topBrandsStrapiResponse.id,

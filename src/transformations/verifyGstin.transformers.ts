@@ -1,7 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-/* eslint-disable @typescript-eslint/no-unsafe-return */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { BaseRequest } from 'src/models/base-request.model';
 import { CustomError } from 'src/utils/CustomError';
 import { HttpStatus } from '@nestjs/common';
@@ -15,16 +11,16 @@ export function verifyGstin(request: BaseRequest): BaseRequest {
     ...request,
     body: { gstin },
   };
-  Logger.log(
-    `Transforming Verify GSTIN Request ${request.url} method: verifyGstin`,
-  );
+  Logger.log(`Transforming Verify GSTIN Request ${request.url} method: verifyGstin`);
   return finalTransformedRequest;
 }
 
 export function verifyGstinResponse(response: any) {
-  safeDebug(Logger, () => ` Verify GSTIN Api response from method: verifyGstinResponse : ${JSON.stringify(
-    response,
-  )}`);
+  safeDebug(
+    Logger,
+    () =>
+      ` Verify GSTIN Api response from method: verifyGstinResponse : ${JSON.stringify(response)}`,
+  );
   const resData = response?.data;
   const error = response?.error;
   const finalResult = {
@@ -41,9 +37,7 @@ export function verifyGstinResponse(response: any) {
     } else if (error.message?.includes('Please enter valid')) {
       throw new CustomError(error.message, HttpStatus.BAD_REQUEST);
     }
-    Logger.error(
-      `Error for Verify GSTIN API method: verifyGstinResponse ${error.message}`,
-    );
+    Logger.error(`Error for Verify GSTIN API method: verifyGstinResponse ${error.message}`);
   } else {
     finalResult.gstVerified = true;
     finalResult.gstDetails = convertToAddress(resData);

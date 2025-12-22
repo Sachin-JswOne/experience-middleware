@@ -1,9 +1,5 @@
 import { CustomError } from 'src/utils/CustomError';
-import {
-  verifyGstin,
-  verifyGstinResponse,
-  convertToAddress,
-} from '../verifyGstin.transformers';
+import { verifyGstin, verifyGstinResponse, convertToAddress } from '../verifyGstin.transformers';
 
 describe('verifyGstin transformer', () => {
   describe('verifyGstin', () => {
@@ -24,14 +20,14 @@ describe('verifyGstin transformer', () => {
     it('should return final result with address when no error', () => {
       const mockResponse = {
         data: {
-            companyName: 'ABC Ltd',
-            streetLine1: '123 Street',
-            streetLine2: 'Suite 456',
-            region: 'South',
-            city: 'Bangalore',
-            state: 'Karnataka',
-            pinCode: '560001',
-            country: 'India',
+          companyName: 'ABC Ltd',
+          streetLine1: '123 Street',
+          streetLine2: 'Suite 456',
+          region: 'South',
+          city: 'Bangalore',
+          state: 'Karnataka',
+          pinCode: '560001',
+          country: 'India',
         },
       };
 

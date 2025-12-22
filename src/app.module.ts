@@ -10,7 +10,7 @@ import { winstonConfig } from './logger/winston.config';
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { RequestContextMiddleware } from './utils/request-context.middleware';
 import { RedisModule } from './redis/redis.module';
-
+import { APP_ENV } from './config/app.config';
 
 @Module({
   imports: [
@@ -22,7 +22,7 @@ import { RedisModule } from './redis/redis.module';
     // }),
     WinstonModule.forRoot(winstonConfig),
     ServeStaticModule.forRoot({
-      rootPath: join(__dirname, '..', 'public'),
+      rootPath: APP_ENV === 'prod' ? undefined : join(__dirname, '..', 'public'),
       exclude: ['/metrics'],
     }),
     ConfigModule.forRoot({

@@ -1,12 +1,6 @@
 import { BaseRequest } from 'src/models/base-request.model';
-import {
-  CONSENT_EVENT_NAME,
-  CONSENT_REGISTRATION_SOURCE,
-} from 'src/config/app.config';
-import {
-  implictConsent,
-  transformMsmeRegistrationPayload,
-} from '../implicit-consent.transformers';
+import { CONSENT_EVENT_NAME, CONSENT_REGISTRATION_SOURCE } from 'src/config/app.config';
+import { implictConsent, transformMsmeRegistrationPayload } from '../implicit-consent.transformers';
 
 const fixedDate = new Date('2024-05-01T12:34:56Z');
 const originalApiKey = process.env.X_API_KEY_FOR_REGISTRATION;

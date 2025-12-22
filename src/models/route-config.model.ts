@@ -45,7 +45,4 @@ export interface ConditionalRouteConfig extends BaseRouteConfig {
   targets: TargetConfig[];
 }
 
-export type RouteConfig =
-  | TransformRouteConfig
-  | AggregateRouteConfig
-  | ConditionalRouteConfig;
+export type RouteConfig = TransformRouteConfig | AggregateRouteConfig | ConditionalRouteConfig;

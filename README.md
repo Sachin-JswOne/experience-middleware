@@ -25,6 +25,7 @@
 **Experience Middleware** is a Node.js/NestJS-based Backend-for-Frontend (BFF) and API Gateway layer designed to aggregate, transform, and proxy requests between frontend clients and multiple backend services (such as CMS and retail APIs). It enables seamless orchestration of data from various microservices, applying custom transformations and aggregations to deliver optimized, frontend-ready responses.
 
 ### Key Capabilities
+
 - **API Proxying:** Forwards requests from the frontend to backend services, handling authentication, headers, and error management.
 - **Data Aggregation:** Combines responses from multiple backend APIs into a single, unified response (e.g., home page data from CMS, top products, and buy-again recommendations).
 - **Custom Transformations:** Applies request and response transformations (via pluggable transformers) to shape data as needed by the frontend.
@@ -32,17 +33,20 @@
 - **Extensible:** Easily add new routes, targets, and transformation logic without changing core code.
 
 ### Example Use Cases
+
 - Aggregating home page data from a CMS and product APIs into a single response for the frontend.
 - Transforming request payloads or response formats to match frontend requirements.
 - Acting as a secure gateway between frontend apps and internal/external APIs.
 
 ## How It Works
+
 - All routes are prefixed with `/xp-mi` (e.g., `/xp-mi/public/app-home-page`).
 - Route behavior (proxy, transform, aggregate) is defined in `src/assets/dev/route-config.json` (or the appropriate environment folder).
 - Each route specifies its handler type (`TRANSFORM`, `AGGREGATE`), target APIs, and optional transformation functions.
 - Aggregated responses can be merged and shaped using custom logic (see `src/transformations/`).
 
 ### Example Route Config
+
 ```json
 {
   "path": "/xp-mi/public/v1/app-home-page",
@@ -59,6 +63,7 @@
 ```
 
 ## How to Use
+
 1. **Install dependencies:**
    ```bash
    pnpm install
@@ -109,7 +114,7 @@ $ pnpm run test:cov
 
 ## Deployment
 
-*Deployment instructions placeholder*
+_Deployment instructions placeholder_
 
 ---
 

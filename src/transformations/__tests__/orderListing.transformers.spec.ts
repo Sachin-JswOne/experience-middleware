@@ -1,9 +1,3 @@
-/* eslint-disable @typescript-eslint/unbound-method */
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
-/* eslint-disable @typescript-eslint/no-unsafe-return */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import {
   transformOrderListingRequest,
   getDeveloperName,
@@ -70,9 +64,7 @@ describe('orderListing.transformers', () => {
         url: new URL('http://test.com?customerType=Retailer PB&gstin=12345'),
       };
       const transformed = transformOrderListingRequest(request);
-      expect(transformed.url.searchParams.get('developerName')).toBe(
-        'PrivateBrand',
-      );
+      expect(transformed.url.searchParams.get('developerName')).toBe('PrivateBrand');
       expect(transformed.url.searchParams.has('customerType')).toBe(false);
     });
 
@@ -268,9 +260,7 @@ describe('orderListing.transformers', () => {
       };
       const result = transformOpportunityAttributes(attrs);
       expect(result).toContainEqual(getPPGLColorInfo('RAL_9002-9002'));
-      expect(result).toContainEqual(
-        buildAttribute('Coating grade', '120', 'GSM'),
-      );
+      expect(result).toContainEqual(buildAttribute('Coating grade', '120', 'GSM'));
       expect(result).toContainEqual(
         buildAttribute('Thickness x Width x Length', '0.5 X 1220 X 2440', 'mm'),
       );
@@ -314,9 +304,7 @@ describe('orderListing.transformers', () => {
         orderType: 'MSME',
         orderStatus: 'New',
       };
-      expect(getAppStatusFromOpportunities(order)).toBe(
-        'Awaiting confirmation',
-      );
+      expect(getAppStatusFromOpportunities(order)).toBe('Awaiting confirmation');
     });
 
     it('should return status for PB with fulfilledBy "JSW One"', () => {
@@ -422,8 +410,7 @@ describe('orderListing.transformers', () => {
         mockOrderListingResponse,
       ];
 
-      const result =
-        mergeMaterialTrackingAndOrderListingResponses(aggregatedResponses);
+      const result = mergeMaterialTrackingAndOrderListingResponses(aggregatedResponses);
 
       const expectedBlocks = [
         {
@@ -456,8 +443,7 @@ describe('orderListing.transformers', () => {
         failedOrderListingResponse,
       ];
 
-      const result =
-        mergeMaterialTrackingAndOrderListingResponses(aggregatedResponses);
+      const result = mergeMaterialTrackingAndOrderListingResponses(aggregatedResponses);
       const materialTrackingBlock = result.data.blocks.find(
         (b) => b.__component === 'app-components.app-cart-product',
       );
@@ -477,8 +463,7 @@ describe('orderListing.transformers', () => {
         emptyOrderListingResponse,
       ];
 
-      const result =
-        mergeMaterialTrackingAndOrderListingResponses(aggregatedResponses);
+      const result = mergeMaterialTrackingAndOrderListingResponses(aggregatedResponses);
       const materialTrackingBlock = result.data.blocks.find(
         (b) => b.__component === 'app-components.app-cart-product',
       );
@@ -505,8 +490,7 @@ describe('orderListing.transformers', () => {
         mockOrderListingResponse,
       ];
 
-      const result =
-        mergeMaterialTrackingAndOrderListingResponses(aggregatedResponses);
+      const result = mergeMaterialTrackingAndOrderListingResponses(aggregatedResponses);
       const materialTrackingBlock = result.data.blocks.find(
         (b) => b.__component === 'app-components.app-cart-product',
       );
@@ -516,12 +500,9 @@ describe('orderListing.transformers', () => {
     });
 
     it('should return empty data and log an error if material tracking response is missing', () => {
-      const aggregatedResponses: AggregatedResponse[] = [
-        mockOrderListingResponse,
-      ];
+      const aggregatedResponses: AggregatedResponse[] = [mockOrderListingResponse];
 
-      const result =
-        mergeMaterialTrackingAndOrderListingResponses(aggregatedResponses);
+      const result = mergeMaterialTrackingAndOrderListingResponses(aggregatedResponses);
 
       expect(result).toEqual({ data: {}, meta: {} });
       expect(Logger.error).toHaveBeenCalledWith(

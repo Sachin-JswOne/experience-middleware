@@ -441,6 +441,7 @@
         "name": "app-in-transit",
         "url": "https://qa-ssr.msme.jswone.in/order-service/order/v1/material-tracking/dispatched-shipments",
         "method": "GET",
+<<<<<<< HEAD
         "timeout": {
           "request": 5000,
           "socket": 1000
@@ -451,6 +452,10 @@
             "destination": "access_token"
           }
         ],
+=======
+        "timeout": { "request": 5000, "socket": 1000 },
+        "headersToPass": [{ "source": "authorization", "destination": "access_token" }],
+>>>>>>> origin/release/gke
         "reqTransform": "app.transformers.transformInTransitRequest"
       }
     ],
@@ -505,6 +510,7 @@
           "socket": 1000
         },
         "reqTransform": "general.transformers.convertToGetRequest",
+<<<<<<< HEAD
         "headersToPass": [
           {
             "source": "authorization",
@@ -514,6 +520,10 @@
         "requiredParams": [
           "pincode"
         ]
+=======
+        "headersToPass": [{ "source": "authorization", "destination": "authorization" }],
+        "requiredParams": ["pincode"]
+>>>>>>> origin/release/gke
       },
       {
         "name": "app-cart-summary",
@@ -524,6 +534,7 @@
           "socket": 1000
         },
         "reqTransform": "general.transformers.convertToGetRequest",
+<<<<<<< HEAD
         "headersToPass": [
           {
             "source": "authorization",
@@ -533,6 +544,10 @@
         "requiredParams": [
           "pincode"
         ]
+=======
+        "headersToPass": [{ "source": "authorization", "destination": "authorization" }],
+        "requiredParams": ["pincode"]
+>>>>>>> origin/release/gke
       }
     ],
     "resTransform": "cart.transformers.mergeCartPageResponses"
@@ -620,6 +635,7 @@
         "name": "homes-project-details",
         "url": "https://services-dev.onejswhomes.in/homes-service/v1/project/project-details",
         "method": "GET",
+<<<<<<< HEAD
         "timeout": {
           "request": 5000,
           "socket": 1000
@@ -630,6 +646,10 @@
             "destination": "Authorization"
           }
         ],
+=======
+        "timeout": { "request": 5000, "socket": 1000 },
+        "headersToPass": [{ "source": "authorization", "destination": "Authorization" }],
+>>>>>>> origin/release/gke
         "reqTransform": "general.transformers.convertToGetRequest",
         "requiredParams": [
           "project_id"
@@ -658,6 +678,7 @@
         "name": "homes-user-details",
         "url": "https://services-dev.onejswhomes.in/homes-service/v1/user/details",
         "method": "GET",
+<<<<<<< HEAD
         "timeout": {
           "request": 5000,
           "socket": 1000
@@ -668,6 +689,10 @@
             "destination": "Authorization"
           }
         ],
+=======
+        "timeout": { "request": 5000, "socket": 1000 },
+        "headersToPass": [{ "source": "authorization", "destination": "Authorization" }],
+>>>>>>> origin/release/gke
         "reqTransform": "general.transformers.convertToGetRequest"
       }
     ],
@@ -681,6 +706,7 @@
       "name": "homes-progress-report",
       "url": "https://services-dev.onejswhomes.in/homes-service/v1/project/progress-reports",
       "method": "GET",
+<<<<<<< HEAD
       "timeout": {
         "request": 5000,
         "socket": 1000
@@ -694,6 +720,11 @@
       "requiredParams": [
         "project_id"
       ]
+=======
+      "timeout": { "request": 5000, "socket": 1000 },
+      "headersToPass": [{ "source": "authorization", "destination": "Authorization" }],
+      "requiredParams": ["project_id"]
+>>>>>>> origin/release/gke
     }
   },
   {
@@ -860,6 +891,7 @@
       "name": "homes-design-documents",
       "url": "https://services-dev.onejswhomes.in/homes-service/v1/project/design-documents",
       "method": "GET",
+<<<<<<< HEAD
       "timeout": {
         "request": 5000,
         "socket": 1000
@@ -873,6 +905,11 @@
       "requiredParams": [
         "project_id"
       ]
+=======
+      "timeout": { "request": 5000, "socket": 1000 },
+      "headersToPass": [{ "source": "authorization", "destination": "Authorization" }],
+      "requiredParams": ["project_id"]
+>>>>>>> origin/release/gke
     }
   },
   {
@@ -962,6 +999,7 @@
       "name": "homes-construction-documents",
       "url": "https://services-dev.onejswhomes.in/homes-service/v1/project/construction-documents",
       "method": "GET",
+<<<<<<< HEAD
       "timeout": {
         "request": 5000,
         "socket": 1000
@@ -975,6 +1013,11 @@
       "requiredParams": [
         "project_id"
       ]
+=======
+      "timeout": { "request": 5000, "socket": 1000 },
+      "headersToPass": [{ "source": "authorization", "destination": "Authorization" }],
+      "requiredParams": ["project_id"]
+>>>>>>> origin/release/gke
     }
   },
   {
@@ -990,6 +1033,7 @@
         "request": 5000,
         "socket": 1000
       },
+<<<<<<< HEAD
       "headersToPass": [
         {
           "source": "authorization",
@@ -999,6 +1043,10 @@
       "requiredParams": [
         "entityName"
       ]
+=======
+      "headersToPass": [{ "source": "authorization", "destination": "access_token" }],
+      "requiredParams": ["entityName"]
+>>>>>>> origin/release/gke
     }
   },
   {
@@ -1393,6 +1441,7 @@
         "request": 5000,
         "socket": 1000
       },
+<<<<<<< HEAD
       "headersToPass": [
         {
           "source": "authorization",
@@ -1402,6 +1451,10 @@
       "requiredParams": [
         "entityName"
       ],
+=======
+      "headersToPass": [{ "source": "authorization", "destination": "access_token" }],
+      "requiredParams": ["entityName"],
+>>>>>>> origin/release/gke
       "appendParams": true,
       "resTransform": "paymentdue.transformers.getPaymentDueDetails"
     }
@@ -1432,6 +1485,7 @@
           "socket": 1000
         },
         "reqTransform": "general.transformers.convertToGetRequest",
+<<<<<<< HEAD
         "headersToPass": [
           {
             "source": "authorization",
@@ -1441,6 +1495,10 @@
         "requiredParams": [
           "pincode"
         ]
+=======
+        "headersToPass": [{ "source": "authorization", "destination": "authorization" }],
+        "requiredParams": ["pincode"]
+>>>>>>> origin/release/gke
       },
       {
         "name": "app-cart-summary",
@@ -1451,6 +1509,7 @@
           "socket": 1000
         },
         "reqTransform": "general.transformers.convertToGetRequest",
+<<<<<<< HEAD
         "headersToPass": [
           {
             "source": "authorization",
@@ -1460,6 +1519,10 @@
         "requiredParams": [
           "pincode"
         ]
+=======
+        "headersToPass": [{ "source": "authorization", "destination": "authorization" }],
+        "requiredParams": ["pincode"]
+>>>>>>> origin/release/gke
       }
     ],
     "resTransform": "cart.transformers.mergeCartPageResponses"
@@ -1535,6 +1598,22 @@
           "request": 5000,
           "socket": 1000
         },
+        "reqTransform": "general.transformers.convertToGetRequest",
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "access_token"
+          }
+        ]
+      },
+      {
+        "name": "ccp-recent-search",
+        "url": "http://127.0.0.1:3000/xp-mi/public/v1/central_commerce/recent-search",
+        "method": "GET",
+        "timeout": {
+            "request": 5000,
+            "socket": 1000
+          },
         "reqTransform": "general.transformers.convertToGetRequest",
         "headersToPass": [
           {
@@ -1624,6 +1703,7 @@
       "name": "homes-progress-report",
       "url": "https://services-dev.onejswhomes.in/homes-service/v1/project/progress-gallery",
       "method": "GET",
+<<<<<<< HEAD
       "timeout": {
         "request": 5000,
         "socket": 1000
@@ -1637,6 +1717,11 @@
       "requiredParams": [
         "project_id"
       ]
+=======
+      "timeout": { "request": 5000, "socket": 1000 },
+      "headersToPass": [{ "source": "authorization", "destination": "Authorization" }],
+      "requiredParams": ["project_id"]
+>>>>>>> origin/release/gke
     }
   },
   {
@@ -1684,6 +1769,69 @@
       "requiredParams": [
         "*"
       ]
+    }
+  },
+  {
+    "path": "/xp-mi/public/v1/central_commerce/products/listing",
+    "method": "POST",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "products-listing",
+      "url": "https://qa.msme.jswone.in/central_commerce/products/listing",
+      "method": "POST",
+      "timeout": {
+        "request": 5000,
+        "socket": 1000
+      },
+      "headersToPass": [
+        {
+          "source": "access_token",
+          "destination": "access_token"
+        }
+      ],
+      "requiredParams": ["*"]
+    }
+  },
+  {
+    "path": "/xp-mi/public/v1/central_commerce/recent-search",
+    "method": "GET",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "get-recent-search",
+      "url": "https://qa.msme.jswone.in/central_commerce/recent-search",
+      "method": "GET",
+      "timeout": {
+        "request": "${TIMEOUTS.REQUEST}",
+        "socket": "${TIMEOUTS.SOCKET}"
+      },
+      "headersToPass": [
+        {
+          "source": "access_token",
+          "destination": "access_token"
+        }
+      ],
+      "requiredParams": ["*"]
+    }
+  },
+  {
+    "path": "/xp-mi/public/v1/central_commerce/recent-search",
+    "method": "DELETE",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "get-recent-search",
+      "url": "https://qa.msme.jswone.in/central_commerce/recent-search",
+      "method": "DELETE",
+      "timeout": {
+        "request": "${TIMEOUTS.REQUEST}",
+        "socket": "${TIMEOUTS.SOCKET}"
+      },
+      "headersToPass": [
+        {
+          "source": "access_token",
+          "destination": "access_token"
+        }
+      ],
+      "requiredParams": ["*"]
     }
   }
 ]

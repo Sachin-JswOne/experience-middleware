@@ -1,7 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import * as fs from 'fs';
 import * as path from 'path';
 import { AggregatorType } from 'src/enum/aggregation-type.enum';
@@ -17,10 +13,7 @@ const CONSTANTS_MAP: Record<string, any> = {
   TIMEOUTS,
 };
 
-const configFilePath = path.resolve(
-  __dirname,
-  `../assets/${APP_ENV}/route-config.json`,
-);
+const configFilePath = path.resolve(__dirname, `../assets/${APP_ENV}/route-config.json`);
 let ROUTE_CONFIG: RouteConfig[] = [];
 const enumFieldsMap: Record<string, any> = {
   routeHandler: RouteHandler,
@@ -103,9 +96,7 @@ try {
     normalizeEnums<RouteConfig>(raw, enumFieldsMap),
   );
 } catch (e) {
-  throw new Error(
-    `Failed to load route config from ${configFilePath}: ${(e as Error).message}`,
-  );
+  throw new Error(`Failed to load route config from ${configFilePath}: ${(e as Error).message}`);
 }
 
 export { ROUTE_CONFIG };
