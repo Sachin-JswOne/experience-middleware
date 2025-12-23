@@ -965,6 +965,23 @@
     }
   },
   {
+    "path": "${PATH_URL}/v1/web-sitemap-categories",
+    "method": "POST",
+    "routeHandler": "TRANSFORM",
+    "isCacheRequired": false,
+    "target": {
+      "name": "webSitemapCategories",
+      "url": "${CMS_MSME_URL}/jsw-main-menus",
+      "method": "GET",
+      "timeout": {
+        "request": "${TIMEOUTS.REQUEST}",
+        "socket": "${TIMEOUTS.SOCKET}"
+      },
+      "reqTransform": "general.transformers.moveBodyToQueryParams",
+      "resTransform": "sitemap.transformers.transformSitemapCategories"
+    }
+  },
+  {
     "path": "/xp-mi/public/v1/central_commerce/catalogue/search",
     "method": "POST",
     "routeHandler": "TRANSFORM",
