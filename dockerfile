@@ -1,5 +1,5 @@
 # ---- Stage 1: Build ----
-FROM node:23-alpine AS builder
+FROM node:23-slim AS builder
 
 # Set working directory
 WORKDIR /app
@@ -18,7 +18,7 @@ COPY . .
 RUN pnpm run build
 
 # ---- Stage 2: Production image ----
-FROM node:23-alpine
+FROM node:23-slim
 
 # Set working directory
 WORKDIR /app
