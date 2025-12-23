@@ -3,7 +3,6 @@
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 
 import { Logger } from '@nestjs/common';
-import { replaceUriPrefix } from './cms.transformers';
 
 /**
  * Transform Strapi jsw-main-menus response to sitemap format
@@ -12,12 +11,9 @@ import { replaceUriPrefix } from './cms.transformers';
  */
 export function transformSitemapCategories(response: any): any {
   try {
-    // First apply URL prefix replacement (bucket to CDN)
-    const responseWithReplacedUrls = replaceUriPrefix(response);
-
     // Extract navigation from first item
     // Response structure: { data: [{ navigation: [...] }] }
-    const firstItem = responseWithReplacedUrls?.data?.[0];
+    const firstItem = response?.data?.[0];
     if (!firstItem || !firstItem.navigation) {
       return { data: { navigation: [] } };
     }
@@ -41,48 +37,47 @@ export function transformSitemapCategories(response: any): any {
 }
 
 /**
- * Transform Strapi subMenu structure to ensure arrays
+ * Transform Strapi subMenu structure and extract only needed fields
  * Handles: { data: [] } -> [] and { data: [...] } -> [...]
+ * Only keeps: id, name, slug, subMenu (removes metaImage, createdAt, etc.)
  */
 function transformSubMenuRecursive(data: any): any {
   if (Array.isArray(data)) {
     return data.map((item) => transformSubMenuRecursive(item));
   } else if (typeof data === 'object' && data !== null) {
-    const item = { ...data };
+    // Extract only needed fields: id, name, slug, subMenu
+    const filteredItem: any = {
+      id: data.id,
+      name: data.name,
+      slug: data.slug,
+    };
 
-    // Handle subMenu: { data: [] } -> subMenu: [] and { data: [...] } -> subMenu: [...]
+    // Handle subMenu: { data: [] } -> [] and { data: [...] } -> [...]
     if (
-      Object.prototype.hasOwnProperty.call(item, 'subMenu') &&
-      typeof item.subMenu === 'object'
+      Object.prototype.hasOwnProperty.call(data, 'subMenu') &&
+      typeof data.subMenu === 'object'
     ) {
-      if (Array.isArray(item.subMenu)) {
+      if (Array.isArray(data.subMenu)) {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-        item.subMenu = item.subMenu.map((subItem: any) =>
+        filteredItem.subMenu = data.subMenu.map((subItem: any) =>
           transformSubMenuRecursive(subItem),
         );
-      } else if (item.subMenu && 'data' in item.subMenu) {
+      } else if (data.subMenu && 'data' in data.subMenu) {
         // Handle subMenu: { data: [...] } -> subMenu: [...]
-        const subMenuData = (item.subMenu as { data: any }).data;
-        item.subMenu = Array.isArray(subMenuData)
+        const subMenuData = (data.subMenu as { data: any }).data;
+        filteredItem.subMenu = Array.isArray(subMenuData)
           ? subMenuData.map((subItem: any) =>
               transformSubMenuRecursive(subItem),
             )
           : [];
       } else {
-        item.subMenu = [];
+        filteredItem.subMenu = [];
       }
+    } else {
+      filteredItem.subMenu = [];
     }
 
-    // Recursively process nested properties (excluding 'subMenu' itself)
-    for (const key in item) {
-      if (
-        Object.prototype.hasOwnProperty.call(item, key) &&
-        key !== 'subMenu'
-      ) {
-        item[key] = transformSubMenuRecursive(item[key]);
-      }
-    }
-    return item;
+    return filteredItem;
   }
   return data;
 }
