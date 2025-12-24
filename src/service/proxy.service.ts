@@ -108,7 +108,7 @@ export class ProxyService {
 
     const needsAuth = this.routeNeedsClientAuth(route);
     if (needsAuth) {
-      const authHeader = req.headers?.authorization;
+      const authHeader = req.headers?.authorization || req.headers?.access_token;
       const userState = req.headers?.['x-user-state'];
 
       if (!authHeader && userState !== 'G') {
