@@ -1,57 +1,48 @@
-# ---- Stage 1: Build ----
-FROM node:23-slim AS builder
+# --------------------
+# Build stage
+# --------------------
+FROM node:20-alpine AS builder
 
 # Set working directory
 WORKDIR /app
 
-# Install build dependencies for native modules
-RUN apt-get update && apt-get install -y \
-    python3 \
-    make \
-    g++ \
-    && rm -rf /var/lib/apt/lists/*
-
-# Install pnpm
-RUN corepack enable && corepack prepare pnpm@latest --activate
-
-# Install dependencies
+# Copy only dependency files first (better caching)
 COPY package*.json ./
-RUN pnpm install
 
-# Copy source
+# Install dependencies (including dev deps for build)
+RUN npm ci
+
+# Copy source code
 COPY . .
 
-# Build the app
-RUN pnpm run build
+# Build the NestJS app
+RUN npm run build
 
-# ---- Stage 2: Production image ----
-FROM node:23-slim
+# --------------------
+# Production stage
+# --------------------
+FROM node:20-alpine
 
-# Set working directory
+# Set NODE_ENV to production
+ENV NODE_ENV=production
+
+# Create app directory
 WORKDIR /app
 
-# Install build dependencies for native modules (needed for Sentry profiling)
-RUN apt-get update && apt-get install -y \
-    python3 \
-    make \
-    g++ \
-    && rm -rf /var/lib/apt/lists/*
-
-# Install pnpm
-RUN corepack enable && corepack prepare pnpm@latest --activate
-
-# Copy package files
+# Copy only package files
 COPY package*.json ./
 
-# Install production dependencies (this will compile native modules for the target architecture)
-RUN pnpm install --prod
+# Install only production dependencies
+RUN npm ci --omit=dev && npm cache clean --force
 
-# Copy built app from builder
+# Copy built output from builder
 COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/public ./public
 
-# Expose NestJS default port
+# Use non-root user for security
+USER node
+
+# Expose port
 EXPOSE 3000
 
 # Run the app
-CMD ["node", "dist/main"]
+CMD ["node", "dist/main.js"]
