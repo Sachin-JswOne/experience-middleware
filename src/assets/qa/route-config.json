@@ -1018,8 +1018,8 @@
       "url": "https://qa.msme.jswone.in/central_commerce/catalogue/search",
       "method": "POST",
       "timeout": {
-        "request": "${TIMEOUTS.REQUEST}",
-        "socket": "${TIMEOUTS.SOCKET}"
+        "request": 10000,
+        "socket": 1000
       },
       "headersToPass": [
         {
