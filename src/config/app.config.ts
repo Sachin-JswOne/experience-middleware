@@ -191,3 +191,63 @@ export const CONSENT_REGISTRATION_SOURCE = 'JSW One MSME App';
 
 export const DEFAULT_OFFSET = 1;
 export const DEFAULT_PAGE_SIZE = 20;
+
+export const CT_ATTRIBUTES_MAPPING = {
+  thickness: 'THICKNESS_MM',
+  width: 'WIDTH_MM',
+  length: 'LENGTH_MM',
+  coating_grade_gsm_gi: 'S_ZN_COATING_GSM_MIN',
+  coating_grade_gsm_gl_ppgl: 'S_AL_ZN_COATING_GSM_MIN',
+  spangle_type: 'SPANGLE_TYPE',
+  colour: 'S_COLOUR_CODE_TOP',
+  diameter: 'DIAMETER_MM',
+  leg: 'LEG1_MM',
+  flange_width: 'FLANGE_WIDTH_MM',
+  web_depth: 'WEB_DEPTH_MM',
+  sectional_weight: 'SECTIONAL_WEIGHT_KG_PER_M',
+  form: 'TMT_FORM',
+};
+
+export const PRODUCT_TYPES = {
+  cement_bitumen: 'Cement/Bitumen',
+  tmt_pb_tmt: 'TMT/PB TMT',
+  ms_ss_hr_cr_coils: 'MS and SS HR/CR Coils',
+  ms_ss_hr_cr_sheets: 'MS and SS HR/CR Sheets',
+  gi_coils: 'GI Coils',
+  gi_sheets: 'GI Sheets',
+  gl_coils: 'GL Coils',
+  gl_sheets: 'GL Sheets',
+  ppgl_coils: 'PPGL Coils',
+  ppgl_sheets: 'PPGL Sheets',
+  wire_rod_coils: 'Wire Rod Coils',
+  ss_hot_rolled_coils: 'SS Hot Rolled Coils',
+  ss_hot_rolled_sheets: 'SS Hot Rolled Sheets',
+  ss_cold_rolled_coils: 'SS Cold Rolled Coils',
+  ss_cold_rolled_sheets: 'SS Cold Rolled Sheets',
+  angles: 'Angles',
+  channels_beams_and_columns: 'Channels, Beams and Columns',
+  default: 'Others',
+};
+
+export const UOM_LIST = {
+  MT: 'MT',
+  bags: 'Bags',
+  KG: 'Kg',
+  sheets: 'Sheets',
+};
+
+export const KEY_AND_DISPLAY_NAME_MAPPING = {
+  DIAMETER_MM: { displayName: 'Diameter', key: 'DIAMETER_MM' },
+  TMT_FORM: { displayName: 'Form', key: 'FORM' },
+  thickness: { displayName: 'Thickness', key: 'thickness' },
+  width: { displayName: 'Width', key: 'width' },
+  length: { displayName: 'Length', key: 'length' },
+  coating_grade: { displayName: 'Coating grade', key: 'coating_grade_gsm' },
+  spangle_type: { displayName: 'Spangle type', key: 'spangle_type' },
+  colour: { displayName: 'Colour', key: 'colour' },
+  diameter: { displayName: 'Diameter', key: 'diameter' },
+  leg: { displayName: 'Leg length', key: 'leg' },
+  web_depth: { displayName: 'Web depth', key: 'web_depth' },
+  flange_width: { displayName: 'Flange width', key: 'flange_width' },
+  sectional_weight: { displayName: 'Sectional weight', key: 'sectional_weight' },
+};

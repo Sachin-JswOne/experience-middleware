@@ -1901,5 +1901,26 @@
       }
     ],
     "resTransform": "category.transformers.mergeMainMenuResponses"
+  },
+    {
+    "path": "/xp-mi/public/v1/buy-again-list",
+    "method": "GET",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "get-buy-again-list",
+      "url": "https://qa.msme.jswone.in/central_commerce/buy-again-list",
+      "method": "GET",
+      "timeout": {
+        "request": "${TIMEOUTS.REQUEST}",
+        "socket": "${TIMEOUTS.SOCKET}"
+      },
+      "headersToPass": [
+        {
+          "source": "authorization",
+          "destination": "access_token"
+        }
+      ],
+      "resTransform": "buyAgain.transformers.transformBuyAgainResponse"
+    }
   }
 ]
