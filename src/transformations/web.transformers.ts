@@ -117,7 +117,6 @@ export function mergeWebHomePageResponses(aggregatedResponses: AggregatedRespons
     const navigation =
       webCentralCatalogueResponse.data.data.navigation;
 
-      console.log(navigation)
 
     // inject central catalogue categories into all blocks that contain them
     const categoryBlocks = blocks.filter(
