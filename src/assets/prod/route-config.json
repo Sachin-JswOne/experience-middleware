@@ -1490,7 +1490,7 @@
       },
       {
         "name": "central-catalogue-category-tree-list",
-        "url": "https://experience-middleware.qa.jswone.in/xp-mi/public/v1/central_commerce/categories/tree/list",
+        "url": "https://www.jswonemsme.com/central_commerce/categories/tree/list",
         "method": "POST",
         "timeout": {
           "request": 5000,
