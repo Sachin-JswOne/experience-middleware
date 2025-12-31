@@ -1528,7 +1528,7 @@
   },
   {
     "path": "/xp-mi/public/v1/explore-categories",
-    "method": "GET",
+    "method": "POST",
     "routeHandler": "AGGREGATE",
     "aggregationType": "SEQUENTIAL",
     "targets": [
