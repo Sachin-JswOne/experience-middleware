@@ -40,6 +40,7 @@ export function transformBuyAgainResponse(response: any) {
           },
         ],
         quantity: quantity,
+        variantKey: item.variantKey,
         attributes: attributes,
         listOfAttributes: listOfAttributes,
       };
