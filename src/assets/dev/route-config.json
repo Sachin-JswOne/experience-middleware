@@ -1806,7 +1806,7 @@
       },
       {
         "name": "central-catalogue-category-tree-list",
-        "url": "http://127.0.0.1:3000/xp-mi/public/v1/central_commerce/categories/tree/list",
+        "url": "https://qa.msme.jswone.in/central_commerce/categories/tree/list",
         "method": "POST",
         "timeout": {
           "request": 5000,
