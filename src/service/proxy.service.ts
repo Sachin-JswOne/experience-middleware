@@ -62,6 +62,26 @@ export class ProxyService {
     return `:m:${methodPart}|p:${pathPart}|${queryPart}`;
   }
 
+  private routeNeedsClientAuth(route: any): boolean {
+    const hasAuthHeaderPassThrough = (headersToPass?: any[]) =>
+      Array.isArray(headersToPass) &&
+      headersToPass.some(
+        (h) => String(h?.source).toLowerCase() === 'authorization' || 'access_token',
+      );
+
+    // TRANSFORM routes
+    if (route?.target && hasAuthHeaderPassThrough(route.target.headersToPass)) {
+      return true;
+    }
+
+    // AGGREGATE / CONDITIONAL routes
+    if (Array.isArray(route?.targets)) {
+      return route.targets.some((t: any) => hasAuthHeaderPassThrough(t?.headersToPass));
+    }
+
+    return false;
+  }
+
   public result: any = '';
   async handleRequest(req: Request) {
     console.log(`Incoming ${req.method} request: ${req.url}`);
@@ -84,6 +104,16 @@ export class ProxyService {
         `Route config not found for ${req.method} ${req.path} trace_id: ${inspect(this.result.traceId)} span_id: ${inspect(this.result.spanId)} `,
       );
       throw new Error('Route config not found');
+    }
+
+    const needsAuth = this.routeNeedsClientAuth(route);
+    if (needsAuth) {
+      const authHeader = req.headers?.authorization || req.headers?.access_token;
+      const userState = req.headers?.['x-user-state'];
+
+      if (!authHeader && userState !== 'G') {
+        throw new CustomError('Bad Request: Authorization required', 400);
+      }
     }
 
     const isCacheRequired = (route as any).isCacheRequired === true;
@@ -304,10 +334,10 @@ export class ProxyService {
               httpStatus: err?.status || 500,
               downstreamResponse: err?.response?.data || null,
             });
-            span.addEvent('sequential.stop', {
+            span.addEvent('sequential.target.failed', {
               'proxy.target': target.name || target.url,
+              'proxy.error': err?.message || String(err),
             });
-            break;
           }
         }
 
