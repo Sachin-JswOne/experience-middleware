@@ -1,28 +1,28 @@
 [
   {
-    "path": "/xp-mi/public/v1/central-catalogue/categories/tree",
-    "method": "GET",
+    "path": "/xp-mi/public/v1/central-catalogue/footer/buy-online",
+    "method": "POST",
     "routeHandler": "AGGREGATE",
     "aggregationType": "SEQUENTIAL",
     "targets": [
       {
-        "name": "strapi-categories",
-        "url": "${CMS_MSME_URL}/jsw-footer-navigations",
+        "name": "strapi-footer",
+        "url": "${CMS_MSME_URL}/PLACEHOLDER",
         "method": "GET",
-        "reqTransform": "general.transformers.moveBodyToQueryParams",
+        "reqTransform": "category.transformers.selectStrapiUrl",
         "timeout": {
-          "request": 5000,
+          "request": 10000,
           "socket": 1000
         }
       },
       {
         "name": "cca-categories",
-        "url": "http://127.0.0.1:3000/xp-mi/public/v1/central_commerce/categories/tree/list",
+        "url": "https://qa.msme.jswone.in/central_commerce/categories/tree/list",
         "method": "POST",
         "reqTransform": "category.transformers.transformCcaRequest",
         "headersToPass": [
           {
-            "source": "authorization",
+            "source": "access_token",
             "destination": "access_token"
           }
         ],
@@ -1186,18 +1186,38 @@
   {
     "path": "${PATH_URL}/v1/web-global",
     "method": "POST",
-    "routeHandler": "TRANSFORM",
-    "target": {
-      "name": "webGlobalPage",
-      "url": "${CMS_MSME_URL}/app-global",
-      "method": "GET",
-      "timeout": {
-        "request": "${TIMEOUTS.REQUEST}",
-        "socket": "${TIMEOUTS.SOCKET}"
+    "routeHandler": "AGGREGATE",
+    "aggregationType": "SEQUENTIAL",
+    "targets": [
+      {
+        "name": "webGlobalPage",
+        "url": "${CMS_MSME_URL}/app-global",
+        "method": "GET",
+        "timeout": {
+          "request": "${TIMEOUTS.REQUEST}",
+          "socket": "${TIMEOUTS.SOCKET}"
+        },
+        "reqTransform": "general.transformers.moveBodyToQueryParams",
+        "resTransform": "cms.transformers.replaceUriPrefix"
       },
-      "reqTransform": "general.transformers.moveBodyToQueryParams",
-      "resTransform": "cms.transformers.replaceUriPrefix"
-    }
+      {
+        "name": "cca-categories",
+        "url": "https://qa.msme.jswone.in/central_commerce/categories/tree/list",
+        "method": "POST",
+        "reqTransform": "category.transformers.transformWebGlobalCcaRequest",
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "access_token"
+          }
+        ],
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        }
+      }
+    ],
+    "resTransform": "category.transformers.mergeWebGlobalResponse"
   },
   {
     "path": "/xp-mi/public/v1/central_commerce/catalogue/search",
