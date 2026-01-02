@@ -334,10 +334,10 @@ export class ProxyService {
               httpStatus: err?.status || 500,
               downstreamResponse: err?.response?.data || null,
             });
-            span.addEvent('sequential.stop', {
+            span.addEvent('sequential.target.failed', {
               'proxy.target': target.name || target.url,
+              'proxy.error': err?.message || String(err),
             });
-            break;
           }
         }
 

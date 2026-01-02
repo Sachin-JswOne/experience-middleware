@@ -760,7 +760,7 @@
     "path": "/xp-mi/public/v1/web-home-page",
     "method": "POST",
     "routeHandler": "AGGREGATE",
-    "aggregationType": "PARALLEL",
+    "aggregationType": "SEQUENTIAL",
     "targets": [
       {
         "name": "app-home-page",
@@ -829,6 +829,22 @@
           {
             "source": "authorization",
             "destination": "authorization"
+          }
+        ]
+      },
+      {
+        "name": "web-central-catalogue-categories",
+         "url": "https://www.jswonemsme.com/central_commerce/categories/tree/list",
+        "method": "POST",
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
+        "reqTransform": "web.transformers.extractCentralCatalogueCategoryIds",
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "access_token"
           }
         ]
       }
