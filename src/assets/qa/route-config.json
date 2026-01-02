@@ -1544,7 +1544,7 @@
   },
   {
     "path": "/xp-mi/public/v1/explore-categories",
-    "method": "GET",
+    "method": "POST",
     "routeHandler": "AGGREGATE",
     "aggregationType": "SEQUENTIAL",
     "targets": [
@@ -1569,7 +1569,7 @@
         "reqTransform": "emptyCart.transformers.transformCcaRequest",
         "headersToPass": [
           {
-            "source": "authorization",
+            "source": "access_token",
             "destination": "access_token"
           }
         ]
