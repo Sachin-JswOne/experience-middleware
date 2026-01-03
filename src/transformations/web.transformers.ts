@@ -120,12 +120,34 @@ export function mergeWebHomePageResponses(aggregatedResponses: AggregatedRespons
 
     // inject central catalogue categories into all blocks that contain them
     const categoryBlocks = blocks.filter(
-    (b: any) =>
-      b.__component === 'app-components.app-category-component' &&
-      Array.isArray(b.web_central_catalogue_categories),
-  );
+      (b: any) =>
+        b.__component === 'app-components.app-category-component' &&
+        Array.isArray(b.web_central_catalogue_categories),
+    );
 
     for (const block of categoryBlocks) {
+      const blockCategoryIds = block.web_central_catalogue_categories
+        .map((c: any) => c.categoryId)
+        .filter(Boolean);
+
+      block.centralCategoryIdData = navigation
+        .map((nav: any) => ({
+          ...nav,
+          subMenu: nav.subMenu?.filter((sub: any) =>
+            blockCategoryIds.includes(sub.id)
+          ),
+        }))
+        .filter((nav: any) => nav.subMenu && nav.subMenu.length > 0);
+    }
+
+    // inject central catalogue categories into app-top-brands blocks
+    const topBrandsBlocks = blocks.filter(
+      (b: any) =>
+        b.__component === 'app-components.app-top-brands' &&
+       Array.isArray(b.web_central_catalogue_categories)
+    );
+
+    for (const block of topBrandsBlocks) {
       const blockCategoryIds = block.web_central_catalogue_categories
         .map((c: any) => c.categoryId)
         .filter(Boolean);
@@ -170,14 +192,14 @@ export function mergeWebHomePageResponses(aggregatedResponses: AggregatedRespons
       .forEach((categoryProducts: any) => {
         const categoryIds = Array.isArray(categoryProducts.web_central_catalogue_categories)
           ? categoryProducts.web_central_catalogue_categories
-              .map((c: any) => c.categoryId)
-              .filter(Boolean)
+            .map((c: any) => c.categoryId)
+            .filter(Boolean)
           : [];
 
         categoryProducts.centralCategoryIdData = categoryIds.length > 0
           ? categoryIds
-              .map((categoryId: string) => productsData[categoryId])
-              .filter(Boolean)
+            .map((categoryId: string) => productsData[categoryId])
+            .filter(Boolean)
           : [];
       });
   }
