@@ -301,20 +301,21 @@
         ],
         "requiredParams": ["pincode"]
       },
-      {
+       {
         "name": "app-buy-again",
-        "url": "${RETAIL_URL}/v1/seller/buy-again",
+        "url": "http://127.0.0.1:3000/xp-mi/public/v1/buy-again-list",
         "method": "GET",
         "timeout": {
-          "request": "${TIMEOUTS.REQUEST_MIN}",
-          "socket": "${TIMEOUTS.SOCKET}"
+          "request": 15000,
+          "socket": 1000
         },
         "reqTransform": "general.transformers.convertToGetRequest",
         "headersToPass": [
-          { "source": "authorization", "destination": "authorization" },
-          { "source": "x-user-state", "destination": "x-user-state" }
-        ],
-        "requiredParams": ["pincode"]
+          {
+            "source": "authorization",
+            "destination": "authorization"
+          }
+        ]
       },
       {
         "name": "app-categories",
