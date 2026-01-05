@@ -1838,5 +1838,28 @@
       }
     ],
     "resTransform": "emptyCart.transformers.mergeCategoryResponses"
+  },
+  {
+    "path": "/xp-mi/public/v1/central_commerce/categories/breadcrumb",
+    "method": "GET",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "get-breadcrumbs-product",
+      "url": "https://qa.msme.jswone.in/central_commerce/categories/breadcrumb",
+      "method": "GET",
+      "timeout": {
+        "request": "${TIMEOUTS.REQUEST}",
+        "socket": "${TIMEOUTS.SOCKET}"
+      },
+      "headersToPass": [
+        {
+          "source": "access_token",
+          "destination": "access_token"
+        }
+      ],
+      "requiredParams": [
+        "categoryId"
+      ]
+    }
   }
 ]
