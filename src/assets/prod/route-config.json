@@ -942,7 +942,8 @@
     "path": "${PATH_URL}/v1/web-global",
     "method": "POST",
     "routeHandler": "TRANSFORM",
-    "target": {
+    "targets": [
+      {
       "name": "webGlobalPage",
       "url": "${CMS_MSME_URL}/app-global",
       "method": "GET",
@@ -952,7 +953,35 @@
       },
       "reqTransform": "general.transformers.moveBodyToQueryParams",
       "resTransform": "cms.transformers.replaceUriPrefix"
-    }
+    },
+    {
+        "name": "cca-categories",
+        "url": "https://www.jswonemsme.com/central_commerce/categories/tree/list",
+        "method": "POST",
+        "reqTransform": "category.transformers.transformWebGlobalCcaRequest",
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "access_token"
+          }
+        ],
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        }
+      },
+    {
+        "name": "cmsFeatureFlag",
+        "url": "${CMS_MSME_URL}/ccp-feature-flags",
+        "method": "GET",
+        "timeout": {
+          "request": "${TIMEOUTS.REQUEST}",
+          "socket": "${TIMEOUTS.SOCKET}"
+        },
+        "reqTransform": "category.transformers.addFeatureFlagQueryParams",
+        "resTransform": "cms.transformers.replaceUriPrefix"
+      }
+    ]
   },
   {
     "path": "${PATH_URL}/v1/web-sitemap-categories",
@@ -1522,6 +1551,52 @@
       }
     ],
     "resTransform": "emptyCart.transformers.mergeCategoryResponses"
+  },
+  {
+    "path": "/xp-mi/public/v1/central-catalogue/footer/buy-online",
+    "method": "POST",
+    "routeHandler": "AGGREGATE",
+    "aggregationType": "SEQUENTIAL",
+    "targets": [
+      {
+        "name": "strapi-footer",
+        "url": "${CMS_MSME_URL}/PLACEHOLDER",
+        "method": "GET",
+        "reqTransform": "category.transformers.selectStrapiUrl",
+        "timeout": {
+          "request": 10000,
+          "socket": 1000
+        }
+      },
+      {
+        "name": "cca-categories",
+        "url": "https://www.jswonemsme.com/central_commerce/categories/tree/list",
+        "method": "POST",
+        "reqTransform": "category.transformers.transformCcaRequest",
+        "headersToPass": [
+          {
+            "source": "access_token",
+            "destination": "access_token"
+          }
+        ],
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        }
+      },
+      {
+        "name": "cmsFeatureFlag",
+        "url": "${CMS_MSME_URL}/ccp-feature-flags",
+        "method": "GET",
+        "timeout": {
+          "request": "${TIMEOUTS.REQUEST}",
+          "socket": "${TIMEOUTS.SOCKET}"
+        },
+        "reqTransform": "category.transformers.addFeatureFlagQueryParams",
+        "resTransform": "cms.transformers.replaceUriPrefix"
+      }
+    ],
+    "resTransform": "category.transformers.mergeCategoryResponses"
   },
   {
     "path": "/xp-mi/public/v1/central_commerce/categories/breadcrumb",
