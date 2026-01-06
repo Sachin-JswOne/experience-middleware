@@ -941,7 +941,8 @@
   {
     "path": "${PATH_URL}/v1/web-global",
     "method": "POST",
-    "routeHandler": "TRANSFORM",
+    "routeHandler": "AGGREGATE",
+    "aggregationType": "SEQUENTIAL",
     "targets": [
       {
       "name": "webGlobalPage",
