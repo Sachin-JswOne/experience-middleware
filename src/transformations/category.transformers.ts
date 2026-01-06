@@ -126,7 +126,7 @@ export function mergeCategoryResponses(results: AggregatedResponse[]): any {
   const centralCatalogueFlag = featureFlags.find(
     (flag: any) => flag?.name === 'central_catalogue_global',
   );
-  Logger.debug(`Central Catalogue Flag: ${JSON.stringify(centralCatalogueFlag)}`);
+
   const isCentralCatalogueEnabled = centralCatalogueFlag?.isActive === true;
 
   // ... existing error handling ...
