@@ -982,7 +982,8 @@
         "reqTransform": "category.transformers.addFeatureFlagQueryParams",
         "resTransform": "cms.transformers.replaceUriPrefix"
       }
-    ]
+    ],
+    "resTransform": "category.transformers.mergeWebGlobalResponse"
   },
   {
     "path": "${PATH_URL}/v1/web-sitemap-categories",
