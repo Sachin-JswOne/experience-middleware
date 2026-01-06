@@ -904,7 +904,7 @@
       },
       {
         "name": "web-central-catalogue-categories",
-         "url": "https://qa.msme.jswone.in/central_commerce/categories/tree/list",
+        "url": "https://qa.msme.jswone.in/central_commerce/categories/tree/list",
         "method": "POST",
         "timeout": {
           "request": 5000,
@@ -995,20 +995,21 @@
   {
     "path": "${PATH_URL}/v1/web-global",
     "method": "POST",
-    "routeHandler": "TRANSFORM",
+    "routeHandler": "AGGREGATE",
+    "aggregationType": "SEQUENTIAL",
     "targets": [
       {
-      "name": "webGlobalPage",
-      "url": "${CMS_MSME_URL}/app-global",
-      "method": "GET",
-      "timeout": {
-        "request": "${TIMEOUTS.REQUEST}",
-        "socket": "${TIMEOUTS.SOCKET}"
+        "name": "webGlobalPage",
+        "url": "${CMS_MSME_URL}/app-global",
+        "method": "GET",
+        "timeout": {
+          "request": "${TIMEOUTS.REQUEST}",
+          "socket": "${TIMEOUTS.SOCKET}"
+        },
+        "reqTransform": "general.transformers.moveBodyToQueryParams",
+        "resTransform": "cms.transformers.replaceUriPrefix"
       },
-      "reqTransform": "general.transformers.moveBodyToQueryParams",
-      "resTransform": "cms.transformers.replaceUriPrefix"
-    },
-    {
+      {
         "name": "cca-categories",
         "url": "https://qa.msme.jswone.in/central_commerce/categories/tree/list",
         "method": "POST",
@@ -1024,7 +1025,7 @@
           "socket": 1000
         }
       },
-    {
+      {
         "name": "cmsFeatureFlag",
         "url": "${CMS_MSME_URL}/ccp-feature-flags",
         "method": "GET",
@@ -1035,7 +1036,8 @@
         "reqTransform": "category.transformers.addFeatureFlagQueryParams",
         "resTransform": "cms.transformers.replaceUriPrefix"
       }
-    ]
+    ],
+    "resTransform": "category.transformers.mergeWebGlobalResponse"
   },
   {
     "path": "${PATH_URL}/v1/web-sitemap-categories",
@@ -1374,9 +1376,9 @@
         "url": "http://127.0.0.1:3000/xp-mi/public/v1/central_commerce/recent-search",
         "method": "GET",
         "timeout": {
-            "request": 5000,
-            "socket": 1000
-          },
+          "request": 5000,
+          "socket": 1000
+        },
         "reqTransform": "general.transformers.convertToGetRequest",
         "headersToPass": [
           {
@@ -1670,9 +1672,7 @@
           "destination": "access_token"
         }
       ],
-      "requiredParams": [
-        "categoryId"
-      ]
+      "requiredParams": ["categoryId"]
     }
   },
   {
