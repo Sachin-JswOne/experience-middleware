@@ -4,6 +4,7 @@ import { Logger } from '@nestjs/common';
 import { safeDebug } from 'src/utils/common-functions.util';
 import { CMS_MSME_URL } from 'src/config/app.config';
 import * as generalTransformers from './general.transformers';
+import * as qs from 'qs';
 
 function extractIds(items: any[]): string[] {
   const ids: string[] = [];
@@ -113,15 +114,18 @@ export function transformCcaRequest(
   };
 }
 
-export function mergeCategoryResponses(
-  results: AggregatedResponse[],
-  // originalRequest: BaseRequest,
-): any {
+export function mergeCategoryResponses(results: AggregatedResponse[]): any {
   const strapiResult = results.find((r) => r.target === 'strapi-footer');
   const ccaResult = results.find((r) => r.target === 'cca-categories');
-  // const device = originalRequest?.headers?.['x-device-type'] || 'desktop';
   const isMobile = strapiResult?.data?.data?.footer !== undefined;
   const device = isMobile ? 'mobile' : 'desktop';
+  const featureFlagResult = results.find((r) => r.target === 'cmsFeatureFlag');
+  const featureFlags = featureFlagResult?.success ? featureFlagResult.data.data : [];
+  // Find the specific flag for 'central_catalogue_global'
+  const centralCatalogueFlag = featureFlags.find(
+    (flag: any) => flag.name === 'central_catalogue_global',
+  );
+  const isCentralCatalogueEnabled = centralCatalogueFlag?.isActive === true;
 
   // ... existing error handling ...
   const ccaSubMenus = ccaResult?.data?.data?.navigation[0]?.subMenu || [];
@@ -138,7 +142,9 @@ export function mergeCategoryResponses(
           const match = ccaSubMenus.find(
             (menu: any) => menu.name.toLowerCase() === link.label.toLowerCase(),
           );
-          return match ? { ...link, label: match.name, url: match.seoUrl } : link;
+          return isCentralCatalogueEnabled && match
+            ? { ...link, label: match.name, url: match.seoUrl }
+            : link;
         });
       }
     }
@@ -157,7 +163,9 @@ export function mergeCategoryResponses(
           const match = ccaSubMenus.find(
             (menu: any) => menu.name.toLowerCase() === link.linkText.toLowerCase(),
           );
-          return match ? { ...link, linkText: match.name, linkHref: match.seoUrl } : link;
+          return isCentralCatalogueEnabled && match
+            ? { ...link, linkText: match.name, linkHref: match.seoUrl }
+            : link;
         });
       }
     }
@@ -170,8 +178,6 @@ export function transformWebGlobalCcaRequest(
   request: BaseRequest,
   prevResponses: AggregatedResponse[],
 ): BaseRequest {
-  console.log('transformWebGlobalCcaRequest called');
-
   // 1. Get the Strapi response
   const strapiResponse = prevResponses.find((r) => r.target === 'webGlobalPage');
   if (!strapiResponse || !strapiResponse.success) {
@@ -188,7 +194,7 @@ export function transformWebGlobalCcaRequest(
     );
     if (globalFooter && globalFooter.footerSections) {
       const buyOnlineSection = globalFooter.footerSections.find(
-        (section: any) => section.heading === 'Buy online'
+        (section: any) => section.heading === 'Buy online',
       );
       if (buyOnlineSection?.central_catalogue_navigations) {
         // Extract IDs using your key logic (assuming array of objects with id or similar)
@@ -200,13 +206,7 @@ export function transformWebGlobalCcaRequest(
     Logger.error('Error extracting IDs from web-global response:', err);
   }
   safeDebug(Logger, () => `Extracted IDs for Web Global: ${JSON.stringify(ids)}`);
-  // 3. Return the CCA Request
-  console.log('transformWebGlobalCcaRequest', {
-    ...request,
-    body: {
-      categoryIds: ids,
-    },
-  });
+
   return {
     ...request,
     body: {
@@ -216,9 +216,16 @@ export function transformWebGlobalCcaRequest(
 }
 
 export function mergeWebGlobalResponse(results: AggregatedResponse[]): any {
-  console.log('mergeWebGlobalResponse called');
   const strapiResult = results.find((r) => r.target === 'webGlobalPage');
   const ccaResult = results.find((r) => r.target === 'cca-categories');
+
+  const featureFlagResult = results.find((r) => r.target === 'cmsFeatureFlag');
+  const featureFlags = featureFlagResult?.success ? featureFlagResult.data.data : [];
+  // Find the specific flag for 'central_catalogue_global'
+  const centralCatalogueFlag = featureFlags.find(
+    (flag: any) => flag.name === 'central_catalogue_global',
+  );
+  const isCentralCatalogueEnabled = centralCatalogueFlag?.isActive === true;
   if (!strapiResult || !strapiResult.success) {
     return { error: 'Strapi fetch failed' };
   }
@@ -231,18 +238,20 @@ export function mergeWebGlobalResponse(results: AggregatedResponse[]): any {
   const ccaSubMenus = ccaResult.data?.data?.navigation?.[0]?.subMenu || [];
   try {
     const footerData = appGlobalData.data?.footer || [];
-    const globalFooter = footerData.find((item: any) => item.__component === 'global.global-footer');
+    const globalFooter = footerData.find(
+      (item: any) => item.__component === 'global.global-footer',
+    );
     if (globalFooter && globalFooter.footerSections) {
       const buyOnlineSection = globalFooter.footerSections.find(
-        (s: any) => s.heading === 'Buy online'
+        (s: any) => s.heading === 'Buy online',
       );
       if (buyOnlineSection?.links) {
         // Update the links with data from CCA
         buyOnlineSection.links = buyOnlineSection.links.map((link: any) => {
           const match = ccaSubMenus.find(
-            (menu: any) => menu.name?.toLowerCase() === link.label?.toLowerCase()
+            (menu: any) => menu.name?.toLowerCase() === link.label?.toLowerCase(),
           );
-          return match
+          return isCentralCatalogueEnabled && match
             ? { ...link, label: match.name, url: match.seoUrl }
             : link;
         });
@@ -252,4 +261,24 @@ export function mergeWebGlobalResponse(results: AggregatedResponse[]): any {
     Logger.error('Error merging web-global response:', error);
   }
   return appGlobalData;
+}
+
+export function addFeatureFlagQueryParams(request: BaseRequest): BaseRequest {
+  const transformedRequest: BaseRequest = {
+    ...request,
+    body: null, // Clear body as it is not needed for GET request
+  };
+  const featureFlagQuery = {
+    filters: {
+      isActive: {
+        $eq: true,
+      },
+    },
+    pagination: {
+      pageSize: 100,
+      page: 1,
+    },
+  };
+  transformedRequest.url.search = qs.stringify(featureFlagQuery);
+  return transformedRequest;
 }
