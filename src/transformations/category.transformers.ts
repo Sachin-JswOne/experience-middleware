@@ -122,9 +122,11 @@ export function mergeCategoryResponses(results: AggregatedResponse[]): any {
   const featureFlagResult = results.find((r) => r.target === 'cmsFeatureFlag');
   const featureFlags = featureFlagResult?.success ? featureFlagResult.data.data : [];
   // Find the specific flag for 'central_catalogue_global'
+  
   const centralCatalogueFlag = featureFlags.find(
-    (flag: any) => flag.name === 'central_catalogue_global',
+    (flag: any) => flag?.name === 'central_catalogue_global',
   );
+
   const isCentralCatalogueEnabled = centralCatalogueFlag?.isActive === true;
 
   // ... existing error handling ...
@@ -140,9 +142,9 @@ export function mergeCategoryResponses(results: AggregatedResponse[]): any {
       if (buyOnlineSection?.links) {
         buyOnlineSection.links = buyOnlineSection.links.map((link: any) => {
           const match = ccaSubMenus.find(
-            (menu: any) => menu.name.toLowerCase() === link.label.toLowerCase(),
+            (menu: any) => menu?.name?.toLowerCase() === link?.label?.toLowerCase(),
           );
-          return isCentralCatalogueEnabled && match
+          return isCentralCatalogueEnabled && match?.name && match?.seoUrl
             ? { ...link, label: match.name, url: match.seoUrl }
             : link;
         });
@@ -161,9 +163,9 @@ export function mergeCategoryResponses(results: AggregatedResponse[]): any {
       if (buyOnlineMenu?.tertiaryLinks) {
         buyOnlineMenu.tertiaryLinks = buyOnlineMenu.tertiaryLinks.map((link: any) => {
           const match = ccaSubMenus.find(
-            (menu: any) => menu.name.toLowerCase() === link.linkText.toLowerCase(),
+            (menu: any) => menu?.name?.toLowerCase() === link?.linkText?.toLowerCase(),
           );
-          return isCentralCatalogueEnabled && match
+          return isCentralCatalogueEnabled && match?.name && match?.seoUrl
             ? { ...link, linkText: match.name, linkHref: match.seoUrl }
             : link;
         });
@@ -223,7 +225,7 @@ export function mergeWebGlobalResponse(results: AggregatedResponse[]): any {
   const featureFlags = featureFlagResult?.success ? featureFlagResult.data.data : [];
   // Find the specific flag for 'central_catalogue_global'
   const centralCatalogueFlag = featureFlags.find(
-    (flag: any) => flag.name === 'central_catalogue_global',
+    (flag: any) => flag?.name === 'central_catalogue_global',
   );
   const isCentralCatalogueEnabled = centralCatalogueFlag?.isActive === true;
   if (!strapiResult || !strapiResult.success) {
@@ -235,23 +237,23 @@ export function mergeWebGlobalResponse(results: AggregatedResponse[]): any {
     return strapiResult.data;
   }
   const appGlobalData = strapiResult.data; // This is the full response object
-  const ccaSubMenus = ccaResult.data?.data?.navigation?.[0]?.subMenu || [];
+  const ccaSubMenus = ccaResult?.data?.data?.navigation?.[0]?.subMenu || [];
   try {
-    const footerData = appGlobalData.data?.footer || [];
+    const footerData = appGlobalData?.data?.footer || [];
     const globalFooter = footerData.find(
-      (item: any) => item.__component === 'global.global-footer',
+      (item: any) => item?.__component === 'global.global-footer',
     );
     if (globalFooter && globalFooter.footerSections) {
       const buyOnlineSection = globalFooter.footerSections.find(
-        (s: any) => s.heading === 'Buy online',
+        (s: any) => s?.heading === 'Buy online',
       );
       if (buyOnlineSection?.links) {
         // Update the links with data from CCA
         buyOnlineSection.links = buyOnlineSection.links.map((link: any) => {
           const match = ccaSubMenus.find(
-            (menu: any) => menu.name?.toLowerCase() === link.label?.toLowerCase(),
+            (menu: any) => menu?.name?.toLowerCase() === link?.label?.toLowerCase(),
           );
-          return isCentralCatalogueEnabled && match
+          return isCentralCatalogueEnabled && match?.name && match?.seoUrl
             ? { ...link, label: match.name, url: match.seoUrl }
             : link;
         });
@@ -259,6 +261,7 @@ export function mergeWebGlobalResponse(results: AggregatedResponse[]): any {
     }
   } catch (error) {
     Logger.error('Error merging web-global response:', error);
+    return appGlobalData;
   }
   return appGlobalData;
 }
