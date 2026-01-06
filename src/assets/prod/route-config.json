@@ -1621,5 +1621,28 @@
         "categoryId"
       ]
     }
+  },
+  {
+    "path": "/xp-mi/public/v1/central_commerce/catalogue/product-details",
+    "method": "POST",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "product-details",
+      "url": "https://www.jswonemsme.com/central_commerce/catalogue/product-details",
+      "method": "POST",
+      "timeout": {
+        "request": "${TIMEOUTS.REQUEST}",
+        "socket": "${TIMEOUTS.SOCKET}"
+      },
+      "headersToPass": [
+        {
+          "source": "access_token",
+          "destination": "access_token"
+        }
+      ],
+      "requiredParams": [
+        "*"
+      ]
+    }
   }
 ]
