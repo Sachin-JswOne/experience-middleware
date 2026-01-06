@@ -3,6 +3,8 @@ dotenv.config();
 
 export const APP_ENV = process.env.APP_ENV || 'dev';
 
+// Below line is Getting imported in tranformer.
+export const CMS_MSME_URL = process.env.CMS_MSME_URL;
 export const CMS_ASSETS_URLS = {
   BUCKET_URL: process.env.CMS_ASSETS_BUCKET_URL || 'https://default-bucket-url.com',
   CDN_URL: process.env.CMS_ASSETS_CDN_URL || 'https://default-cdn-url.com',

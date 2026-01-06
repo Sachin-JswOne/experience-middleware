@@ -3,6 +3,7 @@ import { Logger } from '@nestjs/common';
 import { safeDebug } from 'src/utils/common-functions.util';
 import { BaseRequest } from 'src/models/base-request.model';
 import { CustomError } from 'src/utils/CustomError';
+export { extractCentralCatalogueCategoryIds, getAllCentralCatalogueCategoryIds } from 'src/utils/central-category.util';
 
 export function mergeWebHomePageResponses(aggregatedResponses: AggregatedResponse[]): any {
   const responses = aggregatedResponses.reduce(
@@ -18,6 +19,7 @@ export function mergeWebHomePageResponses(aggregatedResponses: AggregatedRespons
   const buyAgainResponse = responses['ccp-buy-again-with-prices']?.data;
   const pendingDispatchResponse = responses['pending-dispatch-quantity'];
   const webProductsResponse = responses['web-homepage-products'];
+  const webCentralCatalogueResponse = responses['web-central-catalogue-categories'];
 
   safeDebug(
     Logger,
@@ -107,6 +109,60 @@ export function mergeWebHomePageResponses(aggregatedResponses: AggregatedRespons
     blogsBlock.blogs = blogs;
   }
 
+  // // inject central catalogue categories
+  if (
+    webCentralCatalogueResponse?.success &&
+    Array.isArray(webCentralCatalogueResponse.data?.data?.navigation)
+  ) {
+    const navigation =
+      webCentralCatalogueResponse.data.data.navigation;
+
+
+    // inject central catalogue categories into all blocks that contain them
+    const categoryBlocks = blocks.filter(
+      (b: any) =>
+        b.__component === 'app-components.app-category-component' &&
+        Array.isArray(b.web_central_catalogue_categories),
+    );
+
+    for (const block of categoryBlocks) {
+      const blockCategoryIds = block.web_central_catalogue_categories
+        .map((c: any) => c.categoryId)
+        .filter(Boolean);
+
+      block.centralCategoryIdData = navigation
+        .map((nav: any) => ({
+          ...nav,
+          subMenu: nav.subMenu?.filter((sub: any) =>
+            blockCategoryIds.includes(sub.id)
+          ),
+        }))
+        .filter((nav: any) => nav.subMenu && nav.subMenu.length > 0);
+    }
+
+    // inject central catalogue categories into app-top-brands blocks
+    const topBrandsBlocks = blocks.filter(
+      (b: any) =>
+        b.__component === 'app-components.app-top-brands' &&
+       Array.isArray(b.web_central_catalogue_categories)
+    );
+
+    for (const block of topBrandsBlocks) {
+      const blockCategoryIds = block.web_central_catalogue_categories
+        .map((c: any) => c.categoryId)
+        .filter(Boolean);
+
+      block.centralCategoryIdData = navigation
+        .map((nav: any) => ({
+          ...nav,
+          subMenu: nav.subMenu?.filter((sub: any) =>
+            blockCategoryIds.includes(sub.id)
+          ),
+        }))
+        .filter((nav: any) => nav.subMenu && nav.subMenu.length > 0);
+    }
+  }
+
   // Inject pending dispatch quantity data
   if (pendingDispatchResponse?.success) {
     mergedData.pendingDispatchQuantity = pendingDispatchResponse.data;
@@ -126,6 +182,26 @@ export function mergeWebHomePageResponses(aggregatedResponses: AggregatedRespons
         (categoryProducts) =>
           (categoryProducts.productsList = productsData[categoryProducts.webCategoryId]),
       );
+
+    // // Inject central catalogue category data for app-product-category blocks
+    block?.app_product_categories?.filter(
+      (categoryProducts: any) =>
+        categoryProducts.webCategoryId &&
+        categoryProducts.itemsToShow
+    )
+      .forEach((categoryProducts: any) => {
+        const categoryIds = Array.isArray(categoryProducts.web_central_catalogue_categories)
+          ? categoryProducts.web_central_catalogue_categories
+            .map((c: any) => c.categoryId)
+            .filter(Boolean)
+          : [];
+
+        categoryProducts.centralCategoryIdData = categoryIds.length > 0
+          ? categoryIds
+            .map((categoryId: string) => productsData[categoryId])
+            .filter(Boolean)
+          : [];
+      });
   }
 
   // Update merged data with blocks

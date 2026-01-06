@@ -270,11 +270,48 @@ export function mergeProjectDetailsAndTrackerResponses(
 
     currentprojectStage = constructionMileStone?.activeMilestones?.map((m: any) => m.name) ?? [];
   }
+
+  const designSubscription= homesData?.designSubscriptionResponse;
+  const endDate = homesData?.designSubscriptionResponse?.subscriptionEndDate;
+  const daysLeft = homesData?.designSubscriptionResponse?.daysLeft;
+  const date = endDate;
+  let activeDesignType = "designStageTypeOne";
+
+  if(designSubscription?.daysLeft <= 5){
+    let designStageTypeTwo = strapiData?.data?.projectTracker?.designStage?.designStageTypeTwo;
+    designStageTypeTwo.heading =  designStageTypeTwo?.heading.replace("${daysLeft}", daysLeft);
+    designStage.subHeading = designStageTypeTwo?.subHeading.replace("${date}", endDate)
+    activeDesignType = "designStageTypeTwo";
+    strapiData.data.projectTracker.designStage.designStageTypeTwo = designStageTypeTwo;
+  }
+
+  if(designSubscription?.daysLeft == 1){
+    let designStageTypeThree = strapiData?.data?.projectTracker?.designStage?.designStageTypeThree;
+    designStageTypeThree.heading =  designStageTypeThree?.heading.replace("${daysLeft}", daysLeft);
+    activeDesignType = "designStageTypeThree";
+    strapiData.data.projectTracker.designStage.designStageTypeTwo = designStageTypeThree;
+  }
+
+  if(designSubscription?.daysLeft == 0){
+   let designStageTypeFour = strapiData?.data?.projectTracker?.designStage?.designStageTypeFour;
+   designStage.subHeading = designStageTypeFour?.subHeading.replace("${endDate}", endDate);
+   activeDesignType = "designStageTypeFour";
+   strapiData.data.projectTracker.designStage.designStageTypeTwo = designStageTypeFour;
+  }
+
+  let designSubscriptionResponse = {
+    ...homesData?.designSubscriptionResponse,
+    heading : "",
+    subHeading : "",
+    toolTip : ""
+  }
+
   const projectTracker = {
     ...strapiData.data.projectTracker,
     designStage: {
       ...strapiData.data.projectTracker?.designStage,
       subSteps: designStage,
+      activeDesignType : activeDesignType
     },
     preConstructionStage: {
       ...strapiData.data.projectTracker?.preConstructionStage,
@@ -297,6 +334,7 @@ export function mergeProjectDetailsAndTrackerResponses(
       projectID,
       homesTeam,
       projectTracker,
+      designSubscriptionResponse
     },
   };
 }
