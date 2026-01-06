@@ -38,6 +38,9 @@ RUN npm ci --omit=dev && npm cache clean --force
 # Copy built output from builder
 COPY --from=builder /app/dist ./dist
 
+# Create logs directory and set ownership
+RUN mkdir -p logs && chown -R node:node /app
+
 # Use non-root user for security
 USER node
 
