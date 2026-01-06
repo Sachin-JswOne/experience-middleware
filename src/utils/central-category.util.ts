@@ -6,13 +6,20 @@ import { AggregatedResponse } from '../models/aggregated-response.model';
  * Extracts all central catalogue category IDs from all blocks that contain them.
  */
 export function getAllCentralCatalogueCategoryIds(blocks: any[]): string[] {
-    const categoryIds = blocks
+    // Extract from blocks with web_central_catalogue_categories (array)
+    const categoryIdsFromArray = blocks
         .filter((b: any) => Array.isArray(b.web_central_catalogue_categories))
         .flatMap((b: any) => b.web_central_catalogue_categories.map((c: any) => c.categoryId))
         .filter(Boolean);
 
-    // Return unique IDs
-    return [...new Set(categoryIds)];
+    // Extract from blocks with web_central_catalogue_category (single object) - e.g., app-top-brands
+    const categoryIdsFromObject = blocks
+        .filter((b: any) => b.web_central_catalogue_category?.categoryId)
+        .map((b: any) => b.web_central_catalogue_category.categoryId)
+        .filter(Boolean);
+
+    // Combine and return unique IDs
+    return [...new Set([...categoryIdsFromArray, ...categoryIdsFromObject])];
 }
 
 /**
