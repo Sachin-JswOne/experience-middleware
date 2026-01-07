@@ -1,9 +1,6 @@
-﻿/* eslint-disable @typescript-eslint/no-unsafe-argument */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-import './instrumentation';
+﻿import './instrumentation';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { AppService } from './app.service';
 import { TraceContextInterceptor } from './common/trace-context.interceptor';
 import { WinstonModule } from 'nest-winston';
 import { winstonConfig } from './logger/winston.config';
@@ -18,9 +15,7 @@ async function bootstrap() {
   app.enableCors({
     origin: (origin, callback) => {
       const allowedOrigins = process.env.ALLOWED_ORIGINS
-        ? process.env.ALLOWED_ORIGINS.split(',').map(
-          (origin) => new RegExp(origin),
-        )
+        ? process.env.ALLOWED_ORIGINS.split(',').map((origin) => new RegExp(origin))
         : [
           /^https?:\/\/.*\.onejswhomes\.in$/,
           /^https?:\/\/.*jswonehomes\.com$/,
@@ -29,7 +24,7 @@ async function bootstrap() {
           /^https?:\/\/jswonehomes\.com$/,
           /^https?:\/\/34\.93\.108\.241$/,
           /^https?:\/\/.*\.jswone\.in$/,
-          /^https?:\/\/.*\.jswonemsme\.com$/
+          /^https?:\/\/.*\.jswonemsme\.com$/,
         ];
 
       if (!origin) return callback(null, true); // Allow server-to-server or curl requests
@@ -47,10 +42,6 @@ async function bootstrap() {
     credentials: false,
     optionsSuccessStatus: 204,
   });
-
-  const appService = app.get(AppService);
-  // await appService.testRedisConnection();
-  // await appService.subscribeToCacheEvents();
 
   await app.listen(process.env.PORT ?? 3000);
 }

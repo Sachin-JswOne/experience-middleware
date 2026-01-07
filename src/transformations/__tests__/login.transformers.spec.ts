@@ -1,8 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
-/* eslint-disable @typescript-eslint/unbound-method */
-/* eslint-disable @typescript-eslint/no-unsafe-return */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { HttpStatus, Logger } from '@nestjs/common';
 import {
   selectLoginTarget,
@@ -120,10 +115,7 @@ describe('login.transformers', () => {
         },
       };
       expect(() => transformResetPasswordResponse(response)).toThrow(
-        new CustomError(
-          response.data.data.message,
-          response.data.data.statusCode,
-        ),
+        new CustomError(response.data.data.message, response.data.data.statusCode),
       );
     });
 
@@ -132,9 +124,7 @@ describe('login.transformers', () => {
       expect(() => transformResetPasswordResponse(response)).toThrow();
 
       const responseWithNullData = { data: null };
-      expect(() =>
-        transformResetPasswordResponse(responseWithNullData),
-      ).toThrow();
+      expect(() => transformResetPasswordResponse(responseWithNullData)).toThrow();
     });
   });
 
@@ -232,10 +222,7 @@ describe('login.transformers', () => {
         },
       };
       expect(() => transformVerifyMobileNumberResponse(response)).toThrow(
-        new CustomError(
-          'Incorrect OTP. Please enter a valid OTP',
-          HttpStatus.BAD_REQUEST,
-        ),
+        new CustomError('Incorrect OTP. Please enter a valid OTP', HttpStatus.BAD_REQUEST),
       );
     });
   });
@@ -308,8 +295,7 @@ describe('login.transformers', () => {
     };
 
     it('should transform the request correctly with valid data', () => {
-      const transformed =
-        transformVerifyMobileNumberWithOtpRequest(mockBaseRequest);
+      const transformed = transformVerifyMobileNumberWithOtpRequest(mockBaseRequest);
       expect(transformed.body).toEqual({
         ...mockBaseRequest.body,
         storeKey: MSME,
@@ -326,13 +312,8 @@ describe('login.transformers', () => {
         },
       };
 
-      expect(() =>
-        transformVerifyMobileNumberWithOtpRequest(invalidRequest),
-      ).toThrow(
-        new CustomError(
-          'Field requestId is missing or empty.',
-          HttpStatus.BAD_REQUEST,
-        ),
+      expect(() => transformVerifyMobileNumberWithOtpRequest(invalidRequest)).toThrow(
+        new CustomError('Field requestId is missing or empty.', HttpStatus.BAD_REQUEST),
       );
     });
   });
@@ -379,10 +360,7 @@ describe('login.transformers', () => {
         },
       };
       expect(() => transformVerifyMobileNumberOtpResponse(apiResponse)).toThrow(
-        new CustomError(
-          'An unknown error occurred',
-          HttpStatus.INTERNAL_SERVER_ERROR,
-        ),
+        new CustomError('An unknown error occurred', HttpStatus.INTERNAL_SERVER_ERROR),
       );
     });
 
@@ -407,8 +385,7 @@ describe('login.transformers', () => {
           message: 'Invalid OTP.',
         },
       };
-      const expectedMessage =
-        MSME_ERRORS_MAPPING['Invalid OTP.'] || 'Invalid OTP.';
+      const expectedMessage = MSME_ERRORS_MAPPING['Invalid OTP.'] || 'Invalid OTP.';
       expect(() => transformVerifyMobileNumberOtpResponse(apiResponse)).toThrow(
         new CustomError(expectedMessage, HttpStatus.BAD_REQUEST),
       );
@@ -439,9 +416,7 @@ describe('login.transformers', () => {
         body: { email: 'test@example.com', phoneNumber: '1234567890' },
         url: new URL('http://localhost/login'),
       };
-      expect(() => selectLoginTarget(request as BaseRequest)).toThrow(
-        CustomError,
-      );
+      expect(() => selectLoginTarget(request as BaseRequest)).toThrow(CustomError);
       expect(CustomError).toHaveBeenCalledWith(
         'Either email or phoneNumber is required',
         HttpStatus.BAD_REQUEST,
@@ -453,9 +428,7 @@ describe('login.transformers', () => {
         body: {},
         url: new URL('http://localhost/login'),
       };
-      expect(() => selectLoginTarget(request as BaseRequest)).toThrow(
-        CustomError,
-      );
+      expect(() => selectLoginTarget(request as BaseRequest)).toThrow(CustomError);
       expect(CustomError).toHaveBeenCalledWith(
         'Either email or phoneNumber is required',
         HttpStatus.BAD_REQUEST,
@@ -475,10 +448,7 @@ describe('login.transformers', () => {
     });
 
     it('should return invalid when both email and phoneNumber are provided', () => {
-      const result = validateEmailAndPhoneNumber(
-        'test@example.com',
-        '1234567890',
-      );
+      const result = validateEmailAndPhoneNumber('test@example.com', '1234567890');
       expect(result).toEqual({
         isValid: false,
         errorMessage: 'Either email or phoneNumber is required',

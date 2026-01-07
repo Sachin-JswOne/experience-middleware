@@ -1,7 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+
 import * as invoiceAndDocumentsTransformers from '../invoiceAndDocuments.transformers';
 import * as appConfig from 'src/config/app.config';
 import * as utils from 'src/utils/common-functions.util';
@@ -27,8 +25,7 @@ describe('mergeInvoiceAndShipmentsResponse', () => {
     (console.error as jest.Mock).mockRestore();
   });
   const mockFormatDate = utils.formatDate as jest.Mock;
-  const mockGetListOfDocuments =
-    invoiceAndDocumentsTransformers.getListOfDocuments as jest.Mock;
+  const mockGetListOfDocuments = invoiceAndDocumentsTransformers.getListOfDocuments as jest.Mock;
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -79,8 +76,7 @@ describe('mergeInvoiceAndShipmentsResponse', () => {
                 itemDetails: [
                   {
                     brandName: 'JSW Steel',
-                    productName:
-                      'JSW Steel Hot Rolled Sheets IS 2062:2011 E250A',
+                    productName: 'JSW Steel Hot Rolled Sheets IS 2062:2011 E250A',
                     diameter: null,
                     quantity: '1.00 MT',
                     form: 'HRCTLF',
@@ -149,20 +145,12 @@ describe('mergeInvoiceAndShipmentsResponse', () => {
     expect(result.listOfShipments).toHaveLength(1);
     const shipment = result.listOfShipments[0];
     expect(shipment.shipmentId).toBe('JOD-T64UGL2LXW');
-    expect(shipment.downloadInvoiceAndDocumentDetails[0].shipmentNumber).toBe(
-      'JOD-T64UGL2LXW',
-    );
-    expect(shipment.shipmentStatus).toBe(
-      appConfig.SHIPMENT_STATUS['Dispatched'],
-    );
+    expect(shipment.downloadInvoiceAndDocumentDetails[0].shipmentNumber).toBe('JOD-T64UGL2LXW');
+    expect(shipment.shipmentStatus).toBe(appConfig.SHIPMENT_STATUS['Dispatched']);
     expect(shipment.shippedOn).toBe('formatted:2025-09-03T00:00:00');
-    expect(shipment.priceTotal.currencyCode).toBe(
-      appConfig.DEFAULT_CURRENCY_CODE,
-    );
+    expect(shipment.priceTotal.currencyCode).toBe(appConfig.DEFAULT_CURRENCY_CODE);
     expect(shipment.products[0].brand).toBe('JSW Steel');
-    expect(shipment.products[0].sellerName).toBe(
-      'JSW One Distribution Limited',
-    );
+    expect(shipment.products[0].sellerName).toBe('JSW One Distribution Limited');
     expect(mockGetListOfDocuments).toHaveBeenCalled();
     expect(mockFormatDate).toHaveBeenCalled();
   });
@@ -172,9 +160,7 @@ describe('mergeInvoiceAndShipmentsResponse', () => {
       { target: 'app-shipment', data: null },
       { target: 'app-invoice-and-documents', data: {} },
     ];
-    expect(() => mergeInvoiceAndShipmentsResponse(responses as any)).toThrow(
-      'No shipment found',
-    );
+    expect(() => mergeInvoiceAndShipmentsResponse(responses as any)).toThrow('No shipment found');
   });
 
   it('should throw error if orderShipmentDetailsList is missing', () => {
@@ -185,17 +171,13 @@ describe('mergeInvoiceAndShipmentsResponse', () => {
       },
       { target: 'app-invoice-and-documents', data: {} },
     ];
-    expect(() => mergeInvoiceAndShipmentsResponse(responses as any)).toThrow(
-      'No shipment found',
-    );
+    expect(() => mergeInvoiceAndShipmentsResponse(responses as any)).toThrow('No shipment found');
   });
 
   it('should handle missing documents gracefully', () => {
     mockGetListOfDocuments.mockReturnValueOnce([]);
     const result = mergeInvoiceAndShipmentsResponse(aggregatedResponses as any);
-    expect(result.listOfShipments[0].downloadInvoiceAndDocumentDetails).toEqual(
-      [],
-    );
+    expect(result.listOfShipments[0].downloadInvoiceAndDocumentDetails).toEqual([]);
   });
 
   it('should filter out shipments with unknown status', () => {
@@ -224,9 +206,7 @@ describe('mergeInvoiceAndShipmentsResponse', () => {
   });
 
   it('should handle empty aggregatedResponses', () => {
-    expect(() => mergeInvoiceAndShipmentsResponse([] as any)).toThrow(
-      'No shipment found',
-    );
+    expect(() => mergeInvoiceAndShipmentsResponse([] as any)).toThrow('No shipment found');
   });
 });
 
@@ -255,19 +235,12 @@ describe('transformShipmentDetails', () => {
     ];
     const listOfDocuments = [{ shipmentNumber: 'S1' }];
     jest.spyOn(utils, 'formatDate').mockReturnValue('formatted-date');
-    const result = transformShipmentDetails(
-      orderShipmentDetailsSRO,
-      listOfDocuments,
-    );
+    const result = transformShipmentDetails(orderShipmentDetailsSRO, listOfDocuments);
     expect(result).toHaveLength(1);
     expect(result[0].shipmentId).toBe('S1');
-    expect(result[0].shipmentStatus).toBe(
-      appConfig.SHIPMENT_STATUS['Dispatched'],
-    );
+    expect(result[0].shipmentStatus).toBe(appConfig.SHIPMENT_STATUS['Dispatched']);
     expect(result[0].shippedOn).toBe('formatted-date');
-    expect(result[0].downloadInvoiceAndDocumentDetails[0].shipmentNumber).toBe(
-      'S1',
-    );
+    expect(result[0].downloadInvoiceAndDocumentDetails[0].shipmentNumber).toBe('S1');
   });
 
   it('should filter out shipments with unknown status', () => {
@@ -350,12 +323,8 @@ describe('transformAttributes', () => {
     expect(result.some((a) => a.description === 'Colour')).toBe(true);
     expect(result.some((a) => a.description === 'Grade')).toBe(true);
     expect(
-      result.some((a) =>
-        a.description.includes('Thickness x Width x Length'),
-      ) ||
-        result.some((a) =>
-          a.description.includes('Thickness x Length x Width'),
-        ),
+      result.some((a) => a.description.includes('Thickness x Width x Length')) ||
+        result.some((a) => a.description.includes('Thickness x Length x Width')),
     ).toBe(true);
     const colour = result.find((a) => a.description === 'Colour');
     expect(colour.value).toBe('Red');

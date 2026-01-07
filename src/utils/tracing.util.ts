@@ -23,10 +23,7 @@ export function getTracingContext(): { traceId?: string; spanId?: string } {
  * @param tracingContext - The tracing context object
  * @returns Formatted string for trace_id and span_id
  */
-export function formatTracingIds(tracingContext: {
-  traceId?: string;
-  spanId?: string;
-}): string {
+export function formatTracingIds(tracingContext: { traceId?: string; spanId?: string }): string {
   const traceId = tracingContext.traceId ? inspect(tracingContext.traceId) : '';
   const spanId = tracingContext.spanId ? inspect(tracingContext.spanId) : '';
   return `trace_id: ${traceId} span_id: ${spanId}`;

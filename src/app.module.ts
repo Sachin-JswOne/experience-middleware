@@ -9,29 +9,30 @@ import { WinstonModule } from 'nest-winston';
 import { winstonConfig } from './logger/winston.config';
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { RequestContextMiddleware } from './utils/request-context.middleware';
-// import { RedisModule } from './redis/redis.module';
-
+import { RedisModule } from './redis/redis.module';
+import { APP_ENV } from './config/app.config';
+import { SentryModule } from '@sentry/nestjs/setup';
+import { APP_FILTER } from '@nestjs/core';
+import { SentryGlobalFilter } from '@sentry/nestjs/setup';
 
 @Module({
   imports: [
-    // PrometheusModule.register({
-    //   path: '/metrics',
-    // }),
-    // PrometheusModule.register({
-    //   path: '/metrics',
-    // }),
+    SentryModule.forRoot(),
     WinstonModule.forRoot(winstonConfig),
     ServeStaticModule.forRoot({
-      rootPath: join(__dirname, '..', 'public'),
+      rootPath: APP_ENV === 'prod' ? undefined : join(__dirname, '..', 'public'),
       exclude: ['/metrics'],
     }),
     ConfigModule.forRoot({
       isGlobal: true,
     }),
-    // RedisModule,
+    RedisModule,
   ],
   controllers: [ProxyController],
-  providers: [AppService, ProxyService],
+  providers: [{
+    provide: APP_FILTER,
+    useClass: SentryGlobalFilter,
+  }, AppService, ProxyService],
   exports: [AppService],
 })
 export class AppModule implements NestModule {

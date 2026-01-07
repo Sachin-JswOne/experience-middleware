@@ -8,13 +8,14 @@ import { ConfigService, ConfigModule } from '@nestjs/config';
     {
       provide: 'REDIS_CLIENT',
       useFactory: (configService: ConfigService) => {
+        const isDevelopment = process.env.NODE_ENV === 'development';
         return new Redis({
           host: configService.get<string>('REDIS_HOST'),
           port: configService.get<number>('REDIS_PORT'),
           username: configService.get<string>('REDIS_USERNAME'),
           password: configService.get<string>('REDIS_PASSWORD'),
           keyPrefix: configService.get<string>('REDIS_KEY_PREFIX'),
-          tls: {},
+          tls: isDevelopment ? undefined : {},
         });
       },
       inject: [ConfigService],
@@ -22,4 +23,4 @@ import { ConfigService, ConfigModule } from '@nestjs/config';
   ],
   exports: ['REDIS_CLIENT'],
 })
-export class RedisModule { }
+export class RedisModule {}

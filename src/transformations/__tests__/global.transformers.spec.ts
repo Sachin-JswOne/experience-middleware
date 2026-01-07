@@ -1,7 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/* eslint-disable @typescript-eslint/no-unsafe-return */
 // import { Logger } from '@nestjs/common';
 import { AggregatedResponse } from 'src/models/aggregated-response.model';
 import { mergeGlobalAndSlcCartResponses } from '../global.transformers';
@@ -62,10 +58,7 @@ describe('mergeGlobalAndSlcCartResponses', () => {
   });
 
   it('should merge cart details into global page footer when both succeed', () => {
-    const result = mergeGlobalAndSlcCartResponses([
-      globalPageResponse,
-      slcCartResponse,
-    ]);
+    const result = mergeGlobalAndSlcCartResponses([globalPageResponse, slcCartResponse]);
 
     const slcCartComponent = result.data.footer.find(
       (footer: any) => footer.__component === 'app-components.app-slc-cart',
@@ -95,10 +88,7 @@ describe('mergeGlobalAndSlcCartResponses', () => {
       },
     };
 
-    const result = mergeGlobalAndSlcCartResponses([
-      globalPageWithoutCart,
-      slcCartResponse,
-    ]);
+    const result = mergeGlobalAndSlcCartResponses([globalPageWithoutCart, slcCartResponse]);
 
     expect(result).toEqual(globalPageWithoutCart.data);
   });

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 // do not convert to default import
 import * as qs from 'qs';
 import { BaseRequest } from 'src/models/base-request.model';
@@ -33,9 +32,7 @@ export function convertToGetRequest(request: BaseRequest): BaseRequest {
   return transformedRequest;
 }
 
-export function convertAuthorizationToAccessTokenInHeader(
-  request: BaseRequest,
-): BaseRequest {
+export function convertAuthorizationToAccessTokenInHeader(request: BaseRequest): BaseRequest {
   try {
     const transformedRequest: BaseRequest = {
       ...request,
@@ -95,7 +92,7 @@ export function successOnly(results: AggregatedResponse[]): any {
 
 export function transformAppHomePageRequest(request: BaseRequest): BaseRequest {
   const transformedRequest: BaseRequest = {
-    ...request
+    ...request,
   };
   addChannelFilter(transformedRequest.body);
   return moveBodyToQueryParams(transformedRequest);
@@ -107,23 +104,23 @@ const addChannelFilter = (query) => {
     return;
   }
 
-  if (typeof query === "object" && query !== null) {
+  if (typeof query === 'object' && query !== null) {
     // Check if this object has $and array
     if (query.$and && Array.isArray(query.$and)) {
-
-      const hasCustomerType = query.$and.some(item =>
-        item?.customer_types || item?.app_customer_types ||
-        (item?.$or && checkForOrArray(item.$or, ['customer_types', 'app_customer_types']))
+      const hasCustomerType = query.$and.some(
+        (item) =>
+          item?.customer_types ||
+          item?.app_customer_types ||
+          (item?.$or && checkForOrArray(item.$or, ['customer_types', 'app_customer_types'])),
       );
 
-      const hasChannelFilter = query.$and.some(item =>
-        item?.channel ||
-        (item?.$or && checkForOrArray(item.$or, ['channel']))
+      const hasChannelFilter = query.$and.some(
+        (item) => item?.channel || (item?.$or && checkForOrArray(item.$or, ['channel'])),
       );
 
       if (hasCustomerType && !hasChannelFilter) {
         query.$and.push({
-          channels: { "name": { "$eqi": "App" } }
+          channels: { name: { $eqi: 'App' } },
         });
       }
     }
@@ -131,8 +128,7 @@ const addChannelFilter = (query) => {
     // Recurse deeper
     Object.values(query).forEach(addChannelFilter);
   }
-}
+};
 const checkForOrArray = (item: any[], keys: string[]): boolean => {
-  return item.some(item => keys.some(key => item[key]))
-}
-
+  return item.some((item) => keys.some((key) => item[key]));
+};

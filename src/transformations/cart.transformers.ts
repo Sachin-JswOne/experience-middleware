@@ -1,12 +1,8 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { AggregatedResponse } from 'src/models/aggregated-response.model';
 import { Logger } from '@nestjs/common';
 import { safeDebug } from 'src/utils/common-functions.util';
 
-export function mergeCartPageResponses(
-  aggregatedResponses: AggregatedResponse[],
-): any {
+export function mergeCartPageResponses(aggregatedResponses: AggregatedResponse[]): any {
   const responses = aggregatedResponses.reduce(
     (acc, response) => {
       acc[response.target] = response;
@@ -19,17 +15,29 @@ export function mergeCartPageResponses(
   const buyAgainApiResponse = responses['app-buy-again'];
   const cartSummaryApiResponse = responses['app-cart-summary'];
 
-  safeDebug(Logger, () => ` Strapi Cart Page Api response from method: mergeCartPageResponses : ${JSON.stringify(
-    strapiCartPageResponse,
-  )}`);
+  safeDebug(
+    Logger,
+    () =>
+      ` Strapi Cart Page Api response from method: mergeCartPageResponses : ${JSON.stringify(
+        strapiCartPageResponse,
+      )}`,
+  );
 
-  safeDebug(Logger, () => ` Buy Again Api response from method: mergeCartPageResponses : ${JSON.stringify(
-    buyAgainApiResponse,
-  )}`);
+  safeDebug(
+    Logger,
+    () =>
+      ` Buy Again Api response from method: mergeCartPageResponses : ${JSON.stringify(
+        buyAgainApiResponse,
+      )}`,
+  );
 
-  safeDebug(Logger, () => ` Cart Summary Api response from method: mergeCartPageResponses : ${JSON.stringify(
-    cartSummaryApiResponse,
-  )}`);
+  safeDebug(
+    Logger,
+    () =>
+      ` Cart Summary Api response from method: mergeCartPageResponses : ${JSON.stringify(
+        cartSummaryApiResponse,
+      )}`,
+  );
 
   if (
     !strapiCartPageResponse ||
@@ -52,19 +60,15 @@ export function mergeCartPageResponses(
   if (
     typeof strapiCartPageResponse.data === 'object' &&
     strapiCartPageResponse.data.data !== null &&
-    Array.isArray(
-      (strapiCartPageResponse.data.data as { blocks?: unknown[] }).blocks,
-    )
+    Array.isArray((strapiCartPageResponse.data.data as { blocks?: unknown[] }).blocks)
   ) {
     originalBlocks = [
-      ...((strapiCartPageResponse.data.data as { blocks?: unknown[] })
-        .blocks as unknown[]),
+      ...((strapiCartPageResponse.data.data as { blocks?: unknown[] }).blocks as unknown[]),
     ];
     const blocks: any[] = originalBlocks;
 
-    const buyAgainProducts = (
-      buyAgainApiResponse?.data as { listOfBuyAgainProducts?: unknown }
-    )?.listOfBuyAgainProducts;
+    const buyAgainProducts = (buyAgainApiResponse?.data as { listOfBuyAgainProducts?: unknown })
+      ?.listOfBuyAgainProducts;
     if (Array.isArray(buyAgainProducts)) {
       const buyAgainBlock = blocks.find(
         (block) => block.__component === 'app-components.app-buy-again',

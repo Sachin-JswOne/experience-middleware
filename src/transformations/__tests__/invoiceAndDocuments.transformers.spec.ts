@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-
 import { formatDate } from '../../../src/utils/common-functions.util';
 import {
   transformDocuments,
@@ -206,15 +204,11 @@ describe('invoiceAndDocuments.transformers', () => {
       const result = transformInvoiceAndDocuments(apiResponse);
       expect(result.listOfDocuments[0].shipmentNumber).toBe('');
       expect(result.listOfDocuments[0].pbOrder).toBeUndefined();
-      expect(result.listOfDocuments[0].dispatchedOn).toBe(
-        'formatted_2023-10-28T10:00:00Z',
-      );
+      expect(result.listOfDocuments[0].dispatchedOn).toBe('formatted_2023-10-28T10:00:00Z');
     });
 
     it('should return an empty list and log an error if an exception occurs', () => {
-      const errorSpy = jest
-        .spyOn(console, 'error')
-        .mockImplementation(() => {});
+      const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
       const faultyResponse = {
         data: {
           data: { orderShipmentSummaryList: 'not an array' },

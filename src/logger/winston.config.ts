@@ -1,7 +1,3 @@
-/* eslint-disable @typescript-eslint/restrict-template-expressions */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 // src/logger/winston.config.ts
 import { utilities as nestWinstonModuleUtilities } from 'nest-winston';
 import {
@@ -9,6 +5,12 @@ import {
   getFormattedUserIdentifiersFromContext,
 } from 'src/utils/tracing.util';
 import * as winston from 'winston';
+import * as Sentry from '@sentry/nestjs';
+
+const SentryWinstonTransport = Sentry.createSentryWinstonTransport(winston.transports.Stream, {
+  // Only capture error and warn logs
+  levels: ["error", "warn"],
+});
 
 export const winstonConfig: winston.LoggerOptions = {
   level: process.env.LOG_LEVEL ?? 'info',
@@ -34,6 +36,19 @@ export const winstonConfig: winston.LoggerOptions = {
     }),
     new winston.transports.File({
       filename: 'logs/combined.log',
+    }),
+    // Sentry transport for error tracking
+    new SentryWinstonTransport({
+      level: 'warn', // Only send warnings and errors to Sentry
+      stream: process.stdout, // Required stream property
+      format: winston.format.combine(
+        winston.format.timestamp(),
+        winston.format.printf(({ level, message, timestamp }) => {
+          const traceContext = getFormattedTracingContext();
+          const userContext = getFormattedUserIdentifiersFromContext();
+          return `[${timestamp}] ${level}: ${traceContext} ${userContext} ${message}`.trim();
+        }),
+      ),
     }),
   ],
 };

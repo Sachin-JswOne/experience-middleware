@@ -1,6 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import {
   createAddress,
   getAddressRequest,
@@ -79,9 +76,7 @@ describe('address.transformers.createAddress', () => {
       fail('Expected CustomError to be thrown');
     } catch (e: any) {
       expect(e).toBeInstanceOf(CustomError);
-      expect(e.message).toBe(
-        'Access token not found from Salesforce token API',
-      );
+      expect(e.message).toBe('Access token not found from Salesforce token API');
       expect(e.httpStatusCode).toBe(HttpStatus.BAD_REQUEST);
     }
   });
@@ -92,9 +87,7 @@ describe('address.transformers.createAddress', () => {
     try {
       createAddress(req, undefined);
     } catch (e: any) {
-      expect(e.message).toBe(
-        'Access token not found from Salesforce token API',
-      );
+      expect(e.message).toBe('Access token not found from Salesforce token API');
       expect(e.httpStatusCode).toBe(HttpStatus.BAD_REQUEST);
     }
   });
@@ -124,9 +117,7 @@ describe('address.transformers.createAddress', () => {
       try {
         createAddress(req, prev);
       } catch (e: any) {
-        expect(e.message).toBe(
-          'Access token not found from Salesforce token API',
-        );
+        expect(e.message).toBe('Access token not found from Salesforce token API');
         expect(e.httpStatusCode).toBe(HttpStatus.BAD_REQUEST);
       }
     }
@@ -262,14 +253,9 @@ describe('get address api test cases', () => {
     it('should transform the request successfully', () => {
       (jwt.decode as jest.Mock).mockReturnValue({ sfCustomerId: '12345' });
 
-      const transformedRequest = getAddressRequest(
-        mockRequest,
-        mockPrevResponses,
-      );
+      const transformedRequest = getAddressRequest(mockRequest, mockPrevResponses);
 
-      expect(transformedRequest.headers.Authorization).toBe(
-        'Bearer sf-access-token',
-      );
+      expect(transformedRequest.headers.Authorization).toBe('Bearer sf-access-token');
       expect(transformedRequest.body).toBeNull();
       expect(transformedRequest.url.search).toBe('?accountId=12345');
     });
@@ -283,13 +269,8 @@ describe('get address api test cases', () => {
           httpStatus: 200,
         },
       ];
-      expect(() =>
-        getAddressRequest(mockRequest, prevResponsesWithoutToken),
-      ).toThrow(
-        new CustomError(
-          'Access token not found from Salesforce token API',
-          HttpStatus.BAD_REQUEST,
-        ),
+      expect(() => getAddressRequest(mockRequest, prevResponsesWithoutToken)).toThrow(
+        new CustomError('Access token not found from Salesforce token API', HttpStatus.BAD_REQUEST),
       );
     });
 
@@ -335,17 +316,12 @@ describe('get address api test cases', () => {
       (jwt.decode as jest.Mock).mockImplementation(() => {
         throw new Error('Invalid token');
       });
-      const consoleErrorSpy = jest
-        .spyOn(console, 'error')
-        .mockImplementation(() => {});
+      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
 
       const sfId = getSfIdFromHeaders(headers);
 
       expect(sfId).toBeNull();
-      expect(consoleErrorSpy).toHaveBeenCalledWith(
-        'Error decoding JWT:',
-        expect.any(Error),
-      );
+      expect(consoleErrorSpy).toHaveBeenCalledWith('Error decoding JWT:', expect.any(Error));
       consoleErrorSpy.mockRestore();
     });
 

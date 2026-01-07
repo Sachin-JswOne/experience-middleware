@@ -3,9 +3,10 @@ dotenv.config();
 
 export const APP_ENV = process.env.APP_ENV || 'dev';
 
+// Below line is Getting imported in tranformer.
+export const CMS_MSME_URL = process.env.CMS_MSME_URL;
 export const CMS_ASSETS_URLS = {
-  BUCKET_URL:
-    process.env.CMS_ASSETS_BUCKET_URL || 'https://default-bucket-url.com',
+  BUCKET_URL: process.env.CMS_ASSETS_BUCKET_URL || 'https://default-bucket-url.com',
   CDN_URL: process.env.CMS_ASSETS_CDN_URL || 'https://default-cdn-url.com',
 };
 
@@ -67,8 +68,7 @@ export const DEFAULT_CURRENCY_CODE = 'INR';
 export const MSME = 'msme';
 
 export const MSME_ERRORS_MAPPING = {
-  'Incorrect OTP. Please enter correct OTP':
-    'Incorrect OTP. Please enter a valid OTP',
+  'Incorrect OTP. Please enter correct OTP': 'Incorrect OTP. Please enter a valid OTP',
   'Wrong password. Please try again with the correct password':
     'Incorrect password. Please try again',
   'You have exceeded maximum limit. Please retry after 24 hrs or contact our sales team: 7208055523 or support@jswonemsme.com':
@@ -77,8 +77,7 @@ export const MSME_ERRORS_MAPPING = {
     'Max retry limit reached. Please try after 24 hrs.',
   'Otp has expired, Please regenerate otp to continue.':
     'OTP has expired. Please resend OTP to continue.',
-  'Otp is not for this customer':
-    'Something went wrong. Please try again later.',
+  'Otp is not for this customer': 'Something went wrong. Please try again later.',
 };
 export const SF_QUERY_PARAMS = {
   grant_type: process.env.SF_GRANT_TYPE,
@@ -187,5 +186,5 @@ export const PAYMENT_STATUS_MAPPING = {
 };
 
 export const DEFAULT_VALUE = 0.0;
-export const CONSENT_EVENT_NAME="opt-in";
-export const CONSENT_REGISTRATION_SOURCE = "JSW One MSME App";
+export const CONSENT_EVENT_NAME = 'opt-in';
+export const CONSENT_REGISTRATION_SOURCE = 'JSW One MSME App';

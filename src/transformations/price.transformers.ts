@@ -1,31 +1,16 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-import {
-  CCP_PRICE_API_ATTRIBUTES_MAPPING,
-  PRODUCT_TYPE_KEYS,
-} from 'src/config/app.config';
+import { CCP_PRICE_API_ATTRIBUTES_MAPPING, PRODUCT_TYPE_KEYS } from 'src/config/app.config';
 import { BaseRequest } from 'src/models/base-request.model';
 import { priceRequest, priceResponse } from 'src/models/price.model';
 import { Logger } from '@nestjs/common';
 import { safeDebug } from 'src/utils/common-functions.util';
 
-export function transformLineItemPriceRequest(
-  request: BaseRequest,
-): BaseRequest {
+export function transformLineItemPriceRequest(request: BaseRequest): BaseRequest {
   const requestBody: priceRequest = request?.body;
-  const variantMMID = getVariantMMID(
-    requestBody?.category,
-    requestBody?.productMMID,
-  );
+  const variantMMID = getVariantMMID(requestBody?.category, requestBody?.productMMID);
 
-  const productVariantKey = getProductVariantKey(
-    requestBody?.key,
-    requestBody?.productAttributes,
-  );
+  const productVariantKey = getProductVariantKey(requestBody?.key, requestBody?.productAttributes);
 
-  const customAttributes = getCustomAttributes(
-    requestBody?.subCategory,
-    requestBody?.quantity,
-  );
+  const customAttributes = getCustomAttributes(requestBody?.subCategory, requestBody?.quantity);
 
   const productAttributes = getProductAttributes(
     requestBody?.productAttributes,
@@ -98,9 +83,13 @@ export function getVariantMMID(category: string, productMMID: string): string {
 }
 
 export function transformLineItemPriceResponse(response: priceResponse) {
-  safeDebug(Logger, () => ` Line Item Price Api response from method: transformLineItemPriceResponse : ${JSON.stringify(
-    response,
-  )}`);
+  safeDebug(
+    Logger,
+    () =>
+      ` Line Item Price Api response from method: transformLineItemPriceResponse : ${JSON.stringify(
+        response,
+      )}`,
+  );
   if (response.success && response?.price) {
     return {
       price: response?.price?.displayVariantLineItemPrice || 0,
@@ -123,9 +112,7 @@ export function getProductAttributes(
     let attributeKey = attr.key;
 
     if (
-      ['GL Coils', 'GL Sheets', 'PPGL Coils', 'PPGL Sheets'].includes(
-        subCategory,
-      ) &&
+      ['GL Coils', 'GL Sheets', 'PPGL Coils', 'PPGL Sheets'].includes(subCategory) &&
       attr.key === 'coating_grade_gsm'
     ) {
       attributeKey = 'coating_grade_gsm_gl_ppgl';

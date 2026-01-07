@@ -35,8 +35,8 @@ export class TraceContextInterceptor implements NestInterceptor {
       res.setHeader('span-id', spanContext.spanId);
 
       // Optional: attach IDs to request object (for downstream services, logs, etc.)
-      (req as Record<string, unknown>)['traceId'] = spanContext.traceId;
-      (req as Record<string, unknown>)['spanId'] = spanContext.spanId;
+      req['traceId'] = spanContext.traceId;
+      req['spanId'] = spanContext.spanId;
 
       // Add route/method info as span attributes
       activeSpan.setAttribute('http.method', req.method as string);
@@ -44,15 +44,11 @@ export class TraceContextInterceptor implements NestInterceptor {
 
       // normalize span name to route pattern for better Coroot matching
       const method = req.method ?? '';
-      const route =
-        (req as any)?.route?.path ??
-        (req as any)?.originalUrl ??
-        (req.url as string);
+      const route = (req as any)?.route?.path ?? (req as any)?.originalUrl ?? (req.url as string);
       if (route) {
         activeSpan.updateName(`${method} ${route}`);
       }
     }
-
 
     return next.handle().pipe(
       tap({
@@ -66,7 +62,10 @@ export class TraceContextInterceptor implements NestInterceptor {
             if (typeof response === 'object' && response !== null) {
               // For large responses, you might want to truncate or sample
               if (responseStr.length > 1000) {
-                activeSpan.setAttribute('http.response.preview', responseStr.substring(0, 1000) + '...');
+                activeSpan.setAttribute(
+                  'http.response.preview',
+                  responseStr.substring(0, 1000) + '...',
+                );
                 activeSpan.setAttribute('http.response.truncated', true);
               } else {
                 activeSpan.setAttribute('http.response.data', responseStr);
