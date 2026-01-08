@@ -12,7 +12,6 @@ export function getSearchPageDetails(aggregatedResponses: AggregatedResponse[]):
   const buyAgainResponse = responses['ccp-buy-again-with-prices']?.data;
   const recentSearchResponse = responses['ccp-recent-search']?.data;
 
-
   safeDebug(Logger, () => `Search Page CMS → ${JSON.stringify(cmsResponse?.data)}`);
   safeDebug(Logger, () => `Buy Again → ${JSON.stringify(buyAgainResponse?.data)}`);
 
@@ -35,9 +34,9 @@ export function getSearchPageDetails(aggregatedResponses: AggregatedResponse[]):
     recentSearchResponse?.success && Array.isArray(recentSearchResponse.data)
       ? recentSearchResponse.data
       : [];
-
+  const hasBuyAgainBlock = blocks.some((b) => b.__component === 'app-components.app-buy-again');
   //BUY AGAIN → UPDATE EXISTING BLOCK
-  if (buyAgainResponse?.success) {
+  if (buyAgainResponse?.success && hasBuyAgainBlock) {
     const rawData = buyAgainResponse.data ?? {};
     const { listOfBuyAgainProducts, variantList, skuSize } = rawData;
 
@@ -75,8 +74,24 @@ export function getSearchPageDetails(aggregatedResponses: AggregatedResponse[]):
         },
       };
     }
+  } else if (!buyAgainResponse?.success && hasBuyAgainBlock) {
+    const filteredBlocks = blocks.filter(
+      (b) => b.__component !== 'app-components.app-search-top-items',
+    );
+
+    return {
+      data: {
+        ...cmsData,
+        blocks: filteredBlocks,
+        recentSearches,
+      },
+      meta: {
+        timestamp: new Date().toISOString(),
+        version: '1.0',
+      },
+    };
   }
-  //  NO BUY AGAIN → Return CMS blocks as-is with search-top-items
+  // APP FLOW → CMS never had buy-again block → show top items
   return {
     data: {
       ...cmsData,
