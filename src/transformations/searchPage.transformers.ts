@@ -14,7 +14,7 @@ export function getSearchPageDetails(aggregatedResponses: AggregatedResponse[]):
   const featureFlags = responses['cmsFeatureFlag']?.data?.data ?? [];
   const topItemsResponse = responses['search-top-items']?.data;
   const isCentralCatalogueEnabled = featureFlags.some(
-    (f) => f.name === 'central_catalogue_search' && f.isActive === true,
+    (f) => f.name === 'central_catalogue_global' && f.isActive === true,
   );
 
   safeDebug(Logger, () => `Search Page CMS → ${JSON.stringify(cmsResponse?.data)}`);
@@ -84,7 +84,7 @@ export function getSearchPageDetails(aggregatedResponses: AggregatedResponse[]):
     const ccpProducts = topItemsResponse?.data?.products;
     if (!Array.isArray(ccpProducts)) {
       Logger.warn(
-        'central_catalogue_search enabled but CCP top-items failed. Removing top-items block.',
+        'central_catalogue_global enabled but CCP top-items failed. Removing top-items block.',
       );
 
       const filteredBlocks = blocks.filter(
