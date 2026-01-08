@@ -1672,7 +1672,7 @@
           "destination": "access_token"
         }
       ],
-      "requiredParams": ["categoryId"]
+      "requiredParams": ["*"]
     }
   },
   {
