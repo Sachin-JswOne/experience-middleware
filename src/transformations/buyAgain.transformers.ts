@@ -33,7 +33,7 @@ export function transformBuyAgainResponse(response: any) {
       return {
         mmid: item.productMMID,
         displayName: item.name,
-        category: item.category || '',
+        slug: item.productSlug || '',
         imageUrl: [
           {
             url: item.imageUrl || '',
