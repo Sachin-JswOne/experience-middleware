@@ -1900,7 +1900,7 @@
         }
       ],
       "requiredParams": [
-        "categoryId"
+        "*"
       ]
     }
   },
