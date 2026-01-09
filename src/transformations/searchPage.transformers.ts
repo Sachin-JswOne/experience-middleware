@@ -36,8 +36,10 @@ export function getSearchPageDetails(aggregatedResponses: AggregatedResponse[]):
       ? recentSearchResponse.data
       : [];
 
+  const hasBuyAgainBlock = blocks.some((b) => b.__component === 'app-components.app-buy-again');
+
   //BUY AGAIN → UPDATE EXISTING BLOCK
-  if (buyAgainResponse?.success) {
+  if (buyAgainResponse?.success && hasBuyAgainBlock) {
     const rawData = buyAgainResponse.data ?? {};
     const { listOfBuyAgainProducts, variantList, skuSize } = rawData;
 
@@ -75,6 +77,22 @@ export function getSearchPageDetails(aggregatedResponses: AggregatedResponse[]):
         },
       };
     }
+  } else if (!buyAgainResponse?.success && hasBuyAgainBlock) {
+    const filteredBlocks = blocks.filter(
+      (b) => b.__component !== 'app-components.app-search-top-items',
+    );
+
+    return {
+      data: {
+        ...cmsData,
+        blocks: filteredBlocks,
+        recentSearches,
+      },
+      meta: {
+        timestamp: new Date().toISOString(),
+        version: '1.0',
+      },
+    };
   }
   //  NO BUY AGAIN → Return CMS blocks as-is with search-top-items
   return {
