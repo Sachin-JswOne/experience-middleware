@@ -59,3 +59,78 @@ export function extractCentralCatalogueCategoryIds(
         },
     };
 }
+
+export function extractBrandCategoryIds(
+  request: BaseRequest,
+  prevResponses?: AggregatedResponse[],
+): BaseRequest {
+
+  if (!prevResponses || prevResponses.length === 0) {
+    // Return request with empty body array to avoid invalid API calls
+    return {
+      ...request,
+      body: {
+        brandCategoryIds: [],
+      },
+    };
+  }
+  const cmsResponse = prevResponses.find((r) => r.target === 'app-home-page');
+
+  if (!cmsResponse) {
+    Logger.warn(
+      `[extractBrandCategoryIds] CMS response not found in prevResponses. Available targets: ${prevResponses.map((r) => r.target).join(', ')}`,
+    );
+    return {
+      ...request,
+      body: {
+        brandCategoryIds: [],
+      },
+    };
+  }
+
+  const blocks = cmsResponse.data?.data?.blocks ?? [];
+
+  // Extract category IDs from web_central_catalogue_categories array in app-top-brands blocks
+  const brandCategoryIds = blocks
+    .filter(
+      (b: any) =>
+        b.__component === 'app-components.app-top-brands' &&
+        Array.isArray(b.web_central_catalogue_categories) &&
+        b.web_central_catalogue_categories.length > 0,
+    )
+    .flatMap((b: any) =>
+      b.web_central_catalogue_categories.map((c: any) => c.categoryId).filter(Boolean),
+    );
+
+  Logger.log(
+    `[extractBrandCategoryIds] Extracted ${brandCategoryIds.length} brand category IDs: ${JSON.stringify(brandCategoryIds)}`,
+  );
+
+  if (brandCategoryIds.length === 0) {
+    const topBrandBlocks = blocks.filter(
+      (b: any) => b.__component === 'app-components.app-top-brands',
+    );
+    const blocksWithCategories = topBrandBlocks.filter(
+      (b: any) =>
+        Array.isArray(b.web_central_catalogue_categories) &&
+        b.web_central_catalogue_categories.length > 0,
+    );
+    Logger.warn(
+      `[extractBrandCategoryIds] No categoryId found in top-brand component. Total app-top-brands blocks: ${topBrandBlocks.length}, Blocks with web_central_catalogue_categories: ${blocksWithCategories.length}`,
+    );
+    // Return with empty array to make API call with valid structure
+    return {
+      ...request,
+      body: {
+        brandCategoryIds: [],
+      },
+    };
+  }
+
+  return {
+    ...request,
+    body: {
+      brandCategoryIds,
+    },
+  };
+}
