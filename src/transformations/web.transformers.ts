@@ -3,7 +3,11 @@ import { Logger } from '@nestjs/common';
 import { safeDebug } from 'src/utils/common-functions.util';
 import { BaseRequest } from 'src/models/base-request.model';
 import { CustomError } from 'src/utils/CustomError';
-export { extractCentralCatalogueCategoryIds, getAllCentralCatalogueCategoryIds } from 'src/utils/central-category.util';
+export {
+  extractCentralCatalogueCategoryIds,
+  getAllCentralCatalogueCategoryIds,
+  extractBrandCategoryIds,
+} from 'src/utils/central-category.util';
 
 export function mergeWebHomePageResponses(aggregatedResponses: AggregatedResponse[]): any {
   const responses = aggregatedResponses.reduce(
@@ -20,6 +24,7 @@ export function mergeWebHomePageResponses(aggregatedResponses: AggregatedRespons
   const pendingDispatchResponse = responses['pending-dispatch-quantity'];
   const webProductsResponse = responses['web-homepage-products'];
   const webCentralCatalogueResponse = responses['web-central-catalogue-categories'];
+  const webTopBrandCategoriesResponse = responses['web-central-top-brand-categories'];
 
   safeDebug(
     Logger,
@@ -140,11 +145,19 @@ export function mergeWebHomePageResponses(aggregatedResponses: AggregatedRespons
         .filter((nav: any) => nav.subMenu && nav.subMenu.length > 0);
     }
 
-    // inject central catalogue categories into app-top-brands blocks
+  }
+
+  // inject top brand categories data into app-top-brands blocks
+  if (
+    webTopBrandCategoriesResponse?.success &&
+    Array.isArray(webTopBrandCategoriesResponse.data?.data?.navigation)
+  ) {
+    const topBrandNavigation = webTopBrandCategoriesResponse.data.data.navigation;
+
     const topBrandsBlocks = blocks.filter(
       (b: any) =>
         b.__component === 'app-components.app-top-brands' &&
-       Array.isArray(b.web_central_catalogue_categories)
+        Array.isArray(b.web_central_catalogue_categories),
     );
 
     for (const block of topBrandsBlocks) {
@@ -152,12 +165,10 @@ export function mergeWebHomePageResponses(aggregatedResponses: AggregatedRespons
         .map((c: any) => c.categoryId)
         .filter(Boolean);
 
-      block.centralCategoryIdData = navigation
+      block.centralCategoryIdData = topBrandNavigation
         .map((nav: any) => ({
           ...nav,
-          subMenu: nav.subMenu?.filter((sub: any) =>
-            blockCategoryIds.includes(sub.id)
-          ),
+          subMenu: nav.subMenu?.filter((sub: any) => blockCategoryIds.includes(sub.id)),
         }))
         .filter((nav: any) => nav.subMenu && nav.subMenu.length > 0);
     }
