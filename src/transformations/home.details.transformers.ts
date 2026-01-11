@@ -276,6 +276,11 @@ export function mergeProjectDetailsAndTrackerResponses(
   const daysLeft = homesData?.designSubscriptionResponse?.daysLeft;
   const date = endDate;
   let activeDesignType = "designStageTypeOne";
+  let designCardVisible = true;
+
+  if(designSubscription.subscriptionStartDate == null || designSubscription.subscriptionEndDate == null ){
+   designCardVisible = false;
+  }
 
   if(designSubscription?.daysLeft <= 5){
     let designStageTypeTwo = strapiData?.data?.projectTracker?.designStage?.designStageTypeTwo;
@@ -303,7 +308,8 @@ export function mergeProjectDetailsAndTrackerResponses(
     ...homesData?.designSubscriptionResponse,
     heading : "",
     subHeading : "",
-    toolTip : ""
+    toolTip : "",
+    designCardVisible : designCardVisible
   }
 
   const projectTracker = {
