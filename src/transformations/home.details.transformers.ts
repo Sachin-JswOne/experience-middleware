@@ -291,7 +291,7 @@ export function mergeProjectDetailsAndTrackerResponses(
 
     strapiData.data.projectTracker.designStage.designStageTypeOne = {
       ...strapiData.data.projectTracker.designStage.designStageTypeOne,
-      subscriptionStartDate : "",
+      subscriptionStartDate : homesData?.designSubscriptionResponse?.subscriptionStartDate,
       subscriptionEndDate : endDate,
       daysLeft : daysLeft,
       currentDay : homesData?.designSubscriptionResponse?.currentDay,
