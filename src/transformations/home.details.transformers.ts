@@ -282,6 +282,23 @@ export function mergeProjectDetailsAndTrackerResponses(
    designCardVisible = false;
   }
 
+  if(designSubscription?.daysLeft > 5){
+   let designStageTypeOne = strapiData?.data?.projectTracker?.designStage?.designStageTypeOne;
+    designStageTypeOne.heading =  designStageTypeOne?.heading;
+    designStageTypeOne.subHeading = designStageTypeOne;
+    activeDesignType = "designStageTypeOne";
+    strapiData.data.projectTracker.designStage.designStageTypeOne = designStageTypeOne; 
+
+    strapiData.data.projectTracker.designStage.designStageTypeOne = {
+      ...strapiData.data.projectTracker.designStage.designStageTypeOne,
+      subscriptionStartDate : "",
+      subscriptionEndDate : endDate,
+      daysLeft : daysLeft,
+      currentDay : homesData?.designSubscriptionResponse?.currentDay,
+      totalDays : homesData?.designSubscriptionResponse?.totalDays
+  }
+  }
+
   if(designSubscription?.daysLeft <= 5){
     let designStageTypeTwo = strapiData?.data?.projectTracker?.designStage?.designStageTypeTwo;
     designStageTypeTwo.heading =  designStageTypeTwo?.heading.replace("${daysLeft}", daysLeft);
@@ -304,20 +321,13 @@ export function mergeProjectDetailsAndTrackerResponses(
    strapiData.data.projectTracker.designStage.designStageTypeFour = designStageTypeFour;
   }
 
-  let designSubscriptionResponse = {
-    ...homesData?.designSubscriptionResponse,
-    heading : "",
-    subHeading : "",
-    toolTip : "",
-    designCardVisible : designCardVisible
-  }
-
   const projectTracker = {
     ...strapiData.data.projectTracker,
     designStage: {
       ...strapiData.data.projectTracker?.designStage,
       subSteps: designStage,
-      activeDesignType : activeDesignType
+      activeDesignType : activeDesignType,
+      designCardVisible : designCardVisible
     },
     preConstructionStage: {
       ...strapiData.data.projectTracker?.preConstructionStage,
@@ -339,8 +349,7 @@ export function mergeProjectDetailsAndTrackerResponses(
       title,
       projectID,
       homesTeam,
-      projectTracker,
-      designSubscriptionResponse
+      projectTracker
     },
   };
 }
