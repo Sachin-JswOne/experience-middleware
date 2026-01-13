@@ -1,6 +1,7 @@
 import { Logger } from '@nestjs/common';
 import { BaseRequest } from '../models/base-request.model';
 import { AggregatedResponse } from '../models/aggregated-response.model';
+import { CustomError } from './CustomError';
 
 /**
  * Extracts all central catalogue category IDs from all blocks that contain them.
@@ -133,4 +134,118 @@ export function extractBrandCategoryIds(
       brandCategoryIds,
     },
   };
+}
+
+/**
+ * Extracts the category slug from app-product-category component.
+ * Gets the first app_product_categories element and extracts the categorySlug
+ * from the first web_central_catalogue_categories element.
+ * Throws CustomError if no valid slug is found to prevent invalid API calls.
+ */
+export function extractProductListingSlug(
+  request: BaseRequest,
+  prevResponses?: AggregatedResponse[],
+): BaseRequest {
+  Logger.log(
+    `[extractProductListingSlug] Available headers: ${JSON.stringify(Object.keys(request.headers || {}))}`,
+  );
+
+  if (!prevResponses || prevResponses.length === 0) {
+    Logger.warn(`[extractProductListingSlug] No previous responses available`);
+    throw new CustomError(
+      '[extractProductListingSlug] No previous responses available. Cannot extract product listing slug.',
+      400,
+    );
+  }
+
+  const cmsResponse = prevResponses.find((r) => r.target === 'app-home-page');
+
+  if (!cmsResponse || !cmsResponse.success) {
+    Logger.warn(
+      `[extractProductListingSlug] CMS response not found or failed. Available targets: ${prevResponses.map((r) => r.target).join(', ')}`,
+    );
+    throw new CustomError(
+      `[extractProductListingSlug] CMS response not found or failed. Cannot extract product listing slug.`,
+      400,
+    );
+  }
+
+  const blocks = cmsResponse.data?.data?.blocks ?? [];
+
+  // Find app-product-category blocks
+  const productCategoryBlocks = blocks.filter(
+    (b: any) => b.__component === 'app-components.app-product-category',
+  );
+
+  if (productCategoryBlocks.length === 0) {
+    Logger.warn(`[extractProductListingSlug] No app-product-category blocks found in CMS response`);
+    throw new CustomError(
+      '[extractProductListingSlug] No app-product-category blocks found. Cannot extract product listing slug.',
+      400,
+    );
+  }
+
+  // Get the first block and extract slug from first app_product_categories element
+  const firstBlock = productCategoryBlocks[0];
+  const firstProductCategory =
+    Array.isArray(firstBlock.app_product_categories) && firstBlock.app_product_categories.length > 0
+      ? firstBlock.app_product_categories[0]
+      : null;
+
+  if (!firstProductCategory) {
+    Logger.warn(
+      `[extractProductListingSlug] No app_product_categories found in first app-product-category block`,
+    );
+    throw new CustomError(
+      '[extractProductListingSlug] No app_product_categories found. Cannot extract product listing slug.',
+      400,
+    );
+  }
+
+  const firstCentralCategory =
+    Array.isArray(firstProductCategory.web_central_catalogue_categories) &&
+    firstProductCategory.web_central_catalogue_categories.length > 0
+      ? firstProductCategory.web_central_catalogue_categories[0]
+      : null;
+
+  if (!firstCentralCategory?.categorySlug) {
+    Logger.warn(
+      `[extractProductListingSlug] No categorySlug found in first web_central_catalogue_categories element`,
+    );
+    throw new CustomError(
+      '[extractProductListingSlug] No categorySlug found in web_central_catalogue_categories. Cannot extract product listing slug.',
+      400,
+    );
+  }
+
+  const slug = firstCentralCategory.categorySlug;
+
+  // Validate slug is not empty
+  if (!slug || typeof slug !== 'string' || slug.trim() === '') {
+    Logger.warn(`[extractProductListingSlug] Invalid or empty slug found: ${slug}`);
+    throw new CustomError(
+      '[extractProductListingSlug] Invalid or empty slug. Cannot process product listing request.',
+      400,
+    );
+  }
+
+  const trimmedSlug = slug.trim();
+
+  const requestBody = {
+    offSet: 0,
+    limit: 21,
+    slug: trimmedSlug,
+    storefront: 'msme',
+  };
+
+  // Preserve headers from the original request
+  const finalRequest = {
+    ...request,
+    body: requestBody,
+    headers: {
+      ...request.headers,
+    },
+  };
+
+  return finalRequest;
 }
