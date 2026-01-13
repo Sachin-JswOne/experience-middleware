@@ -1665,7 +1665,7 @@
       },
       {
         "name": "cart-page-buy-again",
-        "url": "https://www.jswonemsme.com/central_commerce/buy-again-list",
+        "url": "http://127.0.0.1:3000/xp-mi/public/v1/central_commerce/buy-again-list",
         "method": "GET",
         "timeout": {
           "request": 5000,
