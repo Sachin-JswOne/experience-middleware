@@ -131,24 +131,28 @@ export function getSearchPageDetails(aggregatedResponses: AggregatedResponse[]):
       const productMap = new Map(ccpProducts.map((p) => [p.product_mmid, p]));
 
       // Inject CCP data into CMS items
-      topItemsBlock.app_search_top_items = cmsItems.map((cmsItem) => {
-        const product = productMap.get(cmsItem.MMID);
-        if (!product) return [];
-        safeDebug(Logger, () => `TOP ITEMS MMID MATCHED | MMID: ${cmsItem.MMID}`);
-        return {
-          ...cmsItem,
-          title: product.attributes?.product_title,
-          webUrl: product.attributes?.slug,
-          MMID: product.product_mmid,
-          image: {
-            ...cmsItem.image,
-            url: product.meta_data?.product_media?.[0]?.public_url,
-          },
-        };
-      },
-    );
+      topItemsBlock.app_search_top_items = cmsItems
+        .map((cmsItem) => {
+          const product = productMap.get(cmsItem.MMID);
+          if (!product) {
+            safeDebug(Logger, () => `TOP ITEMS MMID NOT FOUND | MMID: ${cmsItem.MMID}`);
+            return null;
+          }
+          safeDebug(Logger, () => `TOP ITEMS MMID MATCHED | MMID: ${cmsItem.MMID}`);
+          return {
+            ...cmsItem,
+            title: product.attributes?.product_title,
+            webUrl: product.attributes?.slug,
+            MMID: product.product_mmid,
+            image: {
+              ...cmsItem.image,
+              url: product.meta_data?.product_media?.[0]?.public_url,
+            },
+          };
+        },
+      ).filter(Boolean);
+    }
   }
-}
   //  NO BUY AGAIN → Return CMS blocks as-is with search-top-items
   return {
     data: {
