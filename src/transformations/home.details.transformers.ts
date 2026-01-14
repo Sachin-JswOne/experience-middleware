@@ -285,7 +285,7 @@ export function mergeProjectDetailsAndTrackerResponses(
   if(designSubscription?.daysLeft > 5){
    let designStageTypeOne = strapiData?.data?.projectTracker?.designStage?.designStageTypeOne;
     designStageTypeOne.heading =  designStageTypeOne?.heading;
-    designStageTypeOne.subHeading = designStageTypeOne;
+    designStageTypeOne.subHeading = designStageTypeOne.subHeading;
     activeDesignType = "designStageTypeOne";
     strapiData.data.projectTracker.designStage.designStageTypeOne = designStageTypeOne; 
 
@@ -296,7 +296,7 @@ export function mergeProjectDetailsAndTrackerResponses(
       daysLeft : daysLeft,
       currentDay : homesData?.designSubscriptionResponse?.currentDay,
       totalDays : homesData?.designSubscriptionResponse?.totalDays
-  }
+    }
   }
 
   if(designSubscription?.daysLeft <= 5){
