@@ -7,6 +7,7 @@ export {
   extractCentralCatalogueCategoryIds,
   getAllCentralCatalogueCategoryIds,
   extractBrandCategoryIds,
+  extractProductListingSlug,
 } from 'src/utils/central-category.util';
 
 export function mergeWebHomePageResponses(aggregatedResponses: AggregatedResponse[]): any {
@@ -25,6 +26,7 @@ export function mergeWebHomePageResponses(aggregatedResponses: AggregatedRespons
   const webProductsResponse = responses['web-homepage-products'];
   const webCentralCatalogueResponse = responses['web-central-catalogue-categories'];
   const webTopBrandCategoriesResponse = responses['web-central-top-brand-categories'];
+  const productsListingResponse = responses['products-listing'];
 
   safeDebug(
     Logger,
@@ -195,24 +197,24 @@ export function mergeWebHomePageResponses(aggregatedResponses: AggregatedRespons
       );
 
     // // Inject central catalogue category data for app-product-category blocks
-    block?.app_product_categories?.filter(
-      (categoryProducts: any) =>
-        categoryProducts.webCategoryId &&
-        categoryProducts.itemsToShow
-    )
-      .forEach((categoryProducts: any) => {
-        const categoryIds = Array.isArray(categoryProducts.web_central_catalogue_categories)
-          ? categoryProducts.web_central_catalogue_categories
-            .map((c: any) => c.categoryId)
-            .filter(Boolean)
-          : [];
+    if (
+      productsListingResponse?.success &&
+      Array.isArray(productsListingResponse.data?.data?.products)
+    ) {
+      const productsArray = productsListingResponse.data.data.products;
 
-        categoryProducts.centralCategoryIdData = categoryIds.length > 0
-          ? categoryIds
-            .map((categoryId: string) => productsData[categoryId])
-            .filter(Boolean)
-          : [];
-      });
+      const filteredCategories = block?.app_product_categories?.filter(
+        (categoryProducts: any) => categoryProducts.webCategoryId && categoryProducts.itemsToShow,
+      );
+
+      if (filteredCategories && filteredCategories.length > 0) {
+        filteredCategories[0].centralCategoryIdData = [
+          {
+            products: productsArray,
+          },
+        ];
+      }
+    }
   }
 
   // Update merged data with blocks
