@@ -148,8 +148,8 @@ export function mergeCategoryResponses(results: AggregatedResponse[]): any {
           const match = ccaSubMenus.find(
             (menu: any) => menu?.name?.toLowerCase() === link?.label?.toLowerCase(),
           );
-          return isCentralCatalogueEnabled && match?.name && match?.seoUrl
-            ? { ...link, label: match.name, url: match.seoUrl }
+          return isCentralCatalogueEnabled && match?.name && match?.slug
+            ? { ...link, label: match.name, url: match.slug }
             : link;
         });
       }
@@ -169,8 +169,8 @@ export function mergeCategoryResponses(results: AggregatedResponse[]): any {
           const match = ccaSubMenus.find(
             (menu: any) => menu?.name?.toLowerCase() === link?.linkText?.toLowerCase(),
           );
-          return isCentralCatalogueEnabled && match?.name && match?.seoUrl
-            ? { ...link, linkText: match.name, linkHref: match.seoUrl }
+          return isCentralCatalogueEnabled && match?.name && match?.slug
+            ? { ...link, linkText: match.name, linkHref: match.slug }
             : link;
         });
       }
@@ -259,8 +259,8 @@ export function mergeWebGlobalResponse(results: AggregatedResponse[]): any {
           const match = ccaSubMenus.find(
             (menu: any) => menu?.name?.toLowerCase() === link?.label?.toLowerCase(),
           );
-          return isCentralCatalogueEnabled && match?.name && match?.seoUrl
-            ? { ...link, label: match.name, url: match.seoUrl }
+          return isCentralCatalogueEnabled && match?.name && match?.slug
+            ? { ...link, label: match.name, url: match.slug }
             : link;
         });
       }
