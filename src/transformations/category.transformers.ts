@@ -6,6 +6,7 @@ import { CMS_MSME_URL } from 'src/config/app.config';
 import * as generalTransformers from './general.transformers';
 import * as qs from 'qs';
 
+// Responsible for extracting the category ids from provided array of objects
 function extractIds(items: any[]): string[] {
   const ids: string[] = [];
   if (!Array.isArray(items)) return ids;
@@ -18,6 +19,7 @@ function extractIds(items: any[]): string[] {
   return ids;
 }
 
+// This is responsible for selecting the strapi url based on the device type for buy-online footer section
 export function selectStrapiUrl(request: BaseRequest): BaseRequest {
   // Parse query params from the URL search string
 
@@ -50,6 +52,7 @@ export function selectStrapiUrl(request: BaseRequest): BaseRequest {
   return generalTransformers.moveBodyToQueryParams(transformedRequest);
 }
 
+// This is responsible for creating the request for central catalogue API based on the strapi response for desktop
 export function transformCcaRequest(
   request: BaseRequest,
   prevResponses: AggregatedResponse[],
@@ -114,6 +117,7 @@ export function transformCcaRequest(
   };
 }
 
+// This is responsible for merging the strapi and cca responses for buy-online footer section Desktop
 export function mergeCategoryResponses(results: AggregatedResponse[]): any {
   const strapiResult = results.find((r) => r.target === 'strapi-footer');
   const ccaResult = results.find((r) => r.target === 'cca-categories');
@@ -122,7 +126,7 @@ export function mergeCategoryResponses(results: AggregatedResponse[]): any {
   const featureFlagResult = results.find((r) => r.target === 'cmsFeatureFlag');
   const featureFlags = featureFlagResult?.success ? featureFlagResult.data.data : [];
   // Find the specific flag for 'central_catalogue_global'
-  
+
   const centralCatalogueFlag = featureFlags.find(
     (flag: any) => flag?.name === 'central_catalogue_global',
   );
@@ -176,6 +180,7 @@ export function mergeCategoryResponses(results: AggregatedResponse[]): any {
   }
 }
 
+// This is responsible for creating the request for central catalogue API based on the strapi response for mobile mweb
 export function transformWebGlobalCcaRequest(
   request: BaseRequest,
   prevResponses: AggregatedResponse[],
@@ -217,6 +222,7 @@ export function transformWebGlobalCcaRequest(
   };
 }
 
+// This is responsible for merging the strapi and cca responses for buy-online footer section Mobile mweb
 export function mergeWebGlobalResponse(results: AggregatedResponse[]): any {
   const strapiResult = results.find((r) => r.target === 'webGlobalPage');
   const ccaResult = results.find((r) => r.target === 'cca-categories');
@@ -266,6 +272,7 @@ export function mergeWebGlobalResponse(results: AggregatedResponse[]): any {
   return appGlobalData;
 }
 
+// This is responsible for adding the feature flag query params to the request
 export function addFeatureFlagQueryParams(request: BaseRequest): BaseRequest {
   const transformedRequest: BaseRequest = {
     ...request,
@@ -284,4 +291,65 @@ export function addFeatureFlagQueryParams(request: BaseRequest): BaseRequest {
   };
   transformedRequest.url.search = qs.stringify(featureFlagQuery);
   return transformedRequest;
+}
+
+// This is responsible for creating the request for central catalogue API based on the strapi response for main menu
+export function transformMainMenuCcaRequest(
+  request: BaseRequest,
+  prevResponses: AggregatedResponse[],
+): BaseRequest {
+  const strapiResponse = prevResponses.find((r) => r.target === 'header-main-menu');
+  if (!strapiResponse || !strapiResponse.success) {
+    Logger.error(`Error: transformMainMenuCcaRequest Strapi dependency failed`);
+    return request;
+  }
+  let navigationItems: any[] = [];
+  const strapiData = strapiResponse?.data?.data || strapiResponse?.data || [];
+
+  if (Array.isArray(strapiData)) {
+    navigationItems = strapiData[0].central_catalogue_navigations;
+  }
+  const ids = extractIds(navigationItems).filter(Boolean);
+
+  return {
+    ...request,
+    body: {
+      categoryIds: ids,
+    },
+  };
+}
+
+// This is responsible for merging the strapi and cca responses for main menu
+export function mergeMainMenuResponses(results: AggregatedResponse[]): any {
+  const strapiResult = results.find((r) => r.target === 'header-main-menu');
+  const ccaResult = results.find((r) => r.target === 'cca-header-categories');
+  const featureFlagResult = results.find((r) => r.target === 'cmsFeatureFlag');
+
+  const featureFlags = featureFlagResult?.success ? featureFlagResult.data.data : [];
+  const centralCatalogueFlag = featureFlags.find(
+    (flag: any) => flag?.name === 'central_catalogue_global',
+  );
+  const isCentralCatalogueEnabled = centralCatalogueFlag?.isActive === true;
+
+  // if strapi is not able to fetch data then return error
+  if (!strapiResult || !strapiResult.success) {
+    return { error: 'Strapi fetch failed' };
+  }
+  const strapiMainMenuData = strapiResult?.data?.data || strapiResult?.data || [];
+
+  // if feature flag is not enabled or cca is not able to fetch data then return strapi data
+  if (!isCentralCatalogueEnabled || !ccaResult || !ccaResult.success) {
+    return strapiMainMenuData[0].navigation;
+  }
+  const mainMenuNavigationStrapi = strapiMainMenuData[0].navigation;
+  const ccaNavigation = ccaResult?.data?.data?.navigation[0]?.subMenu || [];
+
+  // taking the blogs and offers from strapi and adding it to ccaNavigation
+  mainMenuNavigationStrapi.forEach((item) => {
+    if (item?.name.toLowerCase() === 'blogs' || item?.name.toLowerCase() === 'offers') {
+      ccaNavigation.push(item);
+    }
+  });
+
+  return ccaNavigation;
 }
