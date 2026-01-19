@@ -2064,7 +2064,7 @@
           "request": 5000,
           "socket": 1000
         },
-        "reqTransform": "general.transformers.convertToGetRequest",
+        "reqTransform": "general.transformers.convertToGetRequest"
       }
     ],
     "resTransform": "cart.transformers.mergeMmebCartPageResponses"
