@@ -132,27 +132,26 @@ export function mergeCategoryResponses(results: AggregatedResponse[]): any {
   );
 
   const isCentralCatalogueEnabled = centralCatalogueFlag?.isActive === true;
-
   // ... existing error handling ...
   const ccaSubMenus = ccaResult?.data?.data?.navigation[0]?.subMenu || [];
   if (device === 'mobile') {
     // Process mobile footer (global-footer structure)
     const mobileFooter = strapiResult?.data.data.footer[0] || {};
-
     if (mobileFooter.footerSections) {
       const buyOnlineSection = mobileFooter.footerSections.find(
         (s: any) => s.heading === 'Buy online',
       );
-      if (buyOnlineSection?.links) {
-        buyOnlineSection.links = buyOnlineSection.links.map((link: any) => {
-          const match = ccaSubMenus.find(
-            (menu: any) => menu?.name?.toLowerCase() === link?.label?.toLowerCase(),
-          );
-          return isCentralCatalogueEnabled && match?.name && match?.slug
-            ? { ...link, label: match.name, url: match.slug }
-            : link;
-        });
+      if (!isCentralCatalogueEnabled || !ccaSubMenus || !ccaSubMenus.length) {
+        return mobileFooter;
       }
+      buyOnlineSection.links = ccaSubMenus.map((item) => {
+        return {
+          ...item,
+          label: item.name,
+          url: item.slug,
+        };
+      });
+      return mobileFooter;
     }
 
     return mobileFooter;
@@ -164,16 +163,17 @@ export function mergeCategoryResponses(results: AggregatedResponse[]): any {
         (item: any) => item.sectionTitle === 'Buy online',
       );
 
-      if (buyOnlineMenu?.tertiaryLinks) {
-        buyOnlineMenu.tertiaryLinks = buyOnlineMenu.tertiaryLinks.map((link: any) => {
-          const match = ccaSubMenus.find(
-            (menu: any) => menu?.name?.toLowerCase() === link?.linkText?.toLowerCase(),
-          );
-          return isCentralCatalogueEnabled && match?.name && match?.slug
-            ? { ...link, linkText: match.name, linkHref: match.slug }
-            : link;
-        });
+      if (!isCentralCatalogueEnabled || !ccaSubMenus || !ccaSubMenus.length) {
+        return desktopFooter;
       }
+      buyOnlineMenu.tertiaryLinks = ccaSubMenus.map((item) => {
+        return {
+          ...item,
+          linkText: item.name,
+          linkHref: item.slug,
+        };
+      });
+      return desktopFooter;
     }
 
     return desktopFooter;
@@ -253,17 +253,17 @@ export function mergeWebGlobalResponse(results: AggregatedResponse[]): any {
       const buyOnlineSection = globalFooter.footerSections.find(
         (s: any) => s?.heading === 'Buy online',
       );
-      if (buyOnlineSection?.links) {
-        // Update the links with data from CCA
-        buyOnlineSection.links = buyOnlineSection.links.map((link: any) => {
-          const match = ccaSubMenus.find(
-            (menu: any) => menu?.name?.toLowerCase() === link?.label?.toLowerCase(),
-          );
-          return isCentralCatalogueEnabled && match?.name && match?.slug
-            ? { ...link, label: match.name, url: match.slug }
-            : link;
-        });
+      if (!isCentralCatalogueEnabled || !ccaSubMenus || !ccaSubMenus.length) {
+        return appGlobalData;
       }
+      buyOnlineSection.links = ccaSubMenus.map((item) => {
+        return {
+          ...item,
+          label: item.name,
+          url: item.slug,
+        };
+      });
+      return appGlobalData;
     }
   } catch (error) {
     Logger.error('Error merging web-global response:', error);
