@@ -1811,6 +1811,36 @@
     }
   },
   {
+    "path": "/xp-mi/public/v1/mweb-cart-page",
+    "method": "POST",
+    "routeHandler": "AGGREGATE",
+    "aggregationType": "PARALLEL",
+    "targets": [
+      {
+        "name": "mweb-cart-page",
+        "url": "https://qa-cms-ext.msme.jswone.in/api/app-cart-page-v2",
+        "method": "GET",
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
+        "reqTransform": "general.transformers.moveBodyToQueryParams",
+        "resTransform": "cms.transformers.replaceUriPrefix"
+      },
+      {
+        "name": "cart-page-buy-again",
+        "url": "http://127.0.0.1:3000/xp-mi/public/v1/central_commerce/buy-again-list",
+        "method": "GET",
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
+        "reqTransform": "general.transformers.convertToGetRequest"
+      }
+    ],
+    "resTransform": "cart.transformers.mergeMmebCartPageResponses"
+  },
+  {
     "path": "/xp-mi/public/v1/central-catalogue/header/main-menu",
     "method": "POST",
     "routeHandler": "AGGREGATE",
@@ -1836,11 +1866,7 @@
             "source": "access_token",
             "destination": "access_token"
           }
-        ],
-        "timeout": {
-          "request": 5000,
-          "socket": 1000
-        }
+        ]
       },
       {
         "name": "cmsFeatureFlag",

@@ -98,3 +98,77 @@ export function mergeCartPageResponses(aggregatedResponses: AggregatedResponse[]
   );
   return { data: {}, meta: {} };
 }
+
+// Merge Response for mweb cart page
+export function mergeMmebCartPageResponses(aggregatedResponses: AggregatedResponse[]): any {
+  const responses = aggregatedResponses.reduce(
+    (acc, response) => {
+      acc[response.target] = response;
+      return acc;
+    },
+    {} as Record<string, AggregatedResponse>,
+  );
+
+  const strapiCartPageResponse = responses['mweb-cart-page'];
+  const buyAgainApiResponse = responses['cart-page-buy-again'];
+
+  safeDebug(
+    Logger,
+    () =>
+      ` Strapi Cart Page Api response from method: mergeCartPageResponses : ${JSON.stringify(
+        strapiCartPageResponse,
+      )}`,
+  );
+
+  safeDebug(
+    Logger,
+    () =>
+      ` Buy Again Api response from method: mergeCartPageResponses : ${JSON.stringify(
+        buyAgainApiResponse,
+      )}`,
+  );
+
+  if (
+    !strapiCartPageResponse?.success ||
+    typeof strapiCartPageResponse.data !== 'object' ||
+    strapiCartPageResponse.data === null ||
+    typeof strapiCartPageResponse.data.data !== 'object' ||
+    strapiCartPageResponse.data.data === null
+  ) {
+    Logger.error(
+      `Error for Cart Page API method: mergeCartPageResponses Strapi cart page response is missing or invalid`,
+    );
+    return { data: {}, meta: {}, success: false };
+  }
+
+  if (!buyAgainApiResponse || !buyAgainApiResponse?.success) {
+    Logger.error(
+      `Error for Cart Page API method: mergeCartPageResponses Strapi cart page response is missing or invalid`,
+    );
+    return { data: strapiCartPageResponse?.data?.data, success: true };
+  }
+  const strapiCartData = strapiCartPageResponse?.data?.data as { blocks?: any[] };
+  const blocks: any[] = Array.isArray(strapiCartData?.blocks) ? [...strapiCartData.blocks] : [];
+
+  const rawData = buyAgainApiResponse?.data?.data ?? {};
+  const { listOfBuyAgainProducts, variantList, skuSize } = rawData;
+
+  const buyAgainProducts =
+    listOfBuyAgainProducts ?? variantList ?? (Array.isArray(rawData) ? rawData : []);
+
+  // Inject the buy again products into the buy again block
+  if (buyAgainProducts.length > 0) {
+    const buyAgainBlock = blocks.find(
+      (block) => block.__component === 'app-components.app-buy-again',
+    );
+    if (buyAgainBlock) {
+      buyAgainBlock.listOfBuyAgainProducts = buyAgainProducts;
+      if (variantList) buyAgainBlock.variantList = variantList;
+      if (skuSize != null) buyAgainBlock.skuSize = skuSize;
+    }
+  }
+  return {
+    ...strapiCartData,
+    blocks,
+  };
+}
