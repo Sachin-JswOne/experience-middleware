@@ -5,6 +5,8 @@ import {
   APP_STATUS_PB_WHEN_NO_FULLFILLEDBY_PRESENT,
   CONNECTOR_ORDER_TYPE_MAPPING,
   DEFAULT_CURRENCY_CODE,
+  DEFAULT_OFFSET,
+  DEFAULT_PAGE_SIZE,
   ERP_ORDER_STATUS,
   ERP_ORDER_STATUS_MAPPING,
   ERP_ORDER_TYPE_MAPPING,
@@ -32,6 +34,8 @@ export function transformOrderListingRequest(request) {
     }
 
     request.url.searchParams.set('developerName', developerName);
+    request.url.searchParams.set('offset', DEFAULT_OFFSET);
+    request.url.searchParams.set('limit', DEFAULT_PAGE_SIZE);
     request.url.searchParams.delete('customerType');
     request.body = null;
     return request;
