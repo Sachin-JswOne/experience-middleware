@@ -76,7 +76,6 @@ export function transformCcaRequest(
         categoryIds,
       )}`,
   );
-  console.log("categoryIds", categoryIds);
   return {
     ...request,
     body: {
@@ -138,7 +137,6 @@ export function mergeCategoryResponses(
       }
     );
   }
-  console.log("ccaResult?.data", ccaResult?.data.data.navigation[0].subMenu);
 
   /**
    * Returning both results (can be adapted if only CCA response is needed)
