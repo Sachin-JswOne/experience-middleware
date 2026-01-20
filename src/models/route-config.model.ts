@@ -19,6 +19,7 @@ export interface TargetConfig {
   requiredParams?: string[];
   resTransform?: string;
   interceptors?: string[];
+  requiredPathParams?: string[];
 }
 
 export interface BaseRouteConfig {
