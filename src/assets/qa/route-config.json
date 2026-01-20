@@ -303,7 +303,7 @@
       },
        {
         "name": "app-buy-again",
-        "url": "http://127.0.0.1:3000/xp-mi/public/v1/buy-again-list",
+        "url": "https://qa.msme.jswone.in/central_commerce/buy-again-list",
         "method": "GET",
         "timeout": {
           "request": 15000,
@@ -313,9 +313,10 @@
         "headersToPass": [
           {
             "source": "authorization",
-            "destination": "authorization"
+            "destination": "access_token"
           }
-        ]
+        ],
+         "resTransform": "buyAgain.transformers.transformBuyAgainResponse"
       },
       {
         "name": "app-categories",
@@ -1902,26 +1903,5 @@
       }
     ],
     "resTransform": "category.transformers.mergeMainMenuResponses"
-  },
-    {
-    "path": "/xp-mi/public/v1/buy-again-list",
-    "method": "GET",
-    "routeHandler": "TRANSFORM",
-    "target": {
-      "name": "get-buy-again-list",
-      "url": "https://qa.msme.jswone.in/central_commerce/buy-again-list",
-      "method": "GET",
-      "timeout": {
-        "request": "${TIMEOUTS.REQUEST}",
-        "socket": "${TIMEOUTS.SOCKET}"
-      },
-      "headersToPass": [
-        {
-          "source": "authorization",
-          "destination": "access_token"
-        }
-      ],
-      "resTransform": "buyAgain.transformers.transformBuyAgainResponse"
-    }
   }
 ]
