@@ -1975,5 +1975,77 @@
       "requiredParams": ["*"],
       "requiredPathParams": ["slugId"]
     }
+  },
+  {
+    "path": "/xp-mi/public/v1/mweb-cart-page",
+    "method": "POST",
+    "routeHandler": "AGGREGATE",
+    "aggregationType": "PARALLEL",
+    "targets": [
+      {
+        "name": "mweb-cart-page",
+        "url": "https://qa-cms-ext.msme.jswone.in/api/app-cart-page-v2",
+        "method": "GET",
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
+        "reqTransform": "general.transformers.moveBodyToQueryParams",
+        "resTransform": "cms.transformers.replaceUriPrefix"
+      },
+      {
+        "name": "cart-page-buy-again",
+        "url": "http://127.0.0.1:3000/xp-mi/public/v1/central_commerce/buy-again-list",
+        "method": "GET",
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
+        "reqTransform": "general.transformers.convertToGetRequest"
+      }
+    ],
+    "resTransform": "cart.transformers.mergeMmebCartPageResponses"
+  },
+  {
+    "path": "/xp-mi/public/v1/central-catalogue/header/main-menu",
+    "method": "POST",
+    "routeHandler": "AGGREGATE",
+    "aggregationType": "SEQUENTIAL",
+    "targets": [
+      {
+        "name": "header-main-menu",
+        "url": "${CMS_MSME_URL}/jsw-main-menus",
+        "method": "GET",
+        "reqTransform": "general.transformers.moveBodyToQueryParams",
+        "timeout": {
+          "request": 10000,
+          "socket": 1000
+        }
+      },
+      {
+        "name": "cca-header-categories",
+        "url": "https://qa.msme.jswone.in/central_commerce/categories/tree/list",
+        "method": "POST",
+        "reqTransform": "category.transformers.transformMainMenuCcaRequest",
+        "headersToPass": [
+          {
+            "source": "access_token",
+            "destination": "access_token"
+          }
+        ]
+      },
+      {
+        "name": "cmsFeatureFlag",
+        "url": "${CMS_MSME_URL}/ccp-feature-flags",
+        "method": "GET",
+        "timeout": {
+          "request": "${TIMEOUTS.REQUEST}",
+          "socket": "${TIMEOUTS.SOCKET}"
+        },
+        "reqTransform": "category.transformers.addFeatureFlagQueryParams",
+        "resTransform": "cms.transformers.replaceUriPrefix"
+      }
+    ],
+    "resTransform": "category.transformers.mergeMainMenuResponses"
   }
 ]

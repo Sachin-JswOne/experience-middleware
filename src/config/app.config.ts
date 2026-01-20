@@ -188,3 +188,6 @@ export const PAYMENT_STATUS_MAPPING = {
 export const DEFAULT_VALUE = 0.0;
 export const CONSENT_EVENT_NAME = 'opt-in';
 export const CONSENT_REGISTRATION_SOURCE = 'JSW One MSME App';
+
+export const DEFAULT_OFFSET = 1;
+export const DEFAULT_PAGE_SIZE = 20;
