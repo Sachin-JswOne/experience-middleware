@@ -143,5 +143,5 @@ export function mergeCategoryResponses(
   /**
    * Returning both results (can be adapted if only CCA response is needed)
    */
-  return ccaResult?.data
+  return ccaResult?.data;
 }
