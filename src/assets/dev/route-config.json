@@ -379,7 +379,7 @@
       },
       {
         "name": "app-buy-again",
-        "url": "https://jswoneconstruct.in/v1/seller/buy-again",
+        "url": "https://qa.msme.jswone.in/central_commerce/buy-again-list",
         "method": "GET",
         "timeout": {
           "request": 15000,
@@ -389,14 +389,10 @@
         "headersToPass": [
           {
             "source": "authorization",
-            "destination": "authorization"
-          },
-          {
-            "source": "x-user-state",
-            "destination": "x-user-state"
+            "destination": "access_token"
           }
         ],
-        "requiredParams": ["pincode"]
+         "resTransform": "buyAgain.transformers.transformBuyAgainResponse"
       },
       {
         "name": "app-categories",
