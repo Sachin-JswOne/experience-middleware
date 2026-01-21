@@ -836,7 +836,7 @@
       },
       {
         "name": "web-homepage-products",
-        "url": "http://127.0.0.1:3000/xp-mi/public/v1/web-products",
+        "url": "https://experience-middleware.jswone.in/xp-mi/public/v1/web-products",
         "method": "GET",
         "timeout": {
           "request": 10000,
@@ -1353,7 +1353,7 @@
       },
       {
         "name": "search-top-items",
-        "url": "http://127.0.0.1:3000/xp-mi/public/v1/search-top-items",
+        "url": "https://experience-middleware.jswone.in/xp-mi/public/v1/search-top-items",
         "method": "POST",
         "timeout": {
           "request": 10000,
@@ -1384,7 +1384,7 @@
       },
       {
         "name": "ccp-recent-search",
-        "url": "http://127.0.0.1:3000/xp-mi/public/v1/central_commerce/recent-search",
+        "url": "https://experience-middleware.jswone.in/xp-mi/public/v1/central_commerce/recent-search",
         "method": "GET",
         "timeout": {
           "request": 5000,
@@ -1431,7 +1431,7 @@
       },
       {
         "name": "ccp-top-items-product-details",
-        "url": "http://127.0.0.1:3000/xp-mi/public/v1/central_commerce/catalogue/product-details",
+        "url": "https://www.jswonemsme.com/central_commerce/catalogue/product-details",
         "method": "POST",
         "timeout": {
           "request": 5000,
