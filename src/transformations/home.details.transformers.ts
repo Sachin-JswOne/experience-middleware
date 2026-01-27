@@ -304,21 +304,30 @@ export function mergeProjectDetailsAndTrackerResponses(
     designStageTypeTwo.heading =  designStageTypeTwo?.heading.replace("${daysLeft}", daysLeft);
     designStageTypeTwo.subHeading = designStageTypeTwo?.subHeading.replace("${date}", endDate)
     activeDesignType = "designStageTypeTwo";
-    strapiData.data.projectTracker.designStage.designStageTypeTwo = designStageTypeTwo;
+    strapiData.data.projectTracker.designStage.designStageTypeTwo = {
+      ...strapiData.data.projectTracker.designStage.designStageTypeTwo,
+      daysLeft : daysLeft
+    }
   }
 
   if(designSubscription?.daysLeft == 1){
     let designStageTypeThree = strapiData?.data?.projectTracker?.designStage?.designStageTypeThree;
     designStageTypeThree.subHeading =  designStageTypeThree?.subHeading.replace("${endDate}", endDate);
     activeDesignType = "designStageTypeThree";
-    strapiData.data.projectTracker.designStage.designStageTypeThree = designStageTypeThree;
+    strapiData.data.projectTracker.designStage.designStageTypeThree = {
+      ...strapiData.data.projectTracker.designStage.designStageTypeThree,
+      daysLeft : daysLeft
+    }
   }
 
   if(designSubscription?.daysLeft == 0){
    let designStageTypeFour = strapiData?.data?.projectTracker?.designStage?.designStageTypeFour;
    designStageTypeFour.subHeading = designStageTypeFour?.subHeading.replace("${endDate}", endDate);
    activeDesignType = "designStageTypeFour";
-   strapiData.data.projectTracker.designStage.designStageTypeFour = designStageTypeFour;
+   strapiData.data.projectTracker.designStage.designStageTypeFour = {
+      ...strapiData.data.projectTracker.designStage.designStageTypeFour,
+      daysLeft : daysLeft
+    };
   }
 
   const projectTracker = {
