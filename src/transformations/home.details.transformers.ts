@@ -307,14 +307,14 @@ export function mergeProjectDetailsAndTrackerResponses(
     strapiData.data.projectTracker.designStage.designStageTypeTwo = designStageTypeTwo;
   }
 
-  if(designSubscription?.daysLeft == 0){
+  if(designSubscription?.daysLeft == 1){
     let designStageTypeThree = strapiData?.data?.projectTracker?.designStage?.designStageTypeThree;
     designStageTypeThree.subHeading =  designStageTypeThree?.subHeading.replace("${endDate}", endDate);
     activeDesignType = "designStageTypeThree";
     strapiData.data.projectTracker.designStage.designStageTypeThree = designStageTypeThree;
   }
 
-  if(designSubscription?.daysLeft < 0){
+  if(designSubscription?.daysLeft == 0){
    let designStageTypeFour = strapiData?.data?.projectTracker?.designStage?.designStageTypeFour;
    designStageTypeFour.subHeading = designStageTypeFour?.subHeading.replace("${endDate}", endDate);
    activeDesignType = "designStageTypeFour";
