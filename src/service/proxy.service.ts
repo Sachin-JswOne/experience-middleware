@@ -65,9 +65,16 @@ export class ProxyService {
   private routeNeedsClientAuth(route: any): boolean {
     const hasAuthHeaderPassThrough = (headersToPass?: any[]) =>
       Array.isArray(headersToPass) &&
-      headersToPass.some(
-        (h) => String(h?.source).toLowerCase() === 'authorization' || 'access_token',
-      );
+      headersToPass.some((h) => {
+        const src = String(h?.source ?? '').toLowerCase();
+        const dst = String(h?.destination ?? '').toLowerCase();
+        return (
+          src === 'authorization' ||
+          src === 'access_token' ||
+          dst === 'authorization' ||
+          dst === 'access_token'
+        );
+      });
 
     // TRANSFORM routes
     if (route?.target && hasAuthHeaderPassThrough(route.target.headersToPass)) {
@@ -190,7 +197,8 @@ export class ProxyService {
         continue;
       }
 
-      const routeMatcher = match(route.path, { decode: decodeURIComponent });
+      const normalized = this.normalizePathTemplate(route.path);
+      const routeMatcher = match(normalized, { decode: decodeURIComponent });
       const result = routeMatcher(req.path);
 
       if (result) {
@@ -379,6 +387,7 @@ export class ProxyService {
             target.headersToPass,
             target.staticHeaders,
             target.requiredParams,
+            (target as any).requiredPathParams,
             prevResponses,
           );
 
@@ -493,15 +502,21 @@ export class ProxyService {
     headersToPass?: { source: string; destination: string }[],
     staticHeaders?: { [key: string]: string },
     requiredParams?: string[],
+    requiredPathParams?: string[],
     prevResponses?: AggregatedResponse[],
   ) {
-    const url: URL = new URL(targetUrl);
+    const allowedParams = this.requiredPathParams(req.params as any, requiredPathParams);
+
+    const interpolatedTargetUrl = this.interpolateTemplate(targetUrl, allowedParams);
+
+    const url: URL = new URL(interpolatedTargetUrl);
     url.search = this.requiredQuery(req.query, requiredParams);
+
     let transformedRequestBody: BaseRequest = {
-      url: url,
+      url,
       body: req.body,
       headers: this.getHeadersToPass(req.headers, headersToPass, staticHeaders),
-      params: req.params,
+      params: allowedParams,
     };
 
     if (requestTransform) {
@@ -513,6 +528,7 @@ export class ProxyService {
     }
     return transformedRequestBody;
   }
+
   private requiredQuery(query: any, requiredParams: string[] | undefined): string {
     if (!requiredParams || requiredParams.length === 0) {
       return '';
@@ -538,10 +554,13 @@ export class ProxyService {
     staticHeaders?: { [key: string]: string },
   ): IncomingHttpHeaders {
     let headers: IncomingHttpHeaders = {};
-    if (headersToPass && headersToPass.length > 0) {
+
+    if (Array.isArray(headersToPass) && headersToPass.length > 0) {
+      // Express lowercases header keys in req.headers
       for (const header of headersToPass) {
-        if (reqHeaders[header.source]) {
-          headers[header.destination] = reqHeaders[header.source];
+        const src = String(header.source ?? '').toLowerCase();
+        if (reqHeaders[src]) {
+          headers[header.destination] = reqHeaders[src];
         }
       }
     }
@@ -550,5 +569,54 @@ export class ProxyService {
     }
 
     return headers;
+  }
+
+  private normalizePathTemplate(path: string): string {
+    return String(path ?? '').replace(/\{(\w+)\}/g, ':$1');
+  }
+
+  private requiredPathParams(
+    params: Record<string, any> | undefined,
+    required: string[] | undefined,
+  ): Record<string, any> {
+    const safeParams: Record<string, any> = params ?? {};
+
+    // Default behaviour: allow all extracted params (no config changes required for existing routes)
+    if (!required || required.length === 0) {
+      return safeParams;
+    }
+
+    if (required[0] === '*') {
+      return safeParams;
+    }
+
+    const filtered: Record<string, any> = {};
+    for (const key of required) {
+      const val = safeParams[key];
+      if (val === undefined || val === null || String(val).length === 0) {
+        throw new CustomError(`Bad Request: Missing required path param '${key}'`, 400);
+      }
+      filtered[key] = val;
+    }
+
+    return filtered;
+  }
+
+  /**
+   * Interpolates path placeholders in strings using provided params.
+   * Supports `:id`, `{id}`, and `${id}` in target URLs.
+   */
+  private interpolateTemplate(template: string, params: Record<string, any>): string {
+    const get = (key: string) => {
+      const val = params?.[key];
+      if (val === undefined || val === null) return '';
+      return encodeURIComponent(String(val));
+    };
+
+    let out = String(template ?? '');
+    out = out.replace(/\{(\w+)\}/g, (_, key) => get(key));
+    out = out.replace(/\$\{(\w+)\}/g, (_, key) => get(key));
+    out = out.replace(/:(\w+)(?=\/|$)/g, (_, key) => get(key));
+    return out;
   }
 }

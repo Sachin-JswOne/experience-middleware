@@ -58,9 +58,7 @@
         "request": 5000,
         "socket": 1000
       },
-      "requiredParams": [
-        "*"
-      ]
+      "requiredParams": ["*"]
     }
   },
   {
@@ -117,9 +115,7 @@
             "destination": "x-user-state"
           }
         ],
-        "requiredParams": [
-          "pincode"
-        ]
+        "requiredParams": ["pincode"]
       },
       {
         "name": "app-buy-again",
@@ -140,9 +136,7 @@
             "destination": "x-user-state"
           }
         ],
-        "requiredParams": [
-          "pincode"
-        ]
+        "requiredParams": ["pincode"]
       },
       {
         "name": "app-categories",
@@ -163,9 +157,7 @@
             "destination": "x-user-state"
           }
         ],
-        "requiredParams": [
-          "pincode"
-        ]
+        "requiredParams": ["pincode"]
       }
     ],
     "resTransform": "app.transformers.mergeHomePageResponses"
@@ -283,9 +275,7 @@
             "destination": "authorization"
           }
         ],
-        "requiredParams": [
-          "pincode"
-        ]
+        "requiredParams": ["pincode"]
       }
     ],
     "resTransform": "app.transformers.mergeBuyAgainResponses"
@@ -344,9 +334,7 @@
             "destination": "x-user-state"
           }
         ],
-        "requiredParams": [
-          "pincode"
-        ]
+        "requiredParams": ["pincode"]
       }
     ],
     "resTransform": "app.transformers.mergeTopBrandsResponses"
@@ -387,13 +375,11 @@
             "destination": "x-user-state"
           }
         ],
-        "requiredParams": [
-          "pincode"
-        ]
+        "requiredParams": ["pincode"]
       },
       {
         "name": "app-buy-again",
-        "url": "https://jswoneconstruct.in/v1/seller/buy-again",
+        "url": "https://qa.msme.jswone.in/central_commerce/buy-again-list",
         "method": "GET",
         "timeout": {
           "request": 15000,
@@ -403,16 +389,10 @@
         "headersToPass": [
           {
             "source": "authorization",
-            "destination": "authorization"
-          },
-          {
-            "source": "x-user-state",
-            "destination": "x-user-state"
+            "destination": "access_token"
           }
         ],
-        "requiredParams": [
-          "pincode"
-        ]
+         "resTransform": "buyAgain.transformers.transformBuyAgainResponse"
       },
       {
         "name": "app-categories",
@@ -433,9 +413,7 @@
             "destination": "x-user-state"
           }
         ],
-        "requiredParams": [
-          "pincode"
-        ]
+        "requiredParams": ["pincode"]
       },
       {
         "name": "app-blogs",
@@ -479,9 +457,7 @@
         "request": 5000,
         "socket": 1000
       },
-      "requiredParams": [
-        "orderNumber"
-      ],
+      "requiredParams": ["orderNumber"],
       "staticHeaders": {
         "Authorization": "${X_API_KEY_FOR_ORDER_LISTING}",
         "client_id": "${ERP_CLIENT_ID}"
@@ -522,9 +498,7 @@
             "destination": "authorization"
           }
         ],
-        "requiredParams": [
-          "pincode"
-        ]
+        "requiredParams": ["pincode"]
       },
       {
         "name": "app-cart-summary",
@@ -541,9 +515,7 @@
             "destination": "authorization"
           }
         ],
-        "requiredParams": [
-          "pincode"
-        ]
+        "requiredParams": ["pincode"]
       }
     ],
     "resTransform": "cart.transformers.mergeCartPageResponses"
@@ -563,9 +535,7 @@
           "request": 5000,
           "socket": 1000
         },
-        "requiredParams": [
-          "orderNumber"
-        ],
+        "requiredParams": ["orderNumber"],
         "staticHeaders": {
           "Authorization": "${X_API_KEY_FOR_ORDER_LISTING}",
           "client_id": "${ERP_CLIENT_ID}"
@@ -579,9 +549,7 @@
           "request": 5000,
           "socket": 1000
         },
-        "requiredParams": [
-          "orderNumber"
-        ],
+        "requiredParams": ["orderNumber"],
         "staticHeaders": {
           "Authorization": "${X_API_KEY_FOR_ORDER_LISTING}",
           "client_id": "${ERP_CLIENT_ID}"
@@ -642,9 +610,7 @@
           }
         ],
         "reqTransform": "general.transformers.convertToGetRequest",
-        "requiredParams": [
-          "project_id"
-        ]
+        "requiredParams": ["project_id"]
       }
     ],
     "resTransform": "home.details.transformers.mergeProjectDetailsAndTrackerResponses"
@@ -702,9 +668,7 @@
           "destination": "Authorization"
         }
       ],
-      "requiredParams": [
-        "project_id"
-      ]
+      "requiredParams": ["project_id"]
     }
   },
   {
@@ -798,9 +762,7 @@
         "staticHeaders": {
           "Content-Type": "application/x-www-form-urlencoded"
         },
-        "requiredParams": [
-          "*"
-        ],
+        "requiredParams": ["*"],
         "reqTransform": "general.transformers.createQueryParams",
         "resTransform": ""
       },
@@ -814,9 +776,7 @@
         },
         "reqTransform": "address.transformers.createAddress",
         "headersToPass": [],
-        "requiredParams": [
-          "*"
-        ]
+        "requiredParams": ["*"]
       }
     ],
     "resTransform": "general.transformers.successOnly"
@@ -839,9 +799,7 @@
         "staticHeaders": {
           "Content-Type": "application/x-www-form-urlencoded"
         },
-        "requiredParams": [
-          "*"
-        ],
+        "requiredParams": ["*"],
         "reqTransform": "general.transformers.createQueryParams"
       },
       {
@@ -881,9 +839,7 @@
           "destination": "Authorization"
         }
       ],
-      "requiredParams": [
-        "project_id"
-      ]
+      "requiredParams": ["project_id"]
     }
   },
   {
@@ -916,10 +872,7 @@
         },
         "reqTransform": "orderListing.transformers.transformOrderListingRequest",
         "resTransform": "orderListing.transformers.transformOrderListingResponse",
-        "requiredParams": [
-          "gstin",
-          "customerType"
-        ]
+        "requiredParams": ["gstin", "customerType"]
       }
     ],
     "resTransform": "orderListing.transformers.mergeMaterialTrackingAndOrderListingResponses"
@@ -959,9 +912,7 @@
         },
         "reqTransform": "orderDetails.transformers.transformOpportunityDetailsRequest",
         "resTransform": "orderDetails.transformers.transformOpportunityDetailsResponse",
-        "requiredParams": [
-          "customerType"
-        ]
+        "requiredParams": ["customerType"]
       }
     ]
   },
@@ -983,9 +934,7 @@
           "destination": "Authorization"
         }
       ],
-      "requiredParams": [
-        "project_id"
-      ]
+      "requiredParams": ["project_id"]
     }
   },
   {
@@ -1007,9 +956,7 @@
           "destination": "access_token"
         }
       ],
-      "requiredParams": [
-        "entityName"
-      ]
+      "requiredParams": ["entityName"]
     }
   },
   {
@@ -1027,6 +974,24 @@
       "reqTransform": "general.transformers.moveBodyToQueryParams",
       "resTransform": "cms.transformers.replaceUriPrefix"
     }
+  },
+  {
+    "path": "/xp-mi/public/v1/web-home-page-v2",
+    "method": "POST",
+    "routeHandler": "AGGREGATE",
+    "aggregationType": "PARALLEL",
+    "targets": [
+      {
+        "name": "app-home-page",
+        "url": "${CMS_MSME_URL}/app-home-page-v2",
+        "method": "GET",
+        "timeout": {
+          "request": 10000,
+          "socket": 1000
+        },
+        "reqTransform": "general.transformers.moveBodyToQueryParams"
+      }
+    ]
   },
   {
     "path": "/xp-mi/public/v1/web-home-page",
@@ -1047,7 +1012,7 @@
       },
       {
         "name": "ccp-buy-again-with-prices",
-        "url": "http://127.0.0.1:3000/xp-mi/public/v1/central_commerce/buy-again-list",
+        "url": "https://qa.msme.jswone.in/central_commerce/buy-again-list",
         "method": "GET",
         "timeout": {
           "request": 5000,
@@ -1090,7 +1055,7 @@
       },
       {
         "name": "web-homepage-products",
-        "url": "http://127.0.0.1:3000/xp-mi/public/v1/web-products",
+        "url": "https://experience-middleware.qa.jswone.in/xp-mi/public/v1/web-products",
         "method": "GET",
         "timeout": {
           "request": 10000,
@@ -1105,6 +1070,22 @@
         ]
       },
       {
+        "name": "web-central-top-brand-categories",
+        "url": "https://qa.msme.jswone.in/central_commerce/categories/tree/list",
+        "method": "POST",
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
+        "reqTransform": "web.transformers.extractBrandCategoryIds",
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "access_token"
+          }
+        ]
+      },
+      {
         "name": "web-central-catalogue-categories",
         "url": "https://qa.msme.jswone.in/central_commerce/categories/tree/list",
         "method": "POST",
@@ -1113,6 +1094,22 @@
           "socket": 1000
         },
         "reqTransform": "web.transformers.extractCentralCatalogueCategoryIds",
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "access_token"
+          }
+        ]
+      },
+      {
+        "name": "products-listing",
+        "url": "https://qa.msme.jswone.in/central_commerce/products/listing",
+        "method": "POST",
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
+        "reqTransform": "web.transformers.extractProductListingSlug",
         "headersToPass": [
           {
             "source": "authorization",
@@ -1296,9 +1293,7 @@
           "destination": "traceId"
         }
       ],
-      "requiredParams": [
-        "*"
-      ]
+      "requiredParams": ["*"]
     }
   },
   {
@@ -1319,9 +1314,7 @@
           "destination": "access_token"
         }
       ],
-      "requiredParams": [
-        "*"
-      ]
+      "requiredParams": ["*"]
     }
   },
   {
@@ -1378,9 +1371,7 @@
           "socket": "${TIMEOUTS.SOCKET}"
         },
         "reqTransform": "location.transformers.addGoogleMapsApiKeyRequest",
-        "requiredParams": [
-          "latlng"
-        ]
+        "requiredParams": ["latlng"]
       },
       {
         "name": "jsw-locality-data",
@@ -1474,9 +1465,7 @@
           "destination": "access_token"
         }
       ],
-      "requiredParams": [
-        "entityName"
-      ],
+      "requiredParams": ["entityName"],
       "appendParams": true,
       "resTransform": "paymentdue.transformers.getPaymentDueDetails"
     }
@@ -1513,9 +1502,7 @@
             "destination": "authorization"
           }
         ],
-        "requiredParams": [
-          "pincode"
-        ]
+        "requiredParams": ["pincode"]
       },
       {
         "name": "app-cart-summary",
@@ -1532,9 +1519,7 @@
             "destination": "authorization"
           }
         ],
-        "requiredParams": [
-          "pincode"
-        ]
+        "requiredParams": ["pincode"]
       }
     ],
     "resTransform": "cart.transformers.mergeCartPageResponses"
@@ -1560,9 +1545,7 @@
       "staticHeaders": {
         "content-type": "application/json"
       },
-      "requiredParams": [
-        "*"
-      ]
+      "requiredParams": ["*"]
     }
   },
   {
@@ -1603,8 +1586,23 @@
         "resTransform": "cms.transformers.replaceUriPrefix"
       },
       {
+        "name": "search-top-items",
+        "url": "https://experience-middleware.qa.jswone.in/xp-mi/public/v1/search-top-items",
+        "method": "POST",
+        "timeout": {
+          "request": 10000,
+          "socket": 1000
+        },
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "access_token"
+          }
+        ]
+      },
+      {
         "name": "ccp-buy-again-with-prices",
-        "url": "http://127.0.0.1:3000/xp-mi/public/v1/central_commerce/buy-again-list",
+        "url": "https://qa.msme.jswone.in/central_commerce/buy-again-list",
         "method": "GET",
         "timeout": {
           "request": 5000,
@@ -1620,7 +1618,7 @@
       },
       {
         "name": "ccp-recent-search",
-        "url": "http://127.0.0.1:3000/xp-mi/public/v1/central_commerce/recent-search",
+        "url": "https://experience-middleware.qa.jswone.in/xp-mi/public/v1/central_commerce/recent-search",
         "method": "GET",
         "timeout": {
           "request": 5000,
@@ -1633,9 +1631,56 @@
             "destination": "access_token"
           }
         ]
+      },
+      {
+        "name": "cmsFeatureFlag",
+        "url": "${CMS_MSME_URL}/ccp-feature-flags",
+        "method": "GET",
+        "timeout": {
+          "request": "${TIMEOUTS.REQUEST}",
+          "socket": "${TIMEOUTS.SOCKET}"
+        },
+        "reqTransform": "category.transformers.addFeatureFlagQueryParams",
+        "resTransform": "cms.transformers.replaceUriPrefix"
       }
     ],
     "resTransform": "searchPage.transformers.getSearchPageDetails"
+  },
+  {
+    "path": "/xp-mi/public/v1/search-top-items",
+    "method": "POST",
+    "routeHandler": "AGGREGATE",
+    "aggregationType": "SEQUENTIAL",
+    "targets": [
+      {
+        "name": "app-search-page",
+        "url": "${CMS_MSME_URL}/app-search-page",
+        "method": "GET",
+        "timeout": {
+          "request": 10000,
+          "socket": 1000
+        },
+        "reqTransform": "general.transformers.moveBodyToQueryParams",
+        "resTransform": "cms.transformers.replaceUriPrefix"
+      },
+      {
+        "name": "ccp-top-items-product-details",
+        "url": "https://qa.msme.jswone.in/central_commerce/catalogue/product-details",
+        "method": "POST",
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
+        "reqTransform": "search-topItems.transformers.transformTopItemsMMIDRequest",
+        "headersToPass": [
+          {
+            "source": "access_token",
+            "destination": "access_token"
+          }
+        ]
+      }
+    ],
+    "resTransform": "search-topItems.transformers.pickCcpResponse"
   },
   {
     "path": "/xp-mi/public/v1/central_commerce/line-item/price",
@@ -1655,9 +1700,7 @@
           "destination": "access_token"
         }
       ],
-      "requiredParams": [
-        "*"
-      ]
+      "requiredParams": ["*"]
     }
   },
   {
@@ -1678,9 +1721,7 @@
           "destination": "access_token"
         }
       ],
-      "requiredParams": [
-        "*"
-      ]
+      "requiredParams": ["*"]
     }
   },
   {
@@ -1701,9 +1742,7 @@
           "destination": "access_token"
         }
       ],
-      "requiredParams": [
-        "addressId"
-      ],
+      "requiredParams": ["addressId"],
       "resTransform": "setDefaultAddress.transformers.setDefaultAddress"
     }
   },
@@ -1725,9 +1764,7 @@
           "destination": "Authorization"
         }
       ],
-      "requiredParams": [
-        "project_id"
-      ]
+      "requiredParams": ["project_id"]
     }
   },
   {
@@ -1749,9 +1786,7 @@
           "destination": "access_token"
         }
       ],
-      "requiredParams": [
-        "*"
-      ]
+      "requiredParams": ["*"]
     }
   },
   {
@@ -1772,9 +1807,7 @@
           "destination": "access_token"
         }
       ],
-      "requiredParams": [
-        "*"
-      ]
+      "requiredParams": ["*"]
     }
   },
   {
@@ -1795,9 +1828,7 @@
           "destination": "access_token"
         }
       ],
-      "requiredParams": [
-        "*"
-      ]
+      "requiredParams": ["*"]
     }
   },
   {
@@ -1818,9 +1849,7 @@
           "destination": "access_token"
         }
       ],
-      "requiredParams": [
-        "*"
-      ]
+      "requiredParams": ["*"]
     }
   },
   {
@@ -1841,9 +1870,7 @@
           "destination": "access_token"
         }
       ],
-      "requiredParams": [
-        "*"
-      ]
+      "requiredParams": ["*"]
     }
   },
   {
@@ -1899,9 +1926,7 @@
           "destination": "access_token"
         }
       ],
-      "requiredParams": [
-        "categoryId"
-      ]
+      "requiredParams": ["*"]
     }
   },
   {
@@ -1922,9 +1947,101 @@
           "destination": "access_token"
         }
       ],
-      "requiredParams": [
-        "*"
-      ]
+      "requiredParams": ["*"]
     }
+  },
+  {
+    "path": "/xp-mi/public/v1/central_commerce/product/slug/:slugId",
+    "method": "POST",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "product-by-slug",
+      "url": "https://qa.msme.jswone.in/central_commerce/product/slug/:slugId",
+      "method": "GET",
+      "timeout": {
+        "request": "${TIMEOUTS.REQUEST}",
+        "socket": "${TIMEOUTS.SOCKET}"
+      },
+      "headersToPass": [
+        {
+          "source": "access_token",
+          "destination": "access_token"
+        }
+      ],
+      "requiredParams": ["*"],
+      "requiredPathParams": ["slugId"]
+    }
+  },
+  {
+    "path": "/xp-mi/public/v1/mweb-cart-page",
+    "method": "POST",
+    "routeHandler": "AGGREGATE",
+    "aggregationType": "PARALLEL",
+    "targets": [
+      {
+        "name": "mweb-cart-page",
+        "url": "https://qa-cms-ext.msme.jswone.in/api/app-cart-page-v2",
+        "method": "GET",
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
+        "reqTransform": "general.transformers.moveBodyToQueryParams",
+        "resTransform": "cms.transformers.replaceUriPrefix"
+      },
+      {
+        "name": "cart-page-buy-again",
+        "url": "http://127.0.0.1:3000/xp-mi/public/v1/central_commerce/buy-again-list",
+        "method": "GET",
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
+        "reqTransform": "general.transformers.convertToGetRequest"
+      }
+    ],
+    "resTransform": "cart.transformers.mergeMmebCartPageResponses"
+  },
+  {
+    "path": "/xp-mi/public/v1/central-catalogue/header/main-menu",
+    "method": "POST",
+    "routeHandler": "AGGREGATE",
+    "aggregationType": "SEQUENTIAL",
+    "targets": [
+      {
+        "name": "header-main-menu",
+        "url": "${CMS_MSME_URL}/jsw-main-menus",
+        "method": "GET",
+        "reqTransform": "general.transformers.moveBodyToQueryParams",
+        "timeout": {
+          "request": 10000,
+          "socket": 1000
+        }
+      },
+      {
+        "name": "cca-header-categories",
+        "url": "https://qa.msme.jswone.in/central_commerce/categories/tree/list",
+        "method": "POST",
+        "reqTransform": "category.transformers.transformMainMenuCcaRequest",
+        "headersToPass": [
+          {
+            "source": "access_token",
+            "destination": "access_token"
+          }
+        ]
+      },
+      {
+        "name": "cmsFeatureFlag",
+        "url": "${CMS_MSME_URL}/ccp-feature-flags",
+        "method": "GET",
+        "timeout": {
+          "request": "${TIMEOUTS.REQUEST}",
+          "socket": "${TIMEOUTS.SOCKET}"
+        },
+        "reqTransform": "category.transformers.addFeatureFlagQueryParams",
+        "resTransform": "cms.transformers.replaceUriPrefix"
+      }
+    ],
+    "resTransform": "category.transformers.mergeMainMenuResponses"
   }
 ]

@@ -57,28 +57,6 @@ export function transformCcaRequest(
           ...extractCategoryIds(block.web_central_catalogue_categories),
         );
       }
-
-      /**
-       * Case 2: app-product-category
-       */
-      if (
-        block.__component === 'app-components.app-product-category' &&
-        Array.isArray(block.app_product_categories)
-      ) {
-        for (const productCategory of block.app_product_categories) {
-          if (
-            Array.isArray(
-              productCategory.web_central_catalogue_categories,
-            )
-          ) {
-            categoryIds.push(
-              ...extractCategoryIds(
-                productCategory.web_central_catalogue_categories,
-              ),
-            );
-          }
-        }
-      }
     }
   } catch (error) {
     Logger.warn(
@@ -98,7 +76,6 @@ export function transformCcaRequest(
         categoryIds,
       )}`,
   );
-
   return {
     ...request,
     body: {
@@ -164,5 +141,5 @@ export function mergeCategoryResponses(
   /**
    * Returning both results (can be adapted if only CCA response is needed)
    */
-  return ccaResult?.data
+  return ccaResult?.data;
 }
