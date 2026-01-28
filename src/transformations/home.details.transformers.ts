@@ -299,7 +299,7 @@ export function mergeProjectDetailsAndTrackerResponses(
     }
   }
 
-  if(designSubscription?.daysLeft <= 5){
+  if(designSubscription?.daysLeft <= 5 && designSubscription?.daysLeft > 0){
     let designStageTypeTwo = strapiData?.data?.projectTracker?.designStage?.designStageTypeTwo;
     designStageTypeTwo.heading =  designStageTypeTwo?.heading.replace("${daysLeft}", daysLeft);
     designStageTypeTwo.subHeading = designStageTypeTwo?.subHeading.replace("${date}", endDate)
@@ -310,7 +310,7 @@ export function mergeProjectDetailsAndTrackerResponses(
     }
   }
 
-  if(designSubscription?.daysLeft == 1){
+  if(designSubscription?.daysLeft == 0){
     let designStageTypeThree = strapiData?.data?.projectTracker?.designStage?.designStageTypeThree;
     designStageTypeThree.subHeading =  designStageTypeThree?.subHeading.replace("${endDate}", endDate);
     activeDesignType = "designStageTypeThree";
@@ -320,7 +320,7 @@ export function mergeProjectDetailsAndTrackerResponses(
     }
   }
 
-  if(designSubscription?.daysLeft == 0){
+  if(designSubscription?.daysLeft == -1){
    let designStageTypeFour = strapiData?.data?.projectTracker?.designStage?.designStageTypeFour;
    designStageTypeFour.subHeading = designStageTypeFour?.subHeading.replace("${endDate}", endDate);
    activeDesignType = "designStageTypeFour";
