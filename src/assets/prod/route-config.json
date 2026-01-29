@@ -836,7 +836,7 @@
       },
       {
         "name": "web-homepage-products",
-        "url": "https://experience-middleware.jswone.in/xp-mi/public/v1/web-products",
+        "url": "https://experience-middleware.jswonemsme.com/xp-mi/public/v1/web-products",
         "method": "GET",
         "timeout": {
           "request": 10000,
@@ -1353,7 +1353,7 @@
       },
       {
         "name": "search-top-items",
-        "url": "https://experience-middleware.jswone.in/xp-mi/public/v1/search-top-items",
+        "url": "https://experience-middleware.jswonemsme.com/xp-mi/public/v1/search-top-items",
         "method": "POST",
         "timeout": {
           "request": 10000,
@@ -1384,7 +1384,7 @@
       },
       {
         "name": "ccp-recent-search",
-        "url": "https://experience-middleware.jswone.in/xp-mi/public/v1/central_commerce/recent-search",
+        "url": "https://experience-middleware.jswonemsme.com/xp-mi/public/v1/central_commerce/recent-search",
         "method": "GET",
         "timeout": {
           "request": 5000,
