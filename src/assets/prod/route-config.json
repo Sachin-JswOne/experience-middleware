@@ -1529,7 +1529,7 @@
     "path": "/xp-mi/public/v1/categories/tree",
     "method": "GET",
     "routeHandler": "TRANSFORM",
-    "isCacheRequired": true,
+    "isCacheRequired": false,
     "target": {
       "name": "categories-tree",
       "url": "https://www.jswonemsme.com/central_commerce/categories/tree",
