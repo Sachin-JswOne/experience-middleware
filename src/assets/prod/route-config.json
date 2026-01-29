@@ -250,7 +250,7 @@
       },
       {
         "name": "app-buy-again",
-        "url": "https://www.jswonemsme.com/central_commerce/buy-again-list",
+        "url": "${RETAIL_URL}/v1/seller/buy-again",
         "method": "GET",
         "timeout": {
           "request": 15000,
@@ -258,12 +258,10 @@
         },
         "reqTransform": "general.transformers.convertToGetRequest",
         "headersToPass": [
-          {
-            "source": "authorization",
-            "destination": "access_token"
-          }
+          { "source": "authorization", "destination": "authorization" },
+          { "source": "x-user-state", "destination": "x-user-state" }
         ],
-        "resTransform": "buyAgain.transformers.transformBuyAgainResponse"
+        "requiredParams": ["pincode"]
       },
       {
         "name": "app-categories",
