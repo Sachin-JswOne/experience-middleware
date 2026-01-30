@@ -1394,7 +1394,7 @@
     "path": "/xp-mi/public/v1/web-search-page",
     "method": "POST",
     "routeHandler": "AGGREGATE",
-    "aggregationType": "PARALLEL",
+    "aggregationType": "SEQUENTIAL",
     "targets": [
       {
         "name": "app-search-page",
