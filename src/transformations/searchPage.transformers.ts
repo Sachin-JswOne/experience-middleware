@@ -1,6 +1,9 @@
 import { Logger } from '@nestjs/common';
 import { safeDebug } from 'src/utils/common-functions.util';
 import { AggregatedResponse } from 'src/models/aggregated-response.model';
+export {
+  extractCentralCatalogueCategoryIds
+} from 'src/utils/central-category.util';
 
 export function getSearchPageDetails(aggregatedResponses: AggregatedResponse[]): any {
   const responses = aggregatedResponses.reduce(
@@ -12,6 +15,7 @@ export function getSearchPageDetails(aggregatedResponses: AggregatedResponse[]):
   const buyAgainResponse = responses['ccp-buy-again-with-prices']?.data;
   const recentSearchResponse = responses['ccp-recent-search']?.data;
   const featureFlags = responses['cmsFeatureFlag']?.data?.data ?? [];
+  const webCentralCatalogueResponse = responses['web-central-catalogue-categories'];
   const topItemsResponse = responses['search-top-items']?.data;
   const isCentralCatalogueEnabled = featureFlags.some(
     (f) => f.name === 'central_catalogue_global' && f.isActive === true,
@@ -32,9 +36,7 @@ export function getSearchPageDetails(aggregatedResponses: AggregatedResponse[]):
   }
 
   const cmsData = cmsResponse.data.data as { blocks?: any[] };
-
   const blocks: any[] = Array.isArray(cmsData?.blocks) ? [...cmsData.blocks] : [];
-
   const recentSearches =
     recentSearchResponse?.success && Array.isArray(recentSearchResponse.data)
       ? recentSearchResponse.data
@@ -151,6 +153,43 @@ export function getSearchPageDetails(aggregatedResponses: AggregatedResponse[]):
           };
         },
       ).filter(Boolean);
+    }
+    if (
+      isCentralCatalogueEnabled && webCentralCatalogueResponse?.success &&
+      Array.isArray(webCentralCatalogueResponse.data?.data?.navigation)
+    ) {
+      const navigation =
+        webCentralCatalogueResponse.data.data.navigation;
+      for (const block of blocks) {
+        if (
+          block.__component !== 'app-components.app-category-component' ||
+          !Array.isArray(block.web_central_catalogue_categories)
+        ) {
+          continue;
+        }
+        const blockCategoryIds = block.web_central_catalogue_categories
+          .map((c: any) => c.categoryId)
+          .filter(Boolean);
+  
+        block.centralCategoryIdData = navigation
+          .map((nav: any) => ({
+            ...nav,
+            subMenu: nav.subMenu?.filter((sub: any) =>
+              blockCategoryIds.includes(sub.id)
+            ),
+          }))
+          .filter((nav: any) => nav.subMenu && nav.subMenu.length > 0);
+      }
+      
+      return {
+        data: {
+          ...cmsData
+        },
+        meta: {
+          timestamp: new Date().toISOString(),
+          version: '1.0',
+        },
+      }
     }
   }
   //  NO BUY AGAIN → Return CMS blocks as-is with search-top-items

@@ -1369,6 +1369,22 @@
         ]
       },
       {
+        "name": "web-central-catalogue-categories",
+        "url": "https://www.jswonemsme.com/central_commerce/categories/tree/list",
+        "method": "POST",
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
+        "reqTransform": "searchPage.transformers.extractCentralCatalogueCategoryIds",
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "access_token"
+          }
+        ]
+      },
+      {
         "name": "ccp-buy-again-with-prices",
         "url": "https://www.jswonemsme.com/central_commerce/buy-again-list",
         "method": "GET",
