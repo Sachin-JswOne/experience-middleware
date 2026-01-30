@@ -17,7 +17,7 @@ export function getSearchPageDetails(aggregatedResponses: AggregatedResponse[]):
   const featureFlags = responses['cmsFeatureFlag']?.data?.data ?? [];
   const webCentralCatalogueResponse = responses['web-central-catalogue-categories'];
   const topItemsResponse = responses['search-top-items']?.data;
-  const isCentralCatalogueEnabled = false && featureFlags.some(
+  const isCentralCatalogueEnabled = featureFlags.some(
     (f) => f.name === 'central_catalogue_global' && f.isActive === true,
   );
 
