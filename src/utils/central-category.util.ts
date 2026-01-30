@@ -38,7 +38,8 @@ export function extractCentralCatalogueCategoryIds(
 
     const cmsResponse = prevResponses.find(
         (r) => r.target === 'app-home-page',
-    );
+    ) ??
+    prevResponses.find((r) => r.target === 'app-search-page');
 
     if (!cmsResponse?.success) {
         Logger.warn(`CMS response missing or failed`);

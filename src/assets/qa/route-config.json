@@ -1394,7 +1394,7 @@
     "path": "/xp-mi/public/v1/web-search-page",
     "method": "POST",
     "routeHandler": "AGGREGATE",
-    "aggregationType": "PARALLEL",
+    "aggregationType": "SEQUENTIAL",
     "targets": [
       {
         "name": "app-search-page",
@@ -1415,6 +1415,22 @@
           "request": 10000,
           "socket": 1000
         },
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "access_token"
+          }
+        ]
+      },
+      {
+        "name": "web-central-catalogue-categories",
+        "url": "https://qa.msme.jswone.in/central_commerce/categories/tree/list",
+        "method": "POST",
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
+        "reqTransform": "searchPage.transformers.extractCentralCatalogueCategoryIds",
         "headersToPass": [
           {
             "source": "authorization",
