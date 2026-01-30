@@ -176,13 +176,17 @@ export function getSearchPageDetails(aggregatedResponses: AggregatedResponse[]):
               blockCategoryIds.includes(sub.id)
             ) ?? []
           );
-        block.product_categories = matchedCategories.map((ccItem: any) => ({
-          id: ccItem.id,
-          description: ccItem.metaDescription,
-          displayName: ccItem.name,
-          image: ccItem.metaImage,
-          webUrl: ccItem.seoUrl,
-        }));
+        if (matchedCategories) {
+          block.product_categories = matchedCategories.map((ccItem: any) => ({
+            id: ccItem.id,
+            description: ccItem.metaDescription,
+            displayName: ccItem.name,
+            image: ccItem.metaImage,
+            webUrl: ccItem.seoUrl,
+          }));
+        } else {
+          block.product_categories = [];
+        }
       }
     
       return {
