@@ -17,7 +17,7 @@ export function getSearchPageDetails(aggregatedResponses: AggregatedResponse[]):
   const featureFlags = responses['cmsFeatureFlag']?.data?.data ?? [];
   const webCentralCatalogueResponse = responses['web-central-catalogue-categories'];
   const topItemsResponse = responses['search-top-items']?.data;
-  const isCentralCatalogueEnabled = featureFlags.some(
+  const isCentralCatalogueEnabled = false && featureFlags.some(
     (f) => f.name === 'central_catalogue_global' && f.isActive === true,
   );
 
@@ -154,12 +154,11 @@ export function getSearchPageDetails(aggregatedResponses: AggregatedResponse[]):
         },
       ).filter(Boolean);
     }
-    if (
-      isCentralCatalogueEnabled && webCentralCatalogueResponse?.success &&
+    if (webCentralCatalogueResponse?.success &&
       Array.isArray(webCentralCatalogueResponse.data?.data?.navigation)
     ) {
-      const navigation =
-        webCentralCatalogueResponse.data.data.navigation;
+      const navigation = webCentralCatalogueResponse.data.data.navigation;
+    
       for (const block of blocks) {
         if (
           block.__component !== 'app-components.app-category-component' ||
@@ -167,30 +166,37 @@ export function getSearchPageDetails(aggregatedResponses: AggregatedResponse[]):
         ) {
           continue;
         }
+    
         const blockCategoryIds = block.web_central_catalogue_categories
           .map((c: any) => c.categoryId)
           .filter(Boolean);
-  
-        block.centralCategoryIdData = navigation
-          .map((nav: any) => ({
-            ...nav,
-            subMenu: nav.subMenu?.filter((sub: any) =>
+        const matchedCategories = navigation
+          .flatMap((nav: any) =>
+            nav.subMenu?.filter((sub: any) =>
               blockCategoryIds.includes(sub.id)
-            ),
-          }))
-          .filter((nav: any) => nav.subMenu && nav.subMenu.length > 0);
+            ) ?? []
+          );
+        block.product_categories = matchedCategories.map((ccItem: any) => ({
+          id: ccItem.id,
+          description: ccItem.metaDescription,
+          displayName: ccItem.name,
+          image: ccItem.metaImage,
+          webUrl: ccItem.seoUrl,
+        }));
       }
-      
+    
       return {
         data: {
-          ...cmsData
+          ...cmsData,
+          blocks,
+          recentSearches,
         },
         meta: {
           timestamp: new Date().toISOString(),
           version: '1.0',
         },
-      }
-    }
+      };
+    }    
   }
   //  NO BUY AGAIN → Return CMS blocks as-is with search-top-items
   return {
