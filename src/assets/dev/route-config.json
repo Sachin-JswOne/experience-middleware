@@ -1930,7 +1930,7 @@
     "routeHandler": "TRANSFORM",
     "target": {
       "name": "homes-activity-schedule",
-      "url": "https://services-dev.onejswhomes.ina/homes-service/v1/project/activity-schedule",
+      "url": "https://services-dev.onejswhomes.in/homes-service/v1/project/activity-schedule",
       "method": "GET",
       "timeout": { "request": 5000, "socket": 1000 },
       "headersToPass": [{ "source": "authorization", "destination": "Authorization" }],
