@@ -1739,6 +1739,19 @@
     "resTransform": "emptyCart.transformers.mergeCategoryResponses"
   },
   {
+    "path": "/xp-mi/public/v1/homes/project/activity-schedule",
+    "method": "POST",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "homes-activity-schedule",
+      "url": "https://services-dev.onejswhomes.ina/homes-service/v1/project/activity-schedule",
+      "method": "GET",
+      "timeout": { "request": 5000, "socket": 1000 },
+      "headersToPass": [{ "source": "authorization", "destination": "Authorization" }],
+      "requiredParams": ["project_id"]
+    }
+  },
+  {
     "path": "/xp-mi/public/v1/central-catalogue/footer/buy-online",
     "method": "POST",
     "routeHandler": "AGGREGATE",
