@@ -1929,8 +1929,8 @@
       "url": "https://www.jswonemsme.com/graphql",
       "method": "POST",
       "timeout": {
-        "request": "${TIMEOUTS.REQUEST}",
-        "socket": "${TIMEOUTS.SOCKET}"
+        "request": 5000,
+        "socket": 1000
       },
       "headersToPass": [
         {
