@@ -392,7 +392,7 @@
             "destination": "access_token"
           }
         ],
-         "resTransform": "buyAgain.transformers.transformBuyAgainResponse"
+        "resTransform": "buyAgain.transformers.transformBuyAgainResponse"
       },
       {
         "name": "app-categories",
@@ -2072,5 +2072,35 @@
       }
     ],
     "resTransform": "category.transformers.mergeMainMenuResponses"
+  },
+  {
+    "path": "/xp-mi/public/v2/customer-profile",
+    "method": "GET",
+    "routeHandler": "AGGREGATE",
+    "aggregationType": "PARALLEL",
+    "targets": [
+      {
+        "name": "customer-profile",
+        "url": "https://qa.msme.jswone.in/customer/me/profile",
+        "method": "GET",
+        "timeout": {
+          "request": "${TIMEOUTS.REQUEST}",
+          "socket": "${TIMEOUTS.SOCKET}"
+        },
+        "headersToPass": [{ "source": "access_token", "destination": "access_token" }]
+      },
+      {
+        "name": "mou-eligibility",
+        "url": "https://qa.msme.jswone.in/central_commerce/customer/mou-eligiblity",
+        "method": "GET",
+        "timeout": {
+          "request": "${TIMEOUTS.REQUEST}",
+          "socket": "${TIMEOUTS.SOCKET}"
+        },
+        "headersToPass": [{ "source": "access_token", "destination": "access_token" }],
+        "requiredParams": ["gstin", "financialYear"]
+      }
+    ],
+    "resTransform": "app.transformers.mergeCustomerProfileWithMouEligibility"
   }
 ]
