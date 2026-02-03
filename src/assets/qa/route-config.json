@@ -1189,9 +1189,20 @@
             "destination": "access_token"
           }
         ]
+      },
+      {
+        "name": "mou-eligibility",
+        "url": "https://qa.msme.jswone.in/central_commerce/customer/mou-eligiblity",
+        "method": "GET",
+        "timeout": {
+          "request": "${TIMEOUTS.REQUEST}",
+          "socket": "${TIMEOUTS.SOCKET}"
+        },
+        "headersToPass": [{ "source": "access_token", "destination": "access_token" }],
+        "requiredParams": ["gstin", "financialYear"]
       }
     ],
-    "resTransform": "customer.transformers.transformCustomerProfileResponses"
+    "resTransform": "customer.transformers.mergeCustomerProfile"
   },
   {
     "path": "${PATH_URL}/v1/getCustomerLocation",

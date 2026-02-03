@@ -1135,6 +1135,17 @@
             "destination": "access_token"
           }
         ]
+      },
+      {
+        "name": "mou-eligibility",
+        "url": "https://www.jswonemsme.com/central_commerce/customer/mou-eligiblity",
+        "method": "GET",
+        "timeout": {
+          "request": "${TIMEOUTS.REQUEST}",
+          "socket": "${TIMEOUTS.SOCKET}"
+        },
+        "headersToPass": [{ "source": "access_token", "destination": "access_token" }],
+        "requiredParams": ["gstin", "financialYear"]
       }
     ],
     "resTransform": "customer.transformers.transformCustomerProfileResponses"
