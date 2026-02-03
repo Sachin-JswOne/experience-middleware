@@ -1975,12 +1975,12 @@
     "resTransform": "app.transformers.mergeCustomerProfileWithMouEligibility"
   },
   {
-    "path": "/xp-mi/public/v1/graphql",
+    "path": "/xp-mi/public/v1/central_commerce/graphql",
     "method": "POST",
     "routeHandler": "TRANSFORM",
     "target": {
       "name": "graphql",
-      "url": "https://qa.msme.jswone.in/graphql",
+      "url": "https://qa.msme.jswone.in/central_commerce/graphql",
       "method": "POST",
       "timeout": {
         "request": 5000,
