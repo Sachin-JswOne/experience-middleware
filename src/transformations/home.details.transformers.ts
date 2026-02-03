@@ -301,6 +301,8 @@ export function mergeProjectDetailsAndTrackerResponses(
 
   if(designSubscription?.daysLeft <= 5 && designSubscription?.daysLeft > 0){
     let designStageTypeTwo = strapiData?.data?.projectTracker?.designStage?.designStageTypeTwo;
+    let daysLeft = designSubscription?.daysLeft;
+    let daysLeftString = daysLeft + (daysLeft > 1 ? " days" : " day")
     designStageTypeTwo.heading =  designStageTypeTwo?.heading.replace("${daysLeft}", daysLeft);
     designStageTypeTwo.subHeading = designStageTypeTwo?.subHeading.replace("${date}", endDate)
     activeDesignType = "designStageTypeTwo";
