@@ -2113,5 +2113,26 @@
       }
     ],
     "resTransform": "app.transformers.mergeCustomerProfileWithMouEligibility"
+  },
+  {
+    "path": "/xp-mi/public/v1/graphql",
+    "method": "POST",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "graphql",
+      "url": "https://qa.msme.jswone.in/graphql",
+      "method": "POST",
+      "timeout": {
+        "request": 5000,
+        "socket": 1000
+      },
+      "headersToPass": [
+        {
+          "source": "access_token",
+          "destination": "access_token"
+        }
+      ],
+      "requiredParams": ["*"]
+    }
   }
 ]
