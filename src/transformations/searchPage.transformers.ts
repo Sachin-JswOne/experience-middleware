@@ -154,53 +154,40 @@ export function getSearchPageDetails(aggregatedResponses: AggregatedResponse[]):
         },
       ).filter(Boolean);
     }
-    if (webCentralCatalogueResponse?.success &&
+    const navigation =
+      webCentralCatalogueResponse?.success &&
       Array.isArray(webCentralCatalogueResponse.data?.data?.navigation)
-    ) {
-      const navigation = webCentralCatalogueResponse.data.data.navigation;
-    
-      for (const block of blocks) {
-        if (
-          block.__component !== 'app-components.app-category-component' ||
-          !Array.isArray(block.web_central_catalogue_categories)
-        ) {
-          continue;
-        }
-    
-        const blockCategoryIds = block.web_central_catalogue_categories
-          .map((c: any) => c.categoryId)
-          .filter(Boolean);
-        const matchedCategories = navigation
-          .flatMap((nav: any) =>
-            nav.subMenu?.filter((sub: any) =>
-              blockCategoryIds.includes(sub.id)
-            ) ?? []
-          );
-        if (matchedCategories) {
-          block.product_categories = matchedCategories.map((ccItem: any) => ({
-            id: ccItem.id,
-            description: ccItem.metaDescription,
-            displayName: ccItem.name,
-            image: ccItem.metaImage,
-            webUrl: ccItem.seoUrl,
-          }));
-        } else {
-          block.product_categories = [];
-        }
+        ? webCentralCatalogueResponse.data.data.navigation
+        : null;
+
+    for (const block of blocks) {
+      if (block.__component !== 'app-components.app-category-component') {
+        continue;
       }
-    
-      return {
-        data: {
-          ...cmsData,
-          blocks,
-          recentSearches,
-        },
-        meta: {
-          timestamp: new Date().toISOString(),
-          version: '1.0',
-        },
-      };
-    }    
+
+      if (!navigation || !Array.isArray(block.web_central_catalogue_categories)) {
+        block.product_categories = [];
+        continue;
+      }
+
+      const blockCategoryIds = block.web_central_catalogue_categories
+        .map((c: any) => c.categoryId)
+        .filter(Boolean);
+
+      block.product_categories = navigation
+        .flatMap((nav: any) =>
+          nav.subMenu?.filter((sub: any) =>
+            blockCategoryIds.includes(sub.id),
+          ) ?? [],
+        )
+        .map((ccItem: any) => ({
+          id: ccItem.id,
+          description: ccItem.metaDescription,
+          displayName: ccItem.name,
+          image: ccItem.metaImage,
+          webUrl: ccItem.seoUrl,
+        }));
+    }
   }
   //  NO BUY AGAIN → Return CMS blocks as-is with search-top-items
   return {
