@@ -303,7 +303,7 @@ export function mergeProjectDetailsAndTrackerResponses(
     let designStageTypeTwo = strapiData?.data?.projectTracker?.designStage?.designStageTypeTwo;
     let daysLeft = designSubscription?.daysLeft;
     let daysLeftString = daysLeft + (daysLeft > 1 ? " days" : " day")
-    designStageTypeTwo.heading =  designStageTypeTwo?.heading.replace("${daysLeft}", daysLeft);
+    designStageTypeTwo.heading =  designStageTypeTwo?.heading.replace("${daysLeft}", daysLeftString);
     designStageTypeTwo.subHeading = designStageTypeTwo?.subHeading.replace("${date}", endDate)
     activeDesignType = "designStageTypeTwo";
     strapiData.data.projectTracker.designStage.designStageTypeTwo = {
