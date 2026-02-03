@@ -1363,6 +1363,19 @@
         },
         "headersToPass": [{ "source": "access_token", "destination": "access_token" }],
         "requiredParams": ["gstin", "financialYear"]
+      },
+      {
+        "name": "gstin-customer-profile",
+        "url": "https://tms.qa.jswone.in/account-master/profile/v1",
+        "method": "GET",
+        "timeout": {
+          "request": "${TIMEOUTS.REQUEST}",
+          "socket": "${TIMEOUTS.SOCKET}"
+        },
+        "staticHeaders": {
+          "x-api-key": "test"
+        },
+        "requiredParams": ["gstin"]
       }
     ],
     "resTransform": "customer.transformers.mergeCustomerProfile"
