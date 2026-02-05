@@ -67,36 +67,16 @@ export function getSearchPageDetails(aggregatedResponses: AggregatedResponse[]):
         if (variantList) buyAgainBlock.variantList = variantList;
         if (skuSize != null) buyAgainBlock.skuSize = skuSize;
       }
-
-      // Final assigned blocks
-      return {
-        data: {
-          ...cmsData,
-          blocks: filteredBlocks,
-          recentSearches,
-        },
-        meta: {
-          timestamp: new Date().toISOString(),
-          version: '1.0',
-        },
-      };
+      blocks.length = 0;
+      blocks.push(...filteredBlocks);
     }
   } else if (!buyAgainResponse?.success && hasBuyAgainBlock) {
     const filteredBlocks = blocks.filter(
       (b) => b.__component !== 'app-components.app-search-top-items',
     );
 
-    return {
-      data: {
-        ...cmsData,
-        blocks: filteredBlocks,
-        recentSearches,
-      },
-      meta: {
-        timestamp: new Date().toISOString(),
-        version: '1.0',
-      },
-    };
+    blocks.length = 0;
+    blocks.push(...filteredBlocks);
   }
   if (isCentralCatalogueEnabled) {
     const ccpProducts = topItemsResponse?.data?.products;
