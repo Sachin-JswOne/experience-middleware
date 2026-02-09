@@ -1428,6 +1428,22 @@
         ]
       },
       {
+        "name": "ccp-trending-search",
+        "url": "https://experience-middleware.jswonemsme.com/xp-mi/public/v1/central_commerce/trending-search",
+        "method": "GET",
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
+        "reqTransform": "general.transformers.convertToGetRequest",
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "access_token"
+          }
+        ]
+      },
+      {
         "name": "cmsFeatureFlag",
         "url": "${CMS_MSME_URL}/ccp-feature-flags",
         "method": "GET",
@@ -1647,6 +1663,27 @@
       "name": "get-recent-search",
       "url": "https://www.jswonemsme.com/central_commerce/recent-search",
       "method": "DELETE",
+      "timeout": {
+        "request": "${TIMEOUTS.REQUEST}",
+        "socket": "${TIMEOUTS.SOCKET}"
+      },
+      "headersToPass": [
+        {
+          "source": "access_token",
+          "destination": "access_token"
+        }
+      ],
+      "requiredParams": ["*"]
+    }
+  },
+  {
+    "path": "/xp-mi/public/v1/central_commerce/trending-search",
+    "method": "GET",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "get-trending-search",
+      "url": "https://www.jswonemsme.com/central_commerce/trending-search",
+      "method": "GET",
       "timeout": {
         "request": "${TIMEOUTS.REQUEST}",
         "socket": "${TIMEOUTS.SOCKET}"

@@ -14,6 +14,7 @@ export function getSearchPageDetails(aggregatedResponses: AggregatedResponse[]):
   const cmsResponse = responses['app-search-page'];
   const buyAgainResponse = responses['ccp-buy-again-with-prices']?.data;
   const recentSearchResponse = responses['ccp-recent-search']?.data;
+  const trendingSearchResponse = responses['ccp-trending-search']?.data;
   const featureFlags = responses['cmsFeatureFlag']?.data?.data ?? [];
   const webCentralCatalogueResponse = responses['web-central-catalogue-categories'];
   const topItemsResponse = responses['search-top-items']?.data;
@@ -40,6 +41,10 @@ export function getSearchPageDetails(aggregatedResponses: AggregatedResponse[]):
   const recentSearches =
     recentSearchResponse?.success && Array.isArray(recentSearchResponse.data)
       ? recentSearchResponse.data
+      : [];
+  const trendingSearches =
+    trendingSearchResponse?.success && Array.isArray(trendingSearchResponse.data)
+      ? trendingSearchResponse.data
       : [];
   const hasBuyAgainBlock = blocks.some((b) => b.__component === 'app-components.app-buy-again');
   //BUY AGAIN → UPDATE EXISTING BLOCK
@@ -94,6 +99,7 @@ export function getSearchPageDetails(aggregatedResponses: AggregatedResponse[]):
           ...cmsData,
           blocks: filteredBlocks,
           recentSearches,
+          trendingSearches,
         },
         meta: {
           timestamp: new Date().toISOString(),
@@ -175,6 +181,7 @@ export function getSearchPageDetails(aggregatedResponses: AggregatedResponse[]):
       ...cmsData,
       blocks,
       recentSearches,
+      trendingSearches,
     },
     meta: {
       timestamp: new Date().toISOString(),
