@@ -2134,5 +2134,24 @@
       ],
       "requiredParams": ["*"]
     }
+  },
+  {
+    "path": "/xp-mi/public/v1/web-mou",
+    "method": "POST",
+    "routeHandler": "AGGREGATE",
+    "aggregationType": "PARALLEL",
+    "targets": [
+      {
+        "name": "web-mou",
+        "url": "${CMS_MSME_URL}/web-mou",
+        "method": "GET",
+        "timeout": {
+          "request": 10000,
+          "socket": 1000
+        },
+        "reqTransform": "general.transformers.moveBodyToQueryParams"
+      }
+    ],
+    "resTransform": "general.transformers.unwrapParallelResponse"
   }
 ]

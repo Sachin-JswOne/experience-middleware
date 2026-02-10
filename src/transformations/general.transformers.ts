@@ -89,6 +89,10 @@ export function successOnly(results: AggregatedResponse[]): any {
   // If all targets succeeded
   return { success: true };
 }
+export function unwrapParallelResponse(results: AggregatedResponse[]): any {
+  return Array.isArray(results) && results.length === 1 ? results[0] : results;
+}
+
 
 export function transformAppHomePageRequest(request: BaseRequest): BaseRequest {
   const transformedRequest: BaseRequest = {
