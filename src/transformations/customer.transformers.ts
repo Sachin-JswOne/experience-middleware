@@ -69,43 +69,39 @@ export function mergeCustomerProfile(aggregatedResponses: AggregatedResponse[]):
 
   safeDebug(
     Logger,
-    () =>
-      `Customer profile response from mergeCustomerProfile: ${safeToLog(
-        profileResp,
-      )}`,
+    () => `Customer profile response from mergeCustomerProfile: ${safeToLog(profileResp)}`,
   );
 
   safeDebug(
     Logger,
-    () =>
-      `MOU eligibility response from mergeCustomerProfile: ${safeToLog(mouResp)}`,
+    () => `MOU eligibility response from mergeCustomerProfile: ${safeToLog(mouResp)}`,
   );
 
   safeDebug(
     Logger,
-    () =>
-      `Customer data response from mergeCustomerProfile: ${safeToLog(profileV2Resp)}`,
+    () => `Customer data response from mergeCustomerProfile: ${safeToLog(profileV2Resp)}`,
   );
 
   const profile =
-    profileResp && profileResp.data && typeof profileResp.data === 'object' ? profileResp.data : {
-      success: false,
-      error: profileResp.error || 'Unknown error',
-      httpStatus: profileResp.httpStatus,
-    };
+    profileResp && profileResp.data && typeof profileResp.data === 'object'
+      ? profileResp.data
+      : {
+          success: false,
+          error: profileResp.error || 'Unknown error',
+          httpStatus: profileResp.httpStatus,
+        };
 
   const customerData =
-    profileV2Resp && profileV2Resp.data && typeof profileV2Resp.data === 'object' ? profileV2Resp.data : {
-      success: false,
-      error: profileV2Resp.error || 'Unknown error',
-      httpStatus: profileV2Resp.httpStatus,
-    };
-
-  const mouEligibilityPayload =
-    mouResp && mouResp.data && typeof mouResp.data === 'object' ? (mouResp.data as any) : {};
+    profileV2Resp && profileV2Resp.data && typeof profileV2Resp.data === 'object'
+      ? profileV2Resp.data
+      : {
+          success: false,
+          error: profileV2Resp.error || 'Unknown error',
+          httpStatus: profileV2Resp.httpStatus,
+        };
 
   return {
-    "profile": { ...profile, mouEligibilityPayload },
+    profile: { ...profile },
     customerData,
   };
 }

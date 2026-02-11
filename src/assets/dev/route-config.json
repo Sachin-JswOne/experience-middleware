@@ -1352,17 +1352,6 @@
             "destination": "access_token"
           }
         ]
-      },
-      {
-        "name": "mou-eligibility",
-        "url": "https://qa.msme.jswone.in/central_commerce/customer/mou-eligiblity",
-        "method": "GET",
-        "timeout": {
-          "request": "${TIMEOUTS.REQUEST}",
-          "socket": "${TIMEOUTS.SOCKET}"
-        },
-        "headersToPass": [{ "source": "access_token", "destination": "access_token" }],
-        "requiredParams": ["gstin", "financialYear"]
       }
     ],
     "resTransform": "customer.transformers.mergeCustomerProfile"
@@ -2083,75 +2072,5 @@
       }
     ],
     "resTransform": "category.transformers.mergeMainMenuResponses"
-  },
-  {
-    "path": "/xp-mi/public/v2/customer-profile",
-    "method": "GET",
-    "routeHandler": "AGGREGATE",
-    "aggregationType": "PARALLEL",
-    "targets": [
-      {
-        "name": "customer-profile",
-        "url": "https://qa.msme.jswone.in/customer/me/profile",
-        "method": "GET",
-        "timeout": {
-          "request": "${TIMEOUTS.REQUEST}",
-          "socket": "${TIMEOUTS.SOCKET}"
-        },
-        "headersToPass": [{ "source": "access_token", "destination": "access_token" }]
-      },
-      {
-        "name": "mou-eligibility",
-        "url": "https://qa.msme.jswone.in/central_commerce/customer/mou-eligiblity",
-        "method": "GET",
-        "timeout": {
-          "request": "${TIMEOUTS.REQUEST}",
-          "socket": "${TIMEOUTS.SOCKET}"
-        },
-        "headersToPass": [{ "source": "access_token", "destination": "access_token" }],
-        "requiredParams": ["gstin", "financialYear"]
-      }
-    ],
-    "resTransform": "app.transformers.mergeCustomerProfileWithMouEligibility"
-  },
-  {
-    "path": "/xp-mi/public/v1/central_commerce/graphql",
-    "method": "POST",
-    "routeHandler": "TRANSFORM",
-    "target": {
-      "name": "graphql",
-      "url": "https://qa.msme.jswone.in/central_commerce/graphql",
-      "method": "POST",
-      "timeout": {
-        "request": 5000,
-        "socket": 1000
-      },
-      "headersToPass": [
-        {
-          "source": "access_token",
-          "destination": "access_token"
-        }
-      ],
-      "requiredParams": ["*"]
-    }
-  },
-  {
-    "path": "/xp-mi/public/v1/web-mou",
-    "method": "POST",
-    "routeHandler": "AGGREGATE",
-    "aggregationType": "PARALLEL",
-    "targets": [
-      {
-        "name": "web-mou",
-        "url": "${CMS_MSME_URL}/web-mou",
-        "method": "GET",
-        "timeout": {
-          "request": 10000,
-          "socket": 1000
-        },
-        "reqTransform": "general.transformers.moveBodyToQueryParams"
-      }
-    ],
-    "resTransform": "general.transformers.unwrapParallelResponse"
   }
 ]
