@@ -301,7 +301,7 @@
         ],
         "requiredParams": ["pincode"]
       },
-       {
+      {
         "name": "app-buy-again",
         "url": "https://qa.msme.jswone.in/central_commerce/buy-again-list",
         "method": "GET",
@@ -316,7 +316,7 @@
             "destination": "access_token"
           }
         ],
-         "resTransform": "buyAgain.transformers.transformBuyAgainResponse"
+        "resTransform": "buyAgain.transformers.transformBuyAgainResponse"
       },
       {
         "name": "app-categories",
@@ -1189,9 +1189,20 @@
             "destination": "access_token"
           }
         ]
+      },
+      {
+        "name": "mou-eligibility",
+        "url": "https://qa.msme.jswone.in/central_commerce/customer/mou-eligiblity",
+        "method": "GET",
+        "timeout": {
+          "request": "${TIMEOUTS.REQUEST}",
+          "socket": "${TIMEOUTS.SOCKET}"
+        },
+        "headersToPass": [{ "source": "access_token", "destination": "access_token" }],
+        "requiredParams": ["gstin", "financialYear"]
       }
     ],
-    "resTransform": "customer.transformers.transformCustomerProfileResponses"
+    "resTransform": "customer.transformers.mergeCustomerProfile"
   },
   {
     "path": "${PATH_URL}/v1/getCustomerLocation",
@@ -1394,7 +1405,7 @@
     "path": "/xp-mi/public/v1/web-search-page",
     "method": "POST",
     "routeHandler": "AGGREGATE",
-    "aggregationType": "PARALLEL",
+    "aggregationType": "SEQUENTIAL",
     "targets": [
       {
         "name": "app-search-page",
@@ -1415,6 +1426,22 @@
           "request": 10000,
           "socket": 1000
         },
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "access_token"
+          }
+        ]
+      },
+      {
+        "name": "web-central-catalogue-categories",
+        "url": "https://qa.msme.jswone.in/central_commerce/categories/tree/list",
+        "method": "POST",
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
+        "reqTransform": "searchPage.transformers.extractCentralCatalogueCategoryIds",
         "headersToPass": [
           {
             "source": "authorization",
@@ -1723,6 +1750,19 @@
     "resTransform": "emptyCart.transformers.mergeCategoryResponses"
   },
   {
+    "path": "/xp-mi/public/v1/homes/project/activity-schedule",
+    "method": "POST",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "homes-activity-schedule",
+      "url": "https://services-dev.onejswhomes.in/homes-service/v1/project/activity-schedule",
+      "method": "GET",
+      "timeout": { "request": 5000, "socket": 1000 },
+      "headersToPass": [{ "source": "authorization", "destination": "Authorization" }],
+      "requiredParams": ["project_id"]
+    }
+  },
+  {
     "path": "/xp-mi/public/v1/central-catalogue/footer/buy-online",
     "method": "POST",
     "routeHandler": "AGGREGATE",
@@ -1903,5 +1943,75 @@
       }
     ],
     "resTransform": "category.transformers.mergeMainMenuResponses"
+  },
+  {
+    "path": "/xp-mi/public/v2/customer-profile",
+    "method": "GET",
+    "routeHandler": "AGGREGATE",
+    "aggregationType": "PARALLEL",
+    "targets": [
+      {
+        "name": "customer-profile",
+        "url": "https://qa.msme.jswone.in/customer/me/profile",
+        "method": "GET",
+        "timeout": {
+          "request": "${TIMEOUTS.REQUEST}",
+          "socket": "${TIMEOUTS.SOCKET}"
+        },
+        "headersToPass": [{ "source": "access_token", "destination": "access_token" }]
+      },
+      {
+        "name": "mou-eligibility",
+        "url": "https://qa.msme.jswone.in/central_commerce/customer/mou-eligiblity",
+        "method": "GET",
+        "timeout": {
+          "request": "${TIMEOUTS.REQUEST}",
+          "socket": "${TIMEOUTS.SOCKET}"
+        },
+        "headersToPass": [{ "source": "access_token", "destination": "access_token" }],
+        "requiredParams": ["gstin", "financialYear"]
+      }
+    ],
+    "resTransform": "app.transformers.mergeCustomerProfileWithMouEligibility"
+  },
+  {
+    "path": "/xp-mi/public/v1/central_commerce/graphql",
+    "method": "POST",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "graphql",
+      "url": "https://qa.msme.jswone.in/central_commerce/graphql",
+      "method": "POST",
+      "timeout": {
+        "request": 5000,
+        "socket": 1000
+      },
+      "headersToPass": [
+        {
+          "source": "access_token",
+          "destination": "access_token"
+        }
+      ],
+      "requiredParams": ["*"]
+    }
+  },
+  {
+    "path": "/xp-mi/public/v1/web-mou",
+    "method": "POST",
+    "routeHandler": "AGGREGATE",
+    "aggregationType": "PARALLEL",
+    "targets": [
+      {
+        "name": "web-mou",
+        "url": "${CMS_MSME_URL}/web-mou",
+        "method": "GET",
+        "timeout": {
+          "request": 10000,
+          "socket": 1000
+        },
+        "reqTransform": "general.transformers.moveBodyToQueryParams"
+      }
+    ],
+    "resTransform": "general.transformers.unwrapParallelResponse"
   }
 ]

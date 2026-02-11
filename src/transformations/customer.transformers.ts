@@ -1,6 +1,6 @@
 import { AggregatedResponse } from 'src/models/aggregated-response.model';
 import { Logger } from '@nestjs/common';
-import { safeDebug } from 'src/utils/common-functions.util';
+import { safeDebug, safeToLog } from 'src/utils/common-functions.util';
 
 /**
  * Transforms aggregated customer profile responses to ensure they are JSON-serializable
@@ -52,4 +52,60 @@ export function transformCustomerProfileResponses(aggregatedResponses: Aggregate
   });
 
   return result;
+}
+
+export function mergeCustomerProfile(aggregatedResponses: AggregatedResponse[]): any {
+  const responses = aggregatedResponses.reduce(
+    (acc, response) => {
+      acc[response.target] = response;
+      return acc;
+    },
+    {} as Record<string, AggregatedResponse>,
+  );
+
+  const profileResp = responses['profile'];
+  const mouResp = responses['mou-eligibility'];
+  const profileV2Resp = responses['customerData'];
+
+  safeDebug(
+    Logger,
+    () =>
+      `Customer profile response from mergeCustomerProfile: ${safeToLog(
+        profileResp,
+      )}`,
+  );
+
+  safeDebug(
+    Logger,
+    () =>
+      `MOU eligibility response from mergeCustomerProfile: ${safeToLog(mouResp)}`,
+  );
+
+  safeDebug(
+    Logger,
+    () =>
+      `Customer data response from mergeCustomerProfile: ${safeToLog(profileV2Resp)}`,
+  );
+
+  const profile =
+    profileResp && profileResp.data && typeof profileResp.data === 'object' ? profileResp.data : {
+      success: false,
+      error: profileResp.error || 'Unknown error',
+      httpStatus: profileResp.httpStatus,
+    };
+
+  const customerData =
+    profileV2Resp && profileV2Resp.data && typeof profileV2Resp.data === 'object' ? profileV2Resp.data : {
+      success: false,
+      error: profileV2Resp.error || 'Unknown error',
+      httpStatus: profileV2Resp.httpStatus,
+    };
+
+  const mouEligibilityPayload =
+    mouResp && mouResp.data && typeof mouResp.data === 'object' ? (mouResp.data as any) : {};
+
+  return {
+    "profile": { ...profile, mouEligibilityPayload },
+    customerData,
+  };
 }
