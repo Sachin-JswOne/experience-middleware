@@ -14,6 +14,7 @@ export function getSearchPageDetails(aggregatedResponses: AggregatedResponse[]):
   const cmsResponse = responses['app-search-page'];
   const buyAgainResponse = responses['ccp-buy-again-with-prices']?.data;
   const recentSearchResponse = responses['ccp-recent-search']?.data;
+  const trendingSearchResponse = responses['ccp-trending-search']?.data;
   const featureFlags = responses['cmsFeatureFlag']?.data?.data ?? [];
   const webCentralCatalogueResponse = responses['web-central-catalogue-categories'];
   const topItemsResponse = responses['search-top-items']?.data;
@@ -41,6 +42,10 @@ export function getSearchPageDetails(aggregatedResponses: AggregatedResponse[]):
     recentSearchResponse?.success && Array.isArray(recentSearchResponse.data)
       ? recentSearchResponse.data
       : [];
+  const trendingSearches =
+    trendingSearchResponse?.success && Array.isArray(trendingSearchResponse.data)
+      ? trendingSearchResponse.data
+      : [];
   const hasBuyAgainBlock = blocks.some((b) => b.__component === 'app-components.app-buy-again');
   //BUY AGAIN → UPDATE EXISTING BLOCK
   if (buyAgainResponse?.success && hasBuyAgainBlock) {
@@ -67,36 +72,16 @@ export function getSearchPageDetails(aggregatedResponses: AggregatedResponse[]):
         if (variantList) buyAgainBlock.variantList = variantList;
         if (skuSize != null) buyAgainBlock.skuSize = skuSize;
       }
-
-      // Final assigned blocks
-      return {
-        data: {
-          ...cmsData,
-          blocks: filteredBlocks,
-          recentSearches,
-        },
-        meta: {
-          timestamp: new Date().toISOString(),
-          version: '1.0',
-        },
-      };
+      blocks.length = 0;
+      blocks.push(...filteredBlocks);
     }
   } else if (!buyAgainResponse?.success && hasBuyAgainBlock) {
     const filteredBlocks = blocks.filter(
       (b) => b.__component !== 'app-components.app-search-top-items',
     );
 
-    return {
-      data: {
-        ...cmsData,
-        blocks: filteredBlocks,
-        recentSearches,
-      },
-      meta: {
-        timestamp: new Date().toISOString(),
-        version: '1.0',
-      },
-    };
+    blocks.length = 0;
+    blocks.push(...filteredBlocks);
   }
   if (isCentralCatalogueEnabled) {
     const ccpProducts = topItemsResponse?.data?.products;
@@ -114,6 +99,7 @@ export function getSearchPageDetails(aggregatedResponses: AggregatedResponse[]):
           ...cmsData,
           blocks: filteredBlocks,
           recentSearches,
+          trendingSearches,
         },
         meta: {
           timestamp: new Date().toISOString(),
@@ -195,6 +181,7 @@ export function getSearchPageDetails(aggregatedResponses: AggregatedResponse[]):
       ...cmsData,
       blocks,
       recentSearches,
+      trendingSearches,
     },
     meta: {
       timestamp: new Date().toISOString(),

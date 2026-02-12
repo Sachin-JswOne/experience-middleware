@@ -1,7 +1,7 @@
 import { AggregatedResponse } from 'src/models/aggregated-response.model';
 import { Logger } from '@nestjs/common';
 import { BaseRequest } from 'src/models/base-request.model';
-import { safeDebug, safeToLog } from 'src/utils/common-functions.util';
+import { safeDebug } from 'src/utils/common-functions.util';
 
 export function mergeHomePageResponses(aggregatedResponses: AggregatedResponse[]): any {
   const responses = aggregatedResponses.reduce(
@@ -351,49 +351,4 @@ export function transformInTransitRequest(request) {
   };
   finalTransformedRequest.url.search = `?page=1&size=10&cursorTimestamp=0`;
   return finalTransformedRequest;
-}
-
-export function mergeCustomerProfileWithMouEligibility(
-  aggregatedResponses: AggregatedResponse[],
-): any {
-  const responses = aggregatedResponses.reduce(
-    (acc, response) => {
-      acc[response.target] = response;
-      return acc;
-    },
-    {} as Record<string, AggregatedResponse>,
-  );
-
-  const profileResp = responses['customer-profile'];
-  const mouResp = responses['mou-eligibility'];
-
-  safeDebug(
-    Logger,
-    () =>
-      `Customer profile response from mergeCustomerProfileWithMouEligibility: ${safeToLog(
-        profileResp,
-      )}`,
-  );
-
-  safeDebug(
-    Logger,
-    () =>
-      `MOU eligibility response from mergeCustomerProfileWithMouEligibility: ${safeToLog(mouResp)}`,
-  );
-
-  const profile =
-    profileResp && profileResp.data && typeof profileResp.data === 'object' ? profileResp.data : {};
-
-  const mouEligibilityPayload =
-    mouResp && mouResp.data && typeof mouResp.data === 'object' ? (mouResp.data as any) : {};
-
-  const mouEligibility = {
-    data: mouEligibilityPayload?.data ?? {},
-    error: mouEligibilityPayload?.error ?? null,
-  };
-
-  return {
-    ...(profile as Record<string, unknown>),
-    mouEligibility,
-  };
 }

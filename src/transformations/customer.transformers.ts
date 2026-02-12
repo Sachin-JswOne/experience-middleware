@@ -75,12 +75,12 @@ export function mergeCustomerProfile(aggregatedResponses: AggregatedResponse[]):
 
   safeDebug(
     Logger,
-    () => `MOU eligibility response from mergeCustomerProfile: ${safeToLog(mouResp)}`,
+    () => `Customer profile response v2 from mergeCustomerProfile: ${safeToLog(profileV2Resp)}`,
   );
 
   safeDebug(
     Logger,
-    () => `Customer data response from mergeCustomerProfile: ${safeToLog(profileV2Resp)}`,
+    () => `MOU eligibility response from mergeCustomerProfile: ${safeToLog(mouResp)}`,
   );
 
   safeDebug(
@@ -89,6 +89,7 @@ export function mergeCustomerProfile(aggregatedResponses: AggregatedResponse[]):
   );
 
   const profile =
+ 
     profileResp && profileResp.data && typeof profileResp.data === 'object'
       ? profileResp.data
       : {
@@ -98,6 +99,7 @@ export function mergeCustomerProfile(aggregatedResponses: AggregatedResponse[]):
         };
 
   const customerData =
+  
     profileV2Resp && profileV2Resp.data && typeof profileV2Resp.data === 'object'
       ? profileV2Resp.data
       : {
