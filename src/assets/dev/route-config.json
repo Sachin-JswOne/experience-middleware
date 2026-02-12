@@ -1540,6 +1540,10 @@
         {
           "source": "authorization",
           "destination": "access_token"
+        },
+        {
+          "source": "central_catalogue_enabled",
+          "destination": "central_catalogue_enabled"
         }
       ],
       "staticHeaders": {
