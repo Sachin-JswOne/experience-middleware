@@ -1310,10 +1310,6 @@
           "destination": "access_token"
         },
         {
-          "source": "access_token",
-          "destination": "access_token"
-        },
-        {
           "source": "central_catalogue_enabled",
           "destination": "central_catalogue_enabled"
         }
