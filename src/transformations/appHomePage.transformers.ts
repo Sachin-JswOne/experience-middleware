@@ -84,17 +84,6 @@ export function mergeAppHomePageResponses(aggregatedResponses: AggregatedRespons
     }
   }
 
-  // Prepare top items block if available
-  const topProducts = [];
-  if (Array.isArray(topProducts)) {
-    const topItemsBlock = blocks.find(
-      (block) => block.__component === 'app-components.app-top-items',
-    );
-    if (topItemsBlock) {
-      topItemsBlock.topProducts = topProducts;
-    }
-  }
-
   // inject top brand categories data into app-top-brands blocks
   if (topBrandsResponse?.success && Array.isArray(topBrandsResponse.data?.data?.navigation)) {
     const topBrandNavigation = topBrandsResponse.data.data.navigation;

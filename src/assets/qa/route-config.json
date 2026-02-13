@@ -1320,6 +1320,22 @@
         ],
         "reqTransform": "general.transformers.convertToGetRequest",
         "resTransform": "slc.transformers.convertSlcResponse"
+      },
+        {
+        "name": "app-cart-size",
+        "url": "https://qa.msme.jswone.in/v2/cart/size",
+        "method": "GET",
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "access_token"
+          }
+        ],
+        "reqTransform": "general.transformers.convertToGetRequest"
       }
     ],
     "resTransform": "global.transformers.mergeGlobalAndSlcCartResponses"
@@ -2270,7 +2286,7 @@
     ],
     "resTransform": "web.segment.transformers.mergeWebSegmentPageResponsesV1"
   },
-  {
+   {
     "path": "/xp-mi/public/v3/app-home-page-v3",
     "method": "POST",
     "routeHandler": "AGGREGATE",
@@ -2278,7 +2294,7 @@
     "targets": [
       {
         "name": "app-home-page",
-        "url": "https://qa-cms-ext.msme.jswone.in/api/app-home-page-v2",
+        "url": "https://qa-cms-ext.msme.jswone.in/api/app-home-page-v3",
         "method": "GET",
         "timeout": {
           "request": 5000,
