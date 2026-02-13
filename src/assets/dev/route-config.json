@@ -1483,6 +1483,22 @@
         ],
         "reqTransform": "general.transformers.convertToGetRequest",
         "resTransform": "slc.transformers.convertSlcResponse"
+      },
+       {
+        "name": "app-cart-size",
+        "url": "https://qa.msme.jswone.in/v2/cart/size",
+        "method": "GET",
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "access_token"
+          }
+        ],
+        "reqTransform": "general.transformers.convertToGetRequest"
       }
     ],
     "resTransform": "global.transformers.mergeGlobalAndSlcCartResponses"
@@ -2404,5 +2420,101 @@
       }
     ],
     "resTransform": "web.segment.transformers.mergeWebSegmentPageResponsesV1"
+  },
+   {
+    "path": "/xp-mi/public/v3/app-home-page-v3",
+    "method": "POST",
+    "routeHandler": "AGGREGATE",
+    "aggregationType": "SEQUENTIAL",
+    "targets": [
+      {
+        "name": "app-home-page",
+        "url": "https://qa-cms-ext.msme.jswone.in/api/app-home-page-v3",
+        "method": "GET",
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
+        "reqTransform": "general.transformers.transformAppHomePageRequest",
+        "resTransform": "cms.transformers.replaceUriPrefix"
+      },
+      {
+        "name": "app-buy-again",
+        "url": "https://qa.msme.jswone.in/central_commerce/buy-again-list",
+        "method": "GET",
+        "timeout": {
+          "request": 15000,
+          "socket": 1000
+        },
+        "reqTransform": "general.transformers.convertToGetRequest",
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "access_token"
+          }
+        ],
+        "resTransform": "buyAgain.transformers.transformBuyAgainResponse"
+      },
+      {
+        "name": "app-top-brands",
+        "url": "https://qa.msme.jswone.in/central_commerce/categories/tree/list",
+        "method": "POST",
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
+        "reqTransform": "web.transformers.extractBrandCategoryIds",
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "access_token"
+          }
+        ]
+      },
+      {
+        "name": "app-categories",
+        "url": "https://qa.msme.jswone.in/central_commerce/categories/tree/list",
+        "method": "POST",
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
+        "reqTransform": "web.transformers.extractCentralCatalogueCategoryIds",
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "access_token"
+          }
+        ]
+      },
+      {
+        "name": "app-blogs",
+        "url": "https://qa-cms-ext.msme.jswone.in/api/jsw-blogs-articless",
+        "method": "GET",
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
+        "reqTransform": "cms.transformers.homeBlogs",
+        "resTransform": "cms.transformers.replaceUriPrefix"
+      },
+      {
+        "name": "app-in-transit",
+        "url": "https://qa-ssr.msme.jswone.in/order-service/order/v1/material-tracking/dispatched-shipments",
+        "method": "GET",
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "access_token"
+          }
+        ],
+        "reqTransform": "app.transformers.transformInTransitRequest"
+      }
+    ],
+    "resTransform": "appHomePage.transformers.mergeAppHomePageResponses"
   }
 ]
