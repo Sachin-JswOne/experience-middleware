@@ -66,6 +66,7 @@ export function mergeCustomerProfile(aggregatedResponses: AggregatedResponse[]):
   const profileResp = responses['profile'];
   const mouResp = responses['mou-eligibility'];
   const profileV2Resp = responses['customerData'];
+  const gstResp = responses['gstin-customer-profile'];
 
   safeDebug(
     Logger,
@@ -80,6 +81,11 @@ export function mergeCustomerProfile(aggregatedResponses: AggregatedResponse[]):
   safeDebug(
     Logger,
     () => `Customer data response from mergeCustomerProfile: ${safeToLog(profileV2Resp)}`,
+  );
+
+  safeDebug(
+    Logger,
+    () => `GstIn Customer data response from mergeCustomerProfile: ${safeToLog(gstResp)}`,
   );
 
   const profile =
@@ -99,9 +105,20 @@ export function mergeCustomerProfile(aggregatedResponses: AggregatedResponse[]):
           error: profileV2Resp.error || 'Unknown error',
           httpStatus: profileV2Resp.httpStatus,
         };
+  const mouEligibilityPayload =
+    mouResp && mouResp.data && typeof mouResp.data === 'object' ? (mouResp.data as any) : {};
+
+  const gstPayload =
+    gstResp && gstResp.data && typeof gstResp.data === 'object' ? (gstResp.data as any) : null;
+
+  const gstData =
+    gstPayload && typeof gstPayload.data === 'object' && gstPayload.data !== null
+      ? gstPayload.data
+      : {};
 
   return {
-    profile: { ...profile },
+    profile: { ...profile, mouEligibilityPayload },
     customerData,
+    ...gstData,
   };
 }
