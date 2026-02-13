@@ -2063,7 +2063,7 @@
     "targets": [
       {
         "name": "layout-mweb-homepages",
-        "url": "https://qa-cms.msme.jswone.in/api/layout-mweb-homepages",
+        "url": "${CMS_MSME_URL}/layout-mweb-homepages",
         "method": "GET",
         "timeout": { "request": 10000, "socket": 1000 },
         "reqTransform": "general.transformers.moveBodyToQueryParams",
