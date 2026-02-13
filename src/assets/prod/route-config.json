@@ -1146,6 +1146,19 @@
         },
         "headersToPass": [{ "source": "access_token", "destination": "access_token" }],
         "requiredParams": ["gstin", "financialYear"]
+      },
+      {
+        "name": "gstin-customer-profile",
+        "url": "https://tms.jswone.com/account-master/profile/v1",
+        "method": "GET",
+        "timeout": {
+          "request": "${TIMEOUTS.REQUEST}",
+          "socket": "${TIMEOUTS.SOCKET}"
+        },
+        "staticHeaders": {
+          "x-api-key": "test"
+        },
+        "requiredParams": ["gstin"]
       }
     ],
     "resTransform": "customer.transformers.mergeCustomerProfile"
@@ -2144,5 +2157,46 @@
       },
       "requiredParams": ["*"]
     }
+  },
+  {
+    "path": "/xp-mi/public/v1/web-segment-page",
+    "method": "POST",
+    "routeHandler": "AGGREGATE",
+    "aggregationType": "SEQUENTIAL",
+    "targets": [
+      {
+        "name": "layout-mweb-segment-pages",
+        "url": "${CMS_MSME_URL}/layout-mweb-segment-pages",
+        "method": "GET",
+        "timeout": { "request": 10000, "socket": 1000 },
+        "reqTransform": "general.transformers.moveBodyToQueryParams",
+        "resTransform": "cms.transformers.replaceUriPrefix"
+      },
+      {
+        "name": "app-blogs",
+        "url": "${CMS_MSME_URL}/jsw-blogs-articless",
+        "method": "GET",
+        "timeout": { "request": 5000, "socket": 1000 },
+        "reqTransform": "cms.transformers.homeBlogs",
+        "resTransform": "cms.transformers.replaceUriPrefix"
+      },
+      {
+        "name": "web-segment-products",
+        "url": "https://experience-middleware.jswonemsme.com/xp-mi/public/v1/web-products",
+        "method": "GET",
+        "timeout": { "request": 10000, "socket": 1000 },
+        "reqTransform": "general.transformers.convertToGetRequest",
+        "headersToPass": [{ "source": "authorization", "destination": "authorization" }]
+      },
+      {
+        "name": "segment-products-listing",
+        "url": "https://www.jswonemsme.com/central_commerce/products/listing",
+        "method": "POST",
+        "timeout": { "request": 5000, "socket": 1000 },
+        "reqTransform": "web.segment.transformers.extractProductListingSlugSegment",
+        "headersToPass": [{ "source": "authorization", "destination": "access_token" }]
+      }
+    ],
+    "resTransform": "web.segment.transformers.mergeWebSegmentPageResponsesV1"
   }
 ]
