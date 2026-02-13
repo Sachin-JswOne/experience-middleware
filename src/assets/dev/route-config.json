@@ -1272,6 +1272,23 @@
     }
   },
   {
+    "path": "${PATH_URL}/v1/web-industries",
+    "method": "POST",
+    "routeHandler": "TRANSFORM",
+    "isCacheRequired": false,
+    "target": {
+      "name": "webIndustries",
+      "url": "${CMS_MSME_URL}/industries",
+      "method": "GET",
+      "timeout": {
+        "request": "${TIMEOUTS.REQUEST}",
+        "socket": "${TIMEOUTS.SOCKET}"
+      },
+      "reqTransform": "general.transformers.moveBodyToQueryParams",
+      "resTransform": "cms.transformers.replaceUriPrefix"
+    }
+  },
+  {
     "path": "/xp-mi/public/v1/central_commerce/catalogue/search",
     "method": "POST",
     "routeHandler": "TRANSFORM",
