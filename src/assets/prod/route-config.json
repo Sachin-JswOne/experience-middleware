@@ -1121,7 +1121,7 @@
     "path": "${PATH_URL}/v1/customer-profile",
     "method": "GET",
     "routeHandler": "AGGREGATE",
-    "aggregationType": "PARALLEL",
+    "aggregationType": "SEQUENTIAL",
     "targets": [
       {
         "name": "profile",
@@ -1162,7 +1162,8 @@
           "socket": "${TIMEOUTS.SOCKET}"
         },
         "headersToPass": [{ "source": "access_token", "destination": "access_token" }],
-        "requiredParams": ["gstin", "financialYear"]
+        "requiredParams": ["financialYear"],
+        "reqTransform": "customer.transformers.injectGstinFromProfile"
       },
       {
         "name": "gstin-customer-profile",
@@ -1175,7 +1176,7 @@
         "staticHeaders": {
           "x-api-key": "test"
         },
-        "requiredParams": ["gstin"]
+        "reqTransform": "customer.transformers.injectGstinFromProfile"
       }
     ],
     "resTransform": "customer.transformers.mergeCustomerProfile"
