@@ -106,11 +106,15 @@ export function mergeAppHomePageResponses(aggregatedResponses: AggregatedRespons
         }))
         .filter((nav: any) => nav.subMenu && nav.subMenu.length > 0);
 
-      block.centralCatalogueBrandsList = centralCategoryBrandData[0].subMenu.map((brand) => ({
-        name: brand.name || '',
-        slug: brand.slug || '',
-        image: brand.metaImage.url || '',
-      }));
+      if (centralCategoryBrandData.length > 0) {
+        block.centralCatalogueBrandsList = centralCategoryBrandData[0].subMenu.map((brand) => ({
+          name: brand.name || '',
+          slug: brand.slug || '',
+          image: brand.metaImage.url || '',
+        }));
+      } else {
+        block.centralCatalogueBrandsList = [];
+      }
     }
   }
 
@@ -136,14 +140,17 @@ export function mergeAppHomePageResponses(aggregatedResponses: AggregatedRespons
           subMenu: nav.subMenu?.filter((sub: any) => blockCategoryIds.includes(sub.id)),
         }))
         .filter((nav: any) => nav.subMenu && nav.subMenu.length > 0);
-
-      block.centralCatalogueCategoriesList = centralCategoryCategoriesData[0].subMenu.map(
-        (category) => ({
-          name: category.name || '',
-          slug: category.slug || '',
-          image: category.metaImage.url || '',
-        }),
-      );
+      if (centralCategoryCategoriesData.length > 0) {
+        block.centralCatalogueCategoriesList = centralCategoryCategoriesData[0].subMenu.map(
+          (category: any) => ({
+            name: category.name || '',
+            slug: category.slug || '',
+            image: category.metaImage.url || '',
+          }),
+        );
+      } else {
+        block.centralCatalogueCategoriesList = [];
+      }
     }
   }
 
