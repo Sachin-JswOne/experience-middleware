@@ -1338,7 +1338,7 @@
     "path": "${PATH_URL}/v1/customer-profile",
     "method": "GET",
     "routeHandler": "AGGREGATE",
-    "aggregationType": "PARALLEL",
+    "aggregationType": "SEQUENTIAL",
     "targets": [
       {
         "name": "profile",
@@ -1379,7 +1379,8 @@
           "socket": "${TIMEOUTS.SOCKET}"
         },
         "headersToPass": [{ "source": "access_token", "destination": "access_token" }],
-        "requiredParams": ["gstin", "financialYear"]
+        "requiredParams": ["financialYear"],
+        "reqTransform": "customer.transformers.injectGstinFromProfile"
       },
       {
         "name": "gstin-customer-profile",
@@ -1392,7 +1393,7 @@
         "staticHeaders": {
           "x-api-key": "test"
         },
-        "requiredParams": ["gstin"]
+        "reqTransform": "customer.transformers.injectGstinFromProfile"
       }
     ],
     "resTransform": "customer.transformers.mergeCustomerProfile"
@@ -1484,7 +1485,7 @@
         "reqTransform": "general.transformers.convertToGetRequest",
         "resTransform": "slc.transformers.convertSlcResponse"
       },
-       {
+      {
         "name": "app-cart-size",
         "url": "https://qa.msme.jswone.in/v2/cart/size",
         "method": "GET",
@@ -2421,7 +2422,7 @@
     ],
     "resTransform": "web.segment.transformers.mergeWebSegmentPageResponsesV1"
   },
-   {
+  {
     "path": "/xp-mi/public/v3/app-home-page-v3",
     "method": "POST",
     "routeHandler": "AGGREGATE",
