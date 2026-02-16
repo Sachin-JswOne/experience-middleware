@@ -12,6 +12,7 @@ export function mergeGlobalAndSlcCartResponses(aggregatedResponses: AggregatedRe
 
   const appGlobalPageResponse = responses['app-global-page-v2'];
   const appSlcCartDetailsResponse = responses['app-slc-cart-details'];
+  const appCartSizeResponse = responses['app-cart-size'];
 
   Logger.debug(
     ` Strapi Global Page Api response from method: mergeGlobalAndSlcCartResponses : ${JSON.stringify(
@@ -25,7 +26,36 @@ export function mergeGlobalAndSlcCartResponses(aggregatedResponses: AggregatedRe
     )}`,
   );
 
+  Logger.debug(
+    ` Cart Size response from method: mergeGlobalAndSlcCartResponses : ${JSON.stringify(
+      appCartSizeResponse,
+    )}`,
+  );
+
   if (appGlobalPageResponse && appSlcCartDetailsResponse) {
+    if (appCartSizeResponse.success) {
+      if (
+        appGlobalPageResponse?.data?.data?.footer &&
+        Array.isArray(appGlobalPageResponse?.data?.data?.footer)
+      ) {
+        appGlobalPageResponse.data.data.footer.push({
+          __component: 'cart-size',
+          cartData: appCartSizeResponse?.data.data,
+        });
+      }
+    }
+
+    if (!appCartSizeResponse.success) {
+      if (
+        appGlobalPageResponse?.data?.data?.footer &&
+        Array.isArray(appGlobalPageResponse?.data?.data?.footer)
+      ) {
+        appGlobalPageResponse.data.data.footer.push({
+          __component: 'cart-size',
+          cartData: {},
+        });
+      }
+    }
     if (!appGlobalPageResponse.success && !appSlcCartDetailsResponse.success) {
       return { data: {}, meta: {} };
     }
@@ -46,6 +76,7 @@ export function mergeGlobalAndSlcCartResponses(aggregatedResponses: AggregatedRe
             numberOfItems: appSlcCartDetailsResponse?.data?.numberOfItems,
             totalPrice: appSlcCartDetailsResponse?.data?.totalPrice,
           };
+
           return responseData;
         }
         return responseData;

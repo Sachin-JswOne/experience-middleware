@@ -434,6 +434,14 @@ export function mergeWebHomePageResponsesV3(aggregatedResponses: AggregatedRespo
       }
     }
   }
+  if (Array.isArray(page.industry_specific_components)) {
+    for (const comp of page.industry_specific_components) {
+      if (comp?.product_categories && !comp.app_product_categories) {
+        comp.app_product_categories = comp.product_categories;
+        delete comp.product_categories;
+      }
+    }
+  }
 
   /**
    * 5) Inject productsList into product_category_component app_product_categories
@@ -445,7 +453,34 @@ export function mergeWebHomePageResponsesV3(aggregatedResponses: AggregatedRespo
       ? page.product_category_component
       : [];
 
+    const IndustrySpecificBlock = Array.isArray(page.industry_specific_components)
+      ? page.industry_specific_components
+      : [];
+
     for (const block of productCategoryBlocks) {
+      block?.app_product_categories
+        ?.filter((c: any) => c.webCategoryId && c.itemsToShow)
+        ?.forEach((c: any) => {
+          c.productsList = productsData[c.webCategoryId];
+        });
+
+      // Inject centralCategoryIdData for product listing
+      if (
+        productsListingResponse?.success &&
+        Array.isArray(productsListingResponse.data?.data?.products)
+      ) {
+        const productsArray = productsListingResponse.data.data.products;
+
+        const filteredCategories = block?.app_product_categories?.filter(
+          (c: any) => c.webCategoryId && c.itemsToShow,
+        );
+
+        if (filteredCategories && filteredCategories.length > 0) {
+          filteredCategories[0].centralCategoryIdData = [{ products: productsArray }];
+        }
+      }
+    }
+    for (const block of IndustrySpecificBlock) {
       block?.app_product_categories
         ?.filter((c: any) => c.webCategoryId && c.itemsToShow)
         ?.forEach((c: any) => {
