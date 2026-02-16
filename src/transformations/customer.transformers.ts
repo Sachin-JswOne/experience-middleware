@@ -1,6 +1,8 @@
 import { AggregatedResponse } from 'src/models/aggregated-response.model';
 import { Logger } from '@nestjs/common';
 import { safeDebug, safeToLog } from 'src/utils/common-functions.util';
+import { CustomError } from 'src/utils/CustomError';
+import { BaseRequest } from 'src/models/base-request.model';
 
 /**
  * Transforms aggregated customer profile responses to ensure they are JSON-serializable
@@ -52,6 +54,32 @@ export function transformCustomerProfileResponses(aggregatedResponses: Aggregate
   });
 
   return result;
+}
+
+function extractGstinFromProfile(profileData: any): string | undefined {
+  return (
+    profileData?.gstin ||
+    profileData?.data?.gstin ||
+    profileData?.data?.data?.gstin ||
+    profileData?.customer?.gstin ||
+    profileData?.customerProfile?.gstin
+  );
+}
+
+export function injectGstinFromProfile(
+  request: BaseRequest,
+  prevResponses: AggregatedResponse[],
+): BaseRequest {
+  const profileResp = prevResponses?.find((r) => r.target === 'profile');
+
+  const gstin = extractGstinFromProfile(profileResp?.data);
+
+  if (!gstin) {
+    throw new CustomError('Bad Request: gstin not found in profile response', 400);
+  }
+
+  request.url.searchParams.set('gstin', gstin);
+  return request;
 }
 
 export function mergeCustomerProfile(aggregatedResponses: AggregatedResponse[]): any {
@@ -110,16 +138,6 @@ export function mergeCustomerProfile(aggregatedResponses: AggregatedResponse[]):
           error: profileV2Resp.error || 'Unknown error',
           httpStatus: profileV2Resp.httpStatus,
         };
-  const mouEligibilityPayload =
-    mouResp && mouResp.data && typeof mouResp.data === 'object' ? (mouResp.data as any) : {};
-
-  const gstPayload =
-    gstResp && gstResp.data && typeof gstResp.data === 'object' ? (gstResp.data as any) : null;
-
-  const gstData =
-    gstPayload && typeof gstPayload.data === 'object' && gstPayload.data !== null
-      ? gstPayload.data
-      : {};
 
   const mouEligibilityPayload =
     mouResp && mouResp.data && typeof mouResp.data === 'object' ? (mouResp.data as any) : {};
