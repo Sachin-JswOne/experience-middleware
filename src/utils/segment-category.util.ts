@@ -27,7 +27,7 @@ export function extractProductListingSlugSegment(
 
   let slug: string | undefined;
 
-  const productCategoryComponents = firstPage?.product_category_component;
+  const productCategoryComponents = firstPage?.industry_specific_components;
 
   if (Array.isArray(productCategoryComponents)) {
     for (const comp of productCategoryComponents) {
