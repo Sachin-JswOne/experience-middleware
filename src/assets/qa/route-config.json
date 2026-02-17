@@ -1228,7 +1228,7 @@
           "socket": "${TIMEOUTS.SOCKET}"
         },
         "staticHeaders": {
-          "x-api-key": "test"
+          "x-api-key": "${X_API_KEY_CONNECTOR}"
         },
         "reqTransform": "customer.transformers.injectGstinFromProfile"
       }
@@ -2240,7 +2240,7 @@
         "socket": 1000
       },
       "staticHeaders": {
-        "x-api-key": "test",
+        "x-api-key": "${X_API_KEY_CONNECTOR}",
         "Content-Type": "application/json"
       },
       "requiredParams": ["*"]
