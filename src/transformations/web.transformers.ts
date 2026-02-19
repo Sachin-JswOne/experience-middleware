@@ -333,6 +333,7 @@ export function mergeWebHomePageResponsesV3(aggregatedResponses: AggregatedRespo
   const webCentralCatalogueResponse = responses['web-central-catalogue-categories'];
   const webTopBrandCategoriesResponse = responses['web-central-top-brand-categories'];
   const productsListingResponse = responses['products-listing'];
+  const industryProductsListingResponse = responses['industry-products-listing'];
 
   safeDebug(
     Logger,
@@ -489,10 +490,10 @@ export function mergeWebHomePageResponsesV3(aggregatedResponses: AggregatedRespo
 
       // Inject centralCategoryIdData for product listing
       if (
-        productsListingResponse?.success &&
-        Array.isArray(productsListingResponse.data?.data?.products)
+        industryProductsListingResponse?.success &&
+        Array.isArray(industryProductsListingResponse.data?.data?.products)
       ) {
-        const productsArray = productsListingResponse.data.data.products;
+        const productsArray = industryProductsListingResponse.data.data.products;
 
         const filteredCategories = block?.app_product_categories?.filter(
           (c: any) => c.webCategoryId && c.itemsToShow,
