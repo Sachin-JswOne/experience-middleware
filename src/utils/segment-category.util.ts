@@ -11,7 +11,9 @@ export function extractProductListingSlugSegment(
     return { ...request, body: undefined };
   }
 
-  const cmsResponse = prevResponses.find((r) => r.target === 'layout-mweb-segment-pages');
+  const cmsResponse =
+    prevResponses.find((r) => r.target === 'layout-mweb-segment-pages') ??
+    prevResponses.find((r) => r.target === 'layout-mweb-homepages');
 
   if (!cmsResponse || !cmsResponse.success) {
     Logger.warn(
