@@ -2004,6 +2004,7 @@
       "name": "product-by-slug",
       "url": "https://qa.msme.jswone.in/central_commerce/product/slug/:slugId",
       "method": "GET",
+      "reqTransform": "general.transformers.convertToGetRequest",
       "timeout": {
         "request": "${TIMEOUTS.REQUEST}",
         "socket": "${TIMEOUTS.SOCKET}"

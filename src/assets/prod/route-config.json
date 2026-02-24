@@ -1815,6 +1815,7 @@
       "name": "product-by-slug",
       "url": "https://www.jswonemsme.com/central_commerce/product/slug/:slugId",
       "method": "GET",
+      "reqTransform": "general.transformers.convertToGetRequest",
       "timeout": {
         "request": "${TIMEOUTS.REQUEST}",
         "socket": "${TIMEOUTS.SOCKET}"
