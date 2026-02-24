@@ -615,83 +615,6 @@
     }
   },
   {
-    "path": "${PATH_URL}/v1/create-address",
-    "method": "POST",
-    "routeHandler": "AGGREGATE",
-    "aggregationType": "SEQUENTIAL",
-    "isCacheRequired": false,
-    "targets": [
-      {
-        "name": "get-sf-tokens",
-        "url": "${SF_AUTH_TOKEN_URI}",
-        "method": "POST",
-        "timeout": {
-          "request": "${TIMEOUTS.REQUEST}",
-          "socket": "${TIMEOUTS.SOCKET}"
-        },
-        "staticHeaders": {
-          "Content-Type": "application/x-www-form-urlencoded"
-        },
-        "requiredParams": ["*"],
-        "reqTransform": "general.transformers.createQueryParams",
-        "resTransform": ""
-      },
-      {
-        "name": "create-address",
-        "url": "${SF_OPPORTUNITY_URI}/v1/SiteAddress",
-        "method": "POST",
-        "timeout": {
-          "request": "${TIMEOUTS.REQUEST}",
-          "socket": "${TIMEOUTS.SOCKET}"
-        },
-        "reqTransform": "address.transformers.createAddress",
-        "headersToPass": [],
-        "requiredParams": ["*"]
-      }
-    ],
-    "resTransform": "general.transformers.successOnly"
-  },
-  {
-    "path": "${PATH_URL}/v1/get-address",
-    "method": "GET",
-    "routeHandler": "AGGREGATE",
-    "aggregationType": "SEQUENTIAL",
-    "isCacheRequired": false,
-    "targets": [
-      {
-        "name": "get-sf-tokens",
-        "url": "${SF_AUTH_TOKEN_URI}",
-        "method": "POST",
-        "timeout": {
-          "request": "${TIMEOUTS.REQUEST}",
-          "socket": "${TIMEOUTS.SOCKET}"
-        },
-        "staticHeaders": {
-          "Content-Type": "application/x-www-form-urlencoded"
-        },
-        "requiredParams": ["*"],
-        "reqTransform": "general.transformers.createQueryParams"
-      },
-      {
-        "name": "get-address",
-        "url": "${SF_OPPORTUNITY_URI}/retailAddressData",
-        "method": "GET",
-        "timeout": {
-          "request": "${TIMEOUTS.REQUEST}",
-          "socket": "${TIMEOUTS.SOCKET}"
-        },
-        "headersToPass": [
-          {
-            "source": "authorization",
-            "destination": "authorization"
-          }
-        ],
-        "reqTransform": "address.transformers.getAddressRequest"
-      }
-    ],
-    "resTransform": "address.transformers.getAddressResponse"
-  },
-  {
     "path": "/xp-mi/public/v1/homes/project/design-documents",
     "method": "POST",
     "routeHandler": "TRANSFORM",
@@ -2199,6 +2122,22 @@
             "destination": "access_token"
           }
         ]
+      },
+      {
+        "name": "industry-products-listing",
+        "url": "https://qa.msme.jswone.in/central_commerce/products/listing",
+        "method": "POST",
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
+        "reqTransform": "web.segment.transformers.extractProductListingSlugSegment",
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "access_token"
+          }
+        ]
       }
     ],
     "resTransform": "web.transformers.mergeWebHomePageResponsesV3"
@@ -2359,5 +2298,50 @@
       }
     ],
     "resTransform": "appHomePage.transformers.mergeAppHomePageResponses"
+  },
+  {
+    "path": "/xp-mi/public/v1/create-address",
+    "method": "POST",
+    "routeHandler": "TRANSFORM",
+    "isCacheRequired": false,
+    "target": {
+      "name": "post-address",
+      "url": "https://qa.msme.jswone.in/customer/address/upsert",
+      "method": "POST",
+      "timeout": {
+        "request": 5000,
+        "socket": 1000
+      },
+      "headersToPass": [
+        {
+          "source": "authorization",
+          "destination": "access_token"
+        }
+      ],
+      "reqTransform": "address.transformers.transformcreateAddressRequest",
+      "resTransform": "address.transformers.transformcreateAddressResponse"
+    }
+  },
+  {
+    "path": "/xp-mi/public/v1/get-address",
+    "method": "GET",
+    "routeHandler": "TRANSFORM",
+    "isCacheRequired": false,
+    "target": {
+      "name": "get-address",
+      "url": "https://qa.msme.jswone.in/customer/me/v2",
+      "method": "GET",
+      "timeout": {
+        "request": 5000,
+        "socket": 1000
+      },
+      "headersToPass": [
+        {
+          "source": "authorization",
+          "destination": "access_token"
+        }
+      ],
+      "resTransform": "address.transformers.transformGetAddressResponse"
+    }
   }
 ]

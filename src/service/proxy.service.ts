@@ -1,4 +1,5 @@
-﻿import { Inject, Injectable, Logger } from '@nestjs/common';
+﻿/* eslint-disable @typescript-eslint/no-unsafe-argument */
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { trace, context, SpanStatusCode } from '@opentelemetry/api';
 import { createHttpClient } from '../utils/http-client.factory';
 import { applyTransform } from '../utils/transformer.util';
@@ -477,14 +478,20 @@ export class ProxyService {
                   span.setAttribute('api.error.response.data', errorDataStr);
                 }
               }
-              if (errorResponse.status === 401 || errorResponse.status === 403) {
-                const authError = new CustomError(
-                  `Authorization error from target: ${target.name || target.url}`,
-                  500,
-                ) as any;
-                authError.httpStatusCode = errorResponse.status;
-                authError.response = errorResponse;
-                throw authError;
+
+              if (errorResponse.status >= 400 && errorResponse.status < 500) {
+                const downstreamMessage =
+                  errorResponse.data?.message ||
+                  errorResponse.data?.error_description ||
+                  errorResponse.statusText ||
+                  'Bad Request';
+
+                const clientError = new CustomError(downstreamMessage, errorResponse.status) as any;
+
+                clientError.httpStatusCode = errorResponse.status;
+                clientError.response = errorResponse;
+
+                throw clientError;
               }
             }
           }
