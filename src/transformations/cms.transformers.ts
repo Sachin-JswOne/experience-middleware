@@ -31,8 +31,10 @@ export function homeBlogs(request: BaseRequest): BaseRequest {
     ...request,
     body: null,
   };
-
-  const blogParams = {
+  const industryName = request?.body?.filters?.$and
+    ?.flatMap((f: any) => f.$or || [])
+    ?.find((cond: any) => cond?.industries?.name?.$eqi)?.industries?.name?.$eqi;
+  const blogParams: Record<string, any> = {
     sort: ['customDate:desc', 'updatedAt:desc'],
     populate: {
       fields: ['title', 'categoryName', 'linkUrl'],
@@ -45,6 +47,15 @@ export function homeBlogs(request: BaseRequest): BaseRequest {
       page: 1,
     },
   };
+  if (industryName) {
+    blogParams.filters = {
+      industries: {
+        name: {
+          $eqi: industryName,
+        },
+      },
+    };
+  }
 
   transformedRequest.url.search = qs.stringify(blogParams);
 
