@@ -2457,7 +2457,7 @@
     ],
     "resTransform": "appHomePage.transformers.mergeAppHomePageResponses"
   },
-    {
+  {
     "path": "/xp-mi/public/v1/create-address",
     "method": "POST",
     "routeHandler": "TRANSFORM",
@@ -2480,7 +2480,7 @@
       "resTransform": "address.transformers.transformcreateAddressResponse"
     }
   },
-    {
+  {
     "path": "/xp-mi/public/v1/get-address",
     "method": "GET",
     "routeHandler": "TRANSFORM",
@@ -2500,6 +2500,19 @@
         }
       ],
       "resTransform": "address.transformers.transformGetAddressResponse"
+    }
+  },
+  {
+    "path": "/xp-mi/public/v1/jsw-blog-articles",
+    "method": "POST",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "jsw-blog-articles",
+      "url": "https://qa-cms-ext.msme.jswone.in/api/jsw-blogs-articless",
+      "method": "GET",
+      "timeout": { "request": 20000, "socket": 1000 },
+      "reqTransform": "general.transformers.moveBodyToQueryParams",
+      "resTransform": "cms.transformers.replaceUriPrefix"
     }
   }
 ]
