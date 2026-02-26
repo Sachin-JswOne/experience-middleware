@@ -2003,6 +2003,14 @@
         ]
       },
       {
+        "name": "ccp-top-items-product-details",
+        "url": "https://www.jswonemsme.com/central_commerce/catalogue/product-details",
+        "method": "POST",
+        "timeout": { "request": 5000, "socket": 1000 },
+        "reqTransform": "web.transformers.transformWebHomePageTopItemsMMIDRequestV3",
+        "headersToPass": [{ "source": "authorization", "destination": "access_token" }]
+      },
+      {
         "name": "pending-dispatch-quantity",
         "url": "https://www.jswonemsme.com/order-service/order/v1/material-tracking/pending-dispatch-quantity",
         "method": "GET",
@@ -2292,7 +2300,7 @@
       "resTransform": "address.transformers.transformcreateAddressResponse"
     }
   },
-    {
+  {
     "path": "/xp-mi/public/v1/get-address",
     "method": "GET",
     "routeHandler": "TRANSFORM",

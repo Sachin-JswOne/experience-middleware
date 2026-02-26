@@ -315,6 +315,51 @@ export function handleProductResponse(aggregatedResponses: AggregatedResponse[])
   return productsResponse;
 }
 
+function extractMMIDs(items: any[]): string[] {
+  if (!Array.isArray(items)) return [];
+  return items
+    .map((item) => item?.MMID)
+    .filter((mmid): mmid is string => typeof mmid === 'string' && mmid.length > 0);
+}
+
+export function transformWebHomePageTopItemsMMIDRequestV3(
+  request: BaseRequest,
+  prevResponses: AggregatedResponse[],
+): BaseRequest {
+  const buyAgainAgg = prevResponses.find((r) => r.target === 'ccp-buy-again-with-prices');
+  const list =
+    buyAgainAgg?.data?.data?.listOfBuyAgainProducts ?? buyAgainAgg?.data?.listOfBuyAgainProducts;
+
+  const hasBuyAgainData = Array.isArray(list) && list.length > 0;
+
+  if (hasBuyAgainData) {
+    return { ...request, body: [] };
+  }
+  const cmsAgg = prevResponses.find((r) => r.target === 'layout-mweb-homepages');
+  safeDebug(Logger, () => `Web Home CMS Response → ${safeToLog(cmsAgg?.data)}`);
+
+  let mmids: string[] = [];
+
+  try {
+    const page0 = cmsAgg?.data?.data?.[0];
+    const items = page0?.mweb_top_item?.app_search_top_items ?? [];
+    mmids = extractMMIDs(items);
+  } catch (e) {
+    Logger.warn(
+      `transformWebHomePageTopItemsMMIDRequestV3: MMID extraction failed → ${safeToLog(e)}`,
+    );
+  }
+
+  mmids = Array.from(new Set(mmids));
+  safeDebug(Logger, () => `Homepage MMIDs sent to CCP → ${safeToLog(mmids)}`);
+
+  // CCP expects RAW ARRAY
+  return {
+    ...request,
+    body: mmids,
+  };
+}
+
 export function mergeWebHomePageResponsesV3(aggregatedResponses: AggregatedResponse[]): any {
   const responses = aggregatedResponses.reduce(
     (acc, response) => {
@@ -325,7 +370,7 @@ export function mergeWebHomePageResponsesV3(aggregatedResponses: AggregatedRespo
   );
 
   const cmsResponse = responses['layout-mweb-homepages'] ?? responses['app-home-page']; // fallback (optional)
-
+  // const topItemsCcpResponse = responses['ccp-top-items-product-details'];
   const blogsResponse = responses['app-blogs'];
   const buyAgainAgg = responses['ccp-buy-again-with-prices'];
   const pendingDispatchResponse = responses['pending-dispatch-quantity'];
@@ -411,6 +456,32 @@ export function mergeWebHomePageResponsesV3(aggregatedResponses: AggregatedRespo
       `Warning for Web Home Page API method: mergeWebHomePageResponsesV3 CCP buy again response failed.`,
       buyAgainAgg.error ?? 'Unknown error',
     );
+  }
+
+  const buyAgainList = page?.buy_again_component?.listOfBuyAgainProducts;
+  const hasBuyAgainData = Array.isArray(buyAgainList) && buyAgainList.length > 0;
+  const topItemsCcpResponse = responses['ccp-top-items-product-details'];
+  let isTopItem = false;
+  if (hasBuyAgainData) {
+    page.mweb_top_item.isTopItem = isTopItem;
+    // Explicitly ensure top-items CCP data is not sent when buy-again exists
+    if (page?.mweb_top_item && 'top_items_product_details' in page.mweb_top_item) {
+      delete page.mweb_top_item.top_items_product_details;
+    }
+  } else {
+    // Only inject top-items when buy-again is empty
+    if (page?.mweb_top_item) {
+      isTopItem = true;
+      page.mweb_top_item.isTopItem = isTopItem;
+      if (topItemsCcpResponse?.success) {
+        const ccpPayload = topItemsCcpResponse.data?.data ?? topItemsCcpResponse.data ?? null;
+        page.mweb_top_item.top_items_product_details = ccpPayload;
+      } else if (topItemsCcpResponse && !topItemsCcpResponse.success) {
+        page.mweb_top_item.top_items_product_details = {
+          error: topItemsCcpResponse.error ?? 'Unknown error',
+        };
+      }
+    }
   }
 
   /**

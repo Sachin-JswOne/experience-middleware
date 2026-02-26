@@ -2192,6 +2192,14 @@
         ]
       },
       {
+        "name": "ccp-top-items-product-details",
+        "url": "https://qa.msme.jswone.in/central_commerce/catalogue/product-details",
+        "method": "POST",
+        "timeout": { "request": 5000, "socket": 1000 },
+        "reqTransform": "web.transformers.transformWebHomePageTopItemsMMIDRequestV3",
+        "headersToPass": [{ "source": "authorization", "destination": "access_token" }]
+      },
+      {
         "name": "pending-dispatch-quantity",
         "url": "https://qa.msme.jswone.in/order-service/order/v1/material-tracking/pending-dispatch-quantity",
         "method": "GET",
@@ -2458,7 +2466,7 @@
     ],
     "resTransform": "appHomePage.transformers.mergeAppHomePageResponses"
   },
-    {
+  {
     "path": "/xp-mi/public/v1/create-address",
     "method": "POST",
     "routeHandler": "TRANSFORM",
@@ -2481,7 +2489,7 @@
       "resTransform": "address.transformers.transformcreateAddressResponse"
     }
   },
-    {
+  {
     "path": "/xp-mi/public/v1/get-address",
     "method": "GET",
     "routeHandler": "TRANSFORM",
