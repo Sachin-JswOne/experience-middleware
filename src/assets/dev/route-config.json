@@ -1294,18 +1294,6 @@
         ]
       },
       {
-        "name": "mou-eligibility",
-        "url": "https://qa.msme.jswone.in/central_commerce/customer/mou-eligiblity",
-        "method": "GET",
-        "timeout": {
-          "request": "${TIMEOUTS.REQUEST}",
-          "socket": "${TIMEOUTS.SOCKET}"
-        },
-        "headersToPass": [{ "source": "access_token", "destination": "access_token" }],
-        "requiredParams": ["financialYear"],
-        "reqTransform": "customer.transformers.injectGstinFromProfile"
-      },
-      {
         "name": "gstin-customer-profile",
         "url": "https://tms.qa.jswone.in/account-master/profile/v1",
         "method": "GET",
@@ -1314,7 +1302,7 @@
           "socket": "${TIMEOUTS.SOCKET}"
         },
         "staticHeaders": {
-          "x-api-key": "test"
+          "x-api-key": "${X_API_KEY_CONNECTOR}"
         },
         "reqTransform": "customer.transformers.injectGstinFromProfile"
       }
@@ -2106,17 +2094,6 @@
           "socket": "${TIMEOUTS.SOCKET}"
         },
         "headersToPass": [{ "source": "access_token", "destination": "access_token" }]
-      },
-      {
-        "name": "mou-eligibility",
-        "url": "https://qa.msme.jswone.in/central_commerce/customer/mou-eligiblity",
-        "method": "GET",
-        "timeout": {
-          "request": "${TIMEOUTS.REQUEST}",
-          "socket": "${TIMEOUTS.SOCKET}"
-        },
-        "headersToPass": [{ "source": "access_token", "destination": "access_token" }],
-        "requiredParams": ["gstin", "financialYear"]
       }
     ],
     "resTransform": "app.transformers.mergeCustomerProfileWithMouEligibility"
@@ -2315,7 +2292,7 @@
         "socket": 1000
       },
       "staticHeaders": {
-        "x-api-key": "test",
+        "x-api-key": "${X_API_KEY_CONNECTOR}",
         "Content-Type": "application/json"
       },
       "requiredParams": ["*"]
@@ -2458,7 +2435,7 @@
     ],
     "resTransform": "appHomePage.transformers.mergeAppHomePageResponses"
   },
-    {
+  {
     "path": "/xp-mi/public/v1/create-address",
     "method": "POST",
     "routeHandler": "TRANSFORM",
@@ -2481,7 +2458,7 @@
       "resTransform": "address.transformers.transformcreateAddressResponse"
     }
   },
-    {
+  {
     "path": "/xp-mi/public/v1/get-address",
     "method": "GET",
     "routeHandler": "TRANSFORM",
