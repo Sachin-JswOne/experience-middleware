@@ -475,7 +475,7 @@ export function mergeWebHomePageResponsesV3(aggregatedResponses: AggregatedRespo
   const hasBuyAgainData = Array.isArray(buyAgainList) && buyAgainList.length > 0;
 
   if (page?.mweb_top_item && Array.isArray(page.mweb_top_item.app_search_top_items)) {
-    if (!isCentralCatalogueEnabled || hasBuyAgainData) {
+    if (hasBuyAgainData) {
       page.mweb_top_item.isTopItem = false;
       if ('top_items_product_details' in page.mweb_top_item) {
         delete page.mweb_top_item.top_items_product_details;
