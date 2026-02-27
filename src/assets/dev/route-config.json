@@ -2153,6 +2153,17 @@
         "resTransform": "cms.transformers.replaceUriPrefix"
       },
       {
+        "name": "cmsFeatureFlag",
+        "url": "${CMS_MSME_URL}/ccp-feature-flags",
+        "method": "GET",
+        "timeout": {
+          "request": "${TIMEOUTS.REQUEST}",
+          "socket": "${TIMEOUTS.SOCKET}"
+        },
+        "reqTransform": "category.transformers.addFeatureFlagQueryParams",
+        "resTransform": "cms.transformers.replaceUriPrefix"
+      },
+      {
         "name": "ccp-buy-again-with-prices",
         "url": "https://qa.msme.jswone.in/central_commerce/buy-again-list",
         "method": "GET",
@@ -2167,6 +2178,14 @@
             "destination": "access_token"
           }
         ]
+      },
+      {
+        "name": "ccp-top-items-product-details",
+        "url": "https://qa.msme.jswone.in/central_commerce/catalogue/product-details",
+        "method": "POST",
+        "timeout": { "request": 5000, "socket": 1000 },
+        "reqTransform": "web.transformers.transformWebHomePageTopItemsMMIDRequestV3",
+        "headersToPass": [{ "source": "authorization", "destination": "access_token" }]
       },
       {
         "name": "pending-dispatch-quantity",
