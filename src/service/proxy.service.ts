@@ -119,6 +119,14 @@ export class ProxyService {
       const authHeader = req.headers?.authorization || req.headers?.access_token;
       const userState = req.headers?.['x-user-state'];
 
+      if (userState === 'G') {
+        req.headers = {
+          ...req.headers,
+          authorization:
+            'eyJhbGciOiJIUzUxMiJ9.eyJ0b2tlbkNyZWF0ZWRBdCI6IjIwMjYvMDMvMDIgMTI6Mzc6MTMiLCJzdG9yZUtleSI6Im1zbWUiLCJ4LWNvcnJlbGF0aW9uLWlkIjoiZDVhZjI0ZDMtZTIxNi00ZjFkLTg5N2UtMjgyMDgzM2QxODBjIiwidXNlclR5cGUiOiJHIiwiZXhwIjoxNzc1MDQ3MDMzLCJ1c2VySWQiOiJkNWFmMjRkMy1lMjE2LTRmMWQtODk3ZS0yODIwODMzZDE4MGMiLCJ0b2tlbkV4cGlyZUF0IjoiMjAyNi8wNC8wMSAxMjozNzoxMyIsImlhdCI6MTc3MjQzNTIzM30.BuJwvIepTqWWi4wTkm1b-rkN9uiiNEmEc5r0TQho98wmXP43oSiKMOrudnnubFMDYGe39HojpqCcJkhrtpMNSA',
+        };
+      }
+
       if (!authHeader && userState !== 'G') {
         throw new CustomError('Bad Request: Authorization required', 400);
       }
