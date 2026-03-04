@@ -1,13 +1,17 @@
 import { AggregatedResponse } from 'src/models/aggregated-response.model';
 import { Logger } from '@nestjs/common';
-import { safeDebug } from 'src/utils/common-functions.util';
+import { safeDebug, safeToLog } from 'src/utils/common-functions.util';
 import { BaseRequest } from 'src/models/base-request.model';
 import { CustomError } from 'src/utils/CustomError';
 export {
   extractCentralCatalogueCategoryIds,
+  extractCentralCatalogueCategoryIdsv3,
   getAllCentralCatalogueCategoryIds,
+  getAllCentralCatalogueCategoryIdsv3,
   extractBrandCategoryIds,
   extractProductListingSlug,
+  extractBrandCategoryIdsv3,
+  extractProductListingSlugv3,
 } from 'src/utils/central-category.util';
 
 export function mergeWebHomePageResponses(aggregatedResponses: AggregatedResponse[]): any {
@@ -121,9 +125,7 @@ export function mergeWebHomePageResponses(aggregatedResponses: AggregatedRespons
     webCentralCatalogueResponse?.success &&
     Array.isArray(webCentralCatalogueResponse.data?.data?.navigation)
   ) {
-    const navigation =
-      webCentralCatalogueResponse.data.data.navigation;
-
+    const navigation = webCentralCatalogueResponse.data.data.navigation;
 
     // inject central catalogue categories into all blocks that contain them
     const categoryBlocks = blocks.filter(
@@ -140,13 +142,10 @@ export function mergeWebHomePageResponses(aggregatedResponses: AggregatedRespons
       block.centralCategoryIdData = navigation
         .map((nav: any) => ({
           ...nav,
-          subMenu: nav.subMenu?.filter((sub: any) =>
-            blockCategoryIds.includes(sub.id)
-          ),
+          subMenu: nav.subMenu?.filter((sub: any) => blockCategoryIds.includes(sub.id)),
         }))
         .filter((nav: any) => nav.subMenu && nav.subMenu.length > 0);
     }
-
   }
 
   // inject top brand categories data into app-top-brands blocks
@@ -314,4 +313,366 @@ export function handleProductResponse(aggregatedResponses: AggregatedResponse[])
   );
 
   return productsResponse;
+}
+
+function extractMMIDs(items: any[]): string[] {
+  if (!Array.isArray(items)) return [];
+  return items
+    .map((item) => item?.MMID)
+    .filter((mmid): mmid is string => typeof mmid === 'string' && mmid.length > 0);
+}
+
+export function transformWebHomePageTopItemsMMIDRequestV3(
+  request: BaseRequest,
+  prevResponses: AggregatedResponse[],
+): BaseRequest {
+  const buyAgainAgg = prevResponses.find((r) => r.target === 'ccp-buy-again-with-prices');
+  const list =
+    buyAgainAgg?.data?.data?.listOfBuyAgainProducts ?? buyAgainAgg?.data?.listOfBuyAgainProducts;
+
+  const hasBuyAgainData = Array.isArray(list) && list.length > 0;
+
+  if (hasBuyAgainData) {
+    return { ...request, body: [] };
+  }
+  const cmsAgg = prevResponses.find((r) => r.target === 'layout-mweb-homepages');
+  safeDebug(Logger, () => `Web Home CMS Response → ${safeToLog(cmsAgg?.data)}`);
+
+  let mmids: string[] = [];
+
+  try {
+    const page0 = cmsAgg?.data?.data?.[0];
+    const items = page0?.mweb_top_item?.app_search_top_items ?? [];
+    mmids = extractMMIDs(items);
+  } catch (e) {
+    Logger.warn(
+      `transformWebHomePageTopItemsMMIDRequestV3: MMID extraction failed → ${safeToLog(e)}`,
+    );
+  }
+
+  mmids = Array.from(new Set(mmids));
+  safeDebug(Logger, () => `Homepage MMIDs sent to CCP → ${safeToLog(mmids)}`);
+
+  // CCP expects RAW ARRAY
+  return {
+    ...request,
+    body: mmids,
+  };
+}
+
+export function mergeWebHomePageResponsesV3(aggregatedResponses: AggregatedResponse[]): any {
+  const responses = aggregatedResponses.reduce(
+    (acc, response) => {
+      acc[response.target] = response;
+      return acc;
+    },
+    {} as Record<string, AggregatedResponse>,
+  );
+
+  const cmsResponse = responses['layout-mweb-homepages'] ?? responses['app-home-page']; // fallback (optional)
+  // const topItemsCcpResponse = responses['ccp-top-items-product-details'];
+  const blogsResponse = responses['app-blogs'];
+  const buyAgainAgg = responses['ccp-buy-again-with-prices'];
+  const pendingDispatchResponse = responses['pending-dispatch-quantity'];
+  const webProductsResponse = responses['web-homepage-products'];
+  const webCentralCatalogueResponse = responses['web-central-catalogue-categories'];
+  const webTopBrandCategoriesResponse = responses['web-central-top-brand-categories'];
+  const productsListingResponse = responses['products-listing'];
+  const industryProductsListingResponse = responses['industry-products-listing'];
+  const featureFlags = responses['cmsFeatureFlag']?.data?.data ?? [];
+  const isCentralCatalogueEnabled =
+    Array.isArray(featureFlags) &&
+    featureFlags.some((f: any) => f?.name === 'central_catalogue_global' && f?.isActive === true);
+
+  safeDebug(Logger, () => `FeatureFlags → ${safeToLog(featureFlags)}`);
+  safeDebug(Logger, () => `isCentralCatalogueEnabled → ${String(isCentralCatalogueEnabled)}`);
+
+  safeDebug(
+    Logger,
+    () => `CMS Api response from method: mergeWebHomePageResponsesV3 : ${safeToLog(cmsResponse)}`,
+  );
+  safeDebug(
+    Logger,
+    () =>
+      `Blogs Api response from method: mergeWebHomePageResponsesV3 : ${safeToLog(blogsResponse)}`,
+  );
+  safeDebug(
+    Logger,
+    () =>
+      `Buy Again Api response from method: mergeWebHomePageResponsesV3 : ${safeToLog(buyAgainAgg)}`,
+  );
+  safeDebug(
+    Logger,
+    () =>
+      `Pending Dispatch Api response from method: mergeWebHomePageResponsesV3 : ${safeToLog(
+        pendingDispatchResponse,
+      )}`,
+  );
+
+  // Validate CMS
+  if (
+    !cmsResponse ||
+    !cmsResponse.success ||
+    typeof cmsResponse.data !== 'object' ||
+    cmsResponse.data === null ||
+    !Array.isArray((cmsResponse.data as any)?.data)
+  ) {
+    Logger.error(
+      `Error for Web Home Page API method: mergeWebHomePageResponsesV3 CMS response is missing or invalid.`,
+    );
+    return { data: [], meta: {} };
+  }
+
+  const cmsPayload = cmsResponse.data as any;
+  const mergedWrapper: any = {
+    data: JSON.parse(JSON.stringify(cmsPayload.data ?? [])),
+    meta: cmsPayload.meta ?? {},
+  };
+
+  if (!mergedWrapper.data.length) {
+    return mergedWrapper;
+  }
+
+  const page = mergedWrapper.data[0];
+
+  /**
+   * Inject Blogs into blog_list_component_material_matter.blogs
+   */
+  const blogs = blogsResponse?.data?.data || [];
+  if (page.blog_list_component_material_matter) {
+    page.blog_list_component_material_matter.blogs = blogs;
+  }
+
+  /**
+   * 2) Inject Buy Again into buy_again_component
+   */
+  if (buyAgainAgg?.success) {
+    const rawData = buyAgainAgg.data?.data ?? buyAgainAgg.data ?? {};
+    const { listOfBuyAgainProducts, variantList, skuSize } = rawData;
+
+    const products =
+      listOfBuyAgainProducts ?? variantList ?? (Array.isArray(rawData) ? rawData : []);
+
+    if (page.buy_again_component && Array.isArray(products) && products.length > 0) {
+      page.buy_again_component.listOfBuyAgainProducts = products;
+      if (variantList) page.buy_again_component.variantList = variantList;
+      if (skuSize != null) page.buy_again_component.skuSize = skuSize;
+    }
+  } else if (buyAgainAgg && !buyAgainAgg.success) {
+    Logger.warn(
+      `Warning for Web Home Page API method: mergeWebHomePageResponsesV3 CCP buy again response failed.`,
+      buyAgainAgg.error ?? 'Unknown error',
+    );
+  }
+
+  /**
+   * Top Items: if central_catalogue_global enabled, enrich CMS top items
+   * by overwriting only: title, webUrl, MMID, image.url
+   * Otherwise return CMS as-is.
+   */
+
+  const buyAgainList = page?.buy_again_component?.listOfBuyAgainProducts;
+  const hasBuyAgainData = Array.isArray(buyAgainList) && buyAgainList.length > 0;
+
+  if (page?.mweb_top_item && Array.isArray(page.mweb_top_item.app_search_top_items)) {
+    if (!isCentralCatalogueEnabled || hasBuyAgainData) {
+      page.mweb_top_item.isTopItem = false;
+      if ('top_items_product_details' in page.mweb_top_item) {
+        delete page.mweb_top_item.top_items_product_details;
+      }
+    } else {
+      page.mweb_top_item.isTopItem = true;
+      const topItemsCcpResponse = responses['ccp-top-items-product-details'];
+
+      const ccpProducts = topItemsCcpResponse?.success
+        ? (topItemsCcpResponse.data?.data?.products ?? topItemsCcpResponse.data?.products ?? [])
+        : null;
+
+      if (!Array.isArray(ccpProducts) || ccpProducts.length === 0) {
+        safeDebug(Logger, () => `Top Items: CCP empty/fail; keeping CMS top items as-is.`);
+      } else {
+        // Map CCP products by MMID
+        const productMap = new Map<string, any>(
+          ccpProducts
+            .filter((p: any) => typeof p?.product_mmid === 'string' && p.product_mmid.length > 0)
+            .map((p: any) => [p.product_mmid, p]),
+        );
+
+        const cmsItems = page.mweb_top_item.app_search_top_items;
+
+        page.mweb_top_item.app_search_top_items = cmsItems.map((cmsItem: any) => {
+          const mmid = cmsItem?.MMID;
+          if (typeof mmid !== 'string' || !mmid) return cmsItem;
+
+          const product = productMap.get(mmid);
+          if (!product) {
+            safeDebug(Logger, () => `Top Items: MMID not found in CCP → ${safeToLog(mmid)}`);
+            return cmsItem; // keep CMS item if CCP doesn't have it
+          }
+
+          const newTitle = product.attributes?.product_title;
+          const newWebUrl = product.attributes?.slug;
+          const newMmid = product.product_mmid;
+          const newImageUrl = product.meta_data?.product_media?.[0]?.public_url;
+
+          // Overwrite ONLY the 4 fields
+          return {
+            ...cmsItem,
+            title: typeof newTitle === 'string' ? newTitle : cmsItem.title,
+            webUrl: typeof newWebUrl === 'string' ? newWebUrl : cmsItem.webUrl,
+            MMID: typeof newMmid === 'string' ? newMmid : cmsItem.MMID,
+            image: {
+              ...(cmsItem.image ?? {}),
+              url: typeof newImageUrl === 'string' ? newImageUrl : cmsItem?.image?.url,
+            },
+          };
+        });
+
+        if ('top_items_product_details' in page.mweb_top_item) {
+          delete page.mweb_top_item.top_items_product_details;
+        }
+      }
+    }
+  }
+
+  /**
+   * 3) Inject pending dispatch quantity
+   */
+  if (pendingDispatchResponse?.success) {
+    page.pendingDispatchQuantity = pendingDispatchResponse.data;
+  } else if (pendingDispatchResponse && !pendingDispatchResponse.success) {
+    Logger.warn(
+      `Warning for Web Home Page API method: mergeWebHomePageResponsesV3 pending-dispatch-quantity response failed.`,
+      pendingDispatchResponse.error ?? 'Unknown error',
+    );
+  }
+  /**
+   * 4) Convert product_category_component[].product_categories -> app_product_categories
+   */
+  if (Array.isArray(page.product_category_component)) {
+    for (const comp of page.product_category_component) {
+      if (comp?.product_categories && !comp.app_product_categories) {
+        comp.app_product_categories = comp.product_categories;
+        delete comp.product_categories;
+      }
+    }
+  }
+  if (Array.isArray(page.industry_specific_components)) {
+    for (const comp of page.industry_specific_components) {
+      if (comp?.product_categories && !comp.app_product_categories) {
+        comp.app_product_categories = comp.product_categories;
+        delete comp.product_categories;
+      }
+    }
+  }
+
+  /**
+   * 5) Inject productsList into product_category_component app_product_categories
+   */
+  if (webProductsResponse?.success) {
+    const productsData = webProductsResponse.data?.data ?? webProductsResponse.data?.data ?? {};
+
+    const productCategoryBlocks = Array.isArray(page.product_category_component)
+      ? page.product_category_component
+      : [];
+
+    const IndustrySpecificBlock = Array.isArray(page.industry_specific_components)
+      ? page.industry_specific_components
+      : [];
+
+    for (const block of productCategoryBlocks) {
+      block?.app_product_categories
+        ?.filter((c: any) => c.webCategoryId && c.itemsToShow)
+        ?.forEach((c: any) => {
+          c.productsList = productsData[c.webCategoryId];
+        });
+
+      // Inject centralCategoryIdData for product listing
+      if (
+        productsListingResponse?.success &&
+        Array.isArray(productsListingResponse.data?.data?.products)
+      ) {
+        const productsArray = productsListingResponse.data.data.products;
+
+        const filteredCategories = block?.app_product_categories?.filter(
+          (c: any) => c.webCategoryId && c.itemsToShow,
+        );
+
+        if (filteredCategories && filteredCategories.length > 0) {
+          filteredCategories[0].centralCategoryIdData = [{ products: productsArray }];
+        }
+      }
+    }
+    for (const block of IndustrySpecificBlock) {
+      block?.app_product_categories
+        ?.filter((c: any) => c.webCategoryId && c.itemsToShow)
+        ?.forEach((c: any) => {
+          c.productsList = productsData[c.webCategoryId];
+        });
+
+      // Inject centralCategoryIdData for product listing
+      if (
+        industryProductsListingResponse?.success &&
+        Array.isArray(industryProductsListingResponse.data?.data?.products)
+      ) {
+        const productsArray = industryProductsListingResponse.data.data.products;
+
+        const filteredCategories = block?.app_product_categories?.filter(
+          (c: any) => c.webCategoryId && c.itemsToShow,
+        );
+
+        if (filteredCategories && filteredCategories.length > 0) {
+          filteredCategories[0].centralCategoryIdData = [{ products: productsArray }];
+        }
+      }
+    }
+  }
+
+  /**
+   * 6) Inject central catalogue nav into category_component.centralCategoryIdData
+   */
+  if (
+    webCentralCatalogueResponse?.success &&
+    Array.isArray(webCentralCatalogueResponse.data?.data?.navigation) &&
+    page.category_component &&
+    Array.isArray(page.category_component.web_central_catalogue_categories)
+  ) {
+    const navigation = webCentralCatalogueResponse.data.data.navigation;
+    const blockCategoryIds = page.category_component.web_central_catalogue_categories
+      .map((c: any) => c.categoryId)
+      .filter(Boolean);
+
+    page.category_component.centralCategoryIdData = navigation
+      .map((nav: any) => ({
+        ...nav,
+        subMenu: nav.subMenu?.filter((sub: any) => blockCategoryIds.includes(sub.id)),
+      }))
+      .filter((nav: any) => nav.subMenu && nav.subMenu.length > 0);
+  }
+
+  /**
+   * 7) Inject top brand nav into top_brand_component.centralCategoryIdData
+   * CMS has top_brand_component with web_central_
+   * catalogue_categories
+   */
+  if (
+    webTopBrandCategoriesResponse?.success &&
+    Array.isArray(webTopBrandCategoriesResponse.data?.data?.navigation) &&
+    page.top_brand_component &&
+    Array.isArray(page.top_brand_component.web_central_catalogue_categories)
+  ) {
+    const topBrandNavigation = webTopBrandCategoriesResponse.data.data.navigation;
+    const blockCategoryIds = page.top_brand_component.web_central_catalogue_categories
+      .map((c: any) => c.categoryId)
+      .filter(Boolean);
+
+    page.top_brand_component.centralCategoryIdData = topBrandNavigation
+      .map((nav: any) => ({
+        ...nav,
+        subMenu: nav.subMenu?.filter((sub: any) => blockCategoryIds.includes(sub.id)),
+      }))
+      .filter((nav: any) => nav.subMenu && nav.subMenu.length > 0);
+  }
+
+  return mergedWrapper;
 }

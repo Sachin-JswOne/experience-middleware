@@ -95,3 +95,14 @@ export const safeDebug = (logger, msgFn) => {
     logger.debug(msgFn());
   }
 };
+
+export const safeToLog = (value: unknown): string => {
+  if (value !== null && typeof value === 'object') {
+    try {
+      return JSON.stringify(value);
+    } catch {
+      return '[Unserializable Object]';
+    }
+  }
+  return String(value);
+};

@@ -271,62 +271,70 @@ export function mergeProjectDetailsAndTrackerResponses(
     currentprojectStage = constructionMileStone?.activeMilestones?.map((m: any) => m.name) ?? [];
   }
 
-  const designSubscription= homesData?.designSubscriptionResponse;
+  const designSubscription = homesData?.designSubscriptionResponse;
   const endDate = homesData?.designSubscriptionResponse?.subscriptionEndDate;
   const daysLeft = homesData?.designSubscriptionResponse?.daysLeft;
-  const date = endDate;
-  let activeDesignType = "designStageTypeOne";
+  let activeDesignType = 'designStageTypeOne';
   let designCardVisible = true;
 
-  if(designSubscription.subscriptionStartDate == null || designSubscription.subscriptionEndDate == null ){
-   designCardVisible = false;
+  if (
+    designSubscription?.subscriptionStartDate == null ||
+    designSubscription?.subscriptionEndDate == null
+  ) {
+    designCardVisible = false;
   }
 
-  if(designSubscription?.daysLeft > 5){
-   let designStageTypeOne = strapiData?.data?.projectTracker?.designStage?.designStageTypeOne;
-    designStageTypeOne.heading =  designStageTypeOne?.heading;
-    designStageTypeOne.subHeading = designStageTypeOne.subHeading;
-    activeDesignType = "designStageTypeOne";
-    strapiData.data.projectTracker.designStage.designStageTypeOne = designStageTypeOne; 
+  if (designSubscription?.daysLeft > 5) {
+    const designStageTypeOne = strapiData?.data?.projectTracker?.designStage?.designStageTypeOne;
+    designStageTypeOne.heading = designStageTypeOne.heading ?? '';
+    designStageTypeOne.subHeading = designStageTypeOne.subHeading ?? '';
+    activeDesignType = 'designStageTypeOne';
+    strapiData.data.projectTracker.designStage.designStageTypeOne = designStageTypeOne;
 
     strapiData.data.projectTracker.designStage.designStageTypeOne = {
-      ...strapiData.data.projectTracker.designStage.designStageTypeOne,
-      subscriptionStartDate : homesData?.designSubscriptionResponse?.subscriptionStartDate,
-      subscriptionEndDate : endDate,
-      daysLeft : daysLeft,
-      currentDay : homesData?.designSubscriptionResponse?.currentDay,
-      totalDays : homesData?.designSubscriptionResponse?.totalDays
-    }
+      ...strapiData?.data?.projectTracker?.designStage?.designStageTypeOne,
+      subscriptionStartDate: homesData?.designSubscriptionResponse?.subscriptionStartDate,
+      subscriptionEndDate: endDate,
+      daysLeft: daysLeft,
+      currentDay: homesData?.designSubscriptionResponse?.currentDay,
+      totalDays: homesData?.designSubscriptionResponse?.totalDays,
+    };
   }
 
-  if(designSubscription?.daysLeft <= 5 && designSubscription?.daysLeft > 0){
-    let designStageTypeTwo = strapiData?.data?.projectTracker?.designStage?.designStageTypeTwo;
-    designStageTypeTwo.heading =  designStageTypeTwo?.heading.replace("${daysLeft}", daysLeft);
-    designStageTypeTwo.subHeading = designStageTypeTwo?.subHeading.replace("${date}", endDate)
-    activeDesignType = "designStageTypeTwo";
+  if (designSubscription?.daysLeft <= 5 && designSubscription?.daysLeft > 0) {
+    const designStageTypeTwo = strapiData?.data?.projectTracker?.designStage?.designStageTypeTwo;
+    const daysLeft = designSubscription?.daysLeft;
+    const daysLeftString = daysLeft + (daysLeft > 1 ? ' days' : ' day');
+    designStageTypeTwo.heading = designStageTypeTwo?.heading.replace('${daysLeft}', daysLeftString);
+    designStageTypeTwo.subHeading = designStageTypeTwo?.subHeading.replace('${date}', endDate);
+    activeDesignType = 'designStageTypeTwo';
     strapiData.data.projectTracker.designStage.designStageTypeTwo = {
-      ...strapiData.data.projectTracker.designStage.designStageTypeTwo,
-      daysLeft : daysLeft
-    }
+      ...strapiData?.data?.projectTracker?.designStage?.designStageTypeTwo,
+      daysLeft: daysLeft,
+    };
   }
 
-  if(designSubscription?.daysLeft == 0){
-    let designStageTypeThree = strapiData?.data?.projectTracker?.designStage?.designStageTypeThree;
-    designStageTypeThree.subHeading =  designStageTypeThree?.subHeading.replace("${endDate}", endDate);
-    activeDesignType = "designStageTypeThree";
+  if (designSubscription?.daysLeft == 0) {
+    const designStageTypeThree =
+      strapiData?.data?.projectTracker?.designStage?.designStageTypeThree;
+    designStageTypeThree.subHeading = designStageTypeThree?.subHeading.replace(
+      '${endDate}',
+      endDate,
+    );
+    activeDesignType = 'designStageTypeThree';
     strapiData.data.projectTracker.designStage.designStageTypeThree = {
-      ...strapiData.data.projectTracker.designStage.designStageTypeThree,
-      daysLeft : daysLeft
-    }
+      ...strapiData?.data?.projectTracker?.designStage?.designStageTypeThree,
+      daysLeft: daysLeft,
+    };
   }
 
-  if(designSubscription?.daysLeft == -1){
-   let designStageTypeFour = strapiData?.data?.projectTracker?.designStage?.designStageTypeFour;
-   designStageTypeFour.subHeading = designStageTypeFour?.subHeading.replace("${endDate}", endDate);
-   activeDesignType = "designStageTypeFour";
-   strapiData.data.projectTracker.designStage.designStageTypeFour = {
-      ...strapiData.data.projectTracker.designStage.designStageTypeFour,
-      daysLeft : daysLeft
+  if (designSubscription?.daysLeft == -1) {
+    const designStageTypeFour = strapiData?.data?.projectTracker?.designStage?.designStageTypeFour;
+    designStageTypeFour.subHeading = designStageTypeFour?.subHeading.replace('${endDate}', endDate);
+    activeDesignType = 'designStageTypeFour';
+    strapiData.data.projectTracker.designStage.designStageTypeFour = {
+      ...strapiData?.data.projectTracker?.designStage?.designStageTypeFour,
+      daysLeft: daysLeft,
     };
   }
 
@@ -335,8 +343,8 @@ export function mergeProjectDetailsAndTrackerResponses(
     designStage: {
       ...strapiData.data.projectTracker?.designStage,
       subSteps: designStage,
-      activeDesignType : activeDesignType,
-      designCardVisible : designCardVisible
+      activeDesignType: activeDesignType,
+      designCardVisible: designCardVisible,
     },
     preConstructionStage: {
       ...strapiData.data.projectTracker?.preConstructionStage,
@@ -358,7 +366,7 @@ export function mergeProjectDetailsAndTrackerResponses(
       title,
       projectID,
       homesTeam,
-      projectTracker
+      projectTracker,
     },
   };
 }
