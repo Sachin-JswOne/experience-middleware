@@ -1155,7 +1155,7 @@
     "isCacheRequired": false,
     "target": {
       "name": "webIndustries",
-      "url": "${CMS_MSME_URL}/industries",
+      "url": "https://cms-ext.preprod.jswonemsme.com/api/industries",
       "method": "GET",
       "timeout": {
         "request": "${TIMEOUTS.REQUEST}",
@@ -1969,7 +1969,7 @@
     "targets": [
       {
         "name": "layout-mweb-homepages",
-        "url": "${CMS_MSME_URL}/layout-mweb-homepages",
+        "url": "https://cms-ext.preprod.jswonemsme.com/api/layout-mweb-homepages",
         "method": "GET",
         "timeout": { "request": 10000, "socket": 1000 },
         "reqTransform": "general.transformers.moveBodyToQueryParams",
@@ -2017,7 +2017,7 @@
       },
       {
         "name": "app-blogs",
-        "url": "${CMS_MSME_URL}/jsw-blogs-articless",
+        "url": "https://cms-ext.preprod.jswonemsme.com/api/jsw-blogs-articless",
         "method": "GET",
         "timeout": {
           "request": 5000,
@@ -2137,7 +2137,7 @@
     "targets": [
       {
         "name": "layout-mweb-segment-pages",
-        "url": "${CMS_MSME_URL}/layout-mweb-segment-pages",
+        "url": "https://cms-ext.preprod.jswonemsme.com/api/layout-mweb-segment-pages",
         "method": "GET",
         "timeout": { "request": 10000, "socket": 1000 },
         "reqTransform": "general.transformers.moveBodyToQueryParams",
@@ -2145,7 +2145,7 @@
       },
       {
         "name": "app-blogs",
-        "url": "${CMS_MSME_URL}/jsw-blogs-articless",
+        "url": "https://cms-ext.preprod.jswonemsme.com/api/jsw-blogs-articless",
         "method": "GET",
         "timeout": { "request": 5000, "socket": 1000 },
         "reqTransform": "cms.transformers.homeBlogs",
@@ -2178,7 +2178,7 @@
     "targets": [
       {
         "name": "web-mou",
-        "url": "${CMS_MSME_URL}/web-mou",
+        "url": "https://cms-ext.preprod.jswonemsme.com/api/web-mou",
         "method": "GET",
         "timeout": {
           "request": 10000,
