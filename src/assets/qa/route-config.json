@@ -1096,56 +1096,62 @@
   },
   {
     "path": "${PATH_URL}/v1/customer-profile",
+
     "method": "GET",
+
     "routeHandler": "AGGREGATE",
-    "aggregationType": "SEQUENTIAL",
+
+    "aggregationType": "PARALLEL",
+
     "targets": [
       {
         "name": "profile",
+
         "url": "https://qa.msme.jswone.in/customer/me/profile",
+
         "method": "GET",
+
         "timeout": {
           "request": "${TIMEOUTS.REQUEST}",
+
           "socket": "${TIMEOUTS.SOCKET}"
         },
+
         "headersToPass": [
           {
             "source": "access_token",
+
             "destination": "access_token"
           }
         ]
       },
+
       {
         "name": "customerData",
+
         "url": "https://qa.msme.jswone.in/customer/me/v2",
+
         "method": "GET",
+
         "timeout": {
           "request": "${TIMEOUTS.REQUEST}",
+
           "socket": "${TIMEOUTS.SOCKET}"
         },
+
         "headersToPass": [
           {
             "source": "access_token",
+
             "destination": "access_token"
           }
         ]
-      },
-      {
-        "name": "gstin-customer-profile",
-        "url": "https://tms.qa.jswone.in/account-master/profile/v1",
-        "method": "GET",
-        "timeout": {
-          "request": "${TIMEOUTS.REQUEST}",
-          "socket": "${TIMEOUTS.SOCKET}"
-        },
-        "staticHeaders": {
-          "x-api-key": "${X_API_KEY_CONNECTOR}"
-        },
-        "reqTransform": "customer.transformers.injectGstinFromProfile"
       }
     ],
+
     "resTransform": "customer.transformers.mergeCustomerProfile"
   },
+
   {
     "path": "${PATH_URL}/v1/getCustomerLocation",
     "method": "POST",
