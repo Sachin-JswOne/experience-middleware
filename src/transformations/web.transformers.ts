@@ -383,7 +383,8 @@ export function mergeWebHomePageResponsesV3(aggregatedResponses: AggregatedRespo
   const isCentralCatalogueEnabled =
     Array.isArray(featureFlags) &&
     featureFlags.some((f: any) => f?.name === 'central_catalogue_global' && f?.isActive === true);
-
+  console.log('isCentralCatalogueEnabled', isCentralCatalogueEnabled);
+  console.log('pendingDispatchResponse', pendingDispatchResponse);
   safeDebug(Logger, () => `FeatureFlags → ${safeToLog(featureFlags)}`);
   safeDebug(Logger, () => `isCentralCatalogueEnabled → ${String(isCentralCatalogueEnabled)}`);
 
@@ -480,7 +481,7 @@ export function mergeWebHomePageResponsesV3(aggregatedResponses: AggregatedRespo
       if ('top_items_product_details' in page.mweb_top_item) {
         delete page.mweb_top_item.top_items_product_details;
       }
-    } else {
+    } else if (!hasBuyAgainData && isCentralCatalogueEnabled === true) {
       page.mweb_top_item.isTopItem = true;
       const topItemsCcpResponse = responses['ccp-top-items-product-details'];
 
@@ -502,9 +503,12 @@ export function mergeWebHomePageResponsesV3(aggregatedResponses: AggregatedRespo
 
         page.mweb_top_item.app_search_top_items = cmsItems.map((cmsItem: any) => {
           const mmid = cmsItem?.MMID;
+          // console.log("CMSITEM -->>", cmsItem)
+          // console.log("CMSITEM MMID-->>", mmid)
           if (typeof mmid !== 'string' || !mmid) return cmsItem;
 
           const product = productMap.get(mmid);
+          // console.log("Matched CCP product for MMID", mmid, "is", product.meta_data.product_media)
           if (!product) {
             safeDebug(Logger, () => `Top Items: MMID not found in CCP → ${safeToLog(mmid)}`);
             return cmsItem; // keep CMS item if CCP doesn't have it
@@ -514,7 +518,7 @@ export function mergeWebHomePageResponsesV3(aggregatedResponses: AggregatedRespo
           const newWebUrl = product.attributes?.slug;
           const newMmid = product.product_mmid;
           const newImageUrl = product.meta_data?.product_media?.[0]?.public_url;
-
+          // console.log("New Image URL-->>", newImageUrl)
           // Overwrite ONLY the 4 fields
           return {
             ...cmsItem,
@@ -532,6 +536,9 @@ export function mergeWebHomePageResponsesV3(aggregatedResponses: AggregatedRespo
           delete page.mweb_top_item.top_items_product_details;
         }
       }
+    } else {
+      page.mweb_top_item.isTopItem = true;
+      console.log('Central Catalogue Global flag is disabled. Returning CMS top items as-is.');
     }
   }
 
