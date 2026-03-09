@@ -475,12 +475,12 @@ export function mergeWebHomePageResponsesV3(aggregatedResponses: AggregatedRespo
   const hasBuyAgainData = Array.isArray(buyAgainList) && buyAgainList.length > 0;
 
   if (page?.mweb_top_item && Array.isArray(page.mweb_top_item.app_search_top_items)) {
-    if (!isCentralCatalogueEnabled || hasBuyAgainData) {
+    if (hasBuyAgainData) {
       page.mweb_top_item.isTopItem = false;
       if ('top_items_product_details' in page.mweb_top_item) {
         delete page.mweb_top_item.top_items_product_details;
       }
-    } else {
+    } else if (isCentralCatalogueEnabled) {
       page.mweb_top_item.isTopItem = true;
       const topItemsCcpResponse = responses['ccp-top-items-product-details'];
 
@@ -502,9 +502,11 @@ export function mergeWebHomePageResponsesV3(aggregatedResponses: AggregatedRespo
 
         page.mweb_top_item.app_search_top_items = cmsItems.map((cmsItem: any) => {
           const mmid = cmsItem?.MMID;
+
           if (typeof mmid !== 'string' || !mmid) return cmsItem;
 
           const product = productMap.get(mmid);
+
           if (!product) {
             safeDebug(Logger, () => `Top Items: MMID not found in CCP → ${safeToLog(mmid)}`);
             return cmsItem; // keep CMS item if CCP doesn't have it
@@ -514,7 +516,6 @@ export function mergeWebHomePageResponsesV3(aggregatedResponses: AggregatedRespo
           const newWebUrl = product.attributes?.slug;
           const newMmid = product.product_mmid;
           const newImageUrl = product.meta_data?.product_media?.[0]?.public_url;
-
           // Overwrite ONLY the 4 fields
           return {
             ...cmsItem,
@@ -532,6 +533,9 @@ export function mergeWebHomePageResponsesV3(aggregatedResponses: AggregatedRespo
           delete page.mweb_top_item.top_items_product_details;
         }
       }
+    } else {
+      page.mweb_top_item.isTopItem = true;
+      console.log('Central Catalogue Global flag is disabled. Returning CMS top items as-is.');
     }
   }
 
