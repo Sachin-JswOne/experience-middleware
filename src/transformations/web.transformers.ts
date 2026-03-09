@@ -315,6 +315,51 @@ export function handleProductResponse(aggregatedResponses: AggregatedResponse[])
   return productsResponse;
 }
 
+function extractMMIDs(items: any[]): string[] {
+  if (!Array.isArray(items)) return [];
+  return items
+    .map((item) => item?.MMID)
+    .filter((mmid): mmid is string => typeof mmid === 'string' && mmid.length > 0);
+}
+
+export function transformWebHomePageTopItemsMMIDRequestV3(
+  request: BaseRequest,
+  prevResponses: AggregatedResponse[],
+): BaseRequest {
+  const buyAgainAgg = prevResponses.find((r) => r.target === 'ccp-buy-again-with-prices');
+  const list =
+    buyAgainAgg?.data?.data?.listOfBuyAgainProducts ?? buyAgainAgg?.data?.listOfBuyAgainProducts;
+
+  const hasBuyAgainData = Array.isArray(list) && list.length > 0;
+
+  if (hasBuyAgainData) {
+    return { ...request, body: [] };
+  }
+  const cmsAgg = prevResponses.find((r) => r.target === 'layout-mweb-homepages');
+  safeDebug(Logger, () => `Web Home CMS Response → ${safeToLog(cmsAgg?.data)}`);
+
+  let mmids: string[] = [];
+
+  try {
+    const page0 = cmsAgg?.data?.data?.[0];
+    const items = page0?.mweb_top_item?.app_search_top_items ?? [];
+    mmids = extractMMIDs(items);
+  } catch (e) {
+    Logger.warn(
+      `transformWebHomePageTopItemsMMIDRequestV3: MMID extraction failed → ${safeToLog(e)}`,
+    );
+  }
+
+  mmids = Array.from(new Set(mmids));
+  safeDebug(Logger, () => `Homepage MMIDs sent to CCP → ${safeToLog(mmids)}`);
+
+  // CCP expects RAW ARRAY
+  return {
+    ...request,
+    body: mmids,
+  };
+}
+
 export function mergeWebHomePageResponsesV3(aggregatedResponses: AggregatedResponse[]): any {
   const responses = aggregatedResponses.reduce(
     (acc, response) => {
@@ -325,7 +370,7 @@ export function mergeWebHomePageResponsesV3(aggregatedResponses: AggregatedRespo
   );
 
   const cmsResponse = responses['layout-mweb-homepages'] ?? responses['app-home-page']; // fallback (optional)
-
+  // const topItemsCcpResponse = responses['ccp-top-items-product-details'];
   const blogsResponse = responses['app-blogs'];
   const buyAgainAgg = responses['ccp-buy-again-with-prices'];
   const pendingDispatchResponse = responses['pending-dispatch-quantity'];
@@ -334,6 +379,13 @@ export function mergeWebHomePageResponsesV3(aggregatedResponses: AggregatedRespo
   const webTopBrandCategoriesResponse = responses['web-central-top-brand-categories'];
   const productsListingResponse = responses['products-listing'];
   const industryProductsListingResponse = responses['industry-products-listing'];
+  const featureFlags = responses['cmsFeatureFlag']?.data?.data ?? [];
+  const isCentralCatalogueEnabled =
+    Array.isArray(featureFlags) &&
+    featureFlags.some((f: any) => f?.name === 'central_catalogue_global' && f?.isActive === true);
+
+  safeDebug(Logger, () => `FeatureFlags → ${safeToLog(featureFlags)}`);
+  safeDebug(Logger, () => `isCentralCatalogueEnabled → ${String(isCentralCatalogueEnabled)}`);
 
   safeDebug(
     Logger,
@@ -411,6 +463,76 @@ export function mergeWebHomePageResponsesV3(aggregatedResponses: AggregatedRespo
       `Warning for Web Home Page API method: mergeWebHomePageResponsesV3 CCP buy again response failed.`,
       buyAgainAgg.error ?? 'Unknown error',
     );
+  }
+
+  /**
+   * Top Items: if central_catalogue_global enabled, enrich CMS top items
+   * by overwriting only: title, webUrl, MMID, image.url
+   * Otherwise return CMS as-is.
+   */
+
+  const buyAgainList = page?.buy_again_component?.listOfBuyAgainProducts;
+  const hasBuyAgainData = Array.isArray(buyAgainList) && buyAgainList.length > 0;
+
+  if (page?.mweb_top_item && Array.isArray(page.mweb_top_item.app_search_top_items)) {
+    if (!isCentralCatalogueEnabled || hasBuyAgainData) {
+      page.mweb_top_item.isTopItem = false;
+      if ('top_items_product_details' in page.mweb_top_item) {
+        delete page.mweb_top_item.top_items_product_details;
+      }
+    } else {
+      page.mweb_top_item.isTopItem = true;
+      const topItemsCcpResponse = responses['ccp-top-items-product-details'];
+
+      const ccpProducts = topItemsCcpResponse?.success
+        ? (topItemsCcpResponse.data?.data?.products ?? topItemsCcpResponse.data?.products ?? [])
+        : null;
+
+      if (!Array.isArray(ccpProducts) || ccpProducts.length === 0) {
+        safeDebug(Logger, () => `Top Items: CCP empty/fail; keeping CMS top items as-is.`);
+      } else {
+        // Map CCP products by MMID
+        const productMap = new Map<string, any>(
+          ccpProducts
+            .filter((p: any) => typeof p?.product_mmid === 'string' && p.product_mmid.length > 0)
+            .map((p: any) => [p.product_mmid, p]),
+        );
+
+        const cmsItems = page.mweb_top_item.app_search_top_items;
+
+        page.mweb_top_item.app_search_top_items = cmsItems.map((cmsItem: any) => {
+          const mmid = cmsItem?.MMID;
+          if (typeof mmid !== 'string' || !mmid) return cmsItem;
+
+          const product = productMap.get(mmid);
+          if (!product) {
+            safeDebug(Logger, () => `Top Items: MMID not found in CCP → ${safeToLog(mmid)}`);
+            return cmsItem; // keep CMS item if CCP doesn't have it
+          }
+
+          const newTitle = product.attributes?.product_title;
+          const newWebUrl = product.attributes?.slug;
+          const newMmid = product.product_mmid;
+          const newImageUrl = product.meta_data?.product_media?.[0]?.public_url;
+
+          // Overwrite ONLY the 4 fields
+          return {
+            ...cmsItem,
+            title: typeof newTitle === 'string' ? newTitle : cmsItem.title,
+            webUrl: typeof newWebUrl === 'string' ? newWebUrl : cmsItem.webUrl,
+            MMID: typeof newMmid === 'string' ? newMmid : cmsItem.MMID,
+            image: {
+              ...(cmsItem.image ?? {}),
+              url: typeof newImageUrl === 'string' ? newImageUrl : cmsItem?.image?.url,
+            },
+          };
+        });
+
+        if ('top_items_product_details' in page.mweb_top_item) {
+          delete page.mweb_top_item.top_items_product_details;
+        }
+      }
+    }
   }
 
   /**

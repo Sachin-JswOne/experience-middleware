@@ -1131,18 +1131,6 @@
         ]
       },
       {
-        "name": "mou-eligibility",
-        "url": "https://qa.msme.jswone.in/central_commerce/customer/mou-eligiblity",
-        "method": "GET",
-        "timeout": {
-          "request": "${TIMEOUTS.REQUEST}",
-          "socket": "${TIMEOUTS.SOCKET}"
-        },
-        "headersToPass": [{ "source": "access_token", "destination": "access_token" }],
-        "requiredParams": ["financialYear"],
-        "reqTransform": "customer.transformers.injectGstinFromProfile"
-      },
-      {
         "name": "gstin-customer-profile",
         "url": "https://tms.qa.jswone.in/account-master/profile/v1",
         "method": "GET",
@@ -1151,7 +1139,7 @@
           "socket": "${TIMEOUTS.SOCKET}"
         },
         "staticHeaders": {
-          "x-api-key": "test"
+          "x-api-key": "${X_API_KEY_CONNECTOR}"
         },
         "reqTransform": "customer.transformers.injectGstinFromProfile"
       }
@@ -1336,7 +1324,7 @@
       "url": "https://qa.msme.jswone.in/v2/cart/add",
       "method": "POST",
       "timeout": {
-        "request": 5000,
+        "request": 10000,
         "socket": 1000
       },
       "headersToPass": [
@@ -1869,6 +1857,7 @@
       "name": "product-by-slug",
       "url": "https://qa.msme.jswone.in/central_commerce/product/slug/:slugId",
       "method": "GET",
+      "reqTransform": "general.transformers.convertToGetRequest",
       "timeout": {
         "request": "${TIMEOUTS.REQUEST}",
         "socket": "${TIMEOUTS.SOCKET}"
@@ -1970,17 +1959,6 @@
           "socket": "${TIMEOUTS.SOCKET}"
         },
         "headersToPass": [{ "source": "access_token", "destination": "access_token" }]
-      },
-      {
-        "name": "mou-eligibility",
-        "url": "https://qa.msme.jswone.in/central_commerce/customer/mou-eligiblity",
-        "method": "GET",
-        "timeout": {
-          "request": "${TIMEOUTS.REQUEST}",
-          "socket": "${TIMEOUTS.SOCKET}"
-        },
-        "headersToPass": [{ "source": "access_token", "destination": "access_token" }],
-        "requiredParams": ["gstin", "financialYear"]
       }
     ],
     "resTransform": "app.transformers.mergeCustomerProfileWithMouEligibility"
@@ -2054,6 +2032,14 @@
             "destination": "access_token"
           }
         ]
+      },
+      {
+        "name": "ccp-top-items-product-details",
+        "url": "https://qa.msme.jswone.in/central_commerce/catalogue/product-details",
+        "method": "POST",
+        "timeout": { "request": 5000, "socket": 1000 },
+        "reqTransform": "web.transformers.transformWebHomePageTopItemsMMIDRequestV3",
+        "headersToPass": [{ "source": "authorization", "destination": "access_token" }]
       },
       {
         "name": "pending-dispatch-quantity",
@@ -2179,7 +2165,7 @@
         "socket": 1000
       },
       "staticHeaders": {
-        "x-api-key": "test",
+        "x-api-key": "${X_API_KEY_CONNECTOR}",
         "Content-Type": "application/json"
       },
       "requiredParams": ["*"]
