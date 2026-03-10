@@ -651,7 +651,7 @@ export class ProxyService {
     // existing placeholder styles
     out = out.replace(/\{(\w+)\}/g, (_, key) => getEncoded(key));
     out = out.replace(/\$\{(\w+)\}/g, (_, key) => getEncoded(key));
-    out = out.replace(/:(\w+)(?=\/|$)/g, (_, key) => getEncoded(key));
+    out = out.replace(/(^|\/):(\w+)(?=\/|$)/g, (_, prefix, key) => `${prefix}${getEncoded(key)}`);
 
     return out;
   }
