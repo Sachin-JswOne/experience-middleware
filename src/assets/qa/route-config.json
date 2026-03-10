@@ -2018,6 +2018,17 @@
         "resTransform": "cms.transformers.replaceUriPrefix"
       },
       {
+        "name": "cmsFeatureFlag",
+        "url": "${CMS_MSME_URL}/ccp-feature-flags",
+        "method": "GET",
+        "timeout": {
+          "request": "${TIMEOUTS.REQUEST}",
+          "socket": "${TIMEOUTS.SOCKET}"
+        },
+        "reqTransform": "category.transformers.addFeatureFlagQueryParams",
+        "resTransform": "cms.transformers.replaceUriPrefix"
+      },
+      {
         "name": "ccp-buy-again-with-prices",
         "url": "https://qa.msme.jswone.in/central_commerce/buy-again-list",
         "method": "GET",
