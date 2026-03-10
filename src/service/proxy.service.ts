@@ -621,16 +621,38 @@ export class ProxyService {
    * Supports `:id`, `{id}`, and `${id}` in target URLs.
    */
   private interpolateTemplate(template: string, params: Record<string, any>): string {
-    const get = (key: string) => {
+    const getEncoded = (key: string) => {
       const val = params?.[key];
       if (val === undefined || val === null) return '';
+
+      if (Array.isArray(val)) {
+        return val.map((v) => encodeURIComponent(String(v))).join('/');
+      }
+
       return encodeURIComponent(String(val));
     };
 
+    const getRawPath = (key: string) => {
+      const val = params?.[key];
+      if (val === undefined || val === null) return '';
+
+      if (Array.isArray(val)) {
+        return val.map((v) => String(v)).join('/');
+      }
+
+      return String(val);
+    };
+
     let out = String(template ?? '');
-    out = out.replace(/\{(\w+)\}/g, (_, key) => get(key));
-    out = out.replace(/\$\{(\w+)\}/g, (_, key) => get(key));
-    out = out.replace(/:(\w+)(?=\/|$)/g, (_, key) => get(key));
+
+    // wildcard splat support: *slugId
+    out = out.replace(/\*(\w+)/g, (_, key) => getRawPath(key));
+
+    // existing placeholder styles
+    out = out.replace(/\{(\w+)\}/g, (_, key) => getEncoded(key));
+    out = out.replace(/\$\{(\w+)\}/g, (_, key) => getEncoded(key));
+    out = out.replace(/:(\w+)(?=\/|$)/g, (_, key) => getEncoded(key));
+
     return out;
   }
 }
