@@ -2345,7 +2345,7 @@
       },
       {
         "name": "industry-all-content",
-        "url": "http://127.0.0.1:3000/xp-mi/public/v1/jsw-blog-industry-content-all",
+        "url": "http://experience-middleware.jswonemsme.com/xp-mi/public/v1/jsw-blog-industry-content-all",
         "method": "POST",
         "timeout": {
           "request": 15000,
