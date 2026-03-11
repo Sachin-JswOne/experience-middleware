@@ -1850,12 +1850,12 @@
     }
   },
   {
-    "path": "/xp-mi/public/v1/central_commerce/product/slug/:slugId",
+    "path": "/xp-mi/public/v1/central_commerce/product/slug/*slugId",
     "method": "POST",
     "routeHandler": "TRANSFORM",
     "target": {
       "name": "product-by-slug",
-      "url": "https://qa.msme.jswone.in/central_commerce/product/slug/:slugId",
+      "url": "https://qa.msme.jswone.in/central_commerce/product/slug/*slugId",
       "method": "GET",
       "reqTransform": "general.transformers.convertToGetRequest",
       "timeout": {
@@ -2015,6 +2015,17 @@
         "method": "GET",
         "timeout": { "request": 10000, "socket": 1000 },
         "reqTransform": "general.transformers.moveBodyToQueryParams",
+        "resTransform": "cms.transformers.replaceUriPrefix"
+      },
+      {
+        "name": "cmsFeatureFlag",
+        "url": "${CMS_MSME_URL}/ccp-feature-flags",
+        "method": "GET",
+        "timeout": {
+          "request": 10000,
+          "socket": 1000
+        },
+        "reqTransform": "category.transformers.addFeatureFlagQueryParams",
         "resTransform": "cms.transformers.replaceUriPrefix"
       },
       {

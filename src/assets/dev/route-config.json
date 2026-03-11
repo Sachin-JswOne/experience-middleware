@@ -2228,7 +2228,7 @@
         "headersToPass": [
           {
             "source": "authorization",
-            "destination": "authorization"
+            "destination": "access_token"
           }
         ]
       },
