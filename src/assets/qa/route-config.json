@@ -1850,12 +1850,12 @@
     }
   },
   {
-    "path": "/xp-mi/public/v1/central_commerce/product/slug/:slugId",
+    "path": "/xp-mi/public/v1/central_commerce/product/slug/*slugId",
     "method": "POST",
     "routeHandler": "TRANSFORM",
     "target": {
       "name": "product-by-slug",
-      "url": "https://qa.msme.jswone.in/central_commerce/product/slug/:slugId",
+      "url": "https://qa.msme.jswone.in/central_commerce/product/slug/*slugId",
       "method": "GET",
       "reqTransform": "general.transformers.convertToGetRequest",
       "timeout": {
