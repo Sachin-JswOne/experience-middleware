@@ -2585,7 +2585,7 @@
       },
       {
         "name": "industry-all-content",
-        "url": "http://127.0.0.1:3000/xp-mi/public/v1/jsw-blog-industry-content-all",
+        "url": "https://experience-middleware.qa.jswone.in/xp-mi/public/v1/jsw-blog-industry-content-all",
         "method": "POST",
         "timeout": {
           "request": 15000,

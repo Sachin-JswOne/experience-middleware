@@ -11,10 +11,10 @@ export function selectIndustryContentTarget(req: any): string {
     .toLowerCase();
 
   if (industry === 'all') {
-    return 'industry-all-content';
+    return 'blogs-only';
   }
 
-  return 'blogs-only';
+  return 'industry-all-content';
 }
 
 export function forwardBlogsQueryBody(request: BaseRequest): BaseRequest {
@@ -130,9 +130,6 @@ export function extractProductListingSlugFromIndustrySpecificResponse(
 }
 
 export function mergeIndustryAllContentResponses(aggregatedResponses: AggregatedResponse[]): any {
-  Logger.log(
-    `[DEBUG][mergeIndustryAllContentResponses] ${JSON.stringify(aggregatedResponses, null, 2)}`,
-  );
   const responses = aggregatedResponses.reduce(
     (acc, response) => {
       acc[response.target] = response;
