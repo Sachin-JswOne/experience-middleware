@@ -2491,7 +2491,7 @@
       },
       {
         "name": "industry-specific-components",
-        "url": "https://cms-msme.qa.jswone.in/api/mweb-industry-specific-components",
+        "url": "https://qa-cms-ext.msme.jswone.in/api/mweb-industry-specific-components",
         "method": "GET",
         "timeout": {
           "request": 10000,
