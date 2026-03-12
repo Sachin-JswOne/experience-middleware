@@ -88,7 +88,9 @@ export function extractProductListingSlugFromIndustrySpecificResponse(
   let slug: string | undefined;
   const categories = Array.isArray(firstItem?.app_product_categories)
     ? firstItem.app_product_categories
-    : [];
+    : Array.isArray(firstItem?.product_categories)
+      ? firstItem.product_categories
+      : [];
 
   for (const category of categories) {
     const firstCentralCategory =
@@ -139,16 +141,47 @@ export function mergeIndustryAllContentResponses(aggregatedResponses: Aggregated
   );
 
   const blogsResponse = responses['blogs'];
-
   const metricsResponse = responses['metrics'];
   const industrySpecificResponse = responses['industry-specific-components'];
   const productListingResponse = responses['products-listing'];
+
+  const mergedIndustrySpecificComponents = industrySpecificResponse?.success
+    ? JSON.parse(JSON.stringify(industrySpecificResponse.data))
+    : null;
+
+  if (mergedIndustrySpecificComponents && Array.isArray(mergedIndustrySpecificComponents.data)) {
+    const productsArray = Array.isArray(productListingResponse?.data?.data?.products)
+      ? productListingResponse.data.data.products
+      : [];
+
+    for (const component of mergedIndustrySpecificComponents.data) {
+      if (
+        Array.isArray(component?.product_categories) &&
+        !Array.isArray(component?.app_product_categories)
+      ) {
+        component.app_product_categories = component.product_categories;
+        delete component.product_categories;
+      }
+
+      const filteredCategories = Array.isArray(component?.app_product_categories)
+        ? component.app_product_categories.filter(
+            (category: any) => category?.webCategoryId && category?.itemsToShow,
+          )
+        : [];
+
+      if (filteredCategories.length > 0) {
+        filteredCategories.forEach((category: any) => {
+          category.productsList = {
+            products: productsArray,
+          };
+        });
+      }
+    }
+  }
+
   return {
-    blogs: blogsResponse.data,
+    blogs: blogsResponse?.data ?? null,
     metrics: metricsResponse?.success ? metricsResponse.data : null,
-    industrySpecificComponents: industrySpecificResponse?.success
-      ? industrySpecificResponse.data
-      : null,
-    productListing: productListingResponse?.success ? productListingResponse.data : null,
+    industrySpecificComponents: mergedIndustrySpecificComponents,
   };
 }
