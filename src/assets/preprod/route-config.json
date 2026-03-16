@@ -1480,6 +1480,22 @@
         ]
       },
       {
+        "name": "web-central-catalogue-categories",
+        "url": "https://preprod.jswonemsme.com/central_commerce/categories/tree/list",
+        "method": "POST",
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
+        "reqTransform": "searchPage.transformers.extractCentralCatalogueCategoryIds",
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "access_token"
+          }
+        ]
+      },
+      {
         "name": "ccp-buy-again-with-prices",
         "url": "https://preprod.jswonemsme.com/central_commerce/buy-again-list",
         "method": "GET",
@@ -1512,6 +1528,22 @@
         ]
       },
       {
+        "name": "ccp-trending-search",
+        "url": "https://experience-middleware.preprod.jswonemsme.com/xp-mi/public/v1/central_commerce/trending-search",
+        "method": "GET",
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
+        "reqTransform": "general.transformers.convertToGetRequest",
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "access_token"
+          }
+        ]
+      },
+      {
         "name": "cmsFeatureFlag",
         "url": "https://cms-ext.preprod.jswonemsme.com/api/ccp-feature-flags",
         "method": "GET",
@@ -1524,6 +1556,27 @@
       }
     ],
     "resTransform": "searchPage.transformers.getSearchPageDetails"
+  },
+  {
+    "path": "/xp-mi/public/v1/central_commerce/trending-search",
+    "method": "GET",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "get-trending-search",
+      "url": "https://preprod.jswonemsme.com/central_commerce/trending-search",
+      "method": "GET",
+      "timeout": {
+        "request": "${TIMEOUTS.REQUEST}",
+        "socket": "${TIMEOUTS.SOCKET}"
+      },
+      "headersToPass": [
+        {
+          "source": "access_token",
+          "destination": "access_token"
+        }
+      ],
+      "requiredParams": ["*"]
+    }
   },
   {
     "path": "/xp-mi/public/v1/search-top-items",
