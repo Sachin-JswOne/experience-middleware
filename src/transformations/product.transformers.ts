@@ -43,8 +43,6 @@ export function selectSlugProductResponse(aggregatedResponses: AggregatedRespons
     Array.isArray(featureFlags) &&
     featureFlags.some((f: any) => f?.name === 'central_catalogue_global' && f?.isActive === true);
 
-  console.log('isCentralCatalogueEnabled', isCentralCatalogueEnabled);
-
   const selectedResponse = isCentralCatalogueEnabled
     ? responses['product-by-slug-v2']
     : responses['product-by-slug-old'];
@@ -52,8 +50,6 @@ export function selectSlugProductResponse(aggregatedResponses: AggregatedRespons
   if (selectedResponse?.success) {
     return selectedResponse.data;
   }
-
-  console.log('selectedResponse', selectedResponse);
 
   Logger.error(`[selectSlugProductResponse] Selected target failed: ${selectedResponse?.target}`);
 

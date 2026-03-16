@@ -95,14 +95,6 @@ export class ProxyService {
     console.log(`Incoming ${req.method} request: ${req.url}`);
     const route = this.findRoute(req);
 
-    console.log('[DEBUG][MATCHED ROUTE]', {
-      path: route?.path,
-      method: route?.method,
-      routeHandler: route?.routeHandler,
-      target: (route as any)?.target?.name,
-      targets: (route as any)?.targets?.map((t: any) => t.name),
-    });
-
     if (!route) {
       const activeSpan = trace.getSpan(context.active());
       activeSpan?.setStatus({
@@ -412,14 +404,7 @@ export class ProxyService {
             target.timeout?.socket || 1000,
             target.interceptors,
           );
-          console.log('[DEBUG][OUTGOING REQUEST]', {
-            target: target.name || target.url,
-            url: transformedRequestBody.url.href,
-            method: target.method,
-            headers: transformedRequestBody.headers,
-            body: transformedRequestBody.body,
-            params: transformedRequestBody.params,
-          });
+
           const response = await client.request({
             url: transformedRequestBody.url.href,
             method: target.method,

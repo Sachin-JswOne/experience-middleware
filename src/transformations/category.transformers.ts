@@ -408,18 +408,9 @@ export function selectProductSelectorResponse(aggregatedResponses: AggregatedRes
     Array.isArray(featureFlags) &&
     featureFlags.some((f: any) => f?.name === 'central_catalogue_global' && f?.isActive === true);
 
-  console.log(
-    'isCentralCatalogueEnabled in selectProductSelectorResponse',
-    isCentralCatalogueEnabled,
-  );
   const selectedResponse = isCentralCatalogueEnabled
     ? responses['productSelectorV1']
     : responses['msmeProductSelector'];
-
-  console.log('Selected Response in selectProductSelectorResponse', {
-    target: selectedResponse?.target,
-    success: selectedResponse?.success,
-  });
 
   if (selectedResponse?.success) {
     return selectedResponse.data;
@@ -444,7 +435,6 @@ export function selectProductSelectorResponse(aggregatedResponses: AggregatedRes
 
 export function transformLegacyProductSelectorRequest(request: BaseRequest): BaseRequest {
   const body = request.body ?? {};
-  console.log('Original Request Body in transformLegacyProductSelectorRequest:', body);
   return {
     ...request,
     body: {
@@ -538,15 +528,10 @@ export function selectUomConvertResponse(aggregatedResponses: AggregatedResponse
   const isCentralCatalogueEnabled =
     Array.isArray(featureFlags) &&
     featureFlags.some((f: any) => f?.name === 'central_catalogue_global' && f?.isActive === true);
-  console.log('isCentralCatalogueEnabled in selectUomConvertResponse', isCentralCatalogueEnabled);
   const preferredResponse = isCentralCatalogueEnabled
     ? responses['uom-convert-v2']
     : responses['uom-convert-legacy'];
 
-  console.log('Preferred Response in selectUomConvertResponse', {
-    target: preferredResponse?.target,
-    success: preferredResponse,
-  });
   if (!preferredResponse) {
     throw new CustomError('Preferred UOM convert response not found', 500);
   }
