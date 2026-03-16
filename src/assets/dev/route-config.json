@@ -2096,11 +2096,26 @@
     "path": "/xp-mi/public/v2/customer-profile",
     "method": "GET",
     "routeHandler": "AGGREGATE",
-    "aggregationType": "PARALLEL",
+    "aggregationType": "SEQUENTIAL",
     "targets": [
       {
-        "name": "customer-profile",
+        "name": "profile",
         "url": "https://qa.msme.jswone.in/customer/me/profile",
+        "method": "GET",
+        "timeout": {
+          "request": "${TIMEOUTS.REQUEST}",
+          "socket": "${TIMEOUTS.SOCKET}"
+        },
+        "headersToPass": [
+          {
+            "source": "access_token",
+            "destination": "access_token"
+          }
+        ]
+      },
+      {
+        "name": "customerData",
+        "url": "https://qa.msme.jswone.in/customer/me/v2",
         "method": "GET",
         "timeout": {
           "request": "${TIMEOUTS.REQUEST}",
@@ -2114,7 +2129,7 @@
         ]
       }
     ],
-    "resTransform": "app.transformers.mergeCustomerProfileWithMouEligibility"
+    "resTransform": "customer.transformers.mergeCustomerProfile"
   },
   {
     "path": "/xp-mi/public/v1/central_commerce/graphql",
