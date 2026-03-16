@@ -2464,5 +2464,35 @@
       }
     ],
     "resTransform": "industry-page.transformers.mergeIndustryAllContentResponses"
+  },
+  {
+    "path": "/xp-mi/public/v1/homes/feedback/user",
+    "method": "GET",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "homes-user-details-projectid",
+      "url": "https://service.jswonehomes.com/homes-service/v1/feedback/user-details",
+      "method": "GET",
+      "timeout": {
+        "request": 5000,
+        "socket": 1000
+      },
+      "reqTransform": "general.transformers.convertToGetRequest",
+      "requiredParams": ["project_id"]
+    }
+  },
+  {
+    "path": "/xp-mi/public/v1/homes/feedback/submit-nps",
+    "method": "POST",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "homes-feedback-nps-submit",
+      "url": "https://service.jswonehomes.com/homes-service/v1/feedback/submit-nps",
+      "method": "POST",
+      "timeout": {
+        "request": 5000,
+        "socket": 1000
+      }
+    }
   }
 ]
