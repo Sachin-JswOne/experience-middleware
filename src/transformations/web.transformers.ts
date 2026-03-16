@@ -543,7 +543,7 @@ export function mergeWebHomePageResponsesV3(aggregatedResponses: AggregatedRespo
    * 3) Inject pending dispatch quantity
    */
   if (pendingDispatchResponse?.success) {
-    page.pendingDispatchQuantity = pendingDispatchResponse.data;
+    mergedWrapper.pendingDispatchQuantity = pendingDispatchResponse.data;
   } else if (pendingDispatchResponse && !pendingDispatchResponse.success) {
     Logger.warn(
       `Warning for Web Home Page API method: mergeWebHomePageResponsesV3 pending-dispatch-quantity response failed.`,
