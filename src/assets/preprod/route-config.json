@@ -1879,6 +1879,7 @@
         "request": "${TIMEOUTS.REQUEST}",
         "socket": "${TIMEOUTS.SOCKET}"
       },
+      "reqTransform": "general.transformers.convertToGetRequest",
       "headersToPass": [
         {
           "source": "access_token",
