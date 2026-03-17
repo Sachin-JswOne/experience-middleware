@@ -2096,7 +2096,7 @@
     "path": "/xp-mi/public/v2/customer-profile",
     "method": "GET",
     "routeHandler": "AGGREGATE",
-    "aggregationType": "SEQUENTIAL",
+    "aggregationType": "PARALLEL",
     "targets": [
       {
         "name": "profile",
