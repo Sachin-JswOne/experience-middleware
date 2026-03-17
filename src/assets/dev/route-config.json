@@ -1240,7 +1240,7 @@
     "path": "/xp-mi/public/v1/central_commerce/product/selector",
     "method": "POST",
     "routeHandler": "AGGREGATE",
-    "aggregationType": "SEQUENTIAL",
+    "aggregationType": "PARALLEL",
     "targets": [
       {
         "name": "cmsFeatureFlag",
@@ -2804,7 +2804,7 @@
     "path": "/xp-mi/public/v1/uom-convert",
     "method": "POST",
     "routeHandler": "AGGREGATE",
-    "aggregationType": "SEQUENTIAL",
+    "aggregationType": "PARALLEL",
     "targets": [
       {
         "name": "cmsFeatureFlag",
