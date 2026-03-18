@@ -354,8 +354,8 @@
         "url": "${RETAIL_URL}/v3/seller/cart",
         "method": "GET",
         "timeout": {
-          "request": "${TIMEOUTS.REQUEST_MIN}",
-          "socket": "${TIMEOUTS.SOCKET}"
+          "request": 10000,
+          "socket": 1000
         },
         "reqTransform": "general.transformers.convertToGetRequest",
         "headersToPass": [{ "source": "authorization", "destination": "authorization" }],
@@ -1169,7 +1169,7 @@
         "url": "https://www.jswonemsme.com/v2/cart/size",
         "method": "GET",
         "timeout": {
-          "request": 5000,
+          "request": 10000,
           "socket": 1000
         },
         "headersToPass": [
@@ -1283,7 +1283,7 @@
       "url": "https://www.jswonemsme.com/v2/cart/size",
       "method": "GET",
       "timeout": {
-        "request": 5000,
+        "request": 10000,
         "socket": 1000
       },
       "headersToPass": [
