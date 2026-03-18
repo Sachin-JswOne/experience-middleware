@@ -74,8 +74,8 @@
       "url": "https://preprod.jswonemsme.com/v2/cart/get?onlySlc=true",
       "method": "GET",
       "timeout": {
-        "request": "${TIMEOUTS.REQUEST_MIN}",
-        "socket": "${TIMEOUTS.SOCKET}"
+        "request": 10000,
+        "socket": 1000
       },
       "reqTransform": "general.transformers.convertAuthorizationToAccessTokenInHeader",
       "resTransform": "slc.transformers.convertSlcResponse",
@@ -331,8 +331,8 @@
         "url": "https://cms-ext.preprod.jswonemsme.com/api/app-cart-page",
         "method": "GET",
         "timeout": {
-          "request": "${TIMEOUTS.REQUEST}",
-          "socket": "${TIMEOUTS.SOCKET}"
+          "request": 10000,
+          "socket": 1000
         },
         "reqTransform": "general.transformers.moveBodyToQueryParams",
         "resTransform": "cms.transformers.replaceUriPrefix"
@@ -354,8 +354,8 @@
         "url": "https://jswoneconstruct.in/jswretail/v3/seller/cart",
         "method": "GET",
         "timeout": {
-          "request": "${TIMEOUTS.REQUEST_MIN}",
-          "socket": "${TIMEOUTS.SOCKET}"
+          "request": 10000,
+          "socket": 1000
         },
         "reqTransform": "general.transformers.convertToGetRequest",
         "headersToPass": [{ "source": "authorization", "destination": "authorization" }],
@@ -1412,7 +1412,7 @@
       "url": "https://preprod.jswonemsme.com/v2/cart/add",
       "method": "POST",
       "timeout": {
-        "request": 5000,
+        "request": 10000,
         "socket": 1000
       },
       "headersToPass": [
@@ -1440,7 +1440,7 @@
       "url": "https://preprod.jswonemsme.com/v2/cart/size",
       "method": "GET",
       "timeout": {
-        "request": 5000,
+        "request": 10000,
         "socket": 1000
       },
       "headersToPass": [
