@@ -2660,7 +2660,7 @@
           "request": 10000,
           "socket": 1000
         },
-        "reqTransform": "general.transformers.moveBodyToQueryParams",
+        "reqTransform": "industry-page.transformers.pickBlogsQuery",
         "resTransform": "industry-page.transformers.wrapBlogsOnlyResponse"
       },
       {
@@ -2694,7 +2694,7 @@
           "request": 10000,
           "socket": 1000
         },
-        "reqTransform": "general.transformers.moveBodyToQueryParams",
+        "reqTransform": "industry-page.transformers.pickBlogsQuery",
         "resTransform": "cms.transformers.replaceUriPrefix"
       },
       {
@@ -2752,7 +2752,7 @@
           "request": 10000,
           "socket": 1000
         },
-        "reqTransform": "general.transformers.moveBodyToQueryParams",
+        "reqTransform": "industry-page.transformers.pickBlogsQuery",
         "resTransform": "cms.transformers.replaceUriPrefix"
       },
       {
