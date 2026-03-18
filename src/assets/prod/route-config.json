@@ -1022,23 +1022,56 @@
   {
     "path": "/xp-mi/public/v1/central_commerce/product/selector",
     "method": "POST",
-    "routeHandler": "TRANSFORM",
-    "target": {
-      "name": "msmeProductSelector",
-      "url": "https://www.jswonemsme.com/central_commerce/product/selector",
-      "method": "POST",
-      "timeout": {
-        "request": "${TIMEOUTS.REQUEST}",
-        "socket": "${TIMEOUTS.SOCKET}"
+    "routeHandler": "AGGREGATE",
+    "aggregationType": "PARALLEL",
+    "targets": [
+      {
+        "name": "cmsFeatureFlag",
+        "url": "${CMS_MSME_URL}/ccp-feature-flags",
+        "method": "GET",
+        "timeout": {
+          "request": 10000,
+          "socket": 1000
+        },
+        "reqTransform": "category.transformers.addFeatureFlagQueryParams",
+        "resTransform": "cms.transformers.replaceUriPrefix"
       },
-      "headersToPass": [
-        {
-          "source": "access_token",
-          "destination": "access_token"
-        }
-      ],
-      "requiredParams": ["*"]
-    }
+      {
+        "name": "msmeProductSelector",
+        "url": "https://www.jswonemsme.com/product/v1/product-selector",
+        "method": "POST",
+        "reqTransform": "category.transformers.transformV1ProductSelectorRequest",
+        "timeout": {
+          "request": 10000,
+          "socket": 1000
+        },
+        "headersToPass": [
+          {
+            "source": "access_token",
+            "destination": "access_token"
+          }
+        ],
+        "requiredParams": ["*"]
+      },
+      {
+        "name": "productSelectorV1",
+        "url": "https://www.jswonemsme.com/central_commerce/product/selector",
+        "reqTransform": "category.transformers.transformLegacyProductSelectorRequest",
+        "method": "POST",
+        "timeout": {
+          "request": 10000,
+          "socket": 1000
+        },
+        "headersToPass": [
+          {
+            "source": "access_token",
+            "destination": "access_token"
+          }
+        ],
+        "requiredParams": ["*"]
+      }
+    ],
+    "resTransform": "category.transformers.selectProductSelectorResponse"
   },
   {
     "path": "${PATH_URL}/v1/customer-profile",
@@ -1798,25 +1831,57 @@
   {
     "path": "/xp-mi/public/v1/central_commerce/product/slug/*slugId",
     "method": "POST",
-    "routeHandler": "TRANSFORM",
-    "target": {
-      "name": "product-by-slug",
-      "url": "https://www.jswonemsme.com/central_commerce/product/slug/*slugId",
-      "method": "GET",
-      "reqTransform": "general.transformers.convertToGetRequest",
-      "timeout": {
-        "request": "${TIMEOUTS.REQUEST}",
-        "socket": "${TIMEOUTS.SOCKET}"
+    "routeHandler": "AGGREGATE",
+    "aggregationType": "PARALLEL",
+    "targets": [
+      {
+        "name": "cmsFeatureFlag",
+        "url": "${CMS_MSME_URL}/ccp-feature-flags",
+        "method": "GET",
+        "timeout": {
+          "request": 10000,
+          "socket": 1000
+        },
+        "reqTransform": "category.transformers.addFeatureFlagQueryParams",
+        "resTransform": "cms.transformers.replaceUriPrefix"
       },
-      "headersToPass": [
-        {
-          "source": "access_token",
-          "destination": "access_token"
-        }
-      ],
-      "requiredParams": ["*"],
-      "requiredPathParams": ["slugId"]
-    }
+      {
+        "name": "product-by-slug-old",
+        "url": "https://www.jswonemsme.com/product/v2/slug/*slugId",
+        "method": "GET",
+        "reqTransform": "product.transformers.buildProductSlugV2Request",
+        "timeout": {
+          "request": 10000,
+          "socket": 1000
+        },
+        "headersToPass": [
+          {
+            "source": "access_token",
+            "destination": "access_token"
+          }
+        ],
+        "requiredPathParams": ["slugId"]
+      },
+      {
+        "name": "product-by-slug-v2",
+        "url": "https://www.jswonemsme.com/central_commerce/product/slug/*slugId",
+        "method": "GET",
+        "reqTransform": "general.transformers.convertToGetRequest",
+        "timeout": {
+          "request": 10000,
+          "socket": 1000
+        },
+        "headersToPass": [
+          {
+            "source": "access_token",
+            "destination": "access_token"
+          }
+        ],
+        "requiredParams": ["*"],
+        "requiredPathParams": ["slugId"]
+      }
+    ],
+    "resTransform": "product.transformers.selectSlugProductResponse"
   },
   {
     "path": "/xp-mi/public/v1/mweb-cart-page",
@@ -2494,5 +2559,65 @@
         "socket": 1000
       }
     }
+  },
+  {
+    "path": "/xp-mi/public/v1/uom-convert",
+    "method": "POST",
+    "routeHandler": "AGGREGATE",
+    "aggregationType": "PARALLEL",
+    "targets": [
+      {
+        "name": "cmsFeatureFlag",
+        "url": "${CMS_MSME_URL}/ccp-feature-flags",
+        "method": "GET",
+        "timeout": {
+          "request": "${TIMEOUTS.REQUEST}",
+          "socket": "${TIMEOUTS.SOCKET}"
+        },
+        "reqTransform": "category.transformers.addFeatureFlagQueryParams",
+        "resTransform": "cms.transformers.replaceUriPrefix"
+      },
+      {
+        "name": "uom-convert-legacy",
+        "url": "https://www.jswonemsme.com/measurement-service/unit-of-measure/convert",
+        "method": "POST",
+        "timeout": {
+          "request": "${TIMEOUTS.REQUEST}",
+          "socket": "${TIMEOUTS.SOCKET}"
+        },
+        "reqTransform": "category.transformers.transformV2UomConvertRequest",
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "access_token"
+          },
+          {
+            "source": "access_token",
+            "destination": "access_token"
+          }
+        ]
+      },
+      {
+        "name": "uom-convert-v2",
+        "url": "https://www.jswonemsme.com/central_commerce/uom-convert",
+        "method": "POST",
+        "timeout": {
+          "request": "${TIMEOUTS.REQUEST}",
+          "socket": "${TIMEOUTS.SOCKET}"
+        },
+        "reqTransform": "category.transformers.transformLegacyUomConvertRequest",
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "access_token"
+          },
+          {
+            "source": "access_token",
+            "destination": "access_token"
+          }
+        ]
+      }
+    ],
+    "resTransform": "category.transformers.selectUomConvertResponse"
   }
 ]

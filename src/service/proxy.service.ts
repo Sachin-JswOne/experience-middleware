@@ -270,7 +270,7 @@ export class ProxyService {
                 target: target.name || target.url,
                 success: false,
                 error: err?.message || String(err),
-                httpStatus: err?.status || 500,
+                httpStatus: err?.httpStatusCode || err?.status || 500,
                 downstreamResponse: err?.response?.data || null,
                 customError: err instanceof CustomError ? err : null,
               };
@@ -347,7 +347,7 @@ export class ProxyService {
               target: target.name || target.url,
               success: false,
               error: err?.message || String(err),
-              httpStatus: err?.status || 500,
+              httpStatus: err?.httpStatusCode || err?.status || 500,
               downstreamResponse: err?.response?.data || null,
             });
             span.addEvent('sequential.target.failed', {
