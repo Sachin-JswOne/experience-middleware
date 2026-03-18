@@ -2563,7 +2563,7 @@
         "socket": 1000
       },
       "reqTransform": "general.transformers.convertToGetRequest",
-      "requiredParams": ["project_id"]
+      "requiredParams": ["project_id", "event"]
     }
   },
   {
