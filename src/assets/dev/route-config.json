@@ -2609,6 +2609,83 @@
     }
   },
   {
+    "path": "/xp-mi/public/v1/create-sf-address",
+    "method": "POST",
+    "routeHandler": "AGGREGATE",
+    "aggregationType": "SEQUENTIAL",
+    "isCacheRequired": false,
+    "targets": [
+      {
+        "name": "get-sf-tokens",
+        "url": "https://jswoneplatforms--uat.sandbox.my.salesforce.com/services/oauth2/token",
+        "method": "POST",
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
+        "staticHeaders": {
+          "Content-Type": "application/x-www-form-urlencoded"
+        },
+        "requiredParams": ["*"],
+        "reqTransform": "general.transformers.createQueryParams",
+        "resTransform": ""
+      },
+      {
+        "name": "create-address",
+        "url": "https://jswoneplatforms--uat.sandbox.my.salesforce.com/services/apexrest/v1/SiteAddress",
+        "method": "POST",
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
+        "reqTransform": "address.transformers.createAddress",
+        "headersToPass": [],
+        "requiredParams": ["*"]
+      }
+    ],
+    "resTransform": "general.transformers.successOnly"
+  },
+  {
+    "path": "/xp-mi/public/v1/get-sf-address",
+    "method": "GET",
+    "routeHandler": "AGGREGATE",
+    "aggregationType": "SEQUENTIAL",
+    "isCacheRequired": false,
+    "targets": [
+      {
+        "name": "get-sf-tokens",
+        "url": "https://jswoneplatforms--uat.sandbox.my.salesforce.com/services/oauth2/token",
+        "method": "POST",
+        "timeout": {
+          "request": 50000,
+          "socket": 1000
+        },
+        "staticHeaders": {
+          "Content-Type": "application/x-www-form-urlencoded"
+        },
+        "requiredParams": ["*"],
+        "reqTransform": "general.transformers.createQueryParams"
+      },
+      {
+        "name": "get-address",
+        "url": "https://jswoneplatforms--uat.sandbox.my.salesforce.com/services/apexrest/retailAddressData",
+        "method": "GET",
+        "timeout": {
+          "request": 50000,
+          "socket": 1000
+        },
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "authorization"
+          }
+        ],
+        "reqTransform": "address.transformers.getAddressRequest"
+      }
+    ],
+    "resTransform": "address.transformers.getAddressResponse"
+  },
+  {
     "path": "/xp-mi/public/v1/get-address",
     "method": "GET",
     "routeHandler": "TRANSFORM",
@@ -2629,6 +2706,44 @@
       ],
       "resTransform": "address.transformers.transformGetAddressResponse"
     }
+  },
+  {
+    "path": "/xp-mi/public/v1/get-app-address",
+    "method": "GET",
+    "routeHandler": "CONDITIONAL",
+    "conditionTransform": "address.transformers.selectGetAddressTarget",
+    "targets": [
+      {
+        "name": "sf-address",
+        "url": "xp-mi/public/v1/get-sf-address",
+        "method": "GET",
+        "timeout": {
+          "request": 10000,
+          "socket": 1000
+        },
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "authorization"
+          }
+        ]
+      },
+      {
+        "name": "ct-address",
+        "url": "https://experience-middleware.qa.jswone.in/xp-mi/public/v1/get-address",
+        "method": "GET",
+        "timeout": {
+          "request": 10000,
+          "socket": 1000
+        },
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "authorization"
+          }
+        ]
+      }
+    ]
   },
   {
     "path": "/xp-mi/public/v1/blogs-articles",

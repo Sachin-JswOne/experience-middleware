@@ -253,6 +253,3 @@ export const KEY_AND_DISPLAY_NAME_MAPPING = {
 };
 
 export const country = 'IN';
-
-export const site = 'Site';
-export const shop = 'Shop';
