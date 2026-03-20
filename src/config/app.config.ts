@@ -251,3 +251,8 @@ export const KEY_AND_DISPLAY_NAME_MAPPING = {
   flange_width: { displayName: 'Flange width', key: 'flange_width' },
   sectional_weight: { displayName: 'Sectional weight', key: 'sectional_weight' },
 };
+
+export const country = 'IN';
+
+export const site = 'Site';
+export const shop = 'Shop';
