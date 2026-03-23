@@ -131,7 +131,6 @@ export function getAddressRequest(
       HttpStatus.BAD_REQUEST,
     );
   }
-  console.log('Access Token retrieved for getAddressRequest:', accessToken);
   const headers = {
     Authorization: `Bearer ${accessToken}`,
   };
@@ -231,11 +230,8 @@ export function transformAddress(addressList) {
 
 export function selectGetAddressTarget(request): string {
   const isPbUser = request?.query?.isPbUser;
-  console.log('Request', request.query.isPbUser);
   if (isPbUser === 'true') {
-    console.log('Selecting sf-address for PB user');
     return 'sf-address';
   }
-  console.log('Selecting ct-address for non-PB user');
   return 'ct-address';
 }
