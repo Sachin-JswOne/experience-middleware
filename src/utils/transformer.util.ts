@@ -8,13 +8,14 @@ export async function applyTransform(
     fnPath.slice(fnPath.lastIndexOf('.') + 1),
   ];
   const module = await import(`../transformations/${moduleName}`);
-
+  console.log(`Transforming request using ${fnName} from ${moduleName}`);
   //If prevResponses exist and transformer expects it, pass both
   const transformer = module[fnName];
   if (typeof transformer !== 'function') {
     throw new Error(`Transformer function ${fnName} not found in ${moduleName}`);
   }
-
+  console.log('Request before transformation:', request);
+  console.log('Previous Responses:', prevResponses);
   return prevResponses
     ? transformer(request, prevResponses) // (request, prevResponses)
     : transformer(request);

@@ -70,7 +70,7 @@ export function createQueryParams(request: BaseRequest): BaseRequest {
 
   // Stringify and set
   transformedRequest.url.search = qs.stringify(mergedParams);
-
+  console.log('Transformed Request URL:', transformedRequest.url.toString());
   return transformedRequest;
 }
 
