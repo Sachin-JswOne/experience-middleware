@@ -2478,7 +2478,7 @@
         "socket": 1000
       },
       "reqTransform": "general.transformers.convertToGetRequest",
-      "requiredParams": ["id"]
+      "requiredParams": ["id", "event"]
     }
   },
   {
