@@ -2416,8 +2416,8 @@
         "url": "https://jswoneplatforms--uat.sandbox.my.salesforce.com/services/oauth2/token",
         "method": "POST",
         "timeout": {
-          "request": "50000",
-          "socket": "1000"
+          "request": 50000,
+          "socket": 1000
         },
         "staticHeaders": {
           "Content-Type": "application/x-www-form-urlencoded"
@@ -2431,8 +2431,8 @@
         "url": "https://jswoneplatforms--uat.sandbox.my.salesforce.com/services/apexrest/v1/SiteAddress",
         "method": "POST",
         "timeout": {
-          "request": "50000",
-          "socket": "1000"
+          "request": 50000,
+          "socket": 1000
         },
         "reqTransform": "address.transformers.createAddress",
         "headersToPass": [],
@@ -2491,7 +2491,7 @@
       "url": "https://qa.msme.jswone.in/customer/address/upsert",
       "method": "POST",
       "timeout": {
-        "request": 5000,
+        "request": 50000,
         "socket": 1000
       },
       "headersToPass": [
@@ -2500,8 +2500,8 @@
           "destination": "access_token"
         }
       ],
-      "reqTransform": "address.transformers.transformcreateAddressRequest",
-      "resTransform": "address.transformers.transformcreateAddressResponse"
+      "reqTransform": "address.transformers.transformCreateAddressRequest",
+      "resTransform": "address.transformers.transformCreateAddressResponse"
     }
   },
   {
@@ -2514,7 +2514,7 @@
       "url": "https://qa.msme.jswone.in/customer/me/v2",
       "method": "GET",
       "timeout": {
-        "request": 5000,
+        "request": 50000,
         "socket": 1000
       },
       "headersToPass": [
@@ -2534,7 +2534,7 @@
     "targets": [
       {
         "name": "sf-address",
-        "url": "xp-mi/public/v1/get-sf-address",
+        "url": "https://experience-middleware.qa.jswone.in/xp-mi/public/v1/get-sf-address",
         "method": "GET",
         "timeout": {
           "request": 10000,
@@ -2551,6 +2551,44 @@
         "name": "ct-address",
         "url": "https://experience-middleware.qa.jswone.in/xp-mi/public/v1/get-address",
         "method": "GET",
+        "timeout": {
+          "request": 10000,
+          "socket": 1000
+        },
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "authorization"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "path": "/xp-mi/public/v1/create-app-address",
+    "method": "POST",
+    "routeHandler": "CONDITIONAL",
+    "conditionTransform": "address.transformers.selectGetAddressTarget",
+    "targets": [
+      {
+        "name": "sf-address",
+        "url": "https://experience-middleware.qa.jswone.in/xp-mi/public/v1/create-sf-address",
+        "method": "POST",
+        "timeout": {
+          "request": 10000,
+          "socket": 1000
+        },
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "authorization"
+          }
+        ]
+      },
+      {
+        "name": "ct-address",
+        "url": "https://experience-middleware.qa.jswone.in/xp-mi/public/v1/create-address",
+        "method": "POST",
         "timeout": {
           "request": 10000,
           "socket": 1000

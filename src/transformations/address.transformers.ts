@@ -6,22 +6,22 @@ import { AggregatedResponse } from 'src/models/aggregated-response.model';
 import { CustomError } from 'src/utils/CustomError';
 import * as jwt from 'jsonwebtoken';
 
-export function transformcreateAddressRequest(request: BaseRequest): BaseRequest {
+export function transformCreateAddressRequest(request: BaseRequest): BaseRequest {
   const reqBody = request.body;
   const requestBody = {
     company: reqBody.company,
     firstName: reqBody.firstName || '',
     lastName: reqBody.lastName || '',
-    postalCode: reqBody.postalCode,
+    postalCode: reqBody.postalCode || reqBody.pincode,
     city: reqBody.city,
     state: reqBody.state,
     country: country,
     email: reqBody.email || '',
     mobile: reqBody.mobile || null,
-    streetLine1: reqBody.streetLine1,
-    streetLine2: reqBody.streetLine2 || '',
+    streetLine1: reqBody.streetLine1 || reqBody.addressLine1,
+    streetLine2: reqBody.streetLine2 || reqBody.addressLine2 || '',
     isPrimaryAddress: false,
-    region: reqBody.region,
+    region: reqBody.region || reqBody.district,
   };
 
   const transformedRequest: BaseRequest = {
@@ -31,11 +31,11 @@ export function transformcreateAddressRequest(request: BaseRequest): BaseRequest
   return transformedRequest;
 }
 
-export function transformcreateAddressResponse(response: any) {
+export function transformCreateAddressResponse(response: any) {
   safeDebug(
     Logger,
     () =>
-      ` Create Address Api response from method: transformAddressResponse : ${JSON.stringify(response)}`,
+      ` Create Address Api response from method: transformCreateAddressResponse : ${JSON.stringify(response)}`,
   );
 
   if (response && response.addresses && response.addresses.length > 0) {
@@ -53,7 +53,6 @@ export function transformGetAddressResponse(response: any) {
   );
 
   const { defaultShippingAddressId, defaultBillingAddressId } = response;
-
   const responseData = response.addresses.map((address: any) => {
     return {
       state: address.state,
@@ -131,7 +130,6 @@ export function getAddressRequest(
       HttpStatus.BAD_REQUEST,
     );
   }
-  console.log('Access Token retrieved for getAddressRequest:', accessToken);
   const headers = {
     Authorization: `Bearer ${accessToken}`,
   };
@@ -231,11 +229,8 @@ export function transformAddress(addressList) {
 
 export function selectGetAddressTarget(request): string {
   const isPbUser = request?.query?.isPbUser;
-  console.log('Request', request.query.isPbUser);
   if (isPbUser === 'true') {
-    console.log('Selecting sf-address for PB user');
     return 'sf-address';
   }
-  console.log('Selecting ct-address for non-PB user');
   return 'ct-address';
 }
