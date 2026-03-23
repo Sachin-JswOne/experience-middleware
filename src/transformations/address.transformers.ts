@@ -131,7 +131,7 @@ export function getAddressRequest(
       HttpStatus.BAD_REQUEST,
     );
   }
-
+  console.log('Access Token retrieved for getAddressRequest:', accessToken);
   const headers = {
     Authorization: `Bearer ${accessToken}`,
   };

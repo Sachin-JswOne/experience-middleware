@@ -2715,7 +2715,7 @@
     "targets": [
       {
         "name": "sf-address",
-        "url": "xp-mi/public/v1/get-sf-address",
+        "url": "https://experience-middleware.qa.jswone.in/xp-mi/public/v1/get-sf-address",
         "method": "GET",
         "timeout": {
           "request": 10000,

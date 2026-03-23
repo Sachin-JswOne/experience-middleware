@@ -2453,8 +2453,8 @@
         "url": "https://jswoneplatforms--uat.sandbox.my.salesforce.com/services/oauth2/token",
         "method": "POST",
         "timeout": {
-          "request": "50000",
-          "socket": "1000"
+          "request": 50000,
+          "socket": 1000
         },
         "staticHeaders": {
           "Content-Type": "application/x-www-form-urlencoded"
@@ -2467,8 +2467,8 @@
         "url": "https://jswoneplatforms--uat.sandbox.my.salesforce.com/services/apexrest/retailAddressData",
         "method": "GET",
         "timeout": {
-          "request": "50000",
-          "socket": "1000"
+          "request": 50000,
+          "socket": 1000
         },
         "headersToPass": [
           {
