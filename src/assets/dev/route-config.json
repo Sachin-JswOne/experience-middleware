@@ -1239,23 +1239,56 @@
   {
     "path": "/xp-mi/public/v1/central_commerce/product/selector",
     "method": "POST",
-    "routeHandler": "TRANSFORM",
-    "target": {
-      "name": "msmeProductSelector",
-      "url": "https://qa.msme.jswone.in/central_commerce/product/selector",
-      "method": "POST",
-      "timeout": {
-        "request": "${TIMEOUTS.REQUEST}",
-        "socket": "${TIMEOUTS.SOCKET}"
+    "routeHandler": "AGGREGATE",
+    "aggregationType": "PARALLEL",
+    "targets": [
+      {
+        "name": "cmsFeatureFlag",
+        "url": "${CMS_MSME_URL}/ccp-feature-flags",
+        "method": "GET",
+        "timeout": {
+          "request": 10000,
+          "socket": 1000
+        },
+        "reqTransform": "category.transformers.addFeatureFlagQueryParams",
+        "resTransform": "cms.transformers.replaceUriPrefix"
       },
-      "headersToPass": [
-        {
-          "source": "access_token",
-          "destination": "access_token"
-        }
-      ],
-      "requiredParams": ["*"]
-    }
+      {
+        "name": "msmeProductSelector",
+        "url": "https://qa.msme.jswone.in/product/v1/product-selector",
+        "method": "POST",
+        "reqTransform": "category.transformers.transformV1ProductSelectorRequest",
+        "timeout": {
+          "request": 10000,
+          "socket": 1000
+        },
+        "headersToPass": [
+          {
+            "source": "access_token",
+            "destination": "access_token"
+          }
+        ],
+        "requiredParams": ["*"]
+      },
+      {
+        "name": "productSelectorV1",
+        "url": "https://qa.msme.jswone.in/central_commerce/product/selector",
+        "reqTransform": "category.transformers.transformLegacyProductSelectorRequest",
+        "method": "POST",
+        "timeout": {
+          "request": 10000,
+          "socket": 1000
+        },
+        "headersToPass": [
+          {
+            "source": "access_token",
+            "destination": "access_token"
+          }
+        ],
+        "requiredParams": ["*"]
+      }
+    ],
+    "resTransform": "category.transformers.selectProductSelectorResponse"
   },
   {
     "path": "${PATH_URL}/v1/customer-profile",
@@ -1679,7 +1712,7 @@
         "reqTransform": "search-topItems.transformers.transformTopItemsMMIDRequest",
         "headersToPass": [
           {
-            "source": "access_token",
+            "source": "authorization",
             "destination": "access_token"
           }
         ]
@@ -1890,7 +1923,12 @@
         "request": "${TIMEOUTS.REQUEST}",
         "socket": "${TIMEOUTS.SOCKET}"
       },
-      "headersToPass": [{ "source": "access_token", "destination": "access_token" }],
+      "headersToPass": [
+        {
+          "source": "access_token",
+          "destination": "access_token"
+        }
+      ],
       "requiredParams": ["*"]
     }
   },
@@ -1937,8 +1975,16 @@
       "name": "homes-activity-schedule",
       "url": "https://services-dev.onejswhomes.in/homes-service/v1/project/activity-schedule",
       "method": "GET",
-      "timeout": { "request": 5000, "socket": 1000 },
-      "headersToPass": [{ "source": "authorization", "destination": "Authorization" }],
+      "timeout": {
+        "request": 5000,
+        "socket": 1000
+      },
+      "headersToPass": [
+        {
+          "source": "authorization",
+          "destination": "Authorization"
+        }
+      ],
       "requiredParams": ["project_id"]
     }
   },
@@ -1985,27 +2031,59 @@
     }
   },
   {
-    "path": "/xp-mi/public/v1/central_commerce/product/slug/:slugId",
+    "path": "/xp-mi/public/v1/central_commerce/product/slug/*slugId",
     "method": "POST",
-    "routeHandler": "TRANSFORM",
-    "target": {
-      "name": "product-by-slug",
-      "url": "https://qa.msme.jswone.in/central_commerce/product/slug/:slugId",
-      "method": "GET",
-      "reqTransform": "general.transformers.convertToGetRequest",
-      "timeout": {
-        "request": "${TIMEOUTS.REQUEST}",
-        "socket": "${TIMEOUTS.SOCKET}"
+    "routeHandler": "AGGREGATE",
+    "aggregationType": "PARALLEL",
+    "targets": [
+      {
+        "name": "cmsFeatureFlag",
+        "url": "${CMS_MSME_URL}/ccp-feature-flags",
+        "method": "GET",
+        "timeout": {
+          "request": 10000,
+          "socket": 1000
+        },
+        "reqTransform": "category.transformers.addFeatureFlagQueryParams",
+        "resTransform": "cms.transformers.replaceUriPrefix"
       },
-      "headersToPass": [
-        {
-          "source": "access_token",
-          "destination": "access_token"
-        }
-      ],
-      "requiredParams": ["*"],
-      "requiredPathParams": ["slugId"]
-    }
+      {
+        "name": "product-by-slug-old",
+        "url": "https://qa.msme.jswone.in/product/v2/slug/*slugId",
+        "method": "GET",
+        "reqTransform": "product.transformers.buildProductSlugV2Request",
+        "timeout": {
+          "request": 10000,
+          "socket": 1000
+        },
+        "headersToPass": [
+          {
+            "source": "access_token",
+            "destination": "access_token"
+          }
+        ],
+        "requiredPathParams": ["slugId"]
+      },
+      {
+        "name": "product-by-slug-v2",
+        "url": "https://qa.msme.jswone.in/central_commerce/product/slug/*slugId",
+        "method": "GET",
+        "reqTransform": "general.transformers.convertToGetRequest",
+        "timeout": {
+          "request": 10000,
+          "socket": 1000
+        },
+        "headersToPass": [
+          {
+            "source": "access_token",
+            "destination": "access_token"
+          }
+        ],
+        "requiredParams": ["*"],
+        "requiredPathParams": ["slugId"]
+      }
+    ],
+    "resTransform": "product.transformers.selectSlugProductResponse"
   },
   {
     "path": "/xp-mi/public/v1/mweb-cart-page",
@@ -2086,17 +2164,37 @@
     "aggregationType": "PARALLEL",
     "targets": [
       {
-        "name": "customer-profile",
+        "name": "profile",
         "url": "https://qa.msme.jswone.in/customer/me/profile",
         "method": "GET",
         "timeout": {
           "request": "${TIMEOUTS.REQUEST}",
           "socket": "${TIMEOUTS.SOCKET}"
         },
-        "headersToPass": [{ "source": "access_token", "destination": "access_token" }]
+        "headersToPass": [
+          {
+            "source": "access_token",
+            "destination": "access_token"
+          }
+        ]
+      },
+      {
+        "name": "customerData",
+        "url": "https://qa.msme.jswone.in/customer/me/v2",
+        "method": "GET",
+        "timeout": {
+          "request": "${TIMEOUTS.REQUEST}",
+          "socket": "${TIMEOUTS.SOCKET}"
+        },
+        "headersToPass": [
+          {
+            "source": "access_token",
+            "destination": "access_token"
+          }
+        ]
       }
     ],
-    "resTransform": "app.transformers.mergeCustomerProfileWithMouEligibility"
+    "resTransform": "customer.transformers.mergeCustomerProfile"
   },
   {
     "path": "/xp-mi/public/v1/central_commerce/graphql",
@@ -2148,7 +2246,10 @@
         "name": "layout-mweb-homepages",
         "url": "${CMS_MSME_URL}/layout-mweb-homepages",
         "method": "GET",
-        "timeout": { "request": 10000, "socket": 1000 },
+        "timeout": {
+          "request": 10000,
+          "socket": 1000
+        },
         "reqTransform": "general.transformers.moveBodyToQueryParams",
         "resTransform": "cms.transformers.replaceUriPrefix"
       },
@@ -2183,9 +2284,17 @@
         "name": "ccp-top-items-product-details",
         "url": "https://qa.msme.jswone.in/central_commerce/catalogue/product-details",
         "method": "POST",
-        "timeout": { "request": 5000, "socket": 1000 },
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
         "reqTransform": "web.transformers.transformWebHomePageTopItemsMMIDRequestV3",
-        "headersToPass": [{ "source": "authorization", "destination": "access_token" }]
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "access_token"
+          }
+        ]
       },
       {
         "name": "pending-dispatch-quantity",
@@ -2327,7 +2436,10 @@
         "name": "layout-mweb-segment-pages",
         "url": "${CMS_MSME_URL}/layout-mweb-segment-pages",
         "method": "GET",
-        "timeout": { "request": 10000, "socket": 1000 },
+        "timeout": {
+          "request": 10000,
+          "socket": 1000
+        },
         "reqTransform": "general.transformers.moveBodyToQueryParams",
         "resTransform": "cms.transformers.replaceUriPrefix"
       },
@@ -2335,7 +2447,10 @@
         "name": "app-blogs",
         "url": "${CMS_MSME_URL}/jsw-blogs-articless",
         "method": "GET",
-        "timeout": { "request": 5000, "socket": 1000 },
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
         "reqTransform": "cms.transformers.homeBlogs",
         "resTransform": "cms.transformers.replaceUriPrefix"
       },
@@ -2343,17 +2458,33 @@
         "name": "web-segment-products",
         "url": "https://experience-middleware.qa.jswone.in/xp-mi/public/v1/web-products",
         "method": "GET",
-        "timeout": { "request": 10000, "socket": 1000 },
+        "timeout": {
+          "request": 10000,
+          "socket": 1000
+        },
         "reqTransform": "general.transformers.convertToGetRequest",
-        "headersToPass": [{ "source": "authorization", "destination": "authorization" }]
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "authorization"
+          }
+        ]
       },
       {
         "name": "segment-products-listing",
         "url": "https://qa.msme.jswone.in/central_commerce/products/listing",
         "method": "POST",
-        "timeout": { "request": 5000, "socket": 1000 },
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
         "reqTransform": "web.segment.transformers.extractProductListingSlugSegment",
-        "headersToPass": [{ "source": "authorization", "destination": "access_token" }]
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "access_token"
+          }
+        ]
       }
     ],
     "resTransform": "web.segment.transformers.mergeWebSegmentPageResponsesV1"
@@ -2473,9 +2604,86 @@
           "destination": "access_token"
         }
       ],
-      "reqTransform": "address.transformers.transformcreateAddressRequest",
-      "resTransform": "address.transformers.transformcreateAddressResponse"
+      "reqTransform": "address.transformers.transformCreateAddressRequest",
+      "resTransform": "address.transformers.transformCreateAddressResponse"
     }
+  },
+  {
+    "path": "/xp-mi/public/v1/create-sf-address",
+    "method": "POST",
+    "routeHandler": "AGGREGATE",
+    "aggregationType": "SEQUENTIAL",
+    "isCacheRequired": false,
+    "targets": [
+      {
+        "name": "get-sf-tokens",
+        "url": "https://jswoneplatforms--uat.sandbox.my.salesforce.com/services/oauth2/token",
+        "method": "POST",
+        "timeout": {
+          "request": 50000,
+          "socket": 1000
+        },
+        "staticHeaders": {
+          "Content-Type": "application/x-www-form-urlencoded"
+        },
+        "requiredParams": ["*"],
+        "reqTransform": "general.transformers.createQueryParams",
+        "resTransform": ""
+      },
+      {
+        "name": "create-address",
+        "url": "https://jswoneplatforms--uat.sandbox.my.salesforce.com/services/apexrest/v1/SiteAddress",
+        "method": "POST",
+        "timeout": {
+          "request": 50000,
+          "socket": 1000
+        },
+        "reqTransform": "address.transformers.createAddress",
+        "headersToPass": [],
+        "requiredParams": ["*"]
+      }
+    ],
+    "resTransform": "general.transformers.successOnly"
+  },
+  {
+    "path": "/xp-mi/public/v1/get-sf-address",
+    "method": "GET",
+    "routeHandler": "AGGREGATE",
+    "aggregationType": "SEQUENTIAL",
+    "isCacheRequired": false,
+    "targets": [
+      {
+        "name": "get-sf-tokens",
+        "url": "https://jswoneplatforms--uat.sandbox.my.salesforce.com/services/oauth2/token",
+        "method": "POST",
+        "timeout": {
+          "request": 50000,
+          "socket": 1000
+        },
+        "staticHeaders": {
+          "Content-Type": "application/x-www-form-urlencoded"
+        },
+        "requiredParams": ["*"],
+        "reqTransform": "general.transformers.createQueryParams"
+      },
+      {
+        "name": "get-address",
+        "url": "https://jswoneplatforms--uat.sandbox.my.salesforce.com/services/apexrest/retailAddressData",
+        "method": "GET",
+        "timeout": {
+          "request": 50000,
+          "socket": 1000
+        },
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "authorization"
+          }
+        ],
+        "reqTransform": "address.transformers.getAddressRequest"
+      }
+    ],
+    "resTransform": "address.transformers.getAddressResponse"
   },
   {
     "path": "/xp-mi/public/v1/get-address",
@@ -2498,5 +2706,326 @@
       ],
       "resTransform": "address.transformers.transformGetAddressResponse"
     }
+  },
+  {
+    "path": "/xp-mi/public/v1/get-app-address",
+    "method": "GET",
+    "routeHandler": "CONDITIONAL",
+    "conditionTransform": "address.transformers.selectGetAddressTarget",
+    "targets": [
+      {
+        "name": "sf-address",
+        "url": "https://experience-middleware.qa.jswone.in/xp-mi/public/v1/get-sf-address",
+        "method": "GET",
+        "timeout": {
+          "request": 10000,
+          "socket": 1000
+        },
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "authorization"
+          }
+        ]
+      },
+      {
+        "name": "ct-address",
+        "url": "https://experience-middleware.qa.jswone.in/xp-mi/public/v1/get-address",
+        "method": "GET",
+        "timeout": {
+          "request": 10000,
+          "socket": 1000
+        },
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "authorization"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "path": "/xp-mi/public/v1/create-app-address",
+    "method": "POST",
+    "routeHandler": "CONDITIONAL",
+    "conditionTransform": "address.transformers.selectGetAddressTarget",
+    "targets": [
+      {
+        "name": "sf-address",
+        "url": "https://experience-middleware.qa.jswone.in/xp-mi/public/v1/create-sf-address",
+        "method": "POST",
+        "timeout": {
+          "request": 10000,
+          "socket": 1000
+        },
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "authorization"
+          }
+        ]
+      },
+      {
+        "name": "ct-address",
+        "url": "https://experience-middleware.qa.jswone.in/xp-mi/public/v1/create-address",
+        "method": "POST",
+        "timeout": {
+          "request": 10000,
+          "socket": 1000
+        },
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "authorization"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "path": "/xp-mi/public/v1/blogs-articles",
+    "method": "POST",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "jsw-blog-articles",
+      "url": "https://qa-cms-ext.msme.jswone.in/api/jsw-blogs-articless",
+      "method": "GET",
+      "timeout": {
+        "request": 20000,
+        "socket": 1000
+      },
+      "reqTransform": "general.transformers.moveBodyToQueryParams",
+      "resTransform": "cms.transformers.replaceUriPrefix"
+    }
+  },
+  {
+    "path": "/xp-mi/public/v1/blogs-listing",
+    "method": "POST",
+    "routeHandler": "CONDITIONAL",
+    "conditionTransform": "industry-page.transformers.selectIndustryContentTarget",
+    "targets": [
+      {
+        "name": "blogs-only",
+        "url": "https://qa-cms-ext.msme.jswone.in/api/jsw-blogs-articless",
+        "method": "GET",
+        "timeout": {
+          "request": 10000,
+          "socket": 1000
+        },
+        "reqTransform": "industry-page.transformers.pickBlogsQuery",
+        "resTransform": "industry-page.transformers.wrapBlogsOnlyResponse"
+      },
+      {
+        "name": "industry-all-content",
+        "url": "http://127.0.0.1:3000/xp-mi/public/v1/jsw-blog-industry-content-all",
+        "method": "POST",
+        "timeout": {
+          "request": 15000,
+          "socket": 1000
+        },
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "authorization"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "path": "/xp-mi/public/v1/jsw-blog-industry-content-all",
+    "method": "POST",
+    "routeHandler": "AGGREGATE",
+    "aggregationType": "SEQUENTIAL",
+    "targets": [
+      {
+        "name": "blogs",
+        "url": "https://qa-cms-ext.msme.jswone.in/api/jsw-blogs-articless",
+        "method": "GET",
+        "timeout": {
+          "request": 10000,
+          "socket": 1000
+        },
+        "reqTransform": "industry-page.transformers.pickBlogsQuery",
+        "resTransform": "cms.transformers.replaceUriPrefix"
+      },
+      {
+        "name": "metrics",
+        "url": "https://qa-cms-ext.msme.jswone.in/api/mweb-metrics-components",
+        "method": "GET",
+        "timeout": {
+          "request": 10000,
+          "socket": 1000
+        },
+        "reqTransform": "industry-page.transformers.pickMatrixQuery",
+        "resTransform": "cms.transformers.replaceUriPrefix"
+      },
+      {
+        "name": "industry-specific-components",
+        "url": "https://qa-cms-ext.msme.jswone.in/api/mweb-industry-specific-components",
+        "method": "GET",
+        "timeout": {
+          "request": 10000,
+          "socket": 1000
+        },
+        "reqTransform": "industry-page.transformers.pickIndustryQuery",
+        "resTransform": "cms.transformers.replaceUriPrefix"
+      },
+      {
+        "name": "products-listing",
+        "url": "https://qa.msme.jswone.in/central_commerce/products/listing",
+        "method": "POST",
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
+        "reqTransform": "industry-page.transformers.extractProductListingSlugFromIndustrySpecificResponse",
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "access_token"
+          }
+        ]
+      }
+    ],
+    "resTransform": "industry-page.transformers.mergeIndustryAllContentResponses"
+  },
+  {
+    "path": "/xp-mi/public/v1/blogs-details",
+    "method": "POST",
+    "routeHandler": "AGGREGATE",
+    "aggregationType": "SEQUENTIAL",
+    "targets": [
+      {
+        "name": "blogs",
+        "url": "https://qa-cms-ext.msme.jswone.in/api/jsw-blogs-articless",
+        "method": "GET",
+        "timeout": {
+          "request": 10000,
+          "socket": 1000
+        },
+        "reqTransform": "industry-page.transformers.pickBlogsQuery",
+        "resTransform": "cms.transformers.replaceUriPrefix"
+      },
+      {
+        "name": "industry-specific-components",
+        "url": "https://qa-cms-ext.msme.jswone.in/api/mweb-industry-specific-components",
+        "method": "GET",
+        "timeout": {
+          "request": 10000,
+          "socket": 1000
+        },
+        "reqTransform": "industry-page.transformers.pickIndustryQuery",
+        "resTransform": "cms.transformers.replaceUriPrefix"
+      },
+      {
+        "name": "products-listing",
+        "url": "https://qa.msme.jswone.in/central_commerce/products/listing",
+        "method": "POST",
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
+        "reqTransform": "industry-page.transformers.extractProductListingSlugFromIndustrySpecificResponse",
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "access_token"
+          }
+        ]
+      }
+    ],
+    "resTransform": "industry-page.transformers.mergeIndustryAllContentResponses"
+  },
+  {
+    "path": "/xp-mi/public/v1/homes/feedback/user",
+    "method": "GET",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "homes-user-details-projectid",
+      "url": "https://services-dev.onejswhomes.in/homes-service/v1/feedback/user-details",
+      "method": "GET",
+      "timeout": {
+        "request": 5000,
+        "socket": 1000
+      },
+      "reqTransform": "general.transformers.convertToGetRequest",
+      "requiredParams": ["id", "event"]
+    }
+  },
+  {
+    "path": "/xp-mi/public/v1/homes/feedback/submit-nps",
+    "method": "POST",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "homes-feedback-nps-submit",
+      "url": "https://services-dev.onejswhomes.in/homes-service/v1/feedback/submit-nps",
+      "method": "POST",
+      "timeout": {
+        "request": 5000,
+        "socket": 1000
+      }
+    }
+  },
+  {
+    "path": "/xp-mi/public/v1/uom-convert",
+    "method": "POST",
+    "routeHandler": "AGGREGATE",
+    "aggregationType": "PARALLEL",
+    "targets": [
+      {
+        "name": "cmsFeatureFlag",
+        "url": "${CMS_MSME_URL}/ccp-feature-flags",
+        "method": "GET",
+        "timeout": {
+          "request": "${TIMEOUTS.REQUEST}",
+          "socket": "${TIMEOUTS.SOCKET}"
+        },
+        "reqTransform": "category.transformers.addFeatureFlagQueryParams",
+        "resTransform": "cms.transformers.replaceUriPrefix"
+      },
+      {
+        "name": "uom-convert-legacy",
+        "url": "https://qa.msme.jswone.in/measurement-service/unit-of-measure/convert",
+        "method": "POST",
+        "timeout": {
+          "request": "${TIMEOUTS.REQUEST}",
+          "socket": "${TIMEOUTS.SOCKET}"
+        },
+        "reqTransform": "category.transformers.transformV2UomConvertRequest",
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "access_token"
+          },
+          {
+            "source": "access_token",
+            "destination": "access_token"
+          }
+        ]
+      },
+      {
+        "name": "uom-convert-v2",
+        "url": "https://qa.msme.jswone.in/central_commerce/uom-convert",
+        "method": "POST",
+        "timeout": {
+          "request": "${TIMEOUTS.REQUEST}",
+          "socket": "${TIMEOUTS.SOCKET}"
+        },
+        "reqTransform": "category.transformers.transformLegacyUomConvertRequest",
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "access_token"
+          },
+          {
+            "source": "access_token",
+            "destination": "access_token"
+          }
+        ]
+      }
+    ],
+    "resTransform": "category.transformers.selectUomConvertResponse"
   }
 ]

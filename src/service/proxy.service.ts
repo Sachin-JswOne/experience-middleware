@@ -119,6 +119,13 @@ export class ProxyService {
       const authHeader = req.headers?.authorization || req.headers?.access_token;
       const userState = req.headers?.['x-user-state'];
 
+      if (userState === 'G') {
+        req.headers = {
+          ...req.headers,
+          authorization: process.env.GUEST_ACCESS_TOKEN,
+        };
+      }
+
       if (!authHeader && userState !== 'G') {
         throw new CustomError('Bad Request: Authorization required', 400);
       }
@@ -263,7 +270,7 @@ export class ProxyService {
                 target: target.name || target.url,
                 success: false,
                 error: err?.message || String(err),
-                httpStatus: err?.status || 500,
+                httpStatus: err?.httpStatusCode || err?.status || 500,
                 downstreamResponse: err?.response?.data || null,
                 customError: err instanceof CustomError ? err : null,
               };
@@ -340,7 +347,7 @@ export class ProxyService {
               target: target.name || target.url,
               success: false,
               error: err?.message || String(err),
-              httpStatus: err?.status || 500,
+              httpStatus: err?.httpStatusCode || err?.status || 500,
               downstreamResponse: err?.response?.data || null,
             });
             span.addEvent('sequential.target.failed', {
@@ -614,16 +621,38 @@ export class ProxyService {
    * Supports `:id`, `{id}`, and `${id}` in target URLs.
    */
   private interpolateTemplate(template: string, params: Record<string, any>): string {
-    const get = (key: string) => {
+    const getEncoded = (key: string) => {
       const val = params?.[key];
       if (val === undefined || val === null) return '';
+
+      if (Array.isArray(val)) {
+        return val.map((v) => encodeURIComponent(String(v))).join('/');
+      }
+
       return encodeURIComponent(String(val));
     };
 
+    const getRawPath = (key: string) => {
+      const val = params?.[key];
+      if (val === undefined || val === null) return '';
+
+      if (Array.isArray(val)) {
+        return val.map((v) => String(v)).join('/');
+      }
+
+      return String(val);
+    };
+
     let out = String(template ?? '');
-    out = out.replace(/\{(\w+)\}/g, (_, key) => get(key));
-    out = out.replace(/\$\{(\w+)\}/g, (_, key) => get(key));
-    out = out.replace(/:(\w+)(?=\/|$)/g, (_, key) => get(key));
+
+    // wildcard splat support: *slugId
+    out = out.replace(/\*(\w+)/g, (_, key) => getRawPath(key));
+
+    // existing placeholder styles
+    out = out.replace(/\{(\w+)\}/g, (_, key) => getEncoded(key));
+    out = out.replace(/\$\{(\w+)\}/g, (_, key) => getEncoded(key));
+    out = out.replace(/(^|\/):(\w+)(?=\/|$)/g, (_, prefix, key) => `${prefix}${getEncoded(key)}`);
+
     return out;
   }
 }
