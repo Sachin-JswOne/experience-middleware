@@ -51,7 +51,6 @@ export function transformGetAddressResponse(response: any) {
     () =>
       ` Create Address Api response from method: transformAddressResponse : ${JSON.stringify(response)}`,
   );
-
   const { defaultShippingAddressId, defaultBillingAddressId } = response;
   const responseData = response.addresses.map((address: any) => {
     return {
@@ -64,6 +63,8 @@ export function transformGetAddressResponse(response: any) {
       city: address.city,
       addressLine1: address?.custom?.fields?.streetLine1,
       contactNumber: address.mobile,
+      defaultShippingAddressId: defaultShippingAddressId ?? '',
+      defaultBillingAddressId: defaultBillingAddressId ?? '',
     };
   });
 
