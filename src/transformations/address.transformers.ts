@@ -54,6 +54,7 @@ export function transformGetAddressResponse(response: any) {
   const { defaultShippingAddressId, defaultBillingAddressId } = response;
   const responseData = response.addresses.map((address: any) => {
     return {
+      id: address.id,
       state: address.state,
       pincode: address.postalCode,
       isShippingAddress: address.id === defaultShippingAddressId,
