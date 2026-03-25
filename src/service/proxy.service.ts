@@ -90,7 +90,6 @@ export class ProxyService {
     return false;
   }
 
-  public result: any = '';
   async handleRequest(req: Request) {
     console.log(`Incoming ${req.method} request: ${req.url}`);
     const route = this.findRoute(req);
@@ -101,16 +100,15 @@ export class ProxyService {
         code: SpanStatusCode.ERROR,
         message: `Route config not found for ${req.method} ${req.path}`,
       });
+
       const spanContext = activeSpan?.spanContext();
-      this.result = spanContext
-        ? {
-            traceId: spanContext.traceId,
-            spanId: spanContext.spanId,
-          }
-        : {};
+      const traceId = (req as any).traceId || spanContext?.traceId || '';
+      const spanId = (req as any).spanId || spanContext?.spanId || '';
+
       this.logger.error(
-        `Route config not found for ${req.method} ${req.path} trace_id: ${inspect(this.result.traceId)} span_id: ${inspect(this.result.spanId)} `,
+        `Route config not found for ${req.method} ${req.path} trace_id: ${inspect(traceId)} span_id: ${inspect(spanId)}`,
       );
+
       throw new Error('Route config not found');
     }
 
@@ -152,20 +150,19 @@ export class ProxyService {
     }
 
     const activeSpan = trace.getSpan(context.active());
+    const spanContext = activeSpan?.spanContext();
+    const traceId = (req as any).traceId || spanContext?.traceId || '';
+    const spanId = (req as any).spanId || spanContext?.spanId || '';
+
     if (activeSpan) {
       activeSpan.setAttribute('proxy.route', route.path);
       activeSpan.setAttribute('proxy.method', route.method);
       activeSpan.setAttribute('proxy.handler', RouteHandler[route.routeHandler]);
-      this.result = activeSpan.spanContext();
-      this.logger.log(
-        `Handling request for route: ${req.method} ${req.path} trace_id: ${inspect(this.result.traceId)} span_id: ${inspect(this.result.spanId)} `,
-      );
-      activeSpan.setAttribute('proxy.handler', RouteHandler[route.routeHandler]);
-      this.result = activeSpan.spanContext();
-      this.logger.log(
-        `Handling request for route: ${req.method} ${req.path} trace_id: ${inspect(this.result.traceId)} span_id: ${inspect(this.result.spanId)} `,
-      );
     }
+
+    this.logger.log(
+      `Handling request for route: ${req.method} ${req.path} trace_id: ${inspect(traceId)} span_id: ${inspect(spanId)}`,
+    );
 
     let data: any;
 

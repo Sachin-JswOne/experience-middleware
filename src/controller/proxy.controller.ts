@@ -5,31 +5,43 @@ import { Request, Response } from 'express';
 import { CustomError } from 'src/utils/CustomError';
 import { AxiosError } from 'axios';
 
+type TracedRequest = Request & {
+  traceId?: string;
+  spanId?: string;
+};
+
 @Controller()
 export class ProxyController {
+  private readonly logger = new Logger(ProxyController.name);
   constructor(private readonly proxyService: ProxyService) {}
 
   @All('public/*path')
-  async handle(@Req() req: Request, @Res() res: Response) {
+  async handle(@Req() req: TracedRequest, @Res() res: Response) {
+    const startTime = Date.now();
     try {
       const data = await this.proxyService.handleRequest(req);
       res.status(HttpStatus.OK).json(data);
-    } catch (err: unknown) {
-      Logger.error(
-        `Error for ${req.url} method: handle ${err instanceof Error ? err.message : 'Something went wrong'}`,
+      this.logger.log(
+        `Request completed ${req.method} ${req.path} status=${HttpStatus.OK} trace_id=${req.traceId ?? ''} span_id=${req.spanId ?? ''} duration_ms=${Date.now() - startTime}`,
       );
+    } catch (err: unknown) {
       const statusCode =
-        err instanceof CustomError ? err.httpStatusCode : HttpStatus.INTERNAL_SERVER_ERROR;
+        err instanceof AxiosError
+          ? err.response?.status || HttpStatus.INTERNAL_SERVER_ERROR
+          : err instanceof CustomError
+            ? err.httpStatusCode
+            : HttpStatus.INTERNAL_SERVER_ERROR;
 
-      if (err instanceof AxiosError) {
-        Logger.error(
-          `Error for ${req.url} method: handle ${err.response?.data?.error?.message ?? err.message}`,
-        );
-        return res
-          .status(err.response?.status || statusCode)
-          .json({ error: err.response?.data?.error?.message ?? err.message });
-      }
-      const errorMessage = err instanceof Error ? err.message : 'Internal server error';
+      const errorMessage =
+        err instanceof AxiosError
+          ? (err.response?.data?.error?.message ?? err.message)
+          : err instanceof Error
+            ? err.message
+            : 'Internal server error';
+
+      this.logger.error(
+        `Request failed ${req.method} ${req.path} status=${statusCode} trace_id=${req.traceId ?? ''} span_id=${req.spanId ?? ''} duration_ms=${Date.now() - startTime} error=${errorMessage}`,
+      );
       res.status(statusCode).json({ error: errorMessage });
     }
   }
