@@ -1261,7 +1261,7 @@
         "reqTransform": "customer.transformers.injectGstinFromProfile"
       }
     ],
-    "resTransform": "customer.transformers.transformCustomerProfileResponses"
+    "resTransform": "customer.transformers.mergeCustomerProfile"
   },
   {
     "path": "${PATH_URL}/v1/getCustomerLocation",
