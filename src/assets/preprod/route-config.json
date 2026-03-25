@@ -1249,7 +1249,7 @@
       },
       {
         "name": "gstin-customer-profile",
-        "url": "https://tms.preprod.jswonemsme.com/account-master",
+        "url": "https://tms.preprod.jswonemsme.com/account-master/profile/v1",
         "method": "GET",
         "timeout": {
           "request": "${TIMEOUTS.REQUEST}",
