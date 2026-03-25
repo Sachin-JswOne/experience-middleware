@@ -1,12 +1,14 @@
 import { AggregatedResponse } from 'src/models/aggregated-response.model';
 import { Logger } from '@nestjs/common';
 import { safeDebug, safeToLog } from 'src/utils/common-functions.util';
+import { CustomError } from 'src/utils/CustomError';
+import { BaseRequest } from 'src/models/base-request.model';
 
 /**
- * Transforms aggregated customer profile responses to ensure they are JSON-serializable
- * and removes any circular references by deep cloning the data
- * Returns a structured object with meaningful keys: profile and customerData
- */
+* Transforms aggregated customer profile responses to ensure they are JSON-serializable
+* and removes any circular references by deep cloning the data
+* Returns a structured object with meaningful keys: profile and customerData
+*/
 export function transformCustomerProfileResponses(aggregatedResponses: AggregatedResponse[]): any {
   safeDebug(
     Logger,
@@ -54,6 +56,32 @@ export function transformCustomerProfileResponses(aggregatedResponses: Aggregate
   return result;
 }
 
+function extractGstinFromProfile(profileData: any): string | undefined {
+  return (
+    profileData?.gstin ||
+    profileData?.data?.gstin ||
+    profileData?.data?.data?.gstin ||
+    profileData?.customer?.gstin ||
+    profileData?.customerProfile?.gstin
+  );
+}
+
+export function injectGstinFromProfile(
+  request: BaseRequest,
+  prevResponses: AggregatedResponse[],
+): BaseRequest {
+  const profileResp = prevResponses?.find((r) => r.target === 'profile');
+
+  const gstin = extractGstinFromProfile(profileResp?.data);
+
+  if (!gstin) {
+    throw new CustomError('Bad Request: gstin not found in profile response', 400);
+  }
+
+  request.url.searchParams.set('gstin', gstin);
+  return request;
+}
+
 export function mergeCustomerProfile(aggregatedResponses: AggregatedResponse[]): any {
   const responses = aggregatedResponses.reduce(
     (acc, response) => {
@@ -66,10 +94,16 @@ export function mergeCustomerProfile(aggregatedResponses: AggregatedResponse[]):
   const profileResp = responses['profile'];
   const mouResp = responses['mou-eligibility'];
   const profileV2Resp = responses['customerData'];
+  const gstResp = responses['gstin-customer-profile'];
 
   safeDebug(
     Logger,
     () => `Customer profile response from mergeCustomerProfile: ${safeToLog(profileResp)}`,
+  );
+
+  safeDebug(
+    Logger,
+    () => `Customer profile response v2 from mergeCustomerProfile: ${safeToLog(profileV2Resp)}`,
   );
 
   safeDebug(
@@ -79,7 +113,12 @@ export function mergeCustomerProfile(aggregatedResponses: AggregatedResponse[]):
 
   safeDebug(
     Logger,
-    () => `Customer data response from mergeCustomerProfile: ${safeToLog(profileV2Resp)}`,
+    () => `GstIn Customer data response from mergeCustomerProfile: ${safeToLog(gstResp)}`,
+  );
+
+  safeDebug(
+    Logger,
+    () => `GstIn Customer data response from mergeCustomerProfile: ${safeToLog(gstResp)}`,
   );
 
   const profile =
@@ -100,8 +139,21 @@ export function mergeCustomerProfile(aggregatedResponses: AggregatedResponse[]):
           httpStatus: profileV2Resp.httpStatus,
         };
 
+  const mouEligibilityPayload =
+    mouResp && mouResp.data && typeof mouResp.data === 'object' ? (mouResp.data as any) : {};
+
+  const gstPayload =
+    gstResp && gstResp.data && typeof gstResp.data === 'object' ? (gstResp.data as any) : null;
+
+  const gstData =
+    gstPayload && typeof gstPayload.data === 'object' && gstPayload.data !== null
+      ? gstPayload.data
+      : {};
+
   return {
-    profile: { ...profile },
+    profile: { ...profile, mouEligibilityPayload },
     customerData,
+    ...gstData,
   };
 }
+ 
