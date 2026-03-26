@@ -1,12 +1,12 @@
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 import { country } from 'src/config/app.config';
 import {
-  transformcreateAddressRequest,
-  transformcreateAddressResponse,
+  transformCreateAddressRequest,
+  transformCreateAddressResponse,
   transformGetAddressResponse,
 } from '../address.transformers';
 
-describe('transformcreateAddressRequest', () => {
+describe('transformCreateAddressRequest', () => {
   it('should transform request with all fields provided', () => {
     const mockRequest: any = {
       headers: { authorization: 'token' },
@@ -25,7 +25,7 @@ describe('transformcreateAddressRequest', () => {
       },
     };
 
-    const result = transformcreateAddressRequest(mockRequest);
+    const result = transformCreateAddressRequest(mockRequest);
 
     expect(result.body).toEqual({
       company: 'ABC Pvt Ltd',
@@ -58,7 +58,7 @@ describe('transformcreateAddressRequest', () => {
       },
     };
 
-    const result = transformcreateAddressRequest(mockRequest);
+    const result = transformCreateAddressRequest(mockRequest);
 
     expect(result.body.firstName).toBe('');
     expect(result.body.lastName).toBe('');
@@ -68,13 +68,13 @@ describe('transformcreateAddressRequest', () => {
   });
 });
 
-describe('transformcreateAddressResponse', () => {
+describe('transformCreateAddressResponse', () => {
   it('should return success true when addresses exist', () => {
     const mockResponse = {
       addresses: [{ id: '1' }],
     };
 
-    const result = transformcreateAddressResponse(mockResponse);
+    const result = transformCreateAddressResponse(mockResponse);
 
     expect(result).toEqual({ success: true });
   });
@@ -84,17 +84,17 @@ describe('transformcreateAddressResponse', () => {
       addresses: [],
     };
 
-    expect(() => transformcreateAddressResponse(mockResponse)).toThrow('Address Creation failed');
+    expect(() => transformCreateAddressResponse(mockResponse)).toThrow('Address Creation failed');
   });
 
   it('should throw error when response is null', () => {
-    expect(() => transformcreateAddressResponse(null)).toThrow('Address Creation failed');
+    expect(() => transformCreateAddressResponse(null)).toThrow('Address Creation failed');
   });
 
   it('should throw error when addresses property is missing', () => {
     const mockResponse = {};
 
-    expect(() => transformcreateAddressResponse(mockResponse)).toThrow('Address Creation failed');
+    expect(() => transformCreateAddressResponse(mockResponse)).toThrow('Address Creation failed');
   });
 });
 

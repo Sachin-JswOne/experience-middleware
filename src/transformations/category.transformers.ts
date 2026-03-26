@@ -1,8 +1,9 @@
 import { BaseRequest } from 'src/models/base-request.model';
 import { AggregatedResponse } from 'src/models/aggregated-response.model';
 import { Logger } from '@nestjs/common';
-import { safeDebug } from 'src/utils/common-functions.util';
+import { safeDebug, safeToLog } from 'src/utils/common-functions.util';
 import { CMS_MSME_URL } from 'src/config/app.config';
+import { CustomError } from 'src/utils/CustomError';
 import * as generalTransformers from './general.transformers';
 import * as qs from 'qs';
 
@@ -251,7 +252,8 @@ export function mergeWebGlobalResponse(results: AggregatedResponse[]): any {
     return strapiResult.data;
   }
   const appGlobalData = strapiResult.data; // This is the full response object
-  const centralCatalogueSubMenus = centralCatalogueResult?.data?.data?.navigation?.[0]?.subMenu || [];
+  const centralCatalogueSubMenus =
+    centralCatalogueResult?.data?.data?.navigation?.[0]?.subMenu || [];
   try {
     const footerData = appGlobalData?.data?.footer || [];
     const globalFooter = footerData.find(
@@ -354,7 +356,8 @@ export function mergeMainMenuResponses(results: AggregatedResponse[]): any {
     return strapiMainMenuData[0].navigation;
   }
   const mainMenuNavigationStrapi = strapiMainMenuData[0].navigation;
-  const centralCatalogueNavigation = centralCatalogueResult?.data?.data?.navigation[0]?.subMenu || [];
+  const centralCatalogueNavigation =
+    centralCatalogueResult?.data?.data?.navigation[0]?.subMenu || [];
 
   // taking the blogs and offers from strapi and adding it to ccaNavigation
   mainMenuNavigationStrapi.forEach((item) => {
@@ -364,4 +367,181 @@ export function mergeMainMenuResponses(results: AggregatedResponse[]): any {
   });
 
   return centralCatalogueNavigation;
+}
+
+export function selectProductSelectorResponse(aggregatedResponses: AggregatedResponse[]): any {
+  const responses = aggregatedResponses.reduce(
+    (acc, response) => {
+      acc[response.target] = response;
+      return acc;
+    },
+    {} as Record<string, AggregatedResponse>,
+  );
+
+  safeDebug(
+    Logger,
+    () =>
+      `cmsFeatureFlag response from selectProductSelectorResponse: ${safeToLog(
+        responses['cmsFeatureFlag'],
+      )}`,
+  );
+
+  safeDebug(
+    Logger,
+    () =>
+      `msmeProductSelector response from selectProductSelectorResponse: ${safeToLog(
+        responses['msmeProductSelector'],
+      )}`,
+  );
+
+  safeDebug(
+    Logger,
+    () =>
+      `productSelectorV1 response from selectProductSelectorResponse: ${safeToLog(
+        responses['productSelectorV1'],
+      )}`,
+  );
+
+  const featureFlags = responses['cmsFeatureFlag']?.data?.data ?? [];
+
+  const isCentralCatalogueEnabled =
+    Array.isArray(featureFlags) &&
+    featureFlags.some((f: any) => f?.name === 'central_catalogue_global' && f?.isActive === true);
+
+  const selectedResponse = isCentralCatalogueEnabled
+    ? responses['productSelectorV1']
+    : responses['msmeProductSelector'];
+
+  if (selectedResponse?.success) {
+    return selectedResponse.data;
+  }
+
+  Logger.error(
+    `[selectProductSelectorResponse] Selected target failed: ${selectedResponse?.target}`,
+  );
+
+  const downstreamStatus =
+    selectedResponse?.downstreamResponse?.status ?? selectedResponse?.httpStatus ?? 500;
+
+  const downstreamMessage =
+    selectedResponse?.error || selectedResponse?.downstreamResponse?.error || 'Request failed';
+
+  const error: any = new CustomError(downstreamMessage, downstreamStatus);
+  error.httpStatusCode = downstreamStatus;
+  error.downstreamResponse = selectedResponse?.downstreamResponse ?? null;
+
+  throw error;
+}
+
+export function transformLegacyProductSelectorRequest(request: BaseRequest): BaseRequest {
+  const body = request.body ?? {};
+  return {
+    ...request,
+    body: {
+      productMaterialMasterId:
+        body.productMaterialMasterId ?? body.productKey ?? body.productMMID ?? null,
+      productAttributes: Array.isArray(body.productAttributes) ? body.productAttributes : [],
+    },
+    headers: {
+      ...request.headers,
+    },
+  };
+}
+
+export function transformV1ProductSelectorRequest(request: BaseRequest): BaseRequest {
+  const body = request.body ?? {};
+
+  return {
+    ...request,
+    body: {
+      productKey: body.productKey ?? body.productMaterialMasterId ?? body.productMMID ?? null,
+      productAttributes: Array.isArray(body.productAttributes) ? body.productAttributes : [],
+    },
+    headers: {
+      ...request.headers,
+    },
+  };
+}
+
+export function transformLegacyUomConvertRequest(request: BaseRequest): BaseRequest {
+  const body = request.body ?? {};
+
+  if (!Array.isArray(body.uomRequests) || body.uomRequests.length === 0) {
+    throw new CustomError(
+      'Invalid request for central_commerce/uom-convert. Expected body with non-empty uomRequests array.',
+      400,
+    );
+  }
+
+  return {
+    ...request,
+    body: {
+      uomRequests: Array.isArray(body.uomRequests) ? body.uomRequests : [],
+    },
+    headers: {
+      ...request.headers,
+    },
+  };
+}
+
+export function transformV2UomConvertRequest(request: BaseRequest): BaseRequest {
+  const body = request.body ?? {};
+
+  const hasProductTypeKey =
+    typeof body.productTypeKey === 'string' && body.productTypeKey.trim() !== '';
+
+  const hasProductAttributes =
+    Array.isArray(body.productAttributes) && body.productAttributes.length > 0;
+
+  const hasCustomAttributes =
+    Array.isArray(body.customAttributes) && body.customAttributes.length > 0;
+
+  if (!hasProductTypeKey || !hasProductAttributes || !hasCustomAttributes) {
+    throw new CustomError(
+      'Invalid request for measurement-service/unit-of-measure/convert. Expected productTypeKey, non-empty productAttributes, and non-empty customAttributes.',
+      400,
+    );
+  }
+  return {
+    ...request,
+    body: {
+      productTypeKey: body.productTypeKey ?? null,
+      productAttributes: Array.isArray(body.productAttributes) ? body.productAttributes : [],
+      customAttributes: Array.isArray(body.customAttributes) ? body.customAttributes : [],
+    },
+    headers: {
+      ...request.headers,
+    },
+  };
+}
+
+export function selectUomConvertResponse(aggregatedResponses: AggregatedResponse[]): any {
+  const responses = aggregatedResponses.reduce(
+    (acc, response) => {
+      acc[response.target] = response;
+      return acc;
+    },
+    {} as Record<string, AggregatedResponse>,
+  );
+
+  const featureFlags = responses['cmsFeatureFlag']?.data?.data ?? [];
+  const isCentralCatalogueEnabled =
+    Array.isArray(featureFlags) &&
+    featureFlags.some((f: any) => f?.name === 'central_catalogue_global' && f?.isActive === true);
+  const preferredResponse = isCentralCatalogueEnabled
+    ? responses['uom-convert-v2']
+    : responses['uom-convert-legacy'];
+
+  if (!preferredResponse) {
+    throw new CustomError('Preferred UOM convert response not found', 500);
+  }
+
+  if (!preferredResponse.success) {
+    const err = new CustomError(preferredResponse.error || 'UOM convert failed', 500) as any;
+    err.httpStatusCode = preferredResponse.httpStatus || 500;
+    err.downstreamResponse = preferredResponse.downstreamResponse;
+    throw err;
+  }
+
+  return preferredResponse.data;
 }

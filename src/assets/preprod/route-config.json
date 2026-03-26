@@ -1215,7 +1215,7 @@
     "path": "${PATH_URL}/v1/customer-profile",
     "method": "GET",
     "routeHandler": "AGGREGATE",
-    "aggregationType": "PARALLEL",
+    "aggregationType": "SEQUENTIAL",
     "targets": [
       {
         "name": "profile",
@@ -1246,9 +1246,22 @@
             "destination": "access_token"
           }
         ]
+      },
+      {
+        "name": "gstin-customer-profile",
+        "url": "https://tms.preprod.jswonemsme.com/account-master/profile/v1",
+        "method": "GET",
+        "timeout": {
+          "request": "${TIMEOUTS.REQUEST}",
+          "socket": "${TIMEOUTS.SOCKET}"
+        },
+        "staticHeaders": {
+          "x-api-key": "${X_API_KEY_CONNECTOR}"
+        },
+        "reqTransform": "customer.transformers.injectGstinFromProfile"
       }
     ],
-    "resTransform": "customer.transformers.transformCustomerProfileResponses"
+    "resTransform": "customer.transformers.mergeCustomerProfile"
   },
   {
     "path": "${PATH_URL}/v1/getCustomerLocation",
