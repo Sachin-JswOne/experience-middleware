@@ -55,9 +55,7 @@ if (!OTEL_ENABLED) {
 
   // Store URLs for logging
   const traceEndpoint =
-    process.env.OTEL_EXPORTER_OTLP_TRACES_ENDPOINT ||
-    process.env.OTEL_EXPORTER_OTLP_ENDPOINT ||
-    'http://localhost:4318/v1/traces';
+    'http://otel-collector-opentelemetry-collector.logging.svc.cluster.local:4317';
 
   const metricsEndpoint =
     process.env.OTEL_EXPORTER_OTLP_METRICS_ENDPOINT || 'http://localhost:4318/v1/metrics';
