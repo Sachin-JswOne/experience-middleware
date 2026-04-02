@@ -121,12 +121,6 @@ export function extractCentralCatalogueCategoryIdsv3(
     };
   }
 
-  Logger.log(
-    `[extractCentralCatalogueCategoryIdsv3] Extracted ${categoryIds.length} categoryIds: ${JSON.stringify(
-      categoryIds,
-    )}`,
-  );
-
   return {
     ...request,
     body: { categoryIds },
@@ -174,10 +168,6 @@ export function extractBrandCategoryIds(
     .flatMap((b: any) =>
       b.web_central_catalogue_categories.map((c: any) => c.categoryId).filter(Boolean),
     );
-
-  Logger.log(
-    `[extractBrandCategoryIds] Extracted ${brandCategoryIds.length} brand category IDs: ${JSON.stringify(brandCategoryIds)}`,
-  );
 
   if (brandCategoryIds.length === 0) {
     const topBrandBlocks = blocks.filter(
@@ -392,12 +382,6 @@ export function extractBrandCategoryIdsv3(
     .filter((x: any) => typeof x === 'string' && x.trim() !== '')
     .map((x: string) => x.trim());
 
-  Logger.log(
-    `[extractBrandCategoryIdsv3] (fallback) Extracted ${brandCategoryIds.length} brand category IDs: ${JSON.stringify(
-      brandCategoryIds,
-    )}`,
-  );
-
   return {
     ...request,
     body: { brandCategoryIds },
@@ -408,12 +392,6 @@ export function extractProductListingSlugv3(
   request: BaseRequest,
   prevResponses?: AggregatedResponse[],
 ): BaseRequest {
-  Logger.log(
-    `[extractProductListingSlugv3] Available headers: ${JSON.stringify(
-      Object.keys(request.headers || {}),
-    )}`,
-  );
-
   if (!prevResponses || prevResponses.length === 0) {
     Logger.warn(`[extractProductListingSlugv3] No previous responses available`);
 

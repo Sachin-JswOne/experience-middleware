@@ -456,8 +456,6 @@ export function transformWebHomePageTopItemsMMIDRequestV3FromCmsBody(
     );
   }
 
-  safeDebug(Logger, () => `Homepage MMIDs sent to CCP → ${safeToLog(mmids)}`);
-
   return {
     ...request,
     body: mmids,
@@ -512,7 +510,6 @@ export function transformWebHomePageTopItemsMMIDRequestV3(
     return { ...request, body: [] };
   }
   const cmsAgg = prevResponses.find((r) => r.target === 'layout-mweb-homepages');
-  safeDebug(Logger, () => `Web Home CMS Response → ${safeToLog(cmsAgg?.data)}`);
 
   let mmids: string[] = [];
 
@@ -527,7 +524,6 @@ export function transformWebHomePageTopItemsMMIDRequestV3(
   }
 
   mmids = Array.from(new Set(mmids));
-  safeDebug(Logger, () => `Homepage MMIDs sent to CCP → ${safeToLog(mmids)}`);
 
   // CCP expects RAW ARRAY
   return {
@@ -560,7 +556,6 @@ export function mergeWebHomePageResponsesV3(aggregatedResponses: AggregatedRespo
     Array.isArray(featureFlags) &&
     featureFlags.some((f: any) => f?.name === 'central_catalogue_global' && f?.isActive === true);
 
-  safeDebug(Logger, () => `FeatureFlags → ${safeToLog(featureFlags)}`);
   safeDebug(Logger, () => `isCentralCatalogueEnabled → ${String(isCentralCatalogueEnabled)}`);
 
   safeDebug(
