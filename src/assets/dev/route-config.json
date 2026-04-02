@@ -2239,6 +2239,104 @@
   {
     "path": "/xp-mi/public/v1/web-home-page-v3",
     "method": "POST",
+    "routeHandler": "CONDITIONAL",
+    "conditionTransform": "web.transformers.selectWebHomePageV3TargetByUserType",
+    "targets": [
+      {
+        "name": "web-home-page-v3-guest",
+        "url": "http://127.0.0.1:3000/xp-mi/public/v1/web-home-page-v3-guest",
+        "method": "POST",
+        "timeout": {
+          "request": 20000,
+          "socket": 1000
+        },
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "authorization"
+          },
+          {
+            "source": "authorization",
+            "destination": "access_token"
+          },
+          {
+            "source": "access_token",
+            "destination": "authorization"
+          },
+          {
+            "source": "access_token",
+            "destination": "access_token"
+          },
+          {
+            "source": "x-user-state",
+            "destination": "x-user-state"
+          },
+          {
+            "source": "cookie",
+            "destination": "cookie"
+          }
+        ]
+      },
+      {
+        "name": "web-home-page-v3-registered",
+        "url": "http://127.0.0.1:3000/xp-mi/public/v1/web-home-page-v3-registered",
+        "method": "POST",
+        "timeout": {
+          "request": 20000,
+          "socket": 1000
+        },
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "authorization"
+          },
+          {
+            "source": "authorization",
+            "destination": "access_token"
+          },
+          {
+            "source": "access_token",
+            "destination": "authorization"
+          },
+          {
+            "source": "access_token",
+            "destination": "access_token"
+          },
+          {
+            "source": "x-user-state",
+            "destination": "x-user-state"
+          },
+          {
+            "source": "cookie",
+            "destination": "cookie"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "path": "/xp-mi/public/v1/web-home-page-v3-guest",
+    "method": "POST",
+    "routeHandler": "AGGREGATE",
+    "aggregationType": "PARALLEL",
+    "targets": [
+      {
+        "name": "layout-mweb-homepages",
+        "url": "${CMS_MSME_URL}/layout-mweb-homepages",
+        "method": "GET",
+        "timeout": {
+          "request": 10000,
+          "socket": 1000
+        },
+        "reqTransform": "general.transformers.moveBodyToQueryParams",
+        "resTransform": "cms.transformers.replaceUriPrefix"
+      }
+    ],
+    "resTransform": "web.transformers.mergeWebHomePageResponsesV3"
+  },
+  {
+    "path": "/xp-mi/public/v1/web-home-page-v3-registered",
+    "method": "POST",
     "routeHandler": "AGGREGATE",
     "aggregationType": "SEQUENTIAL",
     "targets": [
@@ -2254,8 +2352,8 @@
         "resTransform": "cms.transformers.replaceUriPrefix"
       },
       {
-        "name": "web-home-page-v3-parallel-helper",
-        "url": "http://127.0.0.1:3000/xp-mi/public/v1/web-home-page-v3-parallel-helper",
+        "name": "web-home-page-v3-registered-parallel-helper",
+        "url": "http://127.0.0.1:3000/xp-mi/public/v1/web-home-page-v3-registered-parallel-helper",
         "method": "POST",
         "timeout": {
           "request": 10000,
@@ -2282,6 +2380,10 @@
           {
             "source": "x-user-state",
             "destination": "x-user-state"
+          },
+          {
+            "source": "cookie",
+            "destination": "cookie"
           }
         ]
       }
@@ -2289,7 +2391,7 @@
     "resTransform": "web.transformers.mergeWebHomePageResponsesV3FromNestedParallel"
   },
   {
-    "path": "/xp-mi/public/v1/web-home-page-v3-parallel-helper",
+    "path": "/xp-mi/public/v1/web-home-page-v3-registered-parallel-helper",
     "method": "POST",
     "routeHandler": "AGGREGATE",
     "aggregationType": "PARALLEL",

@@ -5,6 +5,7 @@ import { createHttpClient } from '../utils/http-client.factory';
 import { applyTransform } from '../utils/transformer.util';
 import { ROUTE_CONFIG } from '../config/route.config';
 import { BaseRequest } from '../models/base-request.model';
+import { safeToLog } from 'src/utils/common-functions.util';
 import {
   AggregateRouteConfig,
   ConditionalRouteConfig,
@@ -494,7 +495,14 @@ export class ProxyService {
               span.setAttribute('http.error.message', errorResponse.statusText || 'Network Error');
 
               if (errorResponse.data) {
-                const errorDataStr = JSON.stringify(errorResponse.data);
+                let errorDataStr: string;
+
+                try {
+                  errorDataStr = JSON.stringify(errorResponse.data);
+                } catch {
+                  errorDataStr = safeToLog(errorResponse.data);
+                }
+
                 span.setAttribute('api.error.response.size', errorDataStr.length);
 
                 if (errorDataStr.length > 1000) {
@@ -509,9 +517,9 @@ export class ProxyService {
               }
 
               if (errorResponse.status >= 400 && errorResponse.status < 500) {
+                const data = errorResponse.data;
                 const downstreamMessage =
-                  errorResponse.data?.message ||
-                  errorResponse.data?.error_description ||
+                  (data && typeof data === 'object' && (data.message || data.error_description)) ||
                   errorResponse.statusText ||
                   'Bad Request';
 

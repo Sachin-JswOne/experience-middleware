@@ -19,6 +19,7 @@ export {
 } from 'src/utils/central-category.util';
 import * as generalTransformers from './general.transformers';
 import * as cmsTransformers from './cms.transformers';
+import { Request } from 'express';
 
 const WEB_HOME_PAGE_V3_ORIGINAL_BODY_KEY = '__webHomePageV3OriginalBody';
 const WEB_HOME_PAGE_V3_CMS_KEY = '__webHomePageV3CmsResponse';
@@ -402,7 +403,7 @@ export function mergeWebHomePageResponsesV3FromNestedParallel(
 ): any {
   const cmsAgg = aggregatedResponses.find((r) => r.target === 'layout-mweb-homepages');
   const helperAgg = aggregatedResponses.find(
-    (r) => r.target === 'web-home-page-v3-parallel-helper',
+    (r) => r.target === 'web-home-page-v3-registered-parallel-helper',
   );
 
   if (!helperAgg) {
@@ -854,4 +855,28 @@ export function mergeWebHomePageResponsesV3(aggregatedResponses: AggregatedRespo
   }
 
   return mergedWrapper;
+}
+
+export function selectWebHomePageV3TargetByUserType(req: Request): string {
+  const cookieHeader = String(req.headers?.cookie ?? '');
+
+  const cookies = Object.fromEntries(
+    cookieHeader
+      .split(';')
+      .map((part) => part.trim())
+      .filter(Boolean)
+      .map((part) => {
+        const idx = part.indexOf('=');
+        if (idx === -1) return [part, ''];
+        return [part.slice(0, idx), decodeURIComponent(part.slice(idx + 1))];
+      }),
+  );
+
+  const userType = String(cookies.userType ?? '').toUpperCase();
+
+  if (userType === 'G') {
+    return 'web-home-page-v3-guest';
+  }
+
+  return 'web-home-page-v3-registered';
 }
