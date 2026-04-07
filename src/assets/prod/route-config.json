@@ -526,6 +526,43 @@
     }
   },
   {
+    "path": "/xp-mi/public/v1/verify-passcode",
+    "method": "POST",
+    "routeHandler": "CONDITIONAL",
+    "conditionTransform": "login.transformers.selectLoginTarget",
+    "targets": [
+      {
+        "name": "otp-login",
+        "url": "https://www.jswonemsme.com/auth/api/v1/construct/otp/verify",
+        "method": "POST",
+        "staticHeaders": {
+          "X-API-KEY": "${X_API_KEY_FOR_LOGIN}"
+        },
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
+        "reqTransform": "login.transformers.transformPhoneNumberPasscodeRequest",
+        "resTransform": "login.transformers.transformPasscodeResponse"
+      },
+      {
+        "name": "email-login",
+        "url": "https://www.jswonemsme.com/auth/api/v1/construct/login",
+        "method": "POST",
+        "staticHeaders": {
+          "content-type": "application/json",
+          "X-API-KEY": "${X_API_KEY_FOR_LOGIN}"
+        },
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
+        "reqTransform": "login.transformers.transformEmailPasscodeRequest",
+        "resTransform": "login.transformers.transformPasscodeResponse"
+      }
+    ]
+  },
+  {
     "path": "${PATH_URL}/v1/app-login-page",
     "method": "POST",
     "routeHandler": "TRANSFORM",
@@ -883,7 +920,7 @@
     "conditionTransform": "login.transformers.selectLoginTarget",
     "targets": [
       {
-        "name": "generate-otp-login",
+        "name": "otp-login",
         "url": "https://www.jswonemsme.com/auth/api/v1/construct/otp/send",
         "method": "POST",
         "staticHeaders": {
