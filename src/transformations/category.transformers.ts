@@ -5,6 +5,7 @@ import { safeDebug, safeToLog } from 'src/utils/common-functions.util';
 import { CMS_MSME_URL } from 'src/config/app.config';
 import { CustomError } from 'src/utils/CustomError';
 import * as generalTransformers from './general.transformers';
+import { moveBodyToQueryParams } from './general.transformers';
 import * as qs from 'qs';
 
 // Responsible for extracting the category ids from provided array of objects
@@ -544,4 +545,324 @@ export function selectUomConvertResponse(aggregatedResponses: AggregatedResponse
   }
 
   return preferredResponse.data;
+}
+
+function getRequestBodyValue(body: any, key: string, fallback?: any) {
+  if (!body || typeof body !== 'object') return fallback;
+  return body[key] ?? fallback;
+}
+
+function getNormalizedPagination(body: any) {
+  const offsetRaw = body?.offset ?? body?.offSet ?? 0;
+  const limitRaw = body?.limit ?? 20;
+
+  const offset = Number(offsetRaw);
+  const limit = Number(limitRaw);
+
+  return {
+    offset: Number.isFinite(offset) ? offset : 0,
+    limit: Number.isFinite(limit) ? limit : 20,
+  };
+}
+
+function getRequiredSlug(body: any): string {
+  const slug = String(body?.slug ?? '')
+    .trim();
+
+  if (!slug) {
+    throw new CustomError('Bad Request: slug is required', 400);
+  }
+
+  return slug;
+}
+
+function getRequiredCategoryIdFromBreadcrumbResponse(response: any): string {
+  const breadcrumbList = response?.data?.breadCrumbDetailList ?? response?.breadCrumbDetailList ?? [];
+
+  if (!Array.isArray(breadcrumbList) || breadcrumbList.length === 0) {
+    throw new CustomError(
+      'Unable to resolve categoryId from breadcrumb response for provided slug.',
+      400,
+    );
+  }
+
+  const lastNode = breadcrumbList[breadcrumbList.length - 1];
+
+  const categoryId =
+    lastNode?.categoryId ??
+    lastNode?.id ??
+    lastNode?.category_id ??
+    null;
+
+  if (!categoryId || String(categoryId).trim() === '') {
+    throw new CustomError(
+      'Unable to resolve categoryId from breadcrumb response for provided slug.',
+      400,
+    );
+  }
+
+  return String(categoryId).trim();
+}
+
+export async function selectCategoryConsolidatedTarget(req: any): Promise<string> {
+  const featureFlagQuery = qs.stringify({
+    filters: {
+      isActive: {
+        $eq: true,
+      },
+    },
+    pagination: {
+      pageSize: 100,
+      page: 1,
+    },
+  });
+
+  const url = `${CMS_MSME_URL}/ccp-feature-flags?${featureFlagQuery}`;
+
+  try {
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        accept: 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      Logger.warn(
+        `[selectCategoryConsolidatedTarget] Feature flag API failed with status ${response.status}. Falling back to legacy.`,
+      );
+      return 'category-consolidated-legacy';
+    }
+
+    const payload = await response.json();
+
+    const featureFlags = Array.isArray(payload?.data) ? payload.data : [];
+
+    const isCentralCatalogueEnabled = featureFlags.some(
+      (flag: any) => flag?.name === 'central_catalogue_global' && flag?.isActive === true,
+    );
+
+    Logger.log(
+      `[selectCategoryConsolidatedTarget] central_catalogue_global=${String(isCentralCatalogueEnabled)}`,
+    );
+    return isCentralCatalogueEnabled
+      ? 'category-consolidated-central'
+      : 'category-consolidated-legacy';
+  } catch (error) {
+    Logger.warn(
+      `[selectCategoryConsolidatedTarget] Feature flag lookup failed. Falling back to legacy. Error: ${error instanceof Error ? error.message : String(error)}`,
+    );
+    return 'category-consolidated-legacy';
+  }
+}
+
+export function transformCentralCategoryProductsRequest(request: BaseRequest): BaseRequest {
+  const body = request.body ?? {};
+  const slug = getRequiredSlug(body);
+  const { offset, limit } = getNormalizedPagination(body);
+  const storefront = String(body?.storefront ?? 'msme').trim() || 'msme';
+  console.log('👉 TRANSFORM PRODUCTS REQUEST');
+  console.log('Incoming body:', request.body);
+  console.log('Outgoing body:', {
+    offSet: offset,
+    limit,
+    slug,
+    storefront,
+  });
+  console.log('Headers:', request.headers);
+  return {
+    ...request,
+    body: {
+      offSet: offset,
+      limit,
+      slug,
+      storefront,
+    },
+    headers: {
+      ...request.headers,
+    },
+  };
+}
+
+export function transformCentralCategoryBreadcrumbRequest(request: BaseRequest): BaseRequest {
+  const slug = getRequiredSlug(request.body ?? {});
+
+  console.log('👉 TRANSFORM BREADCRUMB REQUEST');
+  console.log('Slug:', slug);
+  console.log('Headers:', request.headers);
+  return moveBodyToQueryParams({
+    ...request,
+    body: {
+      slug,
+    },
+    headers: {
+      ...request.headers,
+    },
+  });
+}
+
+export function mergeCentralCategoryConsolidatedResponse(
+  aggregatedResponses: AggregatedResponse[],
+): any {
+  const responses = aggregatedResponses.reduce(
+    (acc, response) => {
+      acc[response.target] = response;
+      return acc;
+    },
+    {} as Record<string, AggregatedResponse>,
+  );
+
+  const productResponse = responses['central-products-listing'];
+  const breadcrumbResponse = responses['central-breadcrumbs'];
+
+  if (!productResponse?.success) {
+    const err = new CustomError(
+      productResponse?.error || 'Central category product listing failed',
+      productResponse?.httpStatus ?? 500,
+    ) as any;
+    err.httpStatusCode = productResponse?.httpStatus ?? 500;
+    err.downstreamResponse = productResponse?.downstreamResponse ?? null;
+    throw err;
+  }
+
+  if (!breadcrumbResponse?.success) {
+    const err = new CustomError(
+      breadcrumbResponse?.error || 'Central category breadcrumb failed',
+      breadcrumbResponse?.httpStatus ?? 500,
+    ) as any;
+    err.httpStatusCode = breadcrumbResponse?.httpStatus ?? 500;
+    err.downstreamResponse = breadcrumbResponse?.downstreamResponse ?? null;
+    throw err;
+  }
+
+  return {
+    productData: productResponse.data,
+    breakCrumbData: breadcrumbResponse.data,
+  };
+}
+
+export function transformResolveCategoryIdBySlugRequest(request: BaseRequest): BaseRequest {
+  const slug = getRequiredSlug(request.body ?? {});
+
+  return moveBodyToQueryParams({
+    ...request,
+    body: {
+      slug,
+    },
+    headers: {
+      ...request.headers,
+    },
+  });
+}
+
+export function transformLegacyCategoryProductsRequest(
+  request: BaseRequest,
+  prevResponses?: AggregatedResponse[],
+): BaseRequest {
+  if (!prevResponses || prevResponses.length === 0) {
+    throw new CustomError(
+      'Previous responses missing while preparing legacy category products request.',
+      400,
+    );
+  }
+
+  const resolveResponse = prevResponses.find((r) => r.target === 'resolve-category-by-slug');
+
+  if (!resolveResponse?.success) {
+    throw new CustomError(
+      resolveResponse?.error || 'Unable to resolve categoryId for legacy products request.',
+      resolveResponse?.httpStatus ?? 400,
+    );
+  }
+
+  const categoryId = getRequiredCategoryIdFromBreadcrumbResponse(resolveResponse.data);
+  const { offset, limit } = getNormalizedPagination(request.body ?? {});
+
+  return {
+    ...request,
+    body: {
+      offSet: offset + 1,
+      limit,
+      categoryId,
+      filterConditions: [],
+      directOrderProducts: false,
+      text: '',
+    },
+    headers: {
+      ...request.headers,
+    },
+  };
+}
+
+export function transformLegacyCategoryBreadcrumbRequest(
+  request: BaseRequest,
+  prevResponses?: AggregatedResponse[],
+): BaseRequest {
+  if (!prevResponses || prevResponses.length === 0) {
+    throw new CustomError(
+      'Previous responses missing while preparing legacy category breadcrumb request.',
+      400,
+    );
+  }
+
+  const resolveResponse = prevResponses.find((r) => r.target === 'resolve-category-by-slug');
+
+  if (!resolveResponse?.success) {
+    throw new CustomError(
+      resolveResponse?.error || 'Unable to resolve categoryId for legacy breadcrumb request.',
+      resolveResponse?.httpStatus ?? 400,
+    );
+  }
+
+  const categoryId = getRequiredCategoryIdFromBreadcrumbResponse(resolveResponse.data);
+
+  return moveBodyToQueryParams({
+    ...request,
+    body: {
+      categoryId,
+    },
+    headers: {
+      ...request.headers,
+    },
+  });
+}
+
+export function mergeLegacyCategoryConsolidatedResponse(
+  aggregatedResponses: AggregatedResponse[],
+): any {
+  const responses = aggregatedResponses.reduce(
+    (acc, response) => {
+      acc[response.target] = response;
+      return acc;
+    },
+    {} as Record<string, AggregatedResponse>,
+  );
+
+  const productResponse = responses['legacy-products-listing'];
+  const breadcrumbResponse = responses['legacy-breadcrumbs'];
+
+  if (!productResponse?.success) {
+    const err = new CustomError(
+      productResponse?.error || 'Legacy category product listing failed',
+      productResponse?.httpStatus ?? 500,
+    ) as any;
+    err.httpStatusCode = productResponse?.httpStatus ?? 500;
+    err.downstreamResponse = productResponse?.downstreamResponse ?? null;
+    throw err;
+  }
+
+  if (!breadcrumbResponse?.success) {
+    const err = new CustomError(
+      breadcrumbResponse?.error || 'Legacy category breadcrumb failed',
+      breadcrumbResponse?.httpStatus ?? 500,
+    ) as any;
+    err.httpStatusCode = breadcrumbResponse?.httpStatus ?? 500;
+    err.downstreamResponse = breadcrumbResponse?.downstreamResponse ?? null;
+    throw err;
+  }
+
+  return {
+    productData: productResponse.data,
+    breakCrumbData: breadcrumbResponse.data,
+  };
 }
