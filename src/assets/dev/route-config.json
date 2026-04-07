@@ -3079,7 +3079,7 @@
         "url": "https://qa.msme.jswone.in/customer/v1/privacy/consent",
         "method": "POST",
         "timeout": {
-          "request": 5000,
+          "request": 10000,
           "socket": 1000
         },
         "staticHeaders": {
@@ -3097,14 +3097,15 @@
       },
       {
         "name": "one-helix-task",
-        "url": "${ONE_HELIX_TASK_API_URL}",
+        "url": "https://tms.qa.jswone.in/jswone/subject/task",
         "method": "POST",
         "timeout": {
-          "request": 5000,
+          "request": 10000,
           "socket": 1000
         },
         "staticHeaders": {
-          "content-type": "application/json"
+          "Authorization": "${ONE_HELIX_TASK_API_AUTHORIZATION}",
+          "Content-Type": "application/json"
         },
         "reqTransform": "one-helix.transformers.transformGuestOneHelixTaskRequest"
       }
@@ -3118,14 +3119,15 @@
     "isCacheRequired": false,
     "target": {
       "name": "one-helix-task",
-      "url": "${ONE_HELIX_TASK_API_URL}",
+      "url": "https://tms.qa.jswone.in/jswone/subject/task",
       "method": "POST",
       "timeout": {
-        "request": 5000,
+        "request": 10000,
         "socket": 1000
       },
       "staticHeaders": {
-        "content-type": "application/json"
+        "Authorization": "${ONE_HELIX_TASK_API_AUTHORIZATION}",
+        "Content-Type": "application/json"
       },
       "headersToPass": [
         {

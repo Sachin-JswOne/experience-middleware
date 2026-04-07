@@ -116,7 +116,7 @@ export function transformLoggedInOneHelixTaskRequest(request: BaseRequest): Base
       RecordTypeId: process.env.SF_TASK_RECORD_TYPE_ID,
       OwnerId: process.env.SF_TASK_OWNER_ID,
       WhatId: sfAccountId,
-      Subject: 'One Helix task',
+      Subject: 'One Helix Task',
       ActivityDate: formatActivityDatePlusOne(),
       Description: `Enquiry for One Helix products. Customer type: ${userType}, Pincode: ${pincode}`,
     },
@@ -137,12 +137,9 @@ export function transformGuestOneHelixTaskRequest(
   const body = request.body ?? {};
   const consentResponse = prevResponses?.find((r) => r.target === 'one-helix-consent');
 
-  console.log('Consent Response in Task Transformer:', prevResponses);
-
   if (!consentResponse?.success) {
     throw new CustomError('Consent API failed for guest user', 500);
   }
-
   const sfAccountId = consentResponse.data?.data?.recordId;
   if (!sfAccountId || typeof sfAccountId !== 'string') {
     throw new CustomError('recordId missing in consent response', 500);
@@ -157,7 +154,7 @@ export function transformGuestOneHelixTaskRequest(
       RecordTypeId: process.env.SF_TASK_RECORD_TYPE_ID,
       OwnerId: process.env.SF_TASK_OWNER_ID,
       WhatId: sfAccountId,
-      Subject: 'One Helix task',
+      Subject: 'One Helix Task',
       ActivityDate: formatActivityDatePlusOne(),
       Description: `Enquiry for One Helix products. Customer type: ${userType}, Pincode: ${pincode}`,
     },
