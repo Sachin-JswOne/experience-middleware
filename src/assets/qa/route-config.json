@@ -974,7 +974,7 @@
     "conditionTransform": "login.transformers.selectLoginTarget",
     "targets": [
       {
-        "name": "generate-otp-login",
+        "name": "otp-login",
         "url": "https://qa-ssr.msme.jswone.in/auth/api/v1/construct/otp/send",
         "method": "POST",
         "staticHeaders": {

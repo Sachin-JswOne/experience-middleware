@@ -920,7 +920,7 @@
     "conditionTransform": "login.transformers.selectLoginTarget",
     "targets": [
       {
-        "name": "generate-otp-login",
+        "name": "otp-login",
         "url": "https://www.jswonemsme.com/auth/api/v1/construct/otp/send",
         "method": "POST",
         "staticHeaders": {
