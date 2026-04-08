@@ -2862,7 +2862,7 @@
       },
       {
         "name": "one-helix-task",
-        "url": "https://tms.qa.jswone.in/jswone/subject/task",
+        "url": "https://tms.jswonemsme.com/jswone/subject/task",
         "method": "POST",
         "timeout": {
           "request": 10000,
