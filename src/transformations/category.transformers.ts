@@ -627,15 +627,7 @@ export function transformCentralCategoryProductsRequest(request: BaseRequest): B
   const slug = getRequiredSlug(body);
   const { offset, limit } = getNormalizedPagination(body);
   const storefront = String(body?.storefront ?? 'msme').trim() || 'msme';
-  console.log('👉 TRANSFORM PRODUCTS REQUEST');
-  console.log('Incoming body:', request.body);
-  console.log('Outgoing body:', {
-    offSet: offset,
-    limit,
-    slug,
-    storefront,
-  });
-  console.log('Headers:', request.headers);
+
   return {
     ...request,
     body: {
@@ -653,9 +645,6 @@ export function transformCentralCategoryProductsRequest(request: BaseRequest): B
 export function transformCentralCategoryBreadcrumbRequest(request: BaseRequest): BaseRequest {
   const slug = getRequiredSlug(request.body ?? {});
 
-  console.log('👉 TRANSFORM BREADCRUMB REQUEST');
-  console.log('Slug:', slug);
-  console.log('Headers:', request.headers);
   return moveBodyToQueryParams({
     ...request,
     body: {
