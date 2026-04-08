@@ -94,7 +94,6 @@ export class ProxyService {
   public result: any = '';
   async handleRequest(req: Request) {
     console.log(`Incoming ${req.method} request: ${req.url}`);
-    console.log('👉 INCOMING HEADERS:', req.headers);
     const route = this.findRoute(req);
 
     if (!route) {
@@ -407,11 +406,6 @@ export class ProxyService {
             target.interceptors,
           );
 
-          console.log('👉 FINAL DOWNSTREAM REQUEST');
-          console.log('URL:', transformedRequestBody.url.href);
-          console.log('METHOD:', target.method);
-          console.log('HEADERS:', transformedRequestBody.headers);
-          console.log('BODY:', transformedRequestBody.body);
           const response = await client.request({
             url: transformedRequestBody.url.href,
             method: target.method,
