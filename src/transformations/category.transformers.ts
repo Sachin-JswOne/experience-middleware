@@ -547,11 +547,6 @@ export function selectUomConvertResponse(aggregatedResponses: AggregatedResponse
   return preferredResponse.data;
 }
 
-function getRequestBodyValue(body: any, key: string, fallback?: any) {
-  if (!body || typeof body !== 'object') return fallback;
-  return body[key] ?? fallback;
-}
-
 function getNormalizedPagination(body: any) {
   const offsetRaw = body?.offset ?? body?.offSet ?? 0;
   const limitRaw = body?.limit ?? 20;
@@ -566,8 +561,7 @@ function getNormalizedPagination(body: any) {
 }
 
 function getRequiredSlug(body: any): string {
-  const slug = String(body?.slug ?? '')
-    .trim();
+  const slug = String(body?.slug ?? '').trim();
 
   if (!slug) {
     throw new CustomError('Bad Request: slug is required', 400);
@@ -576,35 +570,7 @@ function getRequiredSlug(body: any): string {
   return slug;
 }
 
-function getRequiredCategoryIdFromBreadcrumbResponse(response: any): string {
-  const breadcrumbList = response?.data?.breadCrumbDetailList ?? response?.breadCrumbDetailList ?? [];
-
-  if (!Array.isArray(breadcrumbList) || breadcrumbList.length === 0) {
-    throw new CustomError(
-      'Unable to resolve categoryId from breadcrumb response for provided slug.',
-      400,
-    );
-  }
-
-  const lastNode = breadcrumbList[breadcrumbList.length - 1];
-
-  const categoryId =
-    lastNode?.categoryId ??
-    lastNode?.id ??
-    lastNode?.category_id ??
-    null;
-
-  if (!categoryId || String(categoryId).trim() === '') {
-    throw new CustomError(
-      'Unable to resolve categoryId from breadcrumb response for provided slug.',
-      400,
-    );
-  }
-
-  return String(categoryId).trim();
-}
-
-export async function selectCategoryConsolidatedTarget(req: any): Promise<string> {
+export async function selectCategoryConsolidatedTarget(): Promise<string> {
   const featureFlagQuery = qs.stringify({
     filters: {
       isActive: {
@@ -737,56 +703,31 @@ export function mergeCentralCategoryConsolidatedResponse(
 
   return {
     productData: productResponse.data,
-    breakCrumbData: breadcrumbResponse.data,
+    breadCrumbData: breadcrumbResponse.data,
   };
 }
 
-export function transformResolveCategoryIdBySlugRequest(request: BaseRequest): BaseRequest {
-  const slug = getRequiredSlug(request.body ?? {});
+export function transformLegacyCategoryProductsRequest(request: BaseRequest): BaseRequest {
+  const body = request.body ?? {};
 
-  return moveBodyToQueryParams({
-    ...request,
-    body: {
-      slug,
-    },
-    headers: {
-      ...request.headers,
-    },
-  });
-}
-
-export function transformLegacyCategoryProductsRequest(
-  request: BaseRequest,
-  prevResponses?: AggregatedResponse[],
-): BaseRequest {
-  if (!prevResponses || prevResponses.length === 0) {
-    throw new CustomError(
-      'Previous responses missing while preparing legacy category products request.',
-      400,
-    );
+  const categoryId = String(body.categoryId ?? '').trim();
+  if (!categoryId) {
+    throw new CustomError('Bad Request: categoryId is required for legacy flow', 400);
   }
 
-  const resolveResponse = prevResponses.find((r) => r.target === 'resolve-category-by-slug');
-
-  if (!resolveResponse?.success) {
-    throw new CustomError(
-      resolveResponse?.error || 'Unable to resolve categoryId for legacy products request.',
-      resolveResponse?.httpStatus ?? 400,
-    );
-  }
-
-  const categoryId = getRequiredCategoryIdFromBreadcrumbResponse(resolveResponse.data);
-  const { offset, limit } = getNormalizedPagination(request.body ?? {});
+  const offSet = Number(body.offSet ?? body.offset ?? 1);
+  const limit = Number(body.limit ?? 20);
 
   return {
     ...request,
     body: {
-      offSet: offset + 1,
-      limit,
+      offSet: Number.isFinite(offSet) ? offSet : 1,
+      limit: Number.isFinite(limit) ? limit : 20,
       categoryId,
-      filterConditions: [],
-      directOrderProducts: false,
-      text: '',
+      filterConditions: Array.isArray(body.filterConditions) ? body.filterConditions : [],
+      directOrderProducts:
+        typeof body.directOrderProducts === 'boolean' ? body.directOrderProducts : false,
+      text: typeof body.text === 'string' ? body.text : '',
     },
     headers: {
       ...request.headers,
@@ -794,27 +735,13 @@ export function transformLegacyCategoryProductsRequest(
   };
 }
 
-export function transformLegacyCategoryBreadcrumbRequest(
-  request: BaseRequest,
-  prevResponses?: AggregatedResponse[],
-): BaseRequest {
-  if (!prevResponses || prevResponses.length === 0) {
-    throw new CustomError(
-      'Previous responses missing while preparing legacy category breadcrumb request.',
-      400,
-    );
+export function transformLegacyCategoryBreadcrumbRequest(request: BaseRequest): BaseRequest {
+  const body = request.body ?? {};
+
+  const categoryId = String(body.categoryId ?? '').trim();
+  if (!categoryId) {
+    throw new CustomError('Bad Request: categoryId is required for legacy breadcrumb flow', 400);
   }
-
-  const resolveResponse = prevResponses.find((r) => r.target === 'resolve-category-by-slug');
-
-  if (!resolveResponse?.success) {
-    throw new CustomError(
-      resolveResponse?.error || 'Unable to resolve categoryId for legacy breadcrumb request.',
-      resolveResponse?.httpStatus ?? 400,
-    );
-  }
-
-  const categoryId = getRequiredCategoryIdFromBreadcrumbResponse(resolveResponse.data);
 
   return moveBodyToQueryParams({
     ...request,
@@ -863,6 +790,6 @@ export function mergeLegacyCategoryConsolidatedResponse(
 
   return {
     productData: productResponse.data,
-    breakCrumbData: breadcrumbResponse.data,
+    breadCrumbData: breadcrumbResponse.data,
   };
 }

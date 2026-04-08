@@ -3158,25 +3158,9 @@
     "path": "/xp-mi/public/v1/category-consolidated/legacy",
     "method": "POST",
     "routeHandler": "AGGREGATE",
-    "aggregationType": "SEQUENTIAL",
+    "aggregationType": "PARALLEL",
     "isCacheRequired": false,
     "targets": [
-      {
-        "name": "resolve-category-by-slug",
-        "url": "https://qa.msme.jswone.in/central_commerce/categories/breadcrumb",
-        "method": "GET",
-        "timeout": {
-          "request": 5000,
-          "socket": 1000
-        },
-        "reqTransform": "category.transformers.transformResolveCategoryIdBySlugRequest",
-        "headersToPass": [
-          {
-            "source": "access_token",
-            "destination": "access_token"
-          }
-        ]
-      },
       {
         "name": "legacy-products-listing",
         "url": "https://qa.msme.jswone.in/product/v2/projections/filter",

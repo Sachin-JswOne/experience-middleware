@@ -19,6 +19,7 @@ import { inspect } from 'util';
 import { CustomError } from 'src/utils/CustomError';
 import { match } from 'path-to-regexp';
 import Redis from 'ioredis';
+import axios from 'axios';
 
 @Injectable()
 export class ProxyService {
@@ -468,7 +469,7 @@ export class ProxyService {
           });
 
           // Add error response data if available (for network errors, timeouts, etc.)
-          if (err && typeof err === 'object' && 'response' in err) {
+          if (axios.isAxiosError(err) && err.response) {
             const errorResponse = err.response;
             if (errorResponse) {
               span.setAttribute('http.status_code', errorResponse.status);
