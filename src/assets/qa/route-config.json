@@ -3017,5 +3017,136 @@
       ],
       "reqTransform": "one-helix.transformers.transformLoggedInOneHelixTaskRequest"
     }
+  },
+  {
+    "path": "/xp-mi/public/v1/category-consolidated",
+    "method": "POST",
+    "routeHandler": "CONDITIONAL",
+    "isCacheRequired": false,
+    "conditionTransform": "category.transformers.selectCategoryConsolidatedTarget",
+    "targets": [
+      {
+        "name": "category-consolidated-central",
+        "url": "https://experience-middleware.qa.jswone.in/xp-mi/public/v1/category-consolidated/central",
+        "method": "POST",
+        "timeout": {
+          "request": 15000,
+          "socket": 1000
+        },
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "access_token"
+          },
+          {
+            "source": "access_token",
+            "destination": "access_token"
+          }
+        ]
+      },
+      {
+        "name": "category-consolidated-legacy",
+        "url": "https://experience-middleware.qa.jswone.in/xp-mi/public/v1/category-consolidated/legacy",
+        "method": "POST",
+        "timeout": {
+          "request": 15000,
+          "socket": 1000
+        },
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "access_token"
+          },
+          {
+            "source": "access_token",
+            "destination": "access_token"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "path": "/xp-mi/public/v1/category-consolidated/central",
+    "method": "POST",
+    "routeHandler": "AGGREGATE",
+    "aggregationType": "PARALLEL",
+    "isCacheRequired": false,
+    "targets": [
+      {
+        "name": "central-products-listing",
+        "url": "https://qa.msme.jswone.in/central_commerce/products/listing",
+        "method": "POST",
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
+        "reqTransform": "category.transformers.transformCentralCategoryProductsRequest",
+        "headersToPass": [
+          {
+            "source": "access_token",
+            "destination": "access_token"
+          }
+        ]
+      },
+      {
+        "name": "central-breadcrumbs",
+        "url": "https://qa.msme.jswone.in/central_commerce/categories/breadcrumb",
+        "method": "GET",
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
+        "reqTransform": "category.transformers.transformCentralCategoryBreadcrumbRequest",
+        "headersToPass": [
+          {
+            "source": "access_token",
+            "destination": "access_token"
+          }
+        ]
+      }
+    ],
+    "resTransform": "category.transformers.mergeCentralCategoryConsolidatedResponse"
+  },
+  {
+    "path": "/xp-mi/public/v1/category-consolidated/legacy",
+    "method": "POST",
+    "routeHandler": "AGGREGATE",
+    "aggregationType": "PARALLEL",
+    "isCacheRequired": false,
+    "targets": [
+      {
+        "name": "legacy-products-listing",
+        "url": "https://qa.msme.jswone.in/product/v2/projections/filter",
+        "method": "POST",
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
+        "reqTransform": "category.transformers.transformLegacyCategoryProductsRequest",
+        "headersToPass": [
+          {
+            "source": "access_token",
+            "destination": "access_token"
+          }
+        ]
+      },
+      {
+        "name": "legacy-breadcrumbs",
+        "url": "https://qa.msme.jswone.in/catalog/breadcrumb/category",
+        "method": "GET",
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
+        "reqTransform": "category.transformers.transformLegacyCategoryBreadcrumbRequest",
+        "headersToPass": [
+          {
+            "source": "access_token",
+            "destination": "access_token"
+          }
+        ]
+      }
+    ],
+    "resTransform": "category.transformers.mergeLegacyCategoryConsolidatedResponse"
   }
 ]
