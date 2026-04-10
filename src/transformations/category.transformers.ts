@@ -5,6 +5,7 @@ import { safeDebug, safeToLog } from 'src/utils/common-functions.util';
 import { CMS_MSME_URL } from 'src/config/app.config';
 import { CustomError } from 'src/utils/CustomError';
 import * as generalTransformers from './general.transformers';
+import { moveBodyToQueryParams } from './general.transformers';
 import * as qs from 'qs';
 
 // Responsible for extracting the category ids from provided array of objects
@@ -544,4 +545,198 @@ export function selectUomConvertResponse(aggregatedResponses: AggregatedResponse
   }
 
   return preferredResponse.data;
+}
+
+function getNormalizedPagination(body: any) {
+  const offsetRaw = body?.offset ?? body?.offSet ?? 0;
+  const limitRaw = body?.limit ?? 20;
+
+  const offset = Number(offsetRaw);
+  const limit = Number(limitRaw);
+
+  return {
+    offset: Number.isFinite(offset) ? offset : 0,
+    limit: Number.isFinite(limit) ? limit : 20,
+  };
+}
+
+function getRequiredSlug(body: any): string {
+  const slug = String(body?.slug ?? '').trim();
+
+  if (!slug) {
+    throw new CustomError('Bad Request: slug is required', 400);
+  }
+
+  return slug;
+}
+
+export function selectCategoryConsolidatedTarget(req: any): string {
+  const flag = req?.body?.central_catalogue_global;
+
+  if (typeof flag !== 'boolean') {
+    throw new CustomError('Bad Request: central_catalogue_global must be provided as boolean', 400);
+  }
+
+  return flag ? 'category-consolidated-central' : 'category-consolidated-legacy';
+}
+
+export function transformCentralCategoryProductsRequest(request: BaseRequest): BaseRequest {
+  const body = request.body ?? {};
+  const slug = getRequiredSlug(body);
+  const { offset, limit } = getNormalizedPagination(body);
+  const storefront = String(body?.storefront ?? 'msme').trim() || 'msme';
+
+  return {
+    ...request,
+    body: {
+      offSet: offset,
+      limit,
+      slug,
+      storefront,
+    },
+    headers: {
+      ...request.headers,
+    },
+  };
+}
+
+export function transformCentralCategoryBreadcrumbRequest(request: BaseRequest): BaseRequest {
+  const slug = getRequiredSlug(request.body ?? {});
+
+  return moveBodyToQueryParams({
+    ...request,
+    body: {
+      slug,
+    },
+    headers: {
+      ...request.headers,
+    },
+  });
+}
+
+export function mergeCentralCategoryConsolidatedResponse(
+  aggregatedResponses: AggregatedResponse[],
+): any {
+  const responses = aggregatedResponses.reduce(
+    (acc, response) => {
+      acc[response.target] = response;
+      return acc;
+    },
+    {} as Record<string, AggregatedResponse>,
+  );
+
+  const productResponse = responses['central-products-listing'];
+  const breadcrumbResponse = responses['central-breadcrumbs'];
+
+  if (!productResponse?.success) {
+    const err = new CustomError(
+      productResponse?.error || 'Central category product listing failed',
+      productResponse?.httpStatus ?? 500,
+    ) as any;
+    err.httpStatusCode = productResponse?.httpStatus ?? 500;
+    err.downstreamResponse = productResponse?.downstreamResponse ?? null;
+    throw err;
+  }
+
+  if (!breadcrumbResponse?.success) {
+    const err = new CustomError(
+      breadcrumbResponse?.error || 'Central category breadcrumb failed',
+      breadcrumbResponse?.httpStatus ?? 500,
+    ) as any;
+    err.httpStatusCode = breadcrumbResponse?.httpStatus ?? 500;
+    err.downstreamResponse = breadcrumbResponse?.downstreamResponse ?? null;
+    throw err;
+  }
+
+  return {
+    productData: productResponse.data,
+    breadCrumbData: breadcrumbResponse.data,
+  };
+}
+
+export function transformLegacyCategoryProductsRequest(request: BaseRequest): BaseRequest {
+  const body = request.body ?? {};
+
+  const categoryId = String(body.categoryId ?? '').trim();
+  if (!categoryId) {
+    throw new CustomError('Bad Request: categoryId is required for legacy flow', 400);
+  }
+
+  const offSet = Number(body.offSet ?? body.offset ?? 1);
+  const limit = Number(body.limit ?? 20);
+
+  return {
+    ...request,
+    body: {
+      offSet: Number.isFinite(offSet) ? offSet : 1,
+      limit: Number.isFinite(limit) ? limit : 20,
+      categoryId,
+      filterConditions: Array.isArray(body.filterConditions) ? body.filterConditions : [],
+      directOrderProducts:
+        typeof body.directOrderProducts === 'boolean' ? body.directOrderProducts : false,
+      text: typeof body.text === 'string' ? body.text : '',
+    },
+    headers: {
+      ...request.headers,
+    },
+  };
+}
+
+export function transformLegacyCategoryBreadcrumbRequest(request: BaseRequest): BaseRequest {
+  const body = request.body ?? {};
+
+  const categoryId = String(body.categoryId ?? '').trim();
+  if (!categoryId) {
+    throw new CustomError('Bad Request: categoryId is required for legacy breadcrumb flow', 400);
+  }
+
+  return moveBodyToQueryParams({
+    ...request,
+    body: {
+      categoryId,
+    },
+    headers: {
+      ...request.headers,
+    },
+  });
+}
+
+export function mergeLegacyCategoryConsolidatedResponse(
+  aggregatedResponses: AggregatedResponse[],
+): any {
+  const responses = aggregatedResponses.reduce(
+    (acc, response) => {
+      acc[response.target] = response;
+      return acc;
+    },
+    {} as Record<string, AggregatedResponse>,
+  );
+
+  const productResponse = responses['legacy-products-listing'];
+  const breadcrumbResponse = responses['legacy-breadcrumbs'];
+
+  if (!productResponse?.success) {
+    const err = new CustomError(
+      productResponse?.error || 'Legacy category product listing failed',
+      productResponse?.httpStatus ?? 500,
+    ) as any;
+    err.httpStatusCode = productResponse?.httpStatus ?? 500;
+    err.downstreamResponse = productResponse?.downstreamResponse ?? null;
+    throw err;
+  }
+
+  if (!breadcrumbResponse?.success) {
+    const err = new CustomError(
+      breadcrumbResponse?.error || 'Legacy category breadcrumb failed',
+      breadcrumbResponse?.httpStatus ?? 500,
+    ) as any;
+    err.httpStatusCode = breadcrumbResponse?.httpStatus ?? 500;
+    err.downstreamResponse = breadcrumbResponse?.downstreamResponse ?? null;
+    throw err;
+  }
+
+  return {
+    productData: productResponse.data,
+    breadCrumbData: breadcrumbResponse.data,
+  };
 }
