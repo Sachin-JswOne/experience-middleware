@@ -31,9 +31,16 @@ export function homeBlogs(request: BaseRequest): BaseRequest {
     ...request,
     body: null,
   };
-  const industryName = request?.body?.filters?.$and
-    ?.flatMap((f: any) => f.$or || [])
-    ?.find((cond: any) => cond?.industries?.name?.$eqi)?.industries?.name?.$eqi;
+
+  const filters = request?.body?.filters?.$and || [];
+  const allOrConditions = filters.flatMap((f: any) => f.$or || []);
+
+  const industryLink = allOrConditions.find((c) => c?.industries?.link?.$eqi)?.industries?.link
+    ?.$eqi;
+
+  const industryName = allOrConditions.find((c) => c?.industries?.name?.$eqi)?.industries?.name
+    ?.$eqi;
+
   const blogParams: Record<string, any> = {
     sort: ['customDate:desc', 'updatedAt:desc'],
     populate: {
@@ -50,9 +57,13 @@ export function homeBlogs(request: BaseRequest): BaseRequest {
   if (industryName) {
     blogParams.filters = {
       industries: {
-        name: {
-          $eqi: industryName,
-        },
+        name: { $eqi: industryName },
+      },
+    };
+  } else if (industryLink) {
+    blogParams.filters = {
+      industries: {
+        link: { $eqi: industryLink },
       },
     };
   }
