@@ -115,20 +115,22 @@ export class ProxyService {
       throw new Error('Route config not found');
     }
 
-    const needsAuth = this.routeNeedsClientAuth(route);
-    if (needsAuth) {
-      const authHeader = req.headers?.authorization || req.headers?.access_token;
-      const userState = req.headers?.['x-user-state'];
+    if (route.routeHandler !== RouteHandler.CONDITIONAL) {
+      const needsAuth = this.routeNeedsClientAuth(route);
+      if (needsAuth) {
+        const authHeader = req.headers?.authorization || req.headers?.access_token;
+        const userState = req.headers?.['x-user-state'];
 
-      if (userState === 'G') {
-        req.headers = {
-          ...req.headers,
-          authorization: process.env.GUEST_ACCESS_TOKEN,
-        };
-      }
+        if (userState === 'G') {
+          req.headers = {
+            ...req.headers,
+            authorization: process.env.GUEST_ACCESS_TOKEN,
+          };
+        }
 
-      if (!authHeader && userState !== 'G') {
-        throw new CustomError('Bad Request: Authorization required', 400);
+        if (!authHeader && userState !== 'G') {
+          throw new CustomError('Bad Request: Authorization required', 400);
+        }
       }
     }
 
@@ -228,6 +230,23 @@ export class ProxyService {
       throw new Error(
         `Conditional target '${targetName}' not found in route config for path '${route.path}'`,
       );
+    }
+
+    const needsAuth = this.routeNeedsClientAuth({ target: targetToExecute });
+    if (needsAuth) {
+      const authHeader = req.headers?.authorization || req.headers?.access_token;
+      const userState = req.headers?.['x-user-state'];
+
+      if (userState === 'G') {
+        req.headers = {
+          ...req.headers,
+          authorization: process.env.GUEST_ACCESS_TOKEN,
+        };
+      }
+
+      if (!authHeader && userState !== 'G') {
+        throw new CustomError('Bad Request: Authorization required', 400);
+      }
     }
 
     activeSpan?.setAttribute('proxy.conditional.selected_target', targetName);

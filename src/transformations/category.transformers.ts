@@ -570,56 +570,14 @@ function getRequiredSlug(body: any): string {
   return slug;
 }
 
-export async function selectCategoryConsolidatedTarget(): Promise<string> {
-  const featureFlagQuery = qs.stringify({
-    filters: {
-      isActive: {
-        $eq: true,
-      },
-    },
-    pagination: {
-      pageSize: 100,
-      page: 1,
-    },
-  });
+export function selectCategoryConsolidatedTarget(req: any): string {
+  const flag = req?.body?.central_catalogue_global;
 
-  const url = `${CMS_MSME_URL}/ccp-feature-flags?${featureFlagQuery}`;
-
-  try {
-    const response = await fetch(url, {
-      method: 'GET',
-      headers: {
-        accept: 'application/json',
-      },
-    });
-
-    if (!response.ok) {
-      Logger.warn(
-        `[selectCategoryConsolidatedTarget] Feature flag API failed with status ${response.status}. Falling back to legacy.`,
-      );
-      return 'category-consolidated-legacy';
-    }
-
-    const payload = await response.json();
-
-    const featureFlags = Array.isArray(payload?.data) ? payload.data : [];
-
-    const isCentralCatalogueEnabled = featureFlags.some(
-      (flag: any) => flag?.name === 'central_catalogue_global' && flag?.isActive === true,
-    );
-
-    Logger.log(
-      `[selectCategoryConsolidatedTarget] central_catalogue_global=${String(isCentralCatalogueEnabled)}`,
-    );
-    return isCentralCatalogueEnabled
-      ? 'category-consolidated-central'
-      : 'category-consolidated-legacy';
-  } catch (error) {
-    Logger.warn(
-      `[selectCategoryConsolidatedTarget] Feature flag lookup failed. Falling back to legacy. Error: ${error instanceof Error ? error.message : String(error)}`,
-    );
-    return 'category-consolidated-legacy';
+  if (typeof flag !== 'boolean') {
+    throw new CustomError('Bad Request: central_catalogue_global must be provided as boolean', 400);
   }
+
+  return flag ? 'category-consolidated-central' : 'category-consolidated-legacy';
 }
 
 export function transformCentralCategoryProductsRequest(request: BaseRequest): BaseRequest {
