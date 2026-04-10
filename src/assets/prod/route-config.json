@@ -2642,26 +2642,19 @@
     "aggregationType": "SEQUENTIAL",
     "targets": [
       {
-        "name": "blogs",
-        "url": "${CMS_MSME_URL}/jsw-blogs-articless",
-        "method": "GET",
+        "name": "industry-parallel-helper",
+        "url": "http://experience-middleware.jswonemsme.com/xp-mi/public/v1/jsw-blog-industry-content-parallel-helper",
+        "method": "POST",
         "timeout": {
-          "request": 10000,
+          "request": 15000,
           "socket": 1000
         },
-        "reqTransform": "industry-page.transformers.pickBlogsQuery",
-        "resTransform": "cms.transformers.replaceUriPrefix"
-      },
-      {
-        "name": "metrics",
-        "url": "https://internal-cms-ext.jswonemsme.com/api/mweb-metrics-components",
-        "method": "GET",
-        "timeout": {
-          "request": 10000,
-          "socket": 1000
-        },
-        "reqTransform": "industry-page.transformers.pickMatrixQuery",
-        "resTransform": "cms.transformers.replaceUriPrefix"
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "authorization"
+          }
+        ]
       },
       {
         "name": "industry-specific-components",
@@ -2691,7 +2684,38 @@
         ]
       }
     ],
-    "resTransform": "industry-page.transformers.mergeIndustryAllContentResponses"
+    "resTransform": "industry-page.transformers.mergeIndustryAllContentResponsesOptimized"
+  },
+  {
+    "path": "/xp-mi/public/v1/jsw-blog-industry-content-parallel-helper",
+    "method": "POST",
+    "routeHandler": "AGGREGATE",
+    "aggregationType": "PARALLEL",
+    "targets": [
+      {
+        "name": "blogs",
+        "url": "https://internal-cms-ext.jswonemsme.com/api/jsw-blogs-articless",
+        "method": "GET",
+        "timeout": {
+          "request": 10000,
+          "socket": 1000
+        },
+        "reqTransform": "industry-page.transformers.pickBlogsQuery",
+        "resTransform": "cms.transformers.replaceUriPrefix"
+      },
+      {
+        "name": "metrics",
+        "url": "https://internal-cms-ext.jswonemsme.com/api/mweb-metrics-components",
+        "method": "GET",
+        "timeout": {
+          "request": 10000,
+          "socket": 1000
+        },
+        "reqTransform": "industry-page.transformers.pickMatrixQuery",
+        "resTransform": "cms.transformers.replaceUriPrefix"
+      }
+    ],
+    "resTransform": "industry-page.transformers.wrapIndustryParallelResponses"
   },
   {
     "path": "/xp-mi/public/v1/blogs-details",

@@ -2877,6 +2877,57 @@
     "aggregationType": "SEQUENTIAL",
     "targets": [
       {
+        "name": "industry-parallel-helper",
+        "url": "http://127.0.0.1:3000/xp-mi/public/v1/jsw-blog-industry-content-parallel-helper",
+        "method": "POST",
+        "timeout": {
+          "request": 15000,
+          "socket": 1000
+        },
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "authorization"
+          }
+        ]
+      },
+      {
+        "name": "industry-specific-components",
+        "url": "https://qa-cms-ext.msme.jswone.in/api/mweb-industry-specific-components",
+        "method": "GET",
+        "timeout": {
+          "request": 10000,
+          "socket": 1000
+        },
+        "reqTransform": "industry-page.transformers.pickIndustryQuery",
+        "resTransform": "cms.transformers.replaceUriPrefix"
+      },
+      {
+        "name": "products-listing",
+        "url": "https://qa.msme.jswone.in/central_commerce/products/listing",
+        "method": "POST",
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
+        "reqTransform": "industry-page.transformers.extractProductListingSlugFromIndustrySpecificResponse",
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "access_token"
+          }
+        ]
+      }
+    ],
+    "resTransform": "industry-page.transformers.mergeIndustryAllContentResponsesOptimized"
+  },
+  {
+    "path": "/xp-mi/public/v1/jsw-blog-industry-content-parallel-helper",
+    "method": "POST",
+    "routeHandler": "AGGREGATE",
+    "aggregationType": "PARALLEL",
+    "targets": [
+      {
         "name": "blogs",
         "url": "https://qa-cms-ext.msme.jswone.in/api/jsw-blogs-articless",
         "method": "GET",
@@ -2897,83 +2948,9 @@
         },
         "reqTransform": "industry-page.transformers.pickMatrixQuery",
         "resTransform": "cms.transformers.replaceUriPrefix"
-      },
-      {
-        "name": "industry-specific-components",
-        "url": "https://qa-cms-ext.msme.jswone.in/api/mweb-industry-specific-components",
-        "method": "GET",
-        "timeout": {
-          "request": 10000,
-          "socket": 1000
-        },
-        "reqTransform": "industry-page.transformers.pickIndustryQuery",
-        "resTransform": "cms.transformers.replaceUriPrefix"
-      },
-      {
-        "name": "products-listing",
-        "url": "https://qa.msme.jswone.in/central_commerce/products/listing",
-        "method": "POST",
-        "timeout": {
-          "request": 5000,
-          "socket": 1000
-        },
-        "reqTransform": "industry-page.transformers.extractProductListingSlugFromIndustrySpecificResponse",
-        "headersToPass": [
-          {
-            "source": "authorization",
-            "destination": "access_token"
-          }
-        ]
       }
     ],
-    "resTransform": "industry-page.transformers.mergeIndustryAllContentResponses"
-  },
-  {
-    "path": "/xp-mi/public/v1/blogs-details",
-    "method": "POST",
-    "routeHandler": "AGGREGATE",
-    "aggregationType": "SEQUENTIAL",
-    "targets": [
-      {
-        "name": "blogs",
-        "url": "https://qa-cms-ext.msme.jswone.in/api/jsw-blogs-articless",
-        "method": "GET",
-        "timeout": {
-          "request": 10000,
-          "socket": 1000
-        },
-        "reqTransform": "industry-page.transformers.pickBlogsQuery",
-        "resTransform": "cms.transformers.replaceUriPrefix"
-      },
-      {
-        "name": "industry-specific-components",
-        "url": "https://qa-cms-ext.msme.jswone.in/api/mweb-industry-specific-components",
-        "method": "GET",
-        "timeout": {
-          "request": 10000,
-          "socket": 1000
-        },
-        "reqTransform": "industry-page.transformers.pickIndustryQuery",
-        "resTransform": "cms.transformers.replaceUriPrefix"
-      },
-      {
-        "name": "products-listing",
-        "url": "https://qa.msme.jswone.in/central_commerce/products/listing",
-        "method": "POST",
-        "timeout": {
-          "request": 5000,
-          "socket": 1000
-        },
-        "reqTransform": "industry-page.transformers.extractProductListingSlugFromIndustrySpecificResponse",
-        "headersToPass": [
-          {
-            "source": "authorization",
-            "destination": "access_token"
-          }
-        ]
-      }
-    ],
-    "resTransform": "industry-page.transformers.mergeIndustryAllContentResponses"
+    "resTransform": "industry-page.transformers.wrapIndustryParallelResponses"
   },
   {
     "path": "/xp-mi/public/v1/homes/feedback/user",
