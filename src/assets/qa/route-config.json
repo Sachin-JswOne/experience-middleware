@@ -3124,5 +3124,24 @@
       }
     ],
     "resTransform": "category.transformers.mergeLegacyCategoryConsolidatedResponse"
+  },
+  {
+    "path": "/xp-mi/public/v1/recent-viewed/remove",
+    "method": "GET",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "url": "https://qa.msme.jswone.in/central_commerce/recent-viewed/remove",
+      "method": "GET",
+      "timeout": {
+        "request": 5000,
+        "socket": 1000
+      },
+      "headersToPass": [
+        {
+          "source": "authorization",
+          "destination": "access_token"
+        }
+      ]
+    }
   }
 ]
