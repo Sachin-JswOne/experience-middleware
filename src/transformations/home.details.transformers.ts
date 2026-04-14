@@ -359,6 +359,8 @@ export function mergeProjectDetailsAndTrackerResponses(
     currentStage: currentprojectStage,
   };
 
+  const rdashStage = homesData?.rdashStage ?? '';
+
   return {
     data: {
       ...strapiData.data,
@@ -367,6 +369,7 @@ export function mergeProjectDetailsAndTrackerResponses(
       projectID,
       homesTeam,
       projectTracker,
+      rdashStage,
     },
   };
 }

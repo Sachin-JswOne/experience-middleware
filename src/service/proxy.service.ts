@@ -20,6 +20,7 @@ import { inspect } from 'util';
 import { CustomError } from 'src/utils/CustomError';
 import { match } from 'path-to-regexp';
 import Redis from 'ioredis';
+import axios from 'axios';
 
 @Injectable()
 export class ProxyService {
@@ -113,20 +114,22 @@ export class ProxyService {
       throw new Error('Route config not found');
     }
 
-    const needsAuth = this.routeNeedsClientAuth(route);
-    if (needsAuth) {
-      const authHeader = req.headers?.authorization || req.headers?.access_token;
-      const userState = req.headers?.['x-user-state'];
+    if (route.routeHandler !== RouteHandler.CONDITIONAL) {
+      const needsAuth = this.routeNeedsClientAuth(route);
+      if (needsAuth) {
+        const authHeader = req.headers?.authorization || req.headers?.access_token;
+        const userState = req.headers?.['x-user-state'];
 
-      if (userState === 'G') {
-        req.headers = {
-          ...req.headers,
-          authorization: process.env.GUEST_ACCESS_TOKEN,
-        };
-      }
+        if (userState === 'G') {
+          req.headers = {
+            ...req.headers,
+            authorization: process.env.GUEST_ACCESS_TOKEN,
+          };
+        }
 
-      if (!authHeader && userState !== 'G') {
-        throw new CustomError('Bad Request: Authorization required', 400);
+        if (!authHeader && userState !== 'G') {
+          throw new CustomError('Bad Request: Authorization required', 400);
+        }
       }
     }
 
@@ -225,6 +228,23 @@ export class ProxyService {
       throw new Error(
         `Conditional target '${targetName}' not found in route config for path '${route.path}'`,
       );
+    }
+
+    const needsAuth = this.routeNeedsClientAuth({ target: targetToExecute });
+    if (needsAuth) {
+      const authHeader = req.headers?.authorization || req.headers?.access_token;
+      const userState = req.headers?.['x-user-state'];
+
+      if (userState === 'G') {
+        req.headers = {
+          ...req.headers,
+          authorization: process.env.GUEST_ACCESS_TOKEN,
+        };
+      }
+
+      if (!authHeader && userState !== 'G') {
+        throw new CustomError('Bad Request: Authorization required', 400);
+      }
     }
 
     activeSpan?.setAttribute('proxy.conditional.selected_target', targetName);
@@ -486,7 +506,8 @@ export class ProxyService {
             message: err instanceof Error ? err.message : String(err),
           });
 
-          if (err && typeof err === 'object' && 'response' in err) {
+          // Add error response data if available (for network errors, timeouts, etc.)
+          if (axios.isAxiosError(err) && err.response) {
             const errorResponse = err.response;
             if (errorResponse) {
               span.setAttribute('http.status_code', errorResponse.status);

@@ -853,25 +853,11 @@ export function mergeWebHomePageResponsesV3(aggregatedResponses: AggregatedRespo
 }
 
 export function selectWebHomePageV3TargetByUserType(req: Request): string {
-  const cookieHeader = String(req.headers?.cookie ?? '');
-
-  const cookies = Object.fromEntries(
-    cookieHeader
-      .split(';')
-      .map((part) => part.trim())
-      .filter(Boolean)
-      .map((part) => {
-        const idx = part.indexOf('=');
-        if (idx === -1) return [part, ''];
-        return [part.slice(0, idx), decodeURIComponent(part.slice(idx + 1))];
-      }),
-  );
-
-  const userType = String(cookies.userType ?? '').toUpperCase();
+  const userType = String(req.headers?.['user-type'] ?? '').toUpperCase();
 
   if (userType === 'G') {
     return 'web-home-page-v3-guest';
-  }
-
-  return 'web-home-page-v3-registered';
+  } else if (userType === 'R') {
+    return 'web-home-page-v3-registered';
+  } else throw new CustomError(`Invalid or missing user-type header: ${userType}`, 400);
 }

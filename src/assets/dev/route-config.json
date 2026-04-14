@@ -745,6 +745,43 @@
     }
   },
   {
+    "path": "/xp-mi/public/v1/verify-passcode",
+    "method": "POST",
+    "routeHandler": "CONDITIONAL",
+    "conditionTransform": "login.transformers.selectLoginTarget",
+    "targets": [
+      {
+        "name": "otp-login",
+        "url": "https://qa-ssr.msme.jswone.in/auth/api/v1/construct/otp/verify",
+        "method": "POST",
+        "staticHeaders": {
+          "X-API-KEY": "${X_API_KEY_FOR_LOGIN}"
+        },
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
+        "reqTransform": "login.transformers.transformPhoneNumberPasscodeRequest",
+        "resTransform": "login.transformers.transformPasscodeResponse"
+      },
+      {
+        "name": "email-login",
+        "url": "https://qa-ssr.msme.jswone.in/auth/api/v1/construct/login",
+        "method": "POST",
+        "staticHeaders": {
+          "content-type": "application/json",
+          "X-API-KEY": "${X_API_KEY_FOR_LOGIN}"
+        },
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
+        "reqTransform": "login.transformers.transformEmailPasscodeRequest",
+        "resTransform": "login.transformers.transformPasscodeResponse"
+      }
+    ]
+  },
+  {
     "path": "/xp-mi/public/v1/homes/project/design-documents",
     "method": "POST",
     "routeHandler": "TRANSFORM",
@@ -1100,7 +1137,7 @@
     "conditionTransform": "login.transformers.selectLoginTarget",
     "targets": [
       {
-        "name": "generate-otp-login",
+        "name": "otp-login",
         "url": "https://qa-ssr.msme.jswone.in/auth/api/v1/construct/otp/send",
         "method": "POST",
         "staticHeaders": {
@@ -2270,10 +2307,6 @@
           {
             "source": "x-user-state",
             "destination": "x-user-state"
-          },
-          {
-            "source": "cookie",
-            "destination": "cookie"
           }
         ]
       },
@@ -2305,10 +2338,6 @@
           {
             "source": "x-user-state",
             "destination": "x-user-state"
-          },
-          {
-            "source": "cookie",
-            "destination": "cookie"
           }
         ]
       }
@@ -2380,10 +2409,6 @@
           {
             "source": "x-user-state",
             "destination": "x-user-state"
-          },
-          {
-            "source": "cookie",
-            "destination": "cookie"
           }
         ]
       }
@@ -3201,5 +3226,284 @@
       }
     ],
     "resTransform": "category.transformers.selectUomConvertResponse"
+  },
+  {
+    "path": "/xp-mi/public/v1/one-helix-enquiry",
+    "method": "POST",
+    "routeHandler": "CONDITIONAL",
+    "isCacheRequired": false,
+    "conditionTransform": "one-helix.transformers.selectOneHelixTarget",
+    "targets": [
+      {
+        "name": "one-helix-guest",
+        "url": "http://127.0.0.1:3000/xp-mi/public/v1/one-helix-enquiry/guest",
+        "method": "POST",
+        "timeout": {
+          "request": 15000,
+          "socket": 1000
+        },
+        "headersToPass": [
+          {
+            "source": "x-forwarded-for",
+            "destination": "x-forwarded-for"
+          }
+        ]
+      },
+      {
+        "name": "one-helix-logged-in",
+        "url": "http://127.0.0.1:3000/xp-mi/public/v1/one-helix-enquiry/logged-in",
+        "method": "POST",
+        "timeout": {
+          "request": 15000,
+          "socket": 1000
+        },
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "authorization"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "path": "/xp-mi/public/v1/one-helix-enquiry/guest",
+    "method": "POST",
+    "routeHandler": "AGGREGATE",
+    "aggregationType": "SEQUENTIAL",
+    "isCacheRequired": false,
+    "targets": [
+      {
+        "name": "one-helix-consent",
+        "url": "https://qa.msme.jswone.in/customer/v1/privacy/consent",
+        "method": "POST",
+        "timeout": {
+          "request": 10000,
+          "socket": 1000
+        },
+        "staticHeaders": {
+          "accept": "application/json, text/plain, */*",
+          "X-API-KEY": "${CUSTOMER_SERVICE_X_API_KEY}",
+          "content-type": "application/json"
+        },
+        "headersToPass": [
+          {
+            "source": "x-forwarded-for",
+            "destination": "x-forwarded-for"
+          }
+        ],
+        "reqTransform": "one-helix.transformers.transformOneHelixConsentRequest"
+      },
+      {
+        "name": "one-helix-task",
+        "url": "https://tms.qa.jswone.in/jswone/subject/task",
+        "method": "POST",
+        "timeout": {
+          "request": 10000,
+          "socket": 1000
+        },
+        "staticHeaders": {
+          "Authorization": "${ONE_HELIX_TASK_API_AUTHORIZATION}",
+          "Content-Type": "application/json"
+        },
+        "reqTransform": "one-helix.transformers.transformGuestOneHelixTaskRequest"
+      }
+    ],
+    "resTransform": "one-helix.transformers.pickOneHelixFinalResponse"
+  },
+  {
+    "path": "/xp-mi/public/v1/one-helix-enquiry/logged-in",
+    "method": "POST",
+    "routeHandler": "TRANSFORM",
+    "isCacheRequired": false,
+    "target": {
+      "name": "one-helix-task",
+      "url": "https://tms.qa.jswone.in/jswone/subject/task",
+      "method": "POST",
+      "timeout": {
+        "request": 10000,
+        "socket": 1000
+      },
+      "staticHeaders": {
+        "Authorization": "${ONE_HELIX_TASK_API_AUTHORIZATION}",
+        "Content-Type": "application/json"
+      },
+      "headersToPass": [
+        {
+          "source": "authorization",
+          "destination": "authorization"
+        }
+      ],
+      "reqTransform": "one-helix.transformers.transformLoggedInOneHelixTaskRequest"
+    }
+  },
+  {
+    "path": "/xp-mi/public/v1/category-consolidated",
+    "method": "POST",
+    "routeHandler": "CONDITIONAL",
+    "isCacheRequired": false,
+    "conditionTransform": "category.transformers.selectCategoryConsolidatedTarget",
+    "targets": [
+      {
+        "name": "category-consolidated-central",
+        "url": "http://127.0.0.1:3000/xp-mi/public/v1/category-consolidated/central",
+        "method": "POST",
+        "timeout": {
+          "request": 15000,
+          "socket": 1000
+        },
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "access_token"
+          },
+          {
+            "source": "access_token",
+            "destination": "access_token"
+          }
+        ]
+      },
+      {
+        "name": "category-consolidated-legacy",
+        "url": "http://127.0.0.1:3000/xp-mi/public/v1/category-consolidated/legacy",
+        "method": "POST",
+        "timeout": {
+          "request": 15000,
+          "socket": 1000
+        },
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "access_token"
+          },
+          {
+            "source": "access_token",
+            "destination": "access_token"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "path": "/xp-mi/public/v1/category-consolidated/central",
+    "method": "POST",
+    "routeHandler": "AGGREGATE",
+    "aggregationType": "PARALLEL",
+    "isCacheRequired": false,
+    "targets": [
+      {
+        "name": "central-products-listing",
+        "url": "https://qa.msme.jswone.in/central_commerce/products/listing",
+        "method": "POST",
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
+        "reqTransform": "category.transformers.transformCentralCategoryProductsRequest",
+        "headersToPass": [
+          {
+            "source": "access_token",
+            "destination": "access_token"
+          }
+        ]
+      },
+      {
+        "name": "central-breadcrumbs",
+        "url": "https://qa.msme.jswone.in/central_commerce/categories/breadcrumb",
+        "method": "GET",
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
+        "reqTransform": "category.transformers.transformCentralCategoryBreadcrumbRequest",
+        "headersToPass": [
+          {
+            "source": "access_token",
+            "destination": "access_token"
+          }
+        ]
+      }
+    ],
+    "resTransform": "category.transformers.mergeCentralCategoryConsolidatedResponse"
+  },
+  {
+    "path": "/xp-mi/public/v1/category-consolidated/legacy",
+    "method": "POST",
+    "routeHandler": "AGGREGATE",
+    "aggregationType": "PARALLEL",
+    "isCacheRequired": false,
+    "targets": [
+      {
+        "name": "legacy-products-listing",
+        "url": "https://qa.msme.jswone.in/product/v2/projections/filter",
+        "method": "POST",
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
+        "reqTransform": "category.transformers.transformLegacyCategoryProductsRequest",
+        "headersToPass": [
+          {
+            "source": "access_token",
+            "destination": "access_token"
+          }
+        ]
+      },
+      {
+        "name": "legacy-breadcrumbs",
+        "url": "https://qa.msme.jswone.in/catalog/breadcrumb/category",
+        "method": "GET",
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
+        "reqTransform": "category.transformers.transformLegacyCategoryBreadcrumbRequest",
+        "headersToPass": [
+          {
+            "source": "access_token",
+            "destination": "access_token"
+          }
+        ]
+      }
+    ],
+    "resTransform": "category.transformers.mergeLegacyCategoryConsolidatedResponse"
+  },
+  {
+    "path": "/xp-mi/public/v1/recent-viewed/remove",
+    "method": "GET",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "url": "https://qa.msme.jswone.in/central_commerce/recent-viewed/remove",
+      "method": "GET",
+      "timeout": {
+        "request": 5000,
+        "socket": 1000
+      },
+      "headersToPass": [
+        {
+          "source": "authorization",
+          "destination": "access_token"
+        }
+      ]
+    }
+  },
+  {
+    "path": "/xp-mi/public/v1/resend-otp",
+    "method": "POST",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "app-resend-otp",
+      "url": "https://qa-ssr.msme.jswone.in/auth/api/v1/construct/otp/resend",
+      "method": "POST",
+      "staticHeaders": {
+        "X-API-KEY": "${X_API_KEY_FOR_LOGIN}"
+      },
+      "timeout": {
+        "request": 5000,
+        "socket": 1000
+      },
+      "reqTransform": "general.transformers.moveBodyToQueryParams",
+      "resTransform": "login.transformers.transformResendOtpResponse"
+    }
   }
 ]
