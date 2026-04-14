@@ -678,5 +678,87 @@ export function mergeWebHomePageResponsesV3(aggregatedResponses: AggregatedRespo
       .filter((nav: any) => nav.subMenu && nav.subMenu.length > 0);
   }
 
+  /**
+   * 8) Inject Recently Viewed Products
+   */
+  const recentlyViewedDetailsAgg = responses['recently-viewed-product-details'];
+  const recentViewedRemoveAgg = responses['recent-viewed-remove'];
+
+  if (page.recently_viewed_component) {
+    let removedMmids: string[] = [];
+    if (recentViewedRemoveAgg?.success && recentViewedRemoveAgg.data?.data?.removeProduct) {
+      removedMmids = recentViewedRemoveAgg.data.data.removeProduct;
+    } else if (recentViewedRemoveAgg && !recentViewedRemoveAgg.success) {
+      Logger.warn(
+        `Warning for Web Home Page API method: mergeWebHomePageResponsesV3 recent-viewed-remove response failed.`,
+        recentViewedRemoveAgg.error ?? 'Unknown error',
+      );
+    }
+
+    let recentlyViewedProducts: RecentlyViewedProduct[] = [];
+    if (recentlyViewedDetailsAgg?.success) {
+      recentlyViewedProducts = normalizeRecentlyViewedProducts(recentlyViewedDetailsAgg.data as any);
+    } else if (recentlyViewedDetailsAgg && !recentlyViewedDetailsAgg.success) {
+      Logger.warn(
+        `Warning for Web Home Page API method: mergeWebHomePageResponsesV3 recently-viewed-product-details response failed.`,
+        recentlyViewedDetailsAgg.error ?? 'Unknown error',
+      );
+    }
+
+    // Filter out naturally removed products and expose removedMmids for frontend
+    page.recently_viewed_component.recentlyViewedProducts = recentlyViewedProducts.filter(
+      (product) => !removedMmids.includes(product.mmid),
+    );
+    page.recently_viewed_component.removedMmids = removedMmids;
+  }
+
   return mergedWrapper;
+}
+export interface RecentlyViewedProduct {
+  mmid: string;
+  productTitle: string;
+  imageUrl: string;
+  productSlug: string;
+}
+
+// ─── Normalizer ────────────────────────────────────────────────────────────
+
+/** Transform the Central Catalogue API response into display-ready shape */
+export function normalizeRecentlyViewedProducts(response: any): RecentlyViewedProduct[] {
+  const items: any[] = response?.data?.products ?? [];
+
+  return items
+    .map((item) => ({
+      mmid: item.product_mmid ?? '',
+      productTitle: item.attributes?.product_title ?? '',
+      imageUrl: item.meta_data?.product_media?.[0]?.public_url ?? '',
+      productSlug: item.attributes?.slug ?? '',
+    }))
+    .filter((p) => p.mmid && p.productSlug);
+}
+
+// ─── Request Transformer ───────────────────────────────────────────────────
+
+export function transformRecentlyViewedMMIDsRequest(request: BaseRequest): BaseRequest {
+  let mmids: string[] = [];
+
+  try {
+    if (request.body && Array.isArray((request.body as any).recentlyViewedMmids)) {
+      mmids = (request.body as any).recentlyViewedMmids;
+    } else if (request.body && Array.isArray((request.body as any).mmids)) {
+      mmids = (request.body as any).mmids;
+    } else if (Array.isArray(request.body)) {
+      mmids = request.body;
+    }
+  } catch (e) {
+    Logger.warn(`transformRecentlyViewedMMIDsRequest: Failed to extract MMIDs → ${String(e)}`);
+  }
+
+  // Ensure unique MMIDs just in case
+  mmids = Array.from(new Set(mmids));
+
+  return {
+    ...request,
+    body: mmids,
+  };
 }
