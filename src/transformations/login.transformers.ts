@@ -435,3 +435,33 @@ export function validateSellerData(data) {
   }
   return { isValid: true };
 }
+
+export function transformResendOtpResponse(response) {
+  const responseData = response?.data;
+
+  safeDebug(
+    Logger,
+    () =>
+      ` CCP Resend OTP  Api response from method: transformResendOtpResponse : ${JSON.stringify(
+        responseData,
+      )}`,
+  );
+  if (!responseData) {
+    Logger.error(
+      `Error for Resend OTP API method: transformResendOtpResponse CCP Resend OTP API is failing`,
+    );
+    throw new CustomError('CCP Resend OTP API is failing', HttpStatus.INTERNAL_SERVER_ERROR);
+  }
+  if (!responseData.success) {
+    Logger.error(
+      `Error for Resend OTP API method: transformResendOtpResponse MSME_ERRORS_MAPPING[responseData.message] || responseData.message`,
+    );
+    throw new CustomError(
+      MSME_ERRORS_MAPPING[responseData.message] || responseData.message,
+      HttpStatus.BAD_REQUEST,
+    );
+  }
+  return {
+    success: true,
+  };
+}
