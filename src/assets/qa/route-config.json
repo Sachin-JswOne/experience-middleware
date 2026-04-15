@@ -3148,5 +3148,43 @@
       }
     ],
     "resTransform": "category.transformers.mergeLegacyCategoryConsolidatedResponse"
+  },
+  {
+    "path": "/xp-mi/public/v1/recent-viewed/remove",
+    "method": "GET",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "url": "https://qa.msme.jswone.in/central_commerce/recent-viewed/remove",
+      "method": "GET",
+      "timeout": {
+        "request": 5000,
+        "socket": 1000
+      },
+      "headersToPass": [
+        {
+          "source": "authorization",
+          "destination": "access_token"
+        }
+      ]
+    }
+  },
+  {
+    "path": "/xp-mi/public/v1/resend-otp",
+    "method": "POST",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "app-resend-otp",
+      "url": "https://qa-ssr.msme.jswone.in/auth/api/v1/construct/otp/resend",
+      "method": "POST",
+      "staticHeaders": {
+        "X-API-KEY": "${X_API_KEY_FOR_LOGIN}"
+      },
+      "timeout": {
+        "request": 5000,
+        "socket": 1000
+      },
+      "reqTransform": "general.transformers.moveBodyToQueryParams",
+      "resTransform": "login.transformers.transformResendOtpResponse"
+    }
   }
 ]
