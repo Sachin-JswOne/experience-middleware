@@ -370,7 +370,7 @@ export function mergeProjectDetailsAndTrackerResponses(
       projectID,
       homesTeam,
       projectTracker,
-      rdashStage
+      rdashStage,
     },
   };
 }
