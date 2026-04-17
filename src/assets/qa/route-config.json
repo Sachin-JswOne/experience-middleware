@@ -2349,6 +2349,85 @@
     "resTransform": "web.transformers.mergeWebHomePageResponsesV3"
   },
   {
+    "path": "/xp-mi/public/v1/web-generic-page",
+    "method": "POST",
+    "routeHandler": "AGGREGATE",
+    "aggregationType": "SEQUENTIAL",
+    "targets": [
+      {
+        "name": "layout-landing-pages",
+        "url": "${CMS_MSME_URL}/layout-landing-pages",
+        "method": "GET",
+        "timeout": {
+          "request": 10000,
+          "socket": 1000
+        },
+        "reqTransform": "general.transformers.moveBodyToQueryParams",
+        "resTransform": "cms.transformers.replaceUriPrefix"
+      },
+      {
+        "name": "web-products",
+        "url": "https://experience-middleware.qa.jswone.in/xp-mi/public/v1/web-products",
+        "method": "GET",
+        "timeout": {
+          "request": 10000,
+          "socket": 1000
+        },
+        "reqTransform": "general.transformers.convertToGetRequest",
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "authorization"
+          }
+        ]
+      },
+      {
+        "name": "web-categories",
+        "url": "https://qa.msme.jswone.in/central_commerce/categories/tree/list",
+        "method": "POST",
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
+        "reqTransform": "web.transformers.extractCentralCatalogueCategoryIdsv3",
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "access_token"
+          }
+        ]
+      },
+      {
+        "name": "products-listing",
+        "url": "https://qa.msme.jswone.in/central_commerce/products/listing",
+        "method": "POST",
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
+        "reqTransform": "web.genericPage.transformers.extractProductListingSlugv3",
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "access_token"
+          }
+        ]
+      },
+      {
+        "name": "app-blogs",
+        "url": "${CMS_MSME_URL}/jsw-blogs-articless",
+        "method": "GET",
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
+        "reqTransform": "cms.transformers.homeBlogs",
+        "resTransform": "cms.transformers.replaceUriPrefix"
+      }
+    ],
+    "resTransform": "web.genericPage.transformers.mergeWebGenericPageResponses"
+  },
+  {
     "path": "/xp-mi/public/v1/customer-industry",
     "method": "POST",
     "routeHandler": "TRANSFORM",
@@ -2760,26 +2839,19 @@
     "aggregationType": "SEQUENTIAL",
     "targets": [
       {
-        "name": "blogs",
-        "url": "https://qa-cms-ext.msme.jswone.in/api/jsw-blogs-articless",
-        "method": "GET",
+        "name": "industry-parallel-helper",
+        "url": "https://experience-middleware.qa.jswone.in/xp-mi/public/v1/jsw-blog-industry-content-parallel-helper",
+        "method": "POST",
         "timeout": {
-          "request": 10000,
+          "request": 15000,
           "socket": 1000
         },
-        "reqTransform": "industry-page.transformers.pickBlogsQuery",
-        "resTransform": "cms.transformers.replaceUriPrefix"
-      },
-      {
-        "name": "metrics",
-        "url": "https://qa-cms-ext.msme.jswone.in/api/mweb-metrics-components",
-        "method": "GET",
-        "timeout": {
-          "request": 10000,
-          "socket": 1000
-        },
-        "reqTransform": "industry-page.transformers.pickMatrixQuery",
-        "resTransform": "cms.transformers.replaceUriPrefix"
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "authorization"
+          }
+        ]
       },
       {
         "name": "industry-specific-components",
@@ -2809,7 +2881,38 @@
         ]
       }
     ],
-    "resTransform": "industry-page.transformers.mergeIndustryAllContentResponses"
+    "resTransform": "industry-page.transformers.mergeIndustryAllContentResponsesOptimized"
+  },
+  {
+    "path": "/xp-mi/public/v1/jsw-blog-industry-content-parallel-helper",
+    "method": "POST",
+    "routeHandler": "AGGREGATE",
+    "aggregationType": "PARALLEL",
+    "targets": [
+      {
+        "name": "blogs",
+        "url": "https://qa-cms-ext.msme.jswone.in/api/jsw-blogs-articless",
+        "method": "GET",
+        "timeout": {
+          "request": 10000,
+          "socket": 1000
+        },
+        "reqTransform": "industry-page.transformers.pickBlogsQuery",
+        "resTransform": "cms.transformers.replaceUriPrefix"
+      },
+      {
+        "name": "metrics",
+        "url": "https://qa-cms-ext.msme.jswone.in/api/mweb-metrics-components",
+        "method": "GET",
+        "timeout": {
+          "request": 10000,
+          "socket": 1000
+        },
+        "reqTransform": "industry-page.transformers.pickMatrixQuery",
+        "resTransform": "cms.transformers.replaceUriPrefix"
+      }
+    ],
+    "resTransform": "industry-page.transformers.wrapIndustryParallelResponses"
   },
   {
     "path": "/xp-mi/public/v1/blogs-details",

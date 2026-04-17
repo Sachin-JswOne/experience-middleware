@@ -3,16 +3,67 @@ import { Logger } from '@nestjs/common';
 import { safeDebug, safeToLog } from 'src/utils/common-functions.util';
 import { BaseRequest } from 'src/models/base-request.model';
 import { CustomError } from 'src/utils/CustomError';
+import * as categoryTransformers from './category.transformers';
+import {
+  extractBrandCategoryIdsv3 as extractBrandCategoryIdsv3Util,
+  extractCentralCatalogueCategoryIdsv3 as extractCentralCatalogueCategoryIdsv3Util,
+  extractProductListingSlugv3 as extractProductListingSlugv3Util,
+} from 'src/utils/central-category.util';
 export {
   extractCentralCatalogueCategoryIds,
   extractCentralCatalogueCategoryIdsv3,
   getAllCentralCatalogueCategoryIds,
   getAllCentralCatalogueCategoryIdsv3,
-  extractBrandCategoryIds,
-  extractProductListingSlug,
   extractBrandCategoryIdsv3,
   extractProductListingSlugv3,
 } from 'src/utils/central-category.util';
+import * as generalTransformers from './general.transformers';
+import * as cmsTransformers from './cms.transformers';
+import { Request } from 'express';
+
+const WEB_HOME_PAGE_V3_ORIGINAL_BODY_KEY = '__webHomePageV3OriginalBody';
+const WEB_HOME_PAGE_V3_CMS_KEY = '__webHomePageV3CmsResponse';
+
+export function homeBlogsFromParallelPayload(request: BaseRequest): BaseRequest {
+  return cmsTransformers.homeBlogs({
+    ...request,
+    body: getParallelHelperOriginalBody(request),
+  });
+}
+
+export function convertOriginalBodyToGetRequestFromParallelPayload(
+  request: BaseRequest,
+): BaseRequest {
+  return generalTransformers.convertToGetRequest({
+    ...request,
+    body: getParallelHelperOriginalBody(request),
+  });
+}
+
+function buildSyntheticHomepageCmsPrevResponses(cmsResponse: any): AggregatedResponse[] {
+  return [
+    {
+      target: 'layout-mweb-homepages',
+      success: true,
+      data: {
+        data: cmsResponse ? [cmsResponse] : [],
+        meta: {},
+      },
+    } as AggregatedResponse,
+  ];
+}
+
+function getParallelHelperCmsResponse(request: BaseRequest): any {
+  return request?.body?.[WEB_HOME_PAGE_V3_CMS_KEY] ?? null;
+}
+
+function getParallelHelperOriginalBody(request: BaseRequest): any {
+  return request?.body?.[WEB_HOME_PAGE_V3_ORIGINAL_BODY_KEY] ?? {};
+}
+
+function getHomepageV3PageFromHelperBody(request: BaseRequest): any {
+  return getParallelHelperCmsResponse(request);
+}
 
 export function mergeWebHomePageResponses(aggregatedResponses: AggregatedResponse[]): any {
   const responses = aggregatedResponses.reduce(
@@ -315,6 +366,129 @@ export function handleProductResponse(aggregatedResponses: AggregatedResponse[])
   return productsResponse;
 }
 
+function buildCompactWebHomePageV3Payload(cmsResponse: any) {
+  const page = Array.isArray(cmsResponse?.data) ? cmsResponse.data[0] : null;
+
+  return {
+    mweb_top_item: page?.mweb_top_item ?? null,
+    product_category_component: Array.isArray(page?.product_category_component)
+      ? page.product_category_component
+      : [],
+    industry_specific_components: Array.isArray(page?.industry_specific_components)
+      ? page.industry_specific_components
+      : [],
+    category_component: page?.category_component ?? null,
+    top_brand_component: page?.top_brand_component ?? null,
+  };
+}
+
+export function prepareWebHomePageV3ParallelPayload(
+  request: BaseRequest,
+  prevResponses: AggregatedResponse[],
+): BaseRequest {
+  const cmsAgg = prevResponses.find((r) => r.target === 'layout-mweb-homepages');
+  const compactCms = buildCompactWebHomePageV3Payload(cmsAgg?.data);
+
+  return {
+    ...request,
+    body: {
+      [WEB_HOME_PAGE_V3_ORIGINAL_BODY_KEY]: request.body ?? {},
+      [WEB_HOME_PAGE_V3_CMS_KEY]: compactCms,
+    },
+  };
+}
+
+export function mergeWebHomePageResponsesV3FromNestedParallel(
+  aggregatedResponses: AggregatedResponse[],
+): any {
+  const cmsAgg = aggregatedResponses.find((r) => r.target === 'layout-mweb-homepages');
+  const helperAgg = aggregatedResponses.find(
+    (r) => r.target === 'web-home-page-v3-registered-parallel-helper',
+  );
+
+  if (!helperAgg) {
+    throw new CustomError('web-home-page-v3-parallel-helper response missing', 500);
+  }
+
+  if (!helperAgg.success) {
+    Logger.error(
+      `web-home-page-v3-parallel-helper failed: ${safeToLog(helperAgg.error)} | downstream=${safeToLog(
+        helperAgg.downstreamResponse,
+      )}`,
+    );
+    throw new CustomError(
+      `web-home-page-v3-parallel-helper failed: ${helperAgg.error ?? 'unknown error'}`,
+      helperAgg.httpStatus ?? 500,
+    );
+  }
+
+  if (!Array.isArray(helperAgg.data)) {
+    Logger.error(
+      `web-home-page-v3-parallel-helper returned non-array data: ${safeToLog(helperAgg.data)}`,
+    );
+    throw new CustomError('web-home-page-v3-parallel-helper returned non-array data', 500);
+  }
+
+  return mergeWebHomePageResponsesV3([...(cmsAgg ? [cmsAgg] : []), ...helperAgg.data]);
+}
+
+export function addFeatureFlagQueryParamsFromParallelPayload(request: BaseRequest): BaseRequest {
+  return categoryTransformers.addFeatureFlagQueryParams({
+    ...request,
+    body: getParallelHelperOriginalBody(request),
+  });
+}
+
+export function transformWebHomePageTopItemsMMIDRequestV3FromCmsBody(
+  request: BaseRequest,
+): BaseRequest {
+  const page0 = getHomepageV3PageFromHelperBody(request);
+  let mmids: string[] = [];
+
+  try {
+    const items = page0?.mweb_top_item?.app_search_top_items ?? [];
+    mmids = Array.from(new Set(extractMMIDs(items)));
+  } catch (e) {
+    Logger.warn(
+      `transformWebHomePageTopItemsMMIDRequestV3FromCmsBody: MMID extraction failed → ${safeToLog(
+        e,
+      )}`,
+    );
+  }
+
+  return {
+    ...request,
+    body: mmids,
+  };
+}
+
+export function extractBrandCategoryIdsv3FromCmsBody(request: BaseRequest): BaseRequest {
+  const cmsResponse = getParallelHelperCmsResponse(request);
+
+  return extractBrandCategoryIdsv3Util(
+    request,
+    buildSyntheticHomepageCmsPrevResponses(cmsResponse),
+  );
+}
+
+export function extractCentralCatalogueCategoryIdsv3FromCmsBody(request: BaseRequest): BaseRequest {
+  const cmsResponse = getParallelHelperCmsResponse(request);
+
+  return extractCentralCatalogueCategoryIdsv3Util(
+    request,
+    buildSyntheticHomepageCmsPrevResponses(cmsResponse),
+  );
+}
+
+export function extractProductListingSlugv3FromCmsBody(request: BaseRequest): BaseRequest {
+  const cmsResponse = getParallelHelperCmsResponse(request);
+
+  return extractProductListingSlugv3Util(
+    request,
+    buildSyntheticHomepageCmsPrevResponses(cmsResponse),
+  );
+}
+
 function extractMMIDs(items: any[]): string[] {
   if (!Array.isArray(items)) return [];
   return items
@@ -336,7 +510,6 @@ export function transformWebHomePageTopItemsMMIDRequestV3(
     return { ...request, body: [] };
   }
   const cmsAgg = prevResponses.find((r) => r.target === 'layout-mweb-homepages');
-  safeDebug(Logger, () => `Web Home CMS Response → ${safeToLog(cmsAgg?.data)}`);
 
   let mmids: string[] = [];
 
@@ -351,7 +524,6 @@ export function transformWebHomePageTopItemsMMIDRequestV3(
   }
 
   mmids = Array.from(new Set(mmids));
-  safeDebug(Logger, () => `Homepage MMIDs sent to CCP → ${safeToLog(mmids)}`);
 
   // CCP expects RAW ARRAY
   return {
@@ -384,7 +556,6 @@ export function mergeWebHomePageResponsesV3(aggregatedResponses: AggregatedRespo
     Array.isArray(featureFlags) &&
     featureFlags.some((f: any) => f?.name === 'central_catalogue_global' && f?.isActive === true);
 
-  safeDebug(Logger, () => `FeatureFlags → ${safeToLog(featureFlags)}`);
   safeDebug(Logger, () => `isCentralCatalogueEnabled → ${String(isCentralCatalogueEnabled)}`);
 
   safeDebug(
@@ -761,4 +932,14 @@ export function transformRecentlyViewedMMIDsRequest(request: BaseRequest): BaseR
     ...request,
     body: mmids,
   };
+}
+
+export function selectWebHomePageV3TargetByUserType(req: Request): string {
+  const userType = String(req.headers?.['user-type'] ?? '').toUpperCase();
+
+  if (userType === 'G') {
+    return 'web-home-page-v3-guest';
+  } else if (userType === 'R') {
+    return 'web-home-page-v3-registered';
+  } else throw new CustomError(`Invalid or missing user-type header: ${userType}`, 400);
 }

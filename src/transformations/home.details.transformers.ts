@@ -53,6 +53,7 @@ export function mergeUserDetailsResponses(aggregatedResponses: AggregatedRespons
         phoneNumber: homesData?.phoneNumber ?? '',
         email: homesData?.email ?? '',
         projectIds: homesData?.projectIds ?? [],
+        uuid : homesData?.uuid ?? ''
       },
     },
   };
@@ -369,7 +370,7 @@ export function mergeProjectDetailsAndTrackerResponses(
       projectID,
       homesTeam,
       projectTracker,
-      rdashStage
+      rdashStage,
     },
   };
 }
