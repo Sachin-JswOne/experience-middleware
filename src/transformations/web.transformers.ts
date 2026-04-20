@@ -16,6 +16,7 @@ export {
   getAllCentralCatalogueCategoryIdsv3,
   extractBrandCategoryIdsv3,
   extractProductListingSlugv3,
+  extractBrandCategoryIds,
 } from 'src/utils/central-category.util';
 import * as generalTransformers from './general.transformers';
 import * as cmsTransformers from './cms.transformers';
@@ -868,7 +869,9 @@ export function mergeWebHomePageResponsesV3(aggregatedResponses: AggregatedRespo
 
     let recentlyViewedProducts: RecentlyViewedProduct[] = [];
     if (recentlyViewedDetailsAgg?.success) {
-      recentlyViewedProducts = normalizeRecentlyViewedProducts(recentlyViewedDetailsAgg.data as any);
+      recentlyViewedProducts = normalizeRecentlyViewedProducts(
+        recentlyViewedDetailsAgg.data as any,
+      );
     } else if (recentlyViewedDetailsAgg && !recentlyViewedDetailsAgg.success) {
       Logger.warn(
         `Warning for Web Home Page API method: mergeWebHomePageResponsesV3 recently-viewed-product-details response failed.`,
