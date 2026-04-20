@@ -538,9 +538,11 @@ export class ProxyService {
               }
 
               if (errorResponse.status >= 400 && errorResponse.status < 500) {
-                const data = errorResponse.data;
                 const downstreamMessage =
-                  (data && typeof data === 'object' && (data.message || data.error_description)) ||
+                  errorResponse.data?.error?.message ||
+                  errorResponse.data?.error ||
+                  errorResponse.data?.message ||
+                  errorResponse.data?.error_description ||
                   errorResponse.statusText ||
                   'Bad Request';
 

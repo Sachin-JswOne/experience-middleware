@@ -90,8 +90,6 @@ export function transformOneHelixConsentRequest(request: BaseRequest): BaseReque
     },
   };
 
-  console.log('Transformed Consent Request:', JSON.stringify(transformedRequest, null, 2));
-
   return transformedRequest;
 }
 
@@ -178,14 +176,18 @@ export function pickOneHelixFinalResponse(
   const consentResponse = responses['one-helix-consent'];
   const taskResponse = responses['one-helix-task'];
 
-  if (!taskResponse?.success) {
-    const err = new CustomError(
-      taskResponse?.error || 'One Helix task creation failed',
-      500,
-    ) as any;
-    err.httpStatusCode = taskResponse?.httpStatus || 500;
-    err.downstreamResponse = taskResponse?.downstreamResponse || null;
-    throw err;
+  if (consentResponse && !consentResponse.success) {
+    throw new CustomError(
+      consentResponse.error || 'Consent validation failed',
+      consentResponse.httpStatus || 500,
+    );
+  }
+
+  if (taskResponse && !taskResponse.success) {
+    throw new CustomError(
+      taskResponse.error || 'Task creation failed',
+      taskResponse.httpStatus || 500,
+    );
   }
 
   return {
