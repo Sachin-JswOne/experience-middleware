@@ -38,7 +38,8 @@ export function extractCentralCatalogueCategoryIds(
 
   const cmsResponse =
     prevResponses.find((r) => r.target === 'app-home-page') ??
-    prevResponses.find((r) => r.target === 'app-search-page');
+    prevResponses.find((r) => r.target === 'app-search-page') ??
+    prevResponses.find((r) => r.target === 'layout-landing-pages');
 
   if (!cmsResponse?.success) {
     Logger.warn(`CMS response missing or failed`);
@@ -76,7 +77,8 @@ export function extractCentralCatalogueCategoryIdsv3(
   const cmsResponse =
     prevResponses.find((r) => r.target === 'layout-mweb-homepages') ??
     prevResponses.find((r) => r.target === 'app-home-page') ??
-    prevResponses.find((r) => r.target === 'app-search-page');
+    prevResponses.find((r) => r.target === 'app-search-page') ??
+    prevResponses.find((r) => r.target === 'layout-landing-pages');
 
   if (!cmsResponse) {
     Logger.warn(
@@ -426,7 +428,8 @@ export function extractProductListingSlugv3(
   // Prefer V3 cms target
   const cmsResponse =
     prevResponses.find((r) => r.target === 'layout-mweb-homepages') ??
-    prevResponses.find((r) => r.target === 'app-home-page');
+    prevResponses.find((r) => r.target === 'app-home-page') ??
+    prevResponses.find((r) => r.target === 'layout-landing-pages');
 
   if (!cmsResponse || !cmsResponse.success) {
     Logger.warn(
@@ -470,7 +473,31 @@ export function extractProductListingSlugv3(
       if (slug) break;
     }
   }
+  const genericBlocks = firstPage?.genericPage ?? [];
 
+  if (Array.isArray(genericBlocks)) {
+    for (const block of genericBlocks) {
+      if (block.__component === 'app-components.app-product-category') {
+        const categories = block?.app_product_categories ?? [];
+
+        for (const cat of categories) {
+          const firstCentral =
+            Array.isArray(cat?.web_central_catalogue_categories) &&
+            cat.web_central_catalogue_categories.length > 0
+              ? cat.web_central_catalogue_categories[0]
+              : null;
+
+          const candidate = firstCentral?.categorySlug;
+
+          if (typeof candidate === 'string' && candidate.trim()) {
+            slug = candidate.trim();
+            break;
+          }
+        }
+      }
+      if (slug) break;
+    }
+  }
   if (!slug) {
     const blocks = cmsResponse.data?.data?.blocks ?? [];
 
@@ -534,6 +561,22 @@ export function getAllCentralCatalogueCategoryIdsv3(page: any): string[] {
       if (typeof id === 'string' && id.trim()) ids.push(id.trim());
     }
   };
+  const genericBlocks = page?.genericPage ?? [];
+
+  if (Array.isArray(genericBlocks)) {
+    for (const block of genericBlocks) {
+      if (block.__component === 'app-components.app-category-component') {
+        pushIds(block?.web_central_catalogue_categories);
+      }
+
+      if (block.__component === 'app-components.app-product-category') {
+        const categories = block?.app_product_categories ?? [];
+        for (const cat of categories) {
+          pushIds(cat?.web_central_catalogue_categories);
+        }
+      }
+    }
+  }
 
   // 1) category_component.web_central_catalogue_categories[]
   pushIds(page?.category_component?.web_central_catalogue_categories);

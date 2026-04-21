@@ -2372,5 +2372,194 @@
       }
     ],
     "resTransform": "industry-page.transformers.mergeIndustryAllContentResponses"
+  },
+  {
+    "path": "/xp-mi/public/v1/one-helix-enquiry",
+    "method": "POST",
+    "routeHandler": "CONDITIONAL",
+    "isCacheRequired": false,
+    "conditionTransform": "one-helix.transformers.selectOneHelixTarget",
+    "targets": [
+      {
+        "name": "one-helix-guest",
+        "url": "https://experience-middleware.preprod.jswonemsme.com/xp-mi/public/v1/one-helix-enquiry/guest",
+        "method": "POST",
+        "timeout": {
+          "request": 15000,
+          "socket": 1000
+        },
+        "headersToPass": [
+          {
+            "source": "x-forwarded-for",
+            "destination": "x-forwarded-for"
+          }
+        ]
+      },
+      {
+        "name": "one-helix-logged-in",
+        "url": "https://experience-middleware.preprod.jswonemsme.com/xp-mi/public/v1/one-helix-enquiry/logged-in",
+        "method": "POST",
+        "timeout": {
+          "request": 15000,
+          "socket": 1000
+        },
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "authorization"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "path": "/xp-mi/public/v1/one-helix-enquiry/guest",
+    "method": "POST",
+    "routeHandler": "AGGREGATE",
+    "aggregationType": "SEQUENTIAL",
+    "isCacheRequired": false,
+    "targets": [
+      {
+        "name": "one-helix-consent",
+        "url": "https://preprod.jswonemsme.com/customer/v1/privacy/consent",
+        "method": "POST",
+        "timeout": {
+          "request": 10000,
+          "socket": 1000
+        },
+        "staticHeaders": {
+          "accept": "application/json, text/plain, */*",
+          "X-API-KEY": "${CUSTOMER_SERVICE_X_API_KEY}",
+          "content-type": "application/json"
+        },
+        "headersToPass": [
+          {
+            "source": "x-forwarded-for",
+            "destination": "x-forwarded-for"
+          }
+        ],
+        "reqTransform": "one-helix.transformers.transformOneHelixConsentRequest"
+      },
+      {
+        "name": "one-helix-task",
+        "url": "https://tms.preprod.jswonemsme.com/jswone/subject/task",
+        "method": "POST",
+        "timeout": {
+          "request": 10000,
+          "socket": 1000
+        },
+        "staticHeaders": {
+          "Authorization": "${ONE_HELIX_TASK_API_AUTHORIZATION}",
+          "Content-Type": "application/json"
+        },
+        "reqTransform": "one-helix.transformers.transformGuestOneHelixTaskRequest"
+      }
+    ],
+    "resTransform": "one-helix.transformers.pickOneHelixFinalResponse"
+  },
+  {
+    "path": "/xp-mi/public/v1/one-helix-enquiry/logged-in",
+    "method": "POST",
+    "routeHandler": "TRANSFORM",
+    "isCacheRequired": false,
+    "target": {
+      "name": "one-helix-task",
+      "url": "https://tms.preprod.jswonemsme.com/jswone/subject/task",
+      "method": "POST",
+      "timeout": {
+        "request": 10000,
+        "socket": 1000
+      },
+      "staticHeaders": {
+        "Authorization": "${ONE_HELIX_TASK_API_AUTHORIZATION}",
+        "Content-Type": "application/json"
+      },
+      "headersToPass": [
+        {
+          "source": "authorization",
+          "destination": "authorization"
+        }
+      ],
+      "reqTransform": "one-helix.transformers.transformLoggedInOneHelixTaskRequest"
+    }
+  },
+  {
+  "path": "/xp-mi/public/v1/web-generic-page",
+  "method": "POST",
+  "routeHandler": "AGGREGATE",
+  "aggregationType": "SEQUENTIAL",
+  "targets": [
+    {
+      "name": "layout-landing-pages",
+      "url": "${CMS_MSME_URL}/layout-landing-pages",
+      "method": "GET",
+      "timeout": {
+        "request": 10000,
+        "socket": 1000
+      },
+      "reqTransform": "general.transformers.moveBodyToQueryParams",
+      "resTransform": "cms.transformers.replaceUriPrefix"
+    },
+    {
+      "name": "web-products",
+      "url": "https://experience-middleware.preprod.jswonemsme.com/xp-mi/public/v1/web-products",
+      "method": "GET",
+      "timeout": {
+        "request": 10000,
+        "socket": 1000
+      },
+      "reqTransform": "general.transformers.convertToGetRequest",
+      "headersToPass": [
+        {
+          "source": "authorization",
+          "destination": "authorization"
+        }
+      ]
+    },
+    {
+      "name": "web-categories",
+      "url": "https://preprod.jswonemsme.com/central_commerce/categories/tree/list",
+      "method": "POST",
+      "timeout": {
+        "request": 5000,
+        "socket": 1000
+      },
+      "reqTransform": "web.transformers.extractCentralCatalogueCategoryIdsv3",
+      "headersToPass": [
+        {
+          "source": "authorization",
+          "destination": "access_token"
+        }
+      ]
+    },
+    {
+      "name": "products-listing",
+      "url": "https://preprod.jswonemsme.com/central_commerce/products/listing",
+      "method": "POST",
+      "timeout": {
+        "request": 5000,
+        "socket": 1000
+      },
+      "reqTransform": "web.genericPage.transformers.extractProductListingSlugv3",
+      "headersToPass": [
+        {
+          "source": "authorization",
+          "destination": "access_token"
+        }
+      ]
+    },
+    {
+        "name": "app-blogs",
+        "url": "${CMS_MSME_URL}/jsw-blogs-articless",
+        "method": "GET",
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
+        "reqTransform": "cms.transformers.homeBlogs",
+        "resTransform": "cms.transformers.replaceUriPrefix"
+    }
+  ],
+  "resTransform": "web.genericPage.transformers.mergeWebGenericPageResponses"
   }
 ]
