@@ -120,13 +120,6 @@ export class ProxyService {
         const authHeader = req.headers?.authorization || req.headers?.access_token;
         const userState = req.headers?.['x-user-state'];
 
-        if (userState === 'G') {
-          req.headers = {
-            ...req.headers,
-            authorization: process.env.GUEST_ACCESS_TOKEN,
-          };
-        }
-
         if (!authHeader && userState !== 'G') {
           throw new CustomError('Bad Request: Authorization required', 400);
         }
