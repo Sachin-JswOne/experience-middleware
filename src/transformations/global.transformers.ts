@@ -15,21 +15,15 @@ export function mergeGlobalAndSlcCartResponses(aggregatedResponses: AggregatedRe
   const appCartSizeResponse = responses['app-cart-size'];
 
   Logger.debug(
-    ` Strapi Global Page Api response from method: mergeGlobalAndSlcCartResponses : ${JSON.stringify(
-      appGlobalPageResponse,
-    )}`,
+    ` Strapi Global Page Api response from method: mergeGlobalAndSlcCartResponses : {success: appGlobalPageResponse?.success, data: appGlobalPageResponse?.data,}`,
   );
 
   Logger.debug(
-    ` Slc Cart Api response from method: mergeGlobalAndSlcCartResponses : ${JSON.stringify(
-      appSlcCartDetailsResponse,
-    )}`,
+    ` Slc Cart Api response from method: mergeGlobalAndSlcCartResponses : {success: appSlcCartDetailsResponse?.success, data: appSlcCartDetailsResponse?.data}`,
   );
 
   Logger.debug(
-    ` Cart Size response from method: mergeGlobalAndSlcCartResponses : ${JSON.stringify(
-      appCartSizeResponse,
-    )}`,
+    ` Cart Size response from method: mergeGlobalAndSlcCartResponses : {success: appCartSizeResponse?.success, data: appCartSizeResponse?.data}`,
   );
 
   if (appGlobalPageResponse && appSlcCartDetailsResponse) {
