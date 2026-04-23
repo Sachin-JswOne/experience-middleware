@@ -3447,12 +3447,5 @@
       "reqTransform": "general.transformers.moveBodyToQueryParams",
       "resTransform": "login.transformers.transformResendOtpResponse"
     }
-  },
-  {
-    "path": "/xp-mi/public/v1/customer_feedback",
-    "method": "POST",
-    "routeHandler": "CUSTOM",
-    "handler": "customerFeedback.transformers.customerFeedbackHandler"
-    
   }
 ]
