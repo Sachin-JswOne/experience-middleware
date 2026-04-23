@@ -3,16 +3,68 @@ import { Logger } from '@nestjs/common';
 import { safeDebug, safeToLog } from 'src/utils/common-functions.util';
 import { BaseRequest } from 'src/models/base-request.model';
 import { CustomError } from 'src/utils/CustomError';
+import * as categoryTransformers from './category.transformers';
+import {
+  extractBrandCategoryIdsv3 as extractBrandCategoryIdsv3Util,
+  extractCentralCatalogueCategoryIdsv3 as extractCentralCatalogueCategoryIdsv3Util,
+  extractProductListingSlugv3 as extractProductListingSlugv3Util,
+} from 'src/utils/central-category.util';
 export {
   extractCentralCatalogueCategoryIds,
   extractCentralCatalogueCategoryIdsv3,
   getAllCentralCatalogueCategoryIds,
   getAllCentralCatalogueCategoryIdsv3,
-  extractBrandCategoryIds,
-  extractProductListingSlug,
   extractBrandCategoryIdsv3,
   extractProductListingSlugv3,
+  extractBrandCategoryIds,
 } from 'src/utils/central-category.util';
+import * as generalTransformers from './general.transformers';
+import * as cmsTransformers from './cms.transformers';
+import { Request } from 'express';
+
+const WEB_HOME_PAGE_V3_ORIGINAL_BODY_KEY = '__webHomePageV3OriginalBody';
+const WEB_HOME_PAGE_V3_CMS_KEY = '__webHomePageV3CmsResponse';
+
+export function homeBlogsFromParallelPayload(request: BaseRequest): BaseRequest {
+  return cmsTransformers.homeBlogs({
+    ...request,
+    body: getParallelHelperOriginalBody(request),
+  });
+}
+
+export function convertOriginalBodyToGetRequestFromParallelPayload(
+  request: BaseRequest,
+): BaseRequest {
+  return generalTransformers.convertToGetRequest({
+    ...request,
+    body: getParallelHelperOriginalBody(request),
+  });
+}
+
+function buildSyntheticHomepageCmsPrevResponses(cmsResponse: any): AggregatedResponse[] {
+  return [
+    {
+      target: 'layout-mweb-homepages',
+      success: true,
+      data: {
+        data: cmsResponse ? [cmsResponse] : [],
+        meta: {},
+      },
+    } as AggregatedResponse,
+  ];
+}
+
+function getParallelHelperCmsResponse(request: BaseRequest): any {
+  return request?.body?.[WEB_HOME_PAGE_V3_CMS_KEY] ?? null;
+}
+
+function getParallelHelperOriginalBody(request: BaseRequest): any {
+  return request?.body?.[WEB_HOME_PAGE_V3_ORIGINAL_BODY_KEY] ?? {};
+}
+
+function getHomepageV3PageFromHelperBody(request: BaseRequest): any {
+  return getParallelHelperCmsResponse(request);
+}
 
 export function mergeWebHomePageResponses(aggregatedResponses: AggregatedResponse[]): any {
   const responses = aggregatedResponses.reduce(
@@ -315,7 +367,130 @@ export function handleProductResponse(aggregatedResponses: AggregatedResponse[])
   return productsResponse;
 }
 
-function extractMMIDs(items: any[]): string[] {
+function buildCompactWebHomePageV3Payload(cmsResponse: any) {
+  const page = Array.isArray(cmsResponse?.data) ? cmsResponse.data[0] : null;
+
+  return {
+    mweb_top_item: page?.mweb_top_item ?? null,
+    product_category_component: Array.isArray(page?.product_category_component)
+      ? page.product_category_component
+      : [],
+    industry_specific_components: Array.isArray(page?.industry_specific_components)
+      ? page.industry_specific_components
+      : [],
+    category_component: page?.category_component ?? null,
+    top_brand_component: page?.top_brand_component ?? null,
+  };
+}
+
+export function prepareWebHomePageV3ParallelPayload(
+  request: BaseRequest,
+  prevResponses: AggregatedResponse[],
+): BaseRequest {
+  const cmsAgg = prevResponses.find((r) => r.target === 'layout-mweb-homepages');
+  const compactCms = buildCompactWebHomePageV3Payload(cmsAgg?.data);
+
+  return {
+    ...request,
+    body: {
+      [WEB_HOME_PAGE_V3_ORIGINAL_BODY_KEY]: request.body ?? {},
+      [WEB_HOME_PAGE_V3_CMS_KEY]: compactCms,
+    },
+  };
+}
+
+export function mergeWebHomePageResponsesV3FromNestedParallel(
+  aggregatedResponses: AggregatedResponse[],
+): any {
+  const cmsAgg = aggregatedResponses.find((r) => r.target === 'layout-mweb-homepages');
+  const helperAgg = aggregatedResponses.find(
+    (r) => r.target === 'web-home-page-v3-registered-parallel-helper',
+  );
+
+  if (!helperAgg) {
+    throw new CustomError('web-home-page-v3-parallel-helper response missing', 500);
+  }
+
+  if (!helperAgg.success) {
+    Logger.error(
+      `web-home-page-v3-parallel-helper failed: ${safeToLog(helperAgg.error)} | downstream=${safeToLog(
+        helperAgg.downstreamResponse,
+      )}`,
+    );
+    throw new CustomError(
+      `web-home-page-v3-parallel-helper failed: ${helperAgg.error ?? 'unknown error'}`,
+      helperAgg.httpStatus ?? 500,
+    );
+  }
+
+  if (!Array.isArray(helperAgg.data)) {
+    Logger.error(
+      `web-home-page-v3-parallel-helper returned non-array data: ${safeToLog(helperAgg.data)}`,
+    );
+    throw new CustomError('web-home-page-v3-parallel-helper returned non-array data', 500);
+  }
+
+  return mergeWebHomePageResponsesV3([...(cmsAgg ? [cmsAgg] : []), ...helperAgg.data]);
+}
+
+export function addFeatureFlagQueryParamsFromParallelPayload(request: BaseRequest): BaseRequest {
+  return categoryTransformers.addFeatureFlagQueryParams({
+    ...request,
+    body: getParallelHelperOriginalBody(request),
+  });
+}
+
+export function transformWebHomePageTopItemsMMIDRequestV3FromCmsBody(
+  request: BaseRequest,
+): BaseRequest {
+  const page0 = getHomepageV3PageFromHelperBody(request);
+  let mmids: string[] = [];
+
+  try {
+    const items = page0?.mweb_top_item?.app_search_top_items ?? [];
+    mmids = Array.from(new Set(extractMMIDs(items)));
+  } catch (e) {
+    Logger.warn(
+      `transformWebHomePageTopItemsMMIDRequestV3FromCmsBody: MMID extraction failed → ${safeToLog(
+        e,
+      )}`,
+    );
+  }
+
+  return {
+    ...request,
+    body: mmids,
+  };
+}
+
+export function extractBrandCategoryIdsv3FromCmsBody(request: BaseRequest): BaseRequest {
+  const cmsResponse = getParallelHelperCmsResponse(request);
+
+  return extractBrandCategoryIdsv3Util(
+    request,
+    buildSyntheticHomepageCmsPrevResponses(cmsResponse),
+  );
+}
+
+export function extractCentralCatalogueCategoryIdsv3FromCmsBody(request: BaseRequest): BaseRequest {
+  const cmsResponse = getParallelHelperCmsResponse(request);
+
+  return extractCentralCatalogueCategoryIdsv3Util(
+    request,
+    buildSyntheticHomepageCmsPrevResponses(cmsResponse),
+  );
+}
+
+export function extractProductListingSlugv3FromCmsBody(request: BaseRequest): BaseRequest {
+  const cmsResponse = getParallelHelperCmsResponse(request);
+
+  return extractProductListingSlugv3Util(
+    request,
+    buildSyntheticHomepageCmsPrevResponses(cmsResponse),
+  );
+}
+
+export function extractMMIDs(items: any[]): string[] {
   if (!Array.isArray(items)) return [];
   return items
     .map((item) => item?.MMID)
@@ -336,7 +511,6 @@ export function transformWebHomePageTopItemsMMIDRequestV3(
     return { ...request, body: [] };
   }
   const cmsAgg = prevResponses.find((r) => r.target === 'layout-mweb-homepages');
-  safeDebug(Logger, () => `Web Home CMS Response → ${safeToLog(cmsAgg?.data)}`);
 
   let mmids: string[] = [];
 
@@ -351,7 +525,6 @@ export function transformWebHomePageTopItemsMMIDRequestV3(
   }
 
   mmids = Array.from(new Set(mmids));
-  safeDebug(Logger, () => `Homepage MMIDs sent to CCP → ${safeToLog(mmids)}`);
 
   // CCP expects RAW ARRAY
   return {
@@ -384,7 +557,6 @@ export function mergeWebHomePageResponsesV3(aggregatedResponses: AggregatedRespo
     Array.isArray(featureFlags) &&
     featureFlags.some((f: any) => f?.name === 'central_catalogue_global' && f?.isActive === true);
 
-  safeDebug(Logger, () => `FeatureFlags → ${safeToLog(featureFlags)}`);
   safeDebug(Logger, () => `isCentralCatalogueEnabled → ${String(isCentralCatalogueEnabled)}`);
 
   safeDebug(
@@ -678,5 +850,99 @@ export function mergeWebHomePageResponsesV3(aggregatedResponses: AggregatedRespo
       .filter((nav: any) => nav.subMenu && nav.subMenu.length > 0);
   }
 
+  /**
+   * 8) Inject Recently Viewed Products
+   */
+  const recentlyViewedDetailsAgg = responses['recently-viewed-product-details'];
+  const recentViewedRemoveAgg = responses['recent-viewed-remove'];
+
+  if (page.recently_viewed_component) {
+    let removedMmids: string[] = [];
+    if (recentViewedRemoveAgg?.success && recentViewedRemoveAgg.data?.data?.removeProduct) {
+      removedMmids = recentViewedRemoveAgg.data.data.removeProduct;
+    } else if (recentViewedRemoveAgg && !recentViewedRemoveAgg.success) {
+      Logger.warn(
+        `Warning for Web Home Page API method: mergeWebHomePageResponsesV3 recent-viewed-remove response failed.`,
+        recentViewedRemoveAgg.error ?? 'Unknown error',
+      );
+    }
+
+    let recentlyViewedProducts: RecentlyViewedProduct[] = [];
+    if (recentlyViewedDetailsAgg?.success) {
+      recentlyViewedProducts = normalizeRecentlyViewedProducts(
+        recentlyViewedDetailsAgg.data as any,
+      );
+    } else if (recentlyViewedDetailsAgg && !recentlyViewedDetailsAgg.success) {
+      Logger.warn(
+        `Warning for Web Home Page API method: mergeWebHomePageResponsesV3 recently-viewed-product-details response failed.`,
+        recentlyViewedDetailsAgg.error ?? 'Unknown error',
+      );
+    }
+
+    // Filter out naturally removed products and expose removedMmids for frontend
+    page.recently_viewed_component.recentlyViewedProducts = recentlyViewedProducts.filter(
+      (product) => !removedMmids.includes(product.mmid),
+    );
+    page.recently_viewed_component.removedMmids = removedMmids;
+  }
+
   return mergedWrapper;
+}
+export interface RecentlyViewedProduct {
+  mmid: string;
+  productTitle: string;
+  imageUrl: string;
+  productSlug: string;
+}
+
+// ─── Normalizer ────────────────────────────────────────────────────────────
+
+/** Transform the Central Catalogue API response into display-ready shape */
+export function normalizeRecentlyViewedProducts(response: any): RecentlyViewedProduct[] {
+  const items: any[] = response?.data?.products ?? [];
+
+  return items
+    .map((item) => ({
+      mmid: item.product_mmid ?? '',
+      productTitle: item.attributes?.product_title ?? '',
+      imageUrl: item.meta_data?.product_media?.[0]?.public_url ?? '',
+      productSlug: item.attributes?.slug ?? '',
+    }))
+    .filter((p) => p.mmid && p.productSlug);
+}
+
+// ─── Request Transformer ───────────────────────────────────────────────────
+
+export function transformRecentlyViewedMMIDsRequest(request: BaseRequest): BaseRequest {
+  let mmids: string[] = [];
+
+  try {
+    if (request.body && Array.isArray((request.body as any).recentlyViewedMmids)) {
+      mmids = (request.body as any).recentlyViewedMmids;
+    } else if (request.body && Array.isArray((request.body as any).mmids)) {
+      mmids = (request.body as any).mmids;
+    } else if (Array.isArray(request.body)) {
+      mmids = request.body;
+    }
+  } catch (e) {
+    Logger.warn(`transformRecentlyViewedMMIDsRequest: Failed to extract MMIDs → ${String(e)}`);
+  }
+
+  // Ensure unique MMIDs just in case
+  mmids = Array.from(new Set(mmids));
+
+  return {
+    ...request,
+    body: mmids,
+  };
+}
+
+export function selectWebHomePageV3TargetByUserType(req: Request): string {
+  const userType = String(req.headers?.['user-type'] ?? '').toUpperCase();
+
+  if (userType === 'G') {
+    return 'web-home-page-v3-guest';
+  } else if (userType === 'R') {
+    return 'web-home-page-v3-registered';
+  } else throw new CustomError(`Invalid or missing user-type header: ${userType}`, 400);
 }

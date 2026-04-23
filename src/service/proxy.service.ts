@@ -5,6 +5,7 @@ import { createHttpClient } from '../utils/http-client.factory';
 import { applyTransform } from '../utils/transformer.util';
 import { ROUTE_CONFIG } from '../config/route.config';
 import { BaseRequest } from '../models/base-request.model';
+import { safeToLog } from 'src/utils/common-functions.util';
 import {
   AggregateRouteConfig,
   ConditionalRouteConfig,
@@ -19,12 +20,13 @@ import { inspect } from 'util';
 import { CustomError } from 'src/utils/CustomError';
 import { match } from 'path-to-regexp';
 import Redis from 'ioredis';
+import axios from 'axios';
 
 @Injectable()
 export class ProxyService {
   private readonly tracer = trace.getTracer('experience-middleware');
   private readonly logger = new Logger(ProxyService.name);
-  constructor(@Inject('REDIS_CLIENT') private readonly redis: Redis) {}
+  constructor(@Inject('REDIS_CLIENT') private readonly redis: Redis) { }
   // constructor() { }
 
   private getCacheKey(req: Request): string {
@@ -90,7 +92,6 @@ export class ProxyService {
     return false;
   }
 
-  public result: any = '';
   async handleRequest(req: Request) {
     console.log(`Incoming ${req.method} request: ${req.url}`);
     const route = this.findRoute(req);
@@ -101,34 +102,16 @@ export class ProxyService {
         code: SpanStatusCode.ERROR,
         message: `Route config not found for ${req.method} ${req.path}`,
       });
+
       const spanContext = activeSpan?.spanContext();
-      this.result = spanContext
-        ? {
-            traceId: spanContext.traceId,
-            spanId: spanContext.spanId,
-          }
-        : {};
+      const traceId = (req as any).traceId || spanContext?.traceId || '';
+      const spanId = (req as any).spanId || spanContext?.spanId || '';
+
       this.logger.error(
-        `Route config not found for ${req.method} ${req.path} trace_id: ${inspect(this.result.traceId)} span_id: ${inspect(this.result.spanId)} `,
+        `Route config not found for ${req.method} ${req.path} trace_id: ${inspect(traceId)} span_id: ${inspect(spanId)}`,
       );
+
       throw new Error('Route config not found');
-    }
-
-    const needsAuth = this.routeNeedsClientAuth(route);
-    if (needsAuth) {
-      const authHeader = req.headers?.authorization || req.headers?.access_token;
-      const userState = req.headers?.['x-user-state'];
-
-      if (userState === 'G') {
-        req.headers = {
-          ...req.headers,
-          authorization: process.env.GUEST_ACCESS_TOKEN,
-        };
-      }
-
-      if (!authHeader && userState !== 'G') {
-        throw new CustomError('Bad Request: Authorization required', 400);
-      }
     }
 
     const isCacheRequired = (route as any).isCacheRequired === true;
@@ -152,20 +135,19 @@ export class ProxyService {
     }
 
     const activeSpan = trace.getSpan(context.active());
+    const spanContext = activeSpan?.spanContext();
+    const traceId = (req as any).traceId || spanContext?.traceId || '';
+    const spanId = (req as any).spanId || spanContext?.spanId || '';
+
     if (activeSpan) {
       activeSpan.setAttribute('proxy.route', route.path);
       activeSpan.setAttribute('proxy.method', route.method);
       activeSpan.setAttribute('proxy.handler', RouteHandler[route.routeHandler]);
-      this.result = activeSpan.spanContext();
-      this.logger.log(
-        `Handling request for route: ${req.method} ${req.path} trace_id: ${inspect(this.result.traceId)} span_id: ${inspect(this.result.spanId)} `,
-      );
-      activeSpan.setAttribute('proxy.handler', RouteHandler[route.routeHandler]);
-      this.result = activeSpan.spanContext();
-      this.logger.log(
-        `Handling request for route: ${req.method} ${req.path} trace_id: ${inspect(this.result.traceId)} span_id: ${inspect(this.result.spanId)} `,
-      );
     }
+
+    this.logger.log(
+      `Handling request for route: ${req.method} ${req.path} trace_id: ${inspect(traceId)} span_id: ${inspect(spanId)}`,
+    );
 
     let data: any;
 
@@ -282,9 +264,9 @@ export class ProxyService {
           res.status === 'fulfilled'
             ? res.value
             : {
-                success: false,
-                error: 'Unexpected failure',
-              },
+              success: false,
+              error: 'Unexpected failure',
+            },
         );
         const isAggregatedResponse = (r: any): r is AggregatedResponse =>
           'target' in r && 'success' in r;
@@ -387,7 +369,10 @@ export class ProxyService {
         span.setAttribute('http.method', target.method);
         span.setAttribute('cache.hit', false);
 
+        const totalStart = this.nowMs();
+
         try {
+          const buildStart = this.nowMs();
           const transformedRequestBody: BaseRequest = await this.buildRequestFromSource(
             req,
             target.url,
@@ -398,28 +383,45 @@ export class ProxyService {
             (target as any).requiredPathParams,
             prevResponses,
           );
+          const buildMs = this.nowMs() - buildStart;
 
+          const clientCreateStart = this.nowMs();
           const client = await createHttpClient(
             target.timeout?.request || 5000,
             target.timeout?.socket || 1000,
             target.interceptors,
           );
+          const clientCreateMs = this.nowMs() - clientCreateStart;
 
+          const downstreamStart = this.nowMs();
           const response = await client.request({
             url: transformedRequestBody.url.href,
             method: target.method,
             data: transformedRequestBody.body,
             headers: transformedRequestBody.headers,
           });
+          const downstreamMs = this.nowMs() - downstreamStart;
 
           span.setAttribute('http.status_code', response.status);
 
-          // Add response data to span for Coroot visibility (works for both success and error responses)
+          const resTransformStart = this.nowMs();
           const responseData = target.resTransform
             ? await applyTransform(target.resTransform, response.data)
             : response.data;
+          const resTransformMs = this.nowMs() - resTransformStart;
 
-          // Add response data as span attributes
+          const totalMs = this.nowMs() - totalStart;
+
+          span.setAttribute('proxy.target.duration_ms', totalMs);
+          span.setAttribute('proxy.target.build_request_ms', buildMs);
+          span.setAttribute('proxy.target.create_client_ms', clientCreateMs);
+          span.setAttribute('proxy.target.downstream_ms', downstreamMs);
+          span.setAttribute('proxy.target.res_transform_ms', resTransformMs);
+
+          this.logger.log(
+            `Target ${target.name || target.url} completed duration_ms=${totalMs} build_ms=${buildMs} client_ms=${clientCreateMs} downstream_ms=${downstreamMs} res_transform_ms=${resTransformMs} status=${response.status}`,
+          );
+
           if (responseData) {
             const responseStr = JSON.stringify(responseData);
             span.setAttribute('api.response.size', responseStr.length);
@@ -431,6 +433,7 @@ export class ProxyService {
               span.setAttribute('api.response.data', responseStr);
             }
           }
+
           if (response.status === 401 || response.status === 403) {
             const error = new CustomError(
               `Downstream service (${target.name || target.url}) returned ${response.status}`,
@@ -441,20 +444,26 @@ export class ProxyService {
             throw error;
           }
 
-          // Handle error status codes (4xx, 5xx) but still return the response data
           if (response.status >= 400) {
             span.setStatus({
               code: SpanStatusCode.ERROR,
               message: `HTTP ${response.status}: ${response.statusText || 'Error'}`,
             });
-            // Add error-specific attributes
             span.setAttribute('http.error', true);
             span.setAttribute('http.error.status', response.status);
             span.setAttribute('http.error.message', response.statusText || 'Unknown error');
           }
 
           return responseData;
-        } catch (err) {
+        } catch (err: any) {
+          const totalMs = this.nowMs() - totalStart;
+
+          span.setAttribute('proxy.target.duration_ms', totalMs);
+
+          this.logger.error(
+            `Target ${target.name || target.url} failed duration_ms=${totalMs} error=${err?.message || String(err)}`,
+          );
+
           span.recordException(err as Error);
           span.setStatus({
             code: SpanStatusCode.ERROR,
@@ -462,7 +471,7 @@ export class ProxyService {
           });
 
           // Add error response data if available (for network errors, timeouts, etc.)
-          if (err && typeof err === 'object' && 'response' in err) {
+          if (axios.isAxiosError(err) && err.response) {
             const errorResponse = err.response;
             if (errorResponse) {
               span.setAttribute('http.status_code', errorResponse.status);
@@ -470,9 +479,15 @@ export class ProxyService {
               span.setAttribute('http.error.status', errorResponse.status);
               span.setAttribute('http.error.message', errorResponse.statusText || 'Network Error');
 
-              // Capture error response body if available
               if (errorResponse.data) {
-                const errorDataStr = JSON.stringify(errorResponse.data);
+                let errorDataStr: string;
+
+                try {
+                  errorDataStr = JSON.stringify(errorResponse.data);
+                } catch {
+                  errorDataStr = safeToLog(errorResponse.data);
+                }
+
                 span.setAttribute('api.error.response.size', errorDataStr.length);
 
                 if (errorDataStr.length > 1000) {
@@ -488,16 +503,16 @@ export class ProxyService {
 
               if (errorResponse.status >= 400 && errorResponse.status < 500) {
                 const downstreamMessage =
+                  errorResponse.data?.error?.message ||
+                  errorResponse.data?.error ||
                   errorResponse.data?.message ||
                   errorResponse.data?.error_description ||
                   errorResponse.statusText ||
                   'Bad Request';
 
                 const clientError = new CustomError(downstreamMessage, errorResponse.status) as any;
-
                 clientError.httpStatusCode = errorResponse.status;
                 clientError.response = errorResponse;
-
                 throw clientError;
               }
             }
@@ -654,5 +669,9 @@ export class ProxyService {
     out = out.replace(/(^|\/):(\w+)(?=\/|$)/g, (_, prefix, key) => `${prefix}${getEncoded(key)}`);
 
     return out;
+  }
+
+  private nowMs(): number {
+    return Number(process.hrtime.bigint() / 1000000n);
   }
 }
