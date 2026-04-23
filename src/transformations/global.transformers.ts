@@ -1,6 +1,6 @@
 import { AggregatedResponse } from 'src/models/aggregated-response.model';
 import { Logger } from '@nestjs/common';
-
+import { inspect } from 'util';
 export function mergeGlobalAndSlcCartResponses(aggregatedResponses: AggregatedResponse[]): any {
   const responses = aggregatedResponses.reduce(
     (acc, response) => {
@@ -15,15 +15,15 @@ export function mergeGlobalAndSlcCartResponses(aggregatedResponses: AggregatedRe
   const appCartSizeResponse = responses['app-cart-size'];
 
   Logger.debug(
-    ` Strapi Global Page Api response from method: mergeGlobalAndSlcCartResponses : {success: appGlobalPageResponse?.success, data: appGlobalPageResponse?.data,}`,
+    ` Strapi Global Page Api response from method: mergeGlobalAndSlcCartResponses : {success: ${appGlobalPageResponse?.success}, data: ${inspect(appGlobalPageResponse?.data, { depth: null })},}`,
   );
 
   Logger.debug(
-    ` Slc Cart Api response from method: mergeGlobalAndSlcCartResponses : {success: appSlcCartDetailsResponse?.success, data: appSlcCartDetailsResponse?.data}`,
+    ` Slc Cart Api response from method: mergeGlobalAndSlcCartResponses : {success: ${appSlcCartDetailsResponse?.success}, data: ${inspect(appSlcCartDetailsResponse?.data, { depth: null })},}`,
   );
 
   Logger.debug(
-    ` Cart Size response from method: mergeGlobalAndSlcCartResponses : {success: appCartSizeResponse?.success, data: appCartSizeResponse?.data}`,
+    ` Cart Size response from method: mergeGlobalAndSlcCartResponses : {success: ${appCartSizeResponse?.success}, data: ${inspect(appCartSizeResponse?.data, { depth: null })},}`,
   );
 
   if (appGlobalPageResponse && appSlcCartDetailsResponse) {
