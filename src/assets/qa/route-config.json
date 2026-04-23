@@ -3297,5 +3297,26 @@
       "reqTransform": "general.transformers.moveBodyToQueryParams",
       "resTransform": "login.transformers.transformResendOtpResponse"
     }
+  },
+  {
+    "path": "/xp-mi/public/v2/cart/update-shipping-address",
+    "method": "POST",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "update-shipping-address",
+      "url": "https://qa.msme.jswone.in/v2/cart/update-shipping-address",
+      "method": "POST",
+      "timeout": {
+        "request": "10000",
+        "socket": "1000"
+      },
+      "headersToPass": [
+        {
+          "source": "access_token",
+          "destination": "access_token"
+        }
+      ],
+      "requiredParams": ["*"]
+    }
   }
 ]
