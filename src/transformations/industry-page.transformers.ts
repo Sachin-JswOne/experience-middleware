@@ -185,3 +185,79 @@ export function mergeIndustryAllContentResponses(aggregatedResponses: Aggregated
     industrySpecificComponents: mergedIndustrySpecificComponents,
   };
 }
+
+export function wrapIndustryParallelResponses(aggregatedResponses: AggregatedResponse[]): any {
+  const responses = aggregatedResponses.reduce(
+    (acc, response) => {
+      acc[response.target] = response;
+      return acc;
+    },
+    {} as Record<string, AggregatedResponse>,
+  );
+
+  return {
+    blogs: responses['blogs']?.success ? responses['blogs'].data : null,
+    metrics: responses['metrics']?.success ? responses['metrics'].data : null,
+  };
+}
+
+export function mergeIndustryAllContentResponsesOptimized(
+  aggregatedResponses: AggregatedResponse[],
+): any {
+  const responses = aggregatedResponses.reduce(
+    (acc, response) => {
+      acc[response.target] = response;
+      return acc;
+    },
+    {} as Record<string, AggregatedResponse>,
+  );
+
+  const parallelHelperResponse = responses['industry-parallel-helper'];
+  const helperData = parallelHelperResponse?.success ? parallelHelperResponse.data : {};
+
+  const blogsResponse = helperData?.blogs;
+  const metricsResponse = helperData?.metrics;
+
+  const industrySpecificResponse = responses['industry-specific-components'];
+  const productListingResponse = responses['products-listing'];
+
+  const mergedIndustrySpecificComponents = industrySpecificResponse?.success
+    ? JSON.parse(JSON.stringify(industrySpecificResponse.data))
+    : null;
+
+  if (mergedIndustrySpecificComponents && Array.isArray(mergedIndustrySpecificComponents.data)) {
+    const productsArray = Array.isArray(productListingResponse?.data?.data?.products)
+      ? productListingResponse.data.data.products
+      : [];
+
+    for (const component of mergedIndustrySpecificComponents.data) {
+      if (
+        Array.isArray(component?.product_categories) &&
+        !Array.isArray(component?.app_product_categories)
+      ) {
+        component.app_product_categories = component.product_categories;
+        delete component.product_categories;
+      }
+
+      const filteredCategories = Array.isArray(component?.app_product_categories)
+        ? component.app_product_categories.filter(
+            (category: any) => category?.webCategoryId && category?.itemsToShow,
+          )
+        : [];
+
+      if (filteredCategories.length > 0) {
+        filteredCategories.forEach((category: any) => {
+          category.productsList = {
+            products: productsArray,
+          };
+        });
+      }
+    }
+  }
+
+  return {
+    blogs: blogsResponse,
+    metrics: metricsResponse,
+    industrySpecificComponents: mergedIndustrySpecificComponents,
+  };
+}
