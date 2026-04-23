@@ -26,7 +26,7 @@ import axios from 'axios';
 export class ProxyService {
   private readonly tracer = trace.getTracer('experience-middleware');
   private readonly logger = new Logger(ProxyService.name);
-  constructor(@Inject('REDIS_CLIENT') private readonly redis: Redis) { }
+  constructor(@Inject('REDIS_CLIENT') private readonly redis: Redis) {}
   // constructor() { }
 
   private getCacheKey(req: Request): string {
@@ -112,6 +112,18 @@ export class ProxyService {
       );
 
       throw new Error('Route config not found');
+    }
+
+    if (route.routeHandler !== RouteHandler.CONDITIONAL) {
+      const needsAuth = this.routeNeedsClientAuth(route);
+      if (needsAuth) {
+        const authHeader = req.headers?.authorization || req.headers?.access_token;
+        const userState = req.headers?.['x-user-state'];
+
+        if (!authHeader && userState !== 'G') {
+          throw new CustomError('Bad Request: Authorization required', 400);
+        }
+      }
     }
 
     const isCacheRequired = (route as any).isCacheRequired === true;
@@ -211,6 +223,16 @@ export class ProxyService {
       );
     }
 
+    const needsAuth = this.routeNeedsClientAuth({ target: targetToExecute });
+    if (needsAuth) {
+      const authHeader = req.headers?.authorization || req.headers?.access_token;
+      const userState = req.headers?.['x-user-state'];
+
+      if (!authHeader && userState !== 'G') {
+        throw new CustomError('Bad Request: Authorization required', 400);
+      }
+    }
+
     activeSpan?.setAttribute('proxy.conditional.selected_target', targetName);
     return this.handleTransformRequest(targetToExecute, req);
   }
@@ -264,9 +286,9 @@ export class ProxyService {
           res.status === 'fulfilled'
             ? res.value
             : {
-              success: false,
-              error: 'Unexpected failure',
-            },
+                success: false,
+                error: 'Unexpected failure',
+              },
         );
         const isAggregatedResponse = (r: any): r is AggregatedResponse =>
           'target' in r && 'success' in r;
