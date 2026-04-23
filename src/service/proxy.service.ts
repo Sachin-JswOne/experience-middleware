@@ -1,4 +1,4 @@
-﻿/* eslint-disable @typescript-eslint/no-unsafe-argument */
+﻿﻿/* eslint-disable @typescript-eslint/no-unsafe-argument */
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { trace, context, SpanStatusCode } from '@opentelemetry/api';
 import { createHttpClient } from '../utils/http-client.factory';
@@ -114,6 +114,18 @@ export class ProxyService {
       throw new Error('Route config not found');
     }
 
+    if (route.routeHandler !== RouteHandler.CONDITIONAL) {
+      const needsAuth = this.routeNeedsClientAuth(route);
+      if (needsAuth) {
+        const authHeader = req.headers?.authorization || req.headers?.access_token;
+        const userState = req.headers?.['x-user-state'];
+
+        if (!authHeader && userState !== 'G') {
+          throw new CustomError('Bad Request: Authorization required', 400);
+        }
+      }
+    }
+
     const isCacheRequired = (route as any).isCacheRequired === true;
     let cacheKey: string | null = null;
 
@@ -209,6 +221,16 @@ export class ProxyService {
       throw new Error(
         `Conditional target '${targetName}' not found in route config for path '${route.path}'`,
       );
+    }
+
+    const needsAuth = this.routeNeedsClientAuth({ target: targetToExecute });
+    if (needsAuth) {
+      const authHeader = req.headers?.authorization || req.headers?.access_token;
+      const userState = req.headers?.['x-user-state'];
+
+      if (!authHeader && userState !== 'G') {
+        throw new CustomError('Bad Request: Authorization required', 400);
+      }
     }
 
     activeSpan?.setAttribute('proxy.conditional.selected_target', targetName);

@@ -5,10 +5,10 @@ import { CustomError } from 'src/utils/CustomError';
 import { BaseRequest } from 'src/models/base-request.model';
 
 /**
- * Transforms aggregated customer profile responses to ensure they are JSON-serializable
- * and removes any circular references by deep cloning the data
- * Returns a structured object with meaningful keys: profile and customerData
- */
+* Transforms aggregated customer profile responses to ensure they are JSON-serializable
+* and removes any circular references by deep cloning the data
+* Returns a structured object with meaningful keys: profile and customerData
+*/
 export function transformCustomerProfileResponses(aggregatedResponses: AggregatedResponse[]): any {
   safeDebug(
     Logger,
@@ -156,3 +156,4 @@ export function mergeCustomerProfile(aggregatedResponses: AggregatedResponse[]):
     ...gstData,
   };
 }
+ 

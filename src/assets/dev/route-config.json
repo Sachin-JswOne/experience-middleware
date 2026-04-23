@@ -1439,7 +1439,7 @@
         "url": "https://qa.msme.jswone.in/v2/cart/size",
         "method": "GET",
         "timeout": {
-          "request": 5000,
+          "request": 10000,
           "socket": 1000
         },
         "headersToPass": [
@@ -1568,7 +1568,7 @@
       "url": "https://qa.msme.jswone.in/v2/cart/size",
       "method": "GET",
       "timeout": {
-        "request": 5000,
+        "request": 10000,
         "socket": 1000
       },
       "headersToPass": [
