@@ -2,24 +2,8 @@ import { AggregatedResponse } from 'src/models/aggregated-response.model';
 import { Logger } from '@nestjs/common';
 import { safeDebug, safeToLog } from 'src/utils/common-functions.util';
 import { extractProductListingSlugSegment } from 'src/utils/segment-category.util';
-import { BaseRequest } from 'src/models/base-request.model';
 
 export { extractProductListingSlugSegment };
-const WEB_HOME_PAGE_V3_CMS_KEY = '__webHomePageV3CmsResponse';
-export function extractProductListingSlugSegmentFromCmsBody(request: BaseRequest): BaseRequest {
-  const cmsResponse = request?.body?.[WEB_HOME_PAGE_V3_CMS_KEY] ?? null;
-
-  return extractProductListingSlugSegment(request, [
-    {
-      target: 'layout-mweb-homepages',
-      success: true,
-      data: {
-        data: cmsResponse ? [cmsResponse] : [],
-        meta: {},
-      },
-    } as AggregatedResponse,
-  ]);
-}
 
 export function mergeWebSegmentPageResponsesV1(aggregatedResponses: AggregatedResponse[]): any {
   const responses = aggregatedResponses.reduce(

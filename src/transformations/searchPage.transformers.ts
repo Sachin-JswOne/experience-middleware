@@ -1,7 +1,6 @@
 import { Logger } from '@nestjs/common';
 import { safeDebug } from 'src/utils/common-functions.util';
 import { AggregatedResponse } from 'src/models/aggregated-response.model';
-import { normalizeRecentlyViewedProducts, RecentlyViewedProduct } from './web.transformers';
 export {
   extractCentralCatalogueCategoryIds
 } from 'src/utils/central-category.util';
@@ -22,13 +21,10 @@ export function getSearchPageDetails(aggregatedResponses: AggregatedResponse[]):
   const isCentralCatalogueEnabled = featureFlags.some(
     (f) => f.name === 'central_catalogue_global' && f.isActive === true,
   );
-  const recentlyViewedAgg = responses['recently-viewed-product-details'];
-  const recentViewedRemoveAgg = responses['recent-viewed-remove'];
+
   safeDebug(Logger, () => `Search Page CMS → ${JSON.stringify(cmsResponse?.data)}`);
   safeDebug(Logger, () => `Buy Again → ${JSON.stringify(buyAgainResponse?.data)}`);
   safeDebug(Logger, () => `Top Items → ${JSON.stringify(topItemsResponse?.data)}`);
-  safeDebug(Logger, () => `Search Page recentlyviewed → ${JSON.stringify(recentlyViewedAgg?.data)}`);
-  safeDebug(Logger, () => `Search Page recentremovedmmids → ${JSON.stringify(recentViewedRemoveAgg?.data)}`);
   if (
     !cmsResponse?.success ||
     typeof cmsResponse.data !== 'object' ||
@@ -50,31 +46,6 @@ export function getSearchPageDetails(aggregatedResponses: AggregatedResponse[]):
     trendingSearchResponse?.success && Array.isArray(trendingSearchResponse.data)
       ? trendingSearchResponse.data
       : [];
-  let removedMmids: string[] = [];
-
-  if (recentViewedRemoveAgg?.success && recentViewedRemoveAgg.data?.data?.removeProduct) {
-    removedMmids = recentViewedRemoveAgg.data.data.removeProduct;
-  } else if (recentViewedRemoveAgg && !recentViewedRemoveAgg.success) {
-    Logger.warn(
-      'Search Page: recent-viewed-remove failed',
-      recentViewedRemoveAgg.error ?? 'Unknown error',
-    );
-  }
-
-  let recentlyViewedProducts: RecentlyViewedProduct[] = [];
-
-  if (recentlyViewedAgg?.success) {
-    recentlyViewedProducts = normalizeRecentlyViewedProducts(recentlyViewedAgg.data);
-  } else if (recentlyViewedAgg && !recentlyViewedAgg.success) {
-    Logger.warn(
-      'Search Page: recently-viewed-product-details failed',
-      recentlyViewedAgg.error ?? 'Unknown error',
-    );
-  }
-
-  recentlyViewedProducts = recentlyViewedProducts.filter(
-    (product) => !removedMmids.includes(product.mmid),
-  );
   const hasBuyAgainBlock = blocks.some((b) => b.__component === 'app-components.app-buy-again');
   //BUY AGAIN → UPDATE EXISTING BLOCK
   if (buyAgainResponse?.success && hasBuyAgainBlock) {
@@ -129,8 +100,6 @@ export function getSearchPageDetails(aggregatedResponses: AggregatedResponse[]):
           blocks: filteredBlocks,
           recentSearches,
           trendingSearches,
-          recentlyViewedProducts,
-          removedMmids,
         },
         meta: {
           timestamp: new Date().toISOString(),
@@ -213,8 +182,6 @@ export function getSearchPageDetails(aggregatedResponses: AggregatedResponse[]):
       blocks,
       recentSearches,
       trendingSearches,
-      recentlyViewedProducts,
-      removedMmids,
     },
     meta: {
       timestamp: new Date().toISOString(),

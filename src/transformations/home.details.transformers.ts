@@ -53,7 +53,6 @@ export function mergeUserDetailsResponses(aggregatedResponses: AggregatedRespons
         phoneNumber: homesData?.phoneNumber ?? '',
         email: homesData?.email ?? '',
         projectIds: homesData?.projectIds ?? [],
-        uuid : homesData?.uuid ?? ''
       },
     },
   };
@@ -360,8 +359,6 @@ export function mergeProjectDetailsAndTrackerResponses(
     currentStage: currentprojectStage,
   };
 
-  const rdashStage = homesData?.rdashStage ?? '';
-
   return {
     data: {
       ...strapiData.data,
@@ -370,7 +367,6 @@ export function mergeProjectDetailsAndTrackerResponses(
       projectID,
       homesTeam,
       projectTracker,
-      rdashStage,
     },
   };
 }
