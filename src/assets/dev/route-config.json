@@ -2593,6 +2593,22 @@
         "resTransform": "buyAgain.transformers.transformBuyAgainResponse"
       },
       {
+        "name": "app-search-top-items",
+        "url": "https://qa.msme.jswone.in/central_commerce/catalogue/product-details",
+        "method": "POST",
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
+        "reqTransform": "appHomePage.transformers.transformTopItemsRequest",
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "access_token"
+          }
+        ]
+      },
+      {
         "name": "app-top-brands",
         "url": "https://qa.msme.jswone.in/central_commerce/categories/tree/list",
         "method": "POST",
@@ -3431,5 +3447,12 @@
       "reqTransform": "general.transformers.moveBodyToQueryParams",
       "resTransform": "login.transformers.transformResendOtpResponse"
     }
+  },
+  {
+    "path": "/xp-mi/public/v1/customer_feedback",
+    "method": "POST",
+    "routeHandler": "CUSTOM",
+    "handler": "customerFeedback.transformers.customerFeedbackHandler"
+    
   }
 ]

@@ -2627,6 +2627,22 @@
         "resTransform": "buyAgain.transformers.transformBuyAgainResponse"
       },
       {
+        "name": "app-search-top-items",
+        "url": "https://www.jswonemsme.com/central_commerce/catalogue/product-details",
+        "method": "POST",
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
+        "reqTransform": "appHomePage.transformers.transformTopItemsRequest",
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "access_token"
+          }
+        ]
+      },
+      {
         "name": "app-top-brands",
         "url": "https://www.jswonemsme.com/central_commerce/categories/tree/list",
         "method": "POST",
