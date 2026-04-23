@@ -225,7 +225,6 @@ export function transformAddress(addressList) {
       addressLine2: address.addressLine2,
       addressLine1: address.addressLine1,
       contactNumber: address.contactNumber,
-      ctAddressId: address.ctAddressId,
     };
   });
 }

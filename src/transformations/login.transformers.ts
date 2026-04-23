@@ -1,7 +1,7 @@
 /* eslint-disable no-prototype-builtins */
 
 import { HttpStatus } from '@nestjs/common';
-import { MSME, MSME_ERRORS_MAPPING, USER_TYPE } from 'src/config/app.config';
+import { MSME, MSME_ERRORS_MAPPING } from 'src/config/app.config';
 import { BaseRequest } from 'src/models/base-request.model';
 import { CustomError } from 'src/utils/CustomError';
 import { Logger } from '@nestjs/common';
@@ -218,7 +218,7 @@ export function selectLoginTarget(request: BaseRequest) {
   }
 
   if (phoneNumber && phoneNumber !== '') {
-    return 'otp-login';
+    return 'generate-otp-login';
   } else {
     return 'email-login';
   }
@@ -305,163 +305,4 @@ export function transformEmailLoginResponse(response) {
     requestId: '',
     userExists: isEmailExists,
   });
-}
-
-export function transformPhoneNumberPasscodeRequest(request) {
-  const { phoneNumber, passcode, requestId } = request.body;
-  if (!passcode || passcode === '') {
-    Logger.error(
-      `Error for ${request.url} method: transformPhoneNumberPasscodeLoginRequest Passcode is required`,
-    );
-    throw new CustomError('passcode is required', HttpStatus.BAD_REQUEST);
-  }
-
-  if (!phoneNumber || phoneNumber === '') {
-    if (!requestId || requestId === '') {
-      Logger.error(
-        `Error for ${request.url} method: transformPhoneNumberPasscodeLoginRequest Either phoneNumber or requestId is required`,
-      );
-      throw new CustomError('requestId is required', HttpStatus.BAD_REQUEST);
-    }
-  }
-
-  const transformedRequest: BaseRequest = {
-    ...request,
-    body: {
-      requestId: requestId,
-      otp: passcode,
-      phoneNumber: phoneNumber,
-      storeKey: MSME,
-    },
-  };
-
-  return transformedRequest;
-}
-
-export function transformPasscodeResponse(response) {
-  const responseData = response?.data;
-
-  safeDebug(
-    Logger,
-    () =>
-      ` CCP Passcode  Api response from method: transformPasscodeResponse : ${JSON.stringify(
-        responseData,
-      )}`,
-  );
-  if (!responseData) {
-    Logger.error(
-      `Error for Passcode API method: transformPasscodeResponse CCP Passcode API is failing`,
-    );
-    throw new CustomError('CCP Passcode API is failing', HttpStatus.INTERNAL_SERVER_ERROR);
-  }
-  if (!responseData.success) {
-    const errorMessage = MSME_ERRORS_MAPPING[responseData.message] || responseData.message;
-
-    Logger.error(`Error for Passcode API method: transformPasscodeResponse ${errorMessage}`);
-    throw new CustomError(errorMessage, HttpStatus.BAD_REQUEST);
-  }
-
-  const verifyPasscodeResponse = {
-    accessToken: '',
-    userExists: responseData?.customerRegister,
-    userType: USER_TYPE,
-  };
-  if (!responseData?.customerRegister) {
-    return verifyPasscodeResponse;
-  }
-
-  const validationResult = validateSellerData(responseData.customerDetails);
-
-  if (!validationResult.isValid) {
-    Logger.error(
-      `Error for Passcode API method: transformPasscodeResponse ${'Validation failed for seller data'}`,
-    );
-    throw new CustomError('Something went wrong. Please try again later.', HttpStatus.BAD_REQUEST);
-  }
-  if (
-    responseData.customerDetails.accountType === '' ||
-    !responseData.customerDetails.accountType ||
-    responseData.customerDetails.customerSource === '' ||
-    !responseData.customerDetails.customerSource
-  ) {
-    responseData.customerDetails.customerSource = 'MSME Construct';
-  }
-  return {
-    ...verifyPasscodeResponse,
-    accessToken: responseData.jwtToken,
-  };
-}
-
-export function transformEmailPasscodeRequest(request) {
-  let { passcode } = request.body;
-  const { email } = request.body;
-
-  if (!passcode || passcode === '') {
-    Logger.error(
-      `Error for ${request.url} method: transformPhoneNumberPasscodeLoginRequest Passcode is required`,
-    );
-    throw new CustomError('passcode is required', HttpStatus.BAD_REQUEST);
-  }
-
-  passcode = Buffer.from(passcode).toString('base64');
-
-  const transformedRequest: BaseRequest = {
-    ...request,
-    body: {
-      email: email.toLowerCase(),
-      password: passcode,
-      storeKey: MSME,
-    },
-  };
-
-  return transformedRequest;
-}
-
-export function validateSellerData(data) {
-  const requiredFields = ['sfId', 'ctId', 'billingAddress'];
-
-  for (const field of requiredFields) {
-    if (
-      !data.hasOwnProperty(field) ||
-      data[field] === undefined ||
-      data[field] === null ||
-      data[field] === ''
-    ) {
-      return {
-        isValid: false,
-        errorMessage: `Field ${field} is missing or empty.`,
-      };
-    }
-  }
-  return { isValid: true };
-}
-
-export function transformResendOtpResponse(response) {
-  const responseData = response?.data;
-
-  safeDebug(
-    Logger,
-    () =>
-      ` CCP Resend OTP  Api response from method: transformResendOtpResponse : ${JSON.stringify(
-        responseData,
-      )}`,
-  );
-  if (!responseData) {
-    Logger.error(
-      `Error for Resend OTP API method: transformResendOtpResponse CCP Resend OTP API is failing`,
-    );
-    throw new CustomError('CCP Resend OTP API is failing', HttpStatus.INTERNAL_SERVER_ERROR);
-  }
-  if (!responseData.success) {
-    Logger.error(
-      `Error for Resend OTP API method: transformResendOtpResponse MSME_ERRORS_MAPPING[responseData.message] || responseData.message`,
-    );
-    throw new CustomError(
-      MSME_ERRORS_MAPPING[responseData.message] || responseData.message,
-      HttpStatus.BAD_REQUEST,
-    );
-  }
-  return {
-    success: true,
-  };
 }
