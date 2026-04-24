@@ -26,7 +26,7 @@ import axios from 'axios';
 export class ProxyService {
   private readonly tracer = trace.getTracer('experience-middleware');
   private readonly logger = new Logger(ProxyService.name);
-  constructor(@Inject('REDIS_CLIENT') private readonly redis: Redis) { }
+  constructor(@Inject('REDIS_CLIENT') private readonly redis: Redis) {}
   // constructor() { }
 
   private getCacheKey(req: Request): string {
@@ -286,9 +286,9 @@ export class ProxyService {
           res.status === 'fulfilled'
             ? res.value
             : {
-              success: false,
-              error: 'Unexpected failure',
-            },
+                success: false,
+                error: 'Unexpected failure',
+              },
         );
         const isAggregatedResponse = (r: any): r is AggregatedResponse =>
           'target' in r && 'success' in r;
