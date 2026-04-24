@@ -1667,6 +1667,22 @@
         ],
         "reqTransform": "general.transformers.convertToGetRequest",
         "resTransform": "slc.transformers.convertSlcResponse"
+      },
+      {
+        "name": "app-cart-size",
+        "url": "https://preprod.jswonemsme.com/v2/cart/size",
+        "method": "GET",
+        "timeout": {
+          "request": 10000,
+          "socket": 1000
+        },
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "access_token"
+          }
+        ],
+        "reqTransform": "general.transformers.convertToGetRequest"
       }
     ],
     "resTransform": "global.transformers.mergeGlobalAndSlcCartResponses"
