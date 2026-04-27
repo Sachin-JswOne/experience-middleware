@@ -376,7 +376,7 @@
     "routeHandler": "TRANSFORM",
     "target": {
       "name": "appInvoiceAndDocuments",
-      "url": "https://oms.preprod.jswonemsme.com/external-connector-inbound/api/internal/v1/retail/fetch-order-invoice-docs",
+      "url": "https://oms.preprod.jswonemsme.com/external-connector-inbound/api/internal/v1/retail/-invoice-docs",
       "method": "GET",
       "timeout": {
         "request": "${TIMEOUTS.REQUEST}",
@@ -467,7 +467,7 @@
       },
       {
         "name": "app-invoice-and-documents",
-        "url": "https://oms.preprod.jswonemsme.com/external-connector-inbound/api/internal/v1/retail/fetch-order-invoice-docs",
+        "url": "https://oms.preprod.jswonemsme.com/external-connector-inbound/api/internal/v1/retail/-invoice-docs",
         "method": "GET",
         "timeout": {
           "request": "${TIMEOUTS.REQUEST}",
@@ -1117,7 +1117,7 @@
         "url": "https://oms.preprod.jswonemsme.com/opportunity/retail/fetch-order-list",
         "method": "GET",
         "staticHeaders": {
-          "Authorization": "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJPbmxpbmUgSldUIEJ1aWxkZXIiLCJpYXQiOjE3NTI0ODI2NzksImV4cCI6MjUzMzg3NTU3ODc5LCJhdWQiOiJyZXRhaWxzLWFwcCIsInN1YiI6InJldGFpbHNAanN3b25lLmluIiwiR2l2ZW5OYW1lIjoiUmV0YWlscyIsIkVtYWlsIjoicmV0YWlsc0Bqc3dvbmUuaW4iLCJSb2xlIjoiQURNSU4ifQ.NlGWFVVxEMtCVqz4tyMFX-R_qLoOjg_7alWl1MVcmnI"
+          "Authorization": "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJKU1dPTkUiLCJpYXQiOjE3NTE1MzY4NTMsImV4cCI6MTc4MzA3Mjg1MywiYXVkIjoiIiwic3ViIjoib3JkZXJ1bmlmaWNhdGlvbkBqc3dvbmUuY29tIiwiRW1haWwiOiJvcmRlcnVuaWZpY2F0aW9uQGpzd29uZS5jb20iLCJSb2xlIjoiQWRtaW4ifQ.pf4XPzgeoZXIuTcQ4JAqpfln7UfBLkvYQcnqEyrbSqA"
         },
         "timeout": {
           "request": 5000,
