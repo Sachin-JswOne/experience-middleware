@@ -1114,7 +1114,7 @@
       },
       {
         "name": "gstin-customer-profile",
-        "url": "https://oms.jswonemsme.com/account-master/profile/v1",
+        "url": "https://tms.jswonemsme.com/account-master/profile/v1",
         "method": "GET",
         "timeout": {
           "request": "${TIMEOUTS.REQUEST}",
@@ -2282,7 +2282,7 @@
     "isCacheRequired": false,
     "target": {
       "name": "customer-industry",
-      "url": "https://oms.jswonemsme.com/account-master/profile/v1/customer-industry",
+      "url": "https://tms.jswonemsme.com/account-master/profile/v1/customer-industry",
       "method": "POST",
       "timeout": {
         "request": 5000,
