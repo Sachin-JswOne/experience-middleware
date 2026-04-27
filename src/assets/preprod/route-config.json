@@ -376,7 +376,7 @@
     "routeHandler": "TRANSFORM",
     "target": {
       "name": "appInvoiceAndDocuments",
-      "url": "https://oms.preprod.jswonemsme.com/external-connector-inbound/api/internal/v1/retail/-invoice-docs",
+      "url": "https://oms.preprod.jswonemsme.com/external-connector-inbound/api/internal/v1/retail/fetch-order-invoice-docs",
       "method": "GET",
       "timeout": {
         "request": "${TIMEOUTS.REQUEST}",
@@ -467,7 +467,7 @@
       },
       {
         "name": "app-invoice-and-documents",
-        "url": "https://oms.preprod.jswonemsme.com/external-connector-inbound/api/internal/v1/retail/-invoice-docs",
+        "url": "https://oms.preprod.jswonemsme.com/external-connector-inbound/api/internal/v1/retail/fetch-order-invoice-docs",
         "method": "GET",
         "timeout": {
           "request": "${TIMEOUTS.REQUEST}",
