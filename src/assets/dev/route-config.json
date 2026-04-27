@@ -3243,8 +3243,8 @@
       "url": "https://qa.msme.jswone.in/v2/cart/update-shipping-address",
       "method": "POST",
       "timeout": {
-        "request": "10000",
-        "socket": "1000"
+        "request": 10000,
+        "socket": 1000
       },
       "headersToPass": [
         {
@@ -3254,5 +3254,11 @@
       ],
       "requiredParams": ["*"]
     }
+  },
+  {
+    "path": "/xp-mi/public/health",
+    "method": "GET",
+    "routeHandler": "PASS_THROUGH",
+    "response": "OK"
   }
 ]

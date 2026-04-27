@@ -1114,7 +1114,7 @@
       },
       {
         "name": "gstin-customer-profile",
-        "url": "https://tms.jswonemsme.com/account-master/profile/v1",
+        "url": "https://oms.jswonemsme.com/account-master/profile/v1",
         "method": "GET",
         "timeout": {
           "request": "${TIMEOUTS.REQUEST}",
@@ -2282,7 +2282,7 @@
     "isCacheRequired": false,
     "target": {
       "name": "customer-industry",
-      "url": "https://tms.jswonemsme.com/account-master/profile/v1/customer-industry",
+      "url": "https://oms.jswonemsme.com/account-master/profile/v1/customer-industry",
       "method": "POST",
       "timeout": {
         "request": 5000,
@@ -2984,7 +2984,7 @@
       },
       {
         "name": "one-helix-task",
-        "url": "https://tms.jswonemsme.com/jswone/subject/task",
+        "url": "https://oms.jswonemsme.com/jswone/subject/task",
         "method": "POST",
         "timeout": {
           "request": 10000,
@@ -3006,7 +3006,7 @@
     "isCacheRequired": false,
     "target": {
       "name": "one-helix-task",
-      "url": "https://tms.jswonemsme.com/jswone/subject/task",
+      "url": "https://oms.jswonemsme.com/jswone/subject/task",
       "method": "POST",
       "timeout": {
         "request": 10000,
@@ -3053,8 +3053,8 @@
       "url": "https://www.jswonemsme.com/v2/cart/update-shipping-address",
       "method": "POST",
       "timeout": {
-        "request": "10000",
-        "socket": "1000"
+        "request": 10000,
+        "socket": 1000
       },
       "headersToPass": [
         {
@@ -3064,5 +3064,11 @@
       ],
       "requiredParams": ["*"]
     }
+  },
+  {
+    "path": "/xp-mi/public/health",
+    "method": "GET",
+    "routeHandler": "PASS_THROUGH",
+    "response": "OK"
   }
 ]
