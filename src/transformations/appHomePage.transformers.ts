@@ -131,7 +131,7 @@ export function mergeAppHomePageResponses(aggregatedResponses: AggregatedRespons
   if (topItemsResponse?.success && Array.isArray(topItemsResponse.data?.data?.products)) {
     const topItems = topItemsResponse?.success
       ? (topItemsResponse?.data?.data?.products ?? topItemsResponse.data?.products ?? [])
-      : null; //ccpProducts
+      : null;
 
     if (!Array.isArray(topItems) || topItems.length === 0) {
       safeDebug(
@@ -146,26 +146,32 @@ export function mergeAppHomePageResponses(aggregatedResponses: AggregatedRespons
       );
 
       for (const block of topItemBlock) {
-        const centralCategoryTopItemData = topItems.map((item: any) => ({
-          ...item,
-          item: topItems.filter(
-            (p: any) => typeof p?.product_mmid === 'string' && p.product_mmid.length > 0,
-          ),
-        }));
-        if (centralCategoryTopItemData.length > 0) {
-          block.centralCatalogueTopItemList = centralCategoryTopItemData[0].item.map((item) => ({
-            title: item?.attributes?.product_title,
-            webUrl: item?.attributes?.slug,
-            MMID: item?.product_mmid,
-            brand: item?.attributes?.brand,
-            image: item?.meta_data?.product_media?.[0]?.public_url,
-            categoryName: item?.associated_categories?.find((cat) =>
-              cat?.path?.includes('All products'),
-            )?.attributes?.category_title,
-          }));
-        } else {
-          block.centralCatalogueTopItemList = [];
-        }
+        const cmsItems = block.app_search_top_items;
+
+        const productMap = new Map(
+          topItems
+            .filter((p) => typeof p?.product_mmid === 'string' && p.product_mmid.length > 0)
+            .map((p) => [p.product_mmid, p]),
+        );
+
+        block.centralCatalogueTopItemList = cmsItems
+          .map((cmsItem) => {
+            const product = productMap.get(cmsItem.MMID);
+
+            if (!product) return null;
+
+            return {
+              title: product?.attributes?.product_title,
+              webUrl: product?.attributes?.slug,
+              MMID: product?.product_mmid,
+              brand: product?.attributes?.brand,
+              image: product?.meta_data?.product_media?.[0]?.public_url,
+              categoryName: product?.associated_categories?.find((cat) =>
+                cat?.path?.toLowerCase().includes('all products'),
+              )?.attributes?.category_title,
+            };
+          })
+          .filter(Boolean);
       }
     }
   }

@@ -1,12 +1,13 @@
 import { SlcResponse } from 'src/models/slc-response.model';
 import { Logger } from '@nestjs/common';
 import { safeDebug } from 'src/utils/common-functions.util';
+import { inspect } from 'util';
 
 export function convertSlcResponse(response: any): any {
   try {
     safeDebug(
       Logger,
-      () => ` SLC Api response from method: convertSlcResponse : ${JSON.stringify(response)}`,
+      () => ` SLC Api response from method: convertSlcResponse : ${inspect(response)}`,
     );
     if (!response || typeof response !== 'object') {
       Logger.error(`Error for SLC API method: convertSlcResponse Response is not an object`);

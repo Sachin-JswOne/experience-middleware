@@ -1,4 +1,4 @@
-﻿/* eslint-disable @typescript-eslint/no-unsafe-argument */
+﻿﻿/* eslint-disable @typescript-eslint/no-unsafe-argument */
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { trace, context, SpanStatusCode } from '@opentelemetry/api';
 import { createHttpClient } from '../utils/http-client.factory';
@@ -26,7 +26,7 @@ import axios from 'axios';
 export class ProxyService {
   private readonly tracer = trace.getTracer('experience-middleware');
   private readonly logger = new Logger(ProxyService.name);
-  constructor(@Inject('REDIS_CLIENT') private readonly redis: Redis) { }
+  constructor(@Inject('REDIS_CLIENT') private readonly redis: Redis) {}
   // constructor() { }
 
   private getCacheKey(req: Request): string {
@@ -112,6 +112,18 @@ export class ProxyService {
       );
 
       throw new Error('Route config not found');
+    }
+
+    if (route.routeHandler !== RouteHandler.CONDITIONAL) {
+      const needsAuth = this.routeNeedsClientAuth(route);
+      if (needsAuth) {
+        const authHeader = req.headers?.authorization || req.headers?.access_token;
+        const userState = req.headers?.['x-user-state'];
+
+        if (!authHeader && userState !== 'G') {
+          throw new CustomError('Bad Request: Authorization required', 400);
+        }
+      }
     }
 
     const isCacheRequired = (route as any).isCacheRequired === true;
@@ -211,6 +223,16 @@ export class ProxyService {
       );
     }
 
+    const needsAuth = this.routeNeedsClientAuth({ target: targetToExecute });
+    if (needsAuth) {
+      const authHeader = req.headers?.authorization || req.headers?.access_token;
+      const userState = req.headers?.['x-user-state'];
+
+      if (!authHeader && userState !== 'G') {
+        throw new CustomError('Bad Request: Authorization required', 400);
+      }
+    }
+
     activeSpan?.setAttribute('proxy.conditional.selected_target', targetName);
     return this.handleTransformRequest(targetToExecute, req);
   }
@@ -264,9 +286,9 @@ export class ProxyService {
           res.status === 'fulfilled'
             ? res.value
             : {
-              success: false,
-              error: 'Unexpected failure',
-            },
+                success: false,
+                error: 'Unexpected failure',
+              },
         );
         const isAggregatedResponse = (r: any): r is AggregatedResponse =>
           'target' in r && 'success' in r;
@@ -370,10 +392,12 @@ export class ProxyService {
         span.setAttribute('cache.hit', false);
 
         const totalStart = this.nowMs();
+        let transformedRequestBody: BaseRequest | undefined;
+        let maskedHeaders: Record<string, any> | undefined;
 
         try {
           const buildStart = this.nowMs();
-          const transformedRequestBody: BaseRequest = await this.buildRequestFromSource(
+          transformedRequestBody = await this.buildRequestFromSource(
             req,
             target.url,
             target.reqTransform,
@@ -383,6 +407,20 @@ export class ProxyService {
             (target as any).requiredPathParams,
             prevResponses,
           );
+
+          maskedHeaders = {
+            ...transformedRequestBody.headers,
+            authorization: transformedRequestBody.headers?.authorization ? '***masked***' : undefined,
+            Authorization: transformedRequestBody.headers?.Authorization ? '***masked***' : undefined,
+            access_token: transformedRequestBody.headers?.access_token ? '***masked***' : undefined,
+          };
+
+          const downstreamUrl = transformedRequestBody.url.href ?? '';
+
+          this.logger.log(
+            `[DOWNSTREAM REQUEST] target=${target.name || target.url} route=${req.path} method=${target.method} url=${downstreamUrl} headers=${inspect(maskedHeaders ?? '')} body=${inspect(transformedRequestBody.body ?? null)}`,
+          );
+          
           const buildMs = this.nowMs() - buildStart;
 
           const clientCreateStart = this.nowMs();
@@ -419,11 +457,11 @@ export class ProxyService {
           span.setAttribute('proxy.target.res_transform_ms', resTransformMs);
 
           this.logger.log(
-            `Target ${target.name || target.url} completed duration_ms=${totalMs} build_ms=${buildMs} client_ms=${clientCreateMs} downstream_ms=${downstreamMs} res_transform_ms=${resTransformMs} status=${response.status}`,
+            `[DOWNSTREAM RESPONSE] target=${target.name || target.url} route=${req.path} status=${response.status} duration_ms=${totalMs} build_ms=${buildMs} client_ms=${clientCreateMs} downstream_ms=${downstreamMs} res_transform_ms=${resTransformMs} `,
           );
 
           if (responseData) {
-            const responseStr = JSON.stringify(responseData);
+            const responseStr = inspect(responseData);
             span.setAttribute('api.response.size', responseStr.length);
 
             if (responseStr.length > 1000) {
@@ -460,8 +498,11 @@ export class ProxyService {
 
           span.setAttribute('proxy.target.duration_ms', totalMs);
 
+          const errorResponse =
+            axios.isAxiosError(err) && err.response ? err.response : null;
+
           this.logger.error(
-            `Target ${target.name || target.url} failed duration_ms=${totalMs} error=${err?.message || String(err)}`,
+            `[DOWNSTREAM ERROR] target=${target.name || target.url} route=${req.path} method=${target.method} url=${transformedRequestBody?.url?.href ?? 'NA'} duration_ms=${totalMs} error=${err?.message || String(err)} status=${errorResponse?.status ?? 'NA'} body=${inspect(transformedRequestBody?.body ?? null)} response=${inspect(errorResponse?.data ?? null)}`,
           );
 
           span.recordException(err as Error);
@@ -502,8 +543,13 @@ export class ProxyService {
               }
 
               if (errorResponse.status >= 400 && errorResponse.status < 500) {
-                const downstreamMessage =
-                  errorResponse.data?.error?.message ||
+              const downstreamMessage = Array.isArray(errorResponse.data)
+                ? errorResponse.data[0]?.message ||
+                  errorResponse.data[0]?.error ||
+                  errorResponse.data[0]?.error_description ||
+                  errorResponse.statusText ||
+                  'Bad Request'
+                : errorResponse.data?.error?.message ||
                   errorResponse.data?.error ||
                   errorResponse.data?.message ||
                   errorResponse.data?.error_description ||
