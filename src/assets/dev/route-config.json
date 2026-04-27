@@ -1276,56 +1276,24 @@
   {
     "path": "/xp-mi/public/v1/central_commerce/product/selector",
     "method": "POST",
-    "routeHandler": "AGGREGATE",
-    "aggregationType": "PARALLEL",
-    "targets": [
-      {
-        "name": "cmsFeatureFlag",
-        "url": "${CMS_MSME_URL}/ccp-feature-flags",
-        "method": "GET",
-        "timeout": {
-          "request": 10000,
-          "socket": 1000
-        },
-        "reqTransform": "category.transformers.addFeatureFlagQueryParams",
-        "resTransform": "cms.transformers.replaceUriPrefix"
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "productSelectorV1",
+      "url": "https://qa.msme.jswone.in/central_commerce/product/selector",
+      "reqTransform": "category.transformers.transformLegacyProductSelectorRequest",
+      "method": "POST",
+      "timeout": {
+        "request": 10000,
+        "socket": 1000
       },
-      {
-        "name": "msmeProductSelector",
-        "url": "https://qa.msme.jswone.in/product/v1/product-selector",
-        "method": "POST",
-        "reqTransform": "category.transformers.transformV1ProductSelectorRequest",
-        "timeout": {
-          "request": 10000,
-          "socket": 1000
-        },
-        "headersToPass": [
-          {
-            "source": "access_token",
-            "destination": "access_token"
-          }
-        ],
-        "requiredParams": ["*"]
-      },
-      {
-        "name": "productSelectorV1",
-        "url": "https://qa.msme.jswone.in/central_commerce/product/selector",
-        "reqTransform": "category.transformers.transformLegacyProductSelectorRequest",
-        "method": "POST",
-        "timeout": {
-          "request": 10000,
-          "socket": 1000
-        },
-        "headersToPass": [
-          {
-            "source": "access_token",
-            "destination": "access_token"
-          }
-        ],
-        "requiredParams": ["*"]
-      }
-    ],
-    "resTransform": "category.transformers.selectProductSelectorResponse"
+      "headersToPass": [
+        {
+          "source": "access_token",
+          "destination": "access_token"
+        }
+      ],
+      "requiredParams": ["*"]
+    }
   },
   {
     "path": "${PATH_URL}/v1/customer-profile",
@@ -2625,6 +2593,22 @@
         "resTransform": "buyAgain.transformers.transformBuyAgainResponse"
       },
       {
+        "name": "app-search-top-items",
+        "url": "https://qa.msme.jswone.in/central_commerce/catalogue/product-details",
+        "method": "POST",
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
+        "reqTransform": "appHomePage.transformers.transformTopItemsRequest",
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "access_token"
+          }
+        ]
+      },
+      {
         "name": "app-top-brands",
         "url": "https://qa.msme.jswone.in/central_commerce/categories/tree/list",
         "method": "POST",
@@ -3462,6 +3446,27 @@
       },
       "reqTransform": "general.transformers.moveBodyToQueryParams",
       "resTransform": "login.transformers.transformResendOtpResponse"
+    }
+  },
+  {
+    "path": "/xp-mi/public/v2/cart/update-shipping-address",
+    "method": "POST",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "update-shipping-address",
+      "url": "https://qa.msme.jswone.in/v2/cart/update-shipping-address",
+      "method": "POST",
+      "timeout": {
+        "request": "10000",
+        "socket": "1000"
+      },
+      "headersToPass": [
+        {
+          "source": "access_token",
+          "destination": "access_token"
+        }
+      ],
+      "requiredParams": ["*"]
     }
   }
 ]

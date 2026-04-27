@@ -490,7 +490,7 @@ export function extractProductListingSlugv3FromCmsBody(request: BaseRequest): Ba
   );
 }
 
-function extractMMIDs(items: any[]): string[] {
+export function extractMMIDs(items: any[]): string[] {
   if (!Array.isArray(items)) return [];
   return items
     .map((item) => item?.MMID)

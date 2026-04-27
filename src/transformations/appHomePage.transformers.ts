@@ -1,6 +1,8 @@
 import { AggregatedResponse } from 'src/models/aggregated-response.model';
 import { Logger } from '@nestjs/common';
 import { safeDebug } from 'src/utils/common-functions.util';
+import { BaseRequest } from 'src/models/base-request.model';
+import { extractMMIDs } from './web.transformers';
 
 export function mergeAppHomePageResponses(aggregatedResponses: AggregatedResponse[]): any {
   const responses = aggregatedResponses.reduce(
@@ -16,6 +18,7 @@ export function mergeAppHomePageResponses(aggregatedResponses: AggregatedRespons
   const categoriesResponse = responses['app-categories'];
   const blogResponse = responses['app-blogs'];
   const inTransitResponse = responses['app-in-transit'];
+  const topItemsResponse = responses['app-search-top-items'];
 
   safeDebug(
     Logger,
@@ -48,6 +51,13 @@ export function mergeAppHomePageResponses(aggregatedResponses: AggregatedRespons
     () =>
       `In Transit Api response from method: mergeAppHomePageResponses : ${JSON.stringify(
         inTransitResponse,
+      )}`,
+  );
+  safeDebug(
+    Logger,
+    () =>
+      `Top Items Api response from method: mergeAppHomePageResponses : ${JSON.stringify(
+        topItemsResponse,
       )}`,
   );
   if (!strapiResponse || typeof strapiResponse.data !== 'object' || strapiResponse.data === null) {
@@ -114,6 +124,54 @@ export function mergeAppHomePageResponses(aggregatedResponses: AggregatedRespons
         }));
       } else {
         block.centralCatalogueBrandsList = [];
+      }
+    }
+  }
+
+  if (topItemsResponse?.success && Array.isArray(topItemsResponse.data?.data?.products)) {
+    const topItems = topItemsResponse?.success
+      ? (topItemsResponse?.data?.data?.products ?? topItemsResponse.data?.products ?? [])
+      : null;
+
+    if (!Array.isArray(topItems) || topItems.length === 0) {
+      safeDebug(
+        Logger,
+        () => `Top Items from Central Catalogue: empty/fail; keeping CMS top items as-is.`,
+      );
+    } else {
+      const topItemBlock = blocks.filter(
+        (b: any) =>
+          b.__component === 'app-components.app-search-top-items' &&
+          Array.isArray(b.app_search_top_items),
+      );
+
+      for (const block of topItemBlock) {
+        const cmsItems = block.app_search_top_items;
+
+        const productMap = new Map(
+          topItems
+            .filter((p) => typeof p?.product_mmid === 'string' && p.product_mmid.length > 0)
+            .map((p) => [p.product_mmid, p]),
+        );
+
+        block.centralCatalogueTopItemList = cmsItems
+          .map((cmsItem) => {
+            const product = productMap.get(cmsItem.MMID);
+
+            if (!product) return null;
+
+            return {
+              title: product?.attributes?.product_title,
+              webUrl: product?.attributes?.slug,
+              MMID: product?.product_mmid,
+              brand: product?.attributes?.brand,
+              image: product?.meta_data?.product_media?.[0]?.public_url,
+              categoryName: product?.associated_categories?.find((cat) =>
+                cat?.path?.toLowerCase().includes('all products'),
+              )?.attributes?.category_title,
+            };
+          })
+          .filter(Boolean);
       }
     }
   }
@@ -188,5 +246,29 @@ export function mergeAppHomePageResponses(aggregatedResponses: AggregatedRespons
 
   return {
     data: mergedData,
+  };
+}
+
+// This transformer is used to extract MMIDs from request
+export function transformTopItemsRequest(
+  request: BaseRequest,
+  aggregatedResponses: AggregatedResponse[],
+) {
+  const responses = aggregatedResponses.reduce(
+    (acc, response) => {
+      acc[response.target] = response;
+      return acc;
+    },
+    {} as Record<string, AggregatedResponse>,
+  );
+  const aggregateResponse = responses['app-home-page'].data.data;
+
+  const topItemsResponse = aggregateResponse.blocks.find(
+    (block) => block.__component === 'app-components.app-search-top-items',
+  ).app_search_top_items;
+  const mmids = extractMMIDs(topItemsResponse);
+  return {
+    ...request,
+    body: mmids,
   };
 }
