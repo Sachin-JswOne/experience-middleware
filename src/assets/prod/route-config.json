@@ -2681,7 +2681,7 @@
       },
       {
         "name": "industry-all-content",
-        "url": "http://experience-middleware.jswonemsme.com/xp-mi/public/v1/jsw-blog-industry-content-all",
+        "url": "https://experience-middleware.jswonemsme.com/xp-mi/public/v1/jsw-blog-industry-content-all",
         "method": "POST",
         "timeout": {
           "request": 15000,
@@ -2704,7 +2704,7 @@
     "targets": [
       {
         "name": "industry-parallel-helper",
-        "url": "http://experience-middleware.jswonemsme.com/xp-mi/public/v1/jsw-blog-industry-content-parallel-helper",
+        "url": "https://experience-middleware.jswonemsme.com/xp-mi/public/v1/jsw-blog-industry-content-parallel-helper",
         "method": "POST",
         "timeout": {
           "request": 15000,
@@ -2924,11 +2924,11 @@
     "targets": [
       {
         "name": "one-helix-guest",
-        "url": "http://experience-middleware.jswonemsme.com/xp-mi/public/v1/one-helix-enquiry/guest",
+        "url": "https://experience-middleware.jswonemsme.com/xp-mi/public/v1/one-helix-enquiry/guest",
         "method": "POST",
         "timeout": {
           "request": 15000,
-          "socket": 1000
+          "socket": 5000
         },
         "headersToPass": [
           {
@@ -2939,11 +2939,11 @@
       },
       {
         "name": "one-helix-logged-in",
-        "url": "http://experience-middleware.jswonemsme.com/xp-mi/public/v1/one-helix-enquiry/logged-in",
+        "url": "https://experience-middleware.jswonemsme.com/xp-mi/public/v1/one-helix-enquiry/logged-in",
         "method": "POST",
         "timeout": {
           "request": 15000,
-          "socket": 1000
+          "socket": 5000
         },
         "headersToPass": [
           {
