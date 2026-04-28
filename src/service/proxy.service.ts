@@ -65,33 +65,6 @@ export class ProxyService {
     return `:m:${methodPart}|p:${pathPart}|${queryPart}`;
   }
 
-  private routeNeedsClientAuth(route: any): boolean {
-    const hasAuthHeaderPassThrough = (headersToPass?: any[]) =>
-      Array.isArray(headersToPass) &&
-      headersToPass.some((h) => {
-        const src = String(h?.source ?? '').toLowerCase();
-        const dst = String(h?.destination ?? '').toLowerCase();
-        return (
-          src === 'authorization' ||
-          src === 'access_token' ||
-          dst === 'authorization' ||
-          dst === 'access_token'
-        );
-      });
-
-    // TRANSFORM routes
-    if (route?.target && hasAuthHeaderPassThrough(route.target.headersToPass)) {
-      return true;
-    }
-
-    // AGGREGATE / CONDITIONAL routes
-    if (Array.isArray(route?.targets)) {
-      return route.targets.some((t: any) => hasAuthHeaderPassThrough(t?.headersToPass));
-    }
-
-    return false;
-  }
-
   async handleRequest(req: Request) {
     console.log(`Incoming ${req.method} request: ${req.url}`);
     const route = this.findRoute(req);
@@ -112,18 +85,6 @@ export class ProxyService {
       );
 
       throw new Error('Route config not found');
-    }
-
-    if (route.routeHandler !== RouteHandler.CONDITIONAL) {
-      const needsAuth = this.routeNeedsClientAuth(route);
-      if (needsAuth) {
-        const authHeader = req.headers?.authorization || req.headers?.access_token;
-        const userState = req.headers?.['x-user-state'];
-
-        if (!authHeader && userState !== 'G') {
-          throw new CustomError('Bad Request: Authorization required', 400);
-        }
-      }
     }
 
     const isCacheRequired = (route as any).isCacheRequired === true;
@@ -221,16 +182,6 @@ export class ProxyService {
       throw new Error(
         `Conditional target '${targetName}' not found in route config for path '${route.path}'`,
       );
-    }
-
-    const needsAuth = this.routeNeedsClientAuth({ target: targetToExecute });
-    if (needsAuth) {
-      const authHeader = req.headers?.authorization || req.headers?.access_token;
-      const userState = req.headers?.['x-user-state'];
-
-      if (!authHeader && userState !== 'G') {
-        throw new CustomError('Bad Request: Authorization required', 400);
-      }
     }
 
     activeSpan?.setAttribute('proxy.conditional.selected_target', targetName);
