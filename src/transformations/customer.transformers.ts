@@ -156,3 +156,38 @@ export function mergeCustomerProfile(aggregatedResponses: AggregatedResponse[]):
     ...gstData,
   };
 }
+
+export function transformFetchUserRequest(request: BaseRequest): BaseRequest {
+  const searchParams = request.url.searchParams;
+
+  const email = searchParams.get('email');
+  console.log('Email extracted in transformFetchUserRequest:', email);
+  const phoneNumber = searchParams.get('phoneNumber');
+  const contactsfId = searchParams.get('contactsfId');
+
+  const providedParams = [email, phoneNumber, contactsfId].filter(Boolean);
+
+  if (providedParams.length !== 1) {
+    throw new CustomError(
+      'Exactly one of email, phoneNumber, or contactsfId must be provided.',
+      400,
+    );
+  }
+
+  const hasAccessToken =
+    Boolean(request.headers?.access_token) || Boolean(request.headers?.authorization);
+
+  const isInvitationAcceptanceFlow = Boolean(contactsfId) && !hasAccessToken;
+
+  return {
+    ...request,
+    headers: {
+      ...request.headers,
+      ...(isInvitationAcceptanceFlow
+        ? {
+            'X-API-KEY': process.env.CUSTOMER_X_API_KEY_CONSTRUCT,
+          }
+        : {}),
+    },
+  };
+}
