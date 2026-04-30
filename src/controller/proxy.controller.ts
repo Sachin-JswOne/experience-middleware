@@ -51,6 +51,9 @@ export class ProxyController {
         `Request completed ${req.method} ${req.path} status=${HttpStatus.OK} trace_id=${req.traceId ?? ''} span_id=${req.spanId ?? ''} duration_ms=${Date.now() - startTime}`,
       );
     } catch (err: unknown) {
+      const downstreamResponse =
+        err instanceof CustomError ? (err as any).downstreamResponse : null;
+
       const statusCode =
         err instanceof AxiosError
           ? err.response?.status || HttpStatus.INTERNAL_SERVER_ERROR
@@ -69,7 +72,11 @@ export class ProxyController {
         `Request failed ${req.method} ${req.path} status=${statusCode} trace_id=${req.traceId ?? ''} span_id=${req.spanId ?? ''} duration_ms=${Date.now() - startTime} error=${errorMessage}`,
       );
 
-      res.status(statusCode).json({ error: errorMessage });
+      if (downstreamResponse) {
+        return res.status(statusCode).json(downstreamResponse);
+      }
+
+      return res.status(statusCode).json({ error: errorMessage });
     }
   }
 }

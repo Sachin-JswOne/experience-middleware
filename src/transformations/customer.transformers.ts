@@ -158,12 +158,9 @@ export function mergeCustomerProfile(aggregatedResponses: AggregatedResponse[]):
 }
 
 export function transformFetchUserRequest(request: BaseRequest): BaseRequest {
-  const searchParams = request.url.searchParams;
-
-  const email = searchParams.get('email');
-  console.log('Email extracted in transformFetchUserRequest:', email);
-  const phoneNumber = searchParams.get('phoneNumber');
-  const contactsfId = searchParams.get('contactsfId');
+  const email = request.url.searchParams.get('email')?.trim();
+  const phoneNumber = request.url.searchParams.get('phoneNumber')?.trim();
+  const contactsfId = request.url.searchParams.get('contactsfId')?.trim();
 
   const providedParams = [email, phoneNumber, contactsfId].filter(Boolean);
 
@@ -181,6 +178,7 @@ export function transformFetchUserRequest(request: BaseRequest): BaseRequest {
 
   return {
     ...request,
+    body: undefined,
     headers: {
       ...request.headers,
       ...(isInvitationAcceptanceFlow

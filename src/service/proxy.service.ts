@@ -348,7 +348,7 @@ export class ProxyService {
 
         try {
           const buildStart = this.nowMs();
-          const transformedRequestBody: BaseRequest = await this.buildRequestFromSource(
+          transformedRequestBody = await this.buildRequestFromSource(
             req,
             target.url,
             target.reqTransform,
@@ -505,10 +505,17 @@ export class ProxyService {
                   errorResponse.statusText ||
                   'Bad Request';
 
-                const clientError = new CustomError(downstreamMessage, errorResponse.status) as any;
-                clientError.httpStatusCode = errorResponse.status;
-                clientError.response = errorResponse;
-                throw clientError;
+              const clientError = new CustomError(
+                errorResponse.data?.error?.message ||
+                  errorResponse.data?.message ||
+                  errorResponse.statusText ||
+                  'Request failed',
+                errorResponse.status,
+              ) as any;
+
+              clientError.downstreamResponse = errorResponse.data;
+
+              throw clientError;
               }
             }
           }

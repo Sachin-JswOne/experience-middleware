@@ -3484,7 +3484,7 @@
       },
       "headersToPass": [
         {
-          "source": "access_token",
+          "source": "authorization",
           "destination": "access_token"
         }
       ],
@@ -3509,10 +3509,14 @@
       },
       "headersToPass": [
         {
-          "source": "access_token",
+          "source": "authorization",
           "destination": "access_token"
         }
       ],
+      "staticHeaders": {
+        "Content-Type": "application/json"
+      },
+      "requiredParams": ["*"],
       "reqTransform": "customer.transformers.transformFetchUserRequest"
     }
   },
@@ -3531,7 +3535,7 @@
       },
       "headersToPass": [
         {
-          "source": "access_token",
+          "source": "authorization",
           "destination": "access_token"
         }
       ],
@@ -3557,7 +3561,7 @@
       },
       "headersToPass": [
         {
-          "source": "access_token",
+          "source": "authorization",
           "destination": "access_token"
         }
       ],
@@ -3582,7 +3586,7 @@
       },
       "headersToPass": [
         {
-          "source": "access_token",
+          "source": "authorization",
           "destination": "access_token"
         }
       ],
@@ -3607,7 +3611,7 @@
       },
       "headersToPass": [
         {
-          "source": "access_token",
+          "source": "authorization",
           "destination": "access_token"
         }
       ],
@@ -3632,7 +3636,7 @@
       },
       "headersToPass": [
         {
-          "source": "access_token",
+          "source": "authorization",
           "destination": "access_token"
         }
       ],
@@ -3640,5 +3644,30 @@
         "Content-Type": "application/json"
       }
     }
-  }
+  },
+  {
+    "path": "/xp-mi/public/v1/fetch-all-roles",
+    "method": "GET",
+    "routeHandler": "TRANSFORM",
+    "isCacheRequired": false,
+    "target": {
+      "name": "get-all-roles",
+      "url": "https://qa.msme.jswone.in/customer/v1/roles/get-all",
+      "method": "GET",
+      "timeout": {
+        "request": 20000,
+        "socket": 1000
+      },
+      "headersToPass": [
+        {
+          "source": "authorization",
+          "destination": "access_token"
+        }
+      ],
+      "staticHeaders": {
+        "Content-Type": "application/json"
+      },
+      "requiredParams": ["page", "size"]
+    }
+}
 ]
