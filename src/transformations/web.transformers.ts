@@ -370,6 +370,8 @@ export function handleProductResponse(aggregatedResponses: AggregatedResponse[])
 function buildCompactWebHomePageV3Payload(cmsResponse: any) {
   const page = Array.isArray(cmsResponse?.data) ? cmsResponse.data[0] : null;
 
+  if (!page) return null;
+
   return {
     mweb_top_item: page?.mweb_top_item ?? null,
     product_category_component: Array.isArray(page?.product_category_component)
@@ -380,6 +382,9 @@ function buildCompactWebHomePageV3Payload(cmsResponse: any) {
       : [],
     category_component: page?.category_component ?? null,
     top_brand_component: page?.top_brand_component ?? null,
+    blog_list_component_material_matter: page?.blog_list_component_material_matter ?? null,
+    buy_again_component: page?.buy_again_component ?? null,
+    recently_viewed_component: page?.recently_viewed_component ?? null
   };
 }
 
@@ -403,31 +408,35 @@ export function mergeWebHomePageResponsesV3FromNestedParallel(
   aggregatedResponses: AggregatedResponse[],
 ): any {
   const cmsAgg = aggregatedResponses.find((r) => r.target === 'layout-mweb-homepages');
+
   const helperAgg = aggregatedResponses.find(
-    (r) => r.target === 'web-home-page-v3-registered-parallel-helper',
+    (r) =>
+      r.target === 'web-home-page-v3-registered-parallel-helper' ||
+      r.target === 'web-home-page-v3-parallel-helper',
   );
 
   if (!helperAgg) {
-    throw new CustomError('web-home-page-v3-parallel-helper response missing', 500);
+    throw new CustomError('web-home-page-v3 parallel helper response missing', 500);
   }
 
   if (!helperAgg.success) {
     Logger.error(
-      `web-home-page-v3-parallel-helper failed: ${safeToLog(helperAgg.error)} | downstream=${safeToLog(
+      `web-home-page-v3 parallel helper failed: ${safeToLog(helperAgg.error)} | downstream=${safeToLog(
         helperAgg.downstreamResponse,
       )}`,
     );
+
     throw new CustomError(
-      `web-home-page-v3-parallel-helper failed: ${helperAgg.error ?? 'unknown error'}`,
+      `web-home-page-v3 parallel helper failed: ${helperAgg.error ?? 'unknown error'}`,
       helperAgg.httpStatus ?? 500,
     );
   }
 
   if (!Array.isArray(helperAgg.data)) {
     Logger.error(
-      `web-home-page-v3-parallel-helper returned non-array data: ${safeToLog(helperAgg.data)}`,
+      `web-home-page-v3 parallel helper returned non-array data: ${safeToLog(helperAgg.data)}`,
     );
-    throw new CustomError('web-home-page-v3-parallel-helper returned non-array data', 500);
+    throw new CustomError('web-home-page-v3 parallel helper returned non-array data', 500);
   }
 
   return mergeWebHomePageResponsesV3([...(cmsAgg ? [cmsAgg] : []), ...helperAgg.data]);
@@ -912,6 +921,15 @@ export function normalizeRecentlyViewedProducts(response: any): RecentlyViewedPr
 }
 
 // ─── Request Transformer ───────────────────────────────────────────────────
+
+export function transformRecentlyViewedMMIDsRequestFromParallelPayload(
+  request: BaseRequest,
+): BaseRequest {
+  return transformRecentlyViewedMMIDsRequest({
+    ...request,
+    body: getParallelHelperOriginalBody(request),
+  });
+}
 
 export function transformRecentlyViewedMMIDsRequest(request: BaseRequest): BaseRequest {
   let mmids: string[] = [];
