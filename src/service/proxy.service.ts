@@ -191,16 +191,6 @@ export class ProxyService {
       );
     }
 
-    const needsAuth = this.routeNeedsClientAuth({ target: targetToExecute });
-    if (needsAuth) {
-      const authHeader = req.headers?.authorization || req.headers?.access_token;
-      const userState = req.headers?.['x-user-state'];
-
-      if (!authHeader && userState !== 'G') {
-        throw new CustomError('Bad Request: Authorization required', 400);
-      }
-    }
-
     activeSpan?.setAttribute('proxy.conditional.selected_target', targetName);
     return this.handleTransformRequest(targetToExecute, req);
   }
