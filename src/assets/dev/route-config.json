@@ -2241,7 +2241,7 @@
     ],
     "resTransform": "general.transformers.unwrapParallelResponse"
   },
-    {
+  {
     "path": "/xp-mi/public/v1/web-home-page-v3",
     "method": "POST",
     "routeHandler": "AGGREGATE",
@@ -3260,5 +3260,25 @@
     "method": "GET",
     "routeHandler": "PASS_THROUGH",
     "response": "OK"
+  },
+  {
+    "path": "/xp-mi/public/v2/cart",
+    "method": "GET",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "get-cart",
+      "url": "https://qa.msme.jswone.in/v2/cart/get",
+      "method": "GET",
+      "timeout": {
+        "request": "10000",
+        "socket": "1000"
+      },
+      "headersToPass": [
+        {
+          "source": "access_token",
+          "destination": "access_token"
+        }
+      ]
+    }
   }
 ]
