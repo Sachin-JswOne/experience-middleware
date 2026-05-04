@@ -409,11 +409,9 @@ export function mergeWebHomePageResponsesV3FromNestedParallel(
 ): any {
   const cmsAgg = aggregatedResponses.find((r) => r.target === 'layout-mweb-homepages');
 
-  const helperAgg = aggregatedResponses.find(
-    (r) =>
-      r.target === 'web-home-page-v3-registered-parallel-helper' ||
-      r.target === 'web-home-page-v3-parallel-helper',
-  );
+const helperAgg = aggregatedResponses.find(
+  (r) => r.target?.includes('parallel-helper')
+);
 
   if (!helperAgg) {
     throw new CustomError('web-home-page-v3 parallel helper response missing', 500);
