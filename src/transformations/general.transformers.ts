@@ -101,7 +101,7 @@ export function transformAppHomePageRequest(request: BaseRequest): BaseRequest {
   return moveBodyToQueryParams(transformedRequest);
 }
 
-const addChannelFilter = (query) => {
+export const addChannelFilter = (query) => {
   if (Array.isArray(query)) {
     query.forEach(addChannelFilter);
     return;
