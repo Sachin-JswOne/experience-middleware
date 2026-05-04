@@ -3351,8 +3351,8 @@
       "url": "https://qa.msme.jswone.in/v2/cart/get",
       "method": "GET",
       "timeout": {
-        "request": "10000",
-        "socket": "1000"
+        "request": 10000,
+        "socket": 1000
       },
       "headersToPass": [
         {
