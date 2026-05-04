@@ -2324,7 +2324,7 @@
     "path": "/xp-mi/public/v1/web-home-page-v3-guest",
     "method": "POST",
     "routeHandler": "AGGREGATE",
-    "aggregationType": "PARALLEL",
+    "aggregationType": "SEQUENTIAL",
     "targets": [
       {
         "name": "layout-mweb-homepages",
@@ -2335,11 +2335,56 @@
         "resTransform": "cms.transformers.replaceUriPrefix"
       },
       {
+        "name": "web-home-page-v3-guest-parallel-helper",
+        "url": "https://experience-middleware.preprod.jswonemsme.com/xp-mi/public/v1/web-home-page-v3-guest-parallel-helper",
+        "method": "POST",
+        "timeout": { "request": 10000, "socket": 1000 },
+        "reqTransform": "web.transformers.prepareWebHomePageV3ParallelPayload",
+        "headersToPass": [
+          { "source": "authorization", "destination": "authorization" },
+          { "source": "authorization", "destination": "access_token" },
+          { "source": "access_token", "destination": "authorization" },
+          { "source": "access_token", "destination": "access_token" },
+          { "source": "x-user-state", "destination": "x-user-state" }
+        ]
+      }
+    ],
+    "resTransform": "web.transformers.mergeWebHomePageResponsesV3FromNestedParallel"
+  },
+  {
+    "path": "/xp-mi/public/v1/web-home-page-v3-guest-parallel-helper",
+    "method": "POST",
+    "routeHandler": "AGGREGATE",
+    "aggregationType": "PARALLEL",
+    "targets": [
+      {
+        "name": "cmsFeatureFlag",
+        "url": "${CMS_MSME_URL}/ccp-feature-flags",
+        "method": "GET",
+        "timeout": {
+          "request": "${TIMEOUTS.REQUEST}",
+          "socket": "${TIMEOUTS.SOCKET}"
+        },
+        "reqTransform": "web.transformers.addFeatureFlagQueryParamsFromParallelPayload",
+        "resTransform": "cms.transformers.replaceUriPrefix"
+      },
+      {
+        "name": "web-central-catalogue-categories",
+        "url": "https://preprod.jswonemsme.com/central_commerce/categories/tree/list",
+        "method": "POST",
+        "timeout": { "request": 5000, "socket": 1000 },
+        "reqTransform": "web.transformers.extractCentralCatalogueCategoryIdsv3FromCmsBody",
+        "headersToPass": [
+          { "source": "authorization", "destination": "access_token" },
+          { "source": "access_token", "destination": "access_token" }
+        ]
+      },
+      {
         "name": "recent-viewed-remove",
         "url": "https://preprod.jswonemsme.com/central_commerce/recent-viewed/remove",
         "method": "GET",
         "timeout": { "request": 5000, "socket": 1000 },
-        "reqTransform": "general.transformers.convertToGetRequest",
+        "reqTransform": "web.transformers.convertOriginalBodyToGetRequestFromParallelPayload",
         "headersToPass": [
           { "source": "authorization", "destination": "access_token" },
           { "source": "access_token", "destination": "access_token" }
@@ -2350,14 +2395,13 @@
         "url": "https://preprod.jswonemsme.com/central_commerce/catalogue/product-details",
         "method": "POST",
         "timeout": { "request": 5000, "socket": 1000 },
-        "reqTransform": "web.transformers.transformRecentlyViewedMMIDsRequest",
+        "reqTransform": "web.transformers.transformRecentlyViewedMMIDsRequestFromParallelPayload",
         "headersToPass": [
           { "source": "authorization", "destination": "access_token" },
           { "source": "access_token", "destination": "access_token" }
         ]
       }
-    ],
-    "resTransform": "web.transformers.mergeWebHomePageResponsesV3"
+    ]
   },
   {
     "path": "/xp-mi/public/v1/web-home-page-v3-registered",
