@@ -3162,8 +3162,8 @@
       "url": "https://preprod.jswonemsme.com/v2/cart/update-shipping-address",
       "method": "POST",
       "timeout": {
-        "request": "10000",
-        "socket": "1000"
+        "request": 10000,
+        "socket": 1000
       },
       "headersToPass": [
         {
@@ -3183,8 +3183,8 @@
       "url": "https://preprod.jswonemsme.com/v2/cart/get",
       "method": "GET",
       "timeout": {
-        "request": "10000",
-        "socket": "1000"
+        "request": 10000,
+        "socket": 1000
       },
       "headersToPass": [
         {
