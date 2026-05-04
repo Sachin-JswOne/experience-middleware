@@ -499,15 +499,21 @@ export class ProxyService {
                   errorResponse.statusText ||
                   'Bad Request'
                 : errorResponse.data?.error?.message ||
-                  errorResponse.data?.error ||
                   errorResponse.data?.message ||
                   errorResponse.data?.error_description ||
                   errorResponse.statusText ||
                   'Bad Request';
 
-                const clientError = new CustomError(downstreamMessage, errorResponse.status) as any;
+                const clientError = new CustomError(
+                  typeof downstreamMessage === 'string'
+                    ? downstreamMessage
+                    : JSON.stringify(downstreamMessage),
+                  errorResponse.status,
+                ) as any;
+
                 clientError.httpStatusCode = errorResponse.status;
-                clientError.response = errorResponse;
+                clientError.downstreamResponse = errorResponse.data; // plain JSON only
+
                 throw clientError;
               }
             }
