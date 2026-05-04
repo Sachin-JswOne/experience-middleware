@@ -3173,5 +3173,25 @@
       ],
       "requiredParams": ["*"]
     }
+  },
+  {
+    "path": "/xp-mi/public/v2/cart",
+    "method": "GET",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "get-cart",
+      "url": "https://preprod.jswonemsme.com/v2/cart/get",
+      "method": "GET",
+      "timeout": {
+        "request": "10000",
+        "socket": "1000"
+      },
+      "headersToPass": [
+        {
+          "source": "access_token",
+          "destination": "access_token"
+        }
+      ]
+    }
   }
 ]
