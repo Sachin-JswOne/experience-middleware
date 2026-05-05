@@ -1910,6 +1910,10 @@
       },
       "headersToPass": [
         {
+          "source": "authorization",
+          "destination": "access_token"
+        },
+        {
           "source": "access_token",
           "destination": "access_token"
         }
@@ -2231,13 +2235,23 @@
       },
       {
         "name": "cart-page-buy-again",
-        "url": "http://127.0.0.1:3000/xp-mi/public/v1/central_commerce/buy-again-list",
+        "url": "https://experience-middleware.preprod.jswonemsme.com/xp-mi/public/v1/central_commerce/buy-again-list",
         "method": "GET",
         "timeout": {
           "request": 5000,
           "socket": 1000
         },
-        "reqTransform": "general.transformers.convertToGetRequest"
+        "reqTransform": "general.transformers.convertToGetRequest",
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "access_token"
+          },
+          {
+            "source": "access_token",
+            "destination": "access_token"
+          }
+        ]
       }
     ],
     "resTransform": "cart.transformers.mergeMmebCartPageResponses"
