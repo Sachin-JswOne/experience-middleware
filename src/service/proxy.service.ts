@@ -387,6 +387,25 @@ export class ProxyService {
             data: transformedRequestBody.body,
             headers: transformedRequestBody.headers,
           });
+
+          const downstreamSetCookie = response.headers?.['set-cookie'];
+
+          if (downstreamSetCookie) {
+            const cookies = Array.isArray(downstreamSetCookie)
+              ? downstreamSetCookie
+              : [downstreamSetCookie];
+
+            const sanitizedCookies = cookies
+              .map((cookie) => this.sanitizeSetCookieForBff(cookie))
+              .filter(Boolean) as string[];
+
+            if (sanitizedCookies.length > 0) {
+              (req as any).__downstreamSetCookie = [
+                ...((req as any).__downstreamSetCookie ?? []),
+                ...sanitizedCookies,
+              ];
+            }
+          }
           const downstreamMs = this.nowMs() - downstreamStart;
 
           span.setAttribute('http.status_code', response.status);
@@ -594,6 +613,12 @@ export class ProxyService {
         }
       }
     }
+    
+    const incomingCookie = reqHeaders.cookie;
+
+    if (incomingCookie && !headers.cookie) {
+      headers.cookie = incomingCookie;
+    }
     if (staticHeaders) {
       headers = { ...headers, ...staticHeaders };
     }
@@ -674,5 +699,19 @@ export class ProxyService {
 
   private nowMs(): number {
     return Number(process.hrtime.bigint() / 1000000n);
+  }
+
+  private sanitizeSetCookieForBff(cookie: string): string | null {
+  const lowerCookie = cookie.toLowerCase();
+
+  if (!lowerCookie.startsWith('jsw_session_id=')) {
+    return null;
+  }
+  const isLocal = process.env.NODE_ENV !== 'production';
+
+  return cookie
+    .replace(/;\s*Domain=[^;]*/gi, '') // remove downstream domain
+    .replace(/;\s*Path=[^;]*/gi, '; Path=/') // normalize path
+    .replace(isLocal ? /;\s*Secure/gi : /$^/, ''); // remove Secure only in local
   }
 }
