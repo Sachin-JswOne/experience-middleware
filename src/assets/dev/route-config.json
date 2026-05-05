@@ -2358,6 +2358,20 @@
         "resTransform": "cms.transformers.replaceUriPrefix"
       },
       {
+        "name": "web-central-top-brand-categories",
+        "url": "https://qa.msme.jswone.in/central_commerce/categories/tree/list",
+        "method": "POST",
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
+        "reqTransform": "web.transformers.extractBrandCategoryIdsv3FromCmsBody",
+        "headersToPass": [
+          { "source": "authorization", "destination": "access_token" },
+          { "source": "access_token", "destination": "access_token" }
+        ]
+      },
+      {
         "name": "web-central-catalogue-categories",
         "url": "https://qa.msme.jswone.in/central_commerce/categories/tree/list",
         "method": "POST",
