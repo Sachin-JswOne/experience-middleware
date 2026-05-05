@@ -2380,6 +2380,20 @@
         ]
       },
       {
+        "name": "web-central-top-brand-categories",
+        "url": "https://preprod.jswonemsme.com/central_commerce/categories/tree/list",
+        "method": "POST",
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
+        "reqTransform": "web.transformers.extractBrandCategoryIdsv3FromCmsBody",
+        "headersToPass": [
+          { "source": "authorization", "destination": "access_token" },
+          { "source": "access_token", "destination": "access_token" }
+        ]
+      },
+      {
         "name": "recent-viewed-remove",
         "url": "https://preprod.jswonemsme.com/central_commerce/recent-viewed/remove",
         "method": "GET",
