@@ -160,21 +160,37 @@ export function mergeCustomerProfile(aggregatedResponses: AggregatedResponse[]):
 export function transformFetchUserRequest(request: BaseRequest): BaseRequest {
   const email = request.url.searchParams.get('email')?.trim();
   const phoneNumber = request.url.searchParams.get('phoneNumber')?.trim();
-  const contactsfId = request.url.searchParams.get('contactsfId')?.trim();
 
-  const providedParams = [email, phoneNumber, contactsfId].filter(Boolean);
+  const contactSfId = request.url.searchParams.get('contactSfId')?.trim();
+
+  const providedParams = [email, phoneNumber, contactSfId].filter(Boolean);
 
   if (providedParams.length !== 1) {
     throw new CustomError(
-      'Exactly one of email, phoneNumber, or contactsfId must be provided.',
+      'Exactly one of email, phoneNumber, or contactSfId must be provided.',
       400,
     );
   }
 
+  const includePermission =
+    request.url.searchParams.get('includePermission')?.toLowerCase() === 'true';
+
+  request.url.searchParams.delete('email');
+  request.url.searchParams.delete('phoneNumber');
+  request.url.searchParams.delete('contactSfId');
+  request.url.searchParams.delete('includePermission');
+
+  if (email) request.url.searchParams.set('email', email);
+  if (phoneNumber) request.url.searchParams.set('phoneNumber', phoneNumber);
+  if (contactSfId) request.url.searchParams.set('contactSfId', contactSfId);
+
+  // Default false, true only when explicitly true
+  request.url.searchParams.set('includePermission', String(includePermission));
+
   const hasAccessToken =
     Boolean(request.headers?.access_token) || Boolean(request.headers?.authorization);
 
-  const isInvitationAcceptanceFlow = Boolean(contactsfId) && !hasAccessToken;
+  const isInvitationAcceptanceFlow = Boolean(contactSfId) && !hasAccessToken;
 
   return {
     ...request,
