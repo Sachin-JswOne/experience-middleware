@@ -3855,7 +3855,7 @@
     }
   },
   {
-    "path": "/xp-mi/public/v1/customer-user/update/:contactsfId",
+    "path": "/xp-mi/public/v1/customer-user/update",
     "method": "POST",
     "routeHandler": "TRANSFORM",
     "isCacheRequired": false,
@@ -3873,36 +3873,10 @@
           "destination": "access_token"
         }
       ],
-      "requiredPathParams": ["contactsfId"],
       "staticHeaders": {
         "Content-Type": "application/json"
       },
       "requiredParams": ["*"]
-    }
-  },
-  {
-    "path": "/xp-mi/public/v1/customer-users/:customerSfid",
-    "method": "GET",
-    "routeHandler": "TRANSFORM",
-    "isCacheRequired": false,
-    "target": {
-      "name": "get-all-customer-users",
-      "url": "https://qa.msme.jswone.in/customer/user/v1/get-all/*customerSfid",
-      "method": "GET",
-      "timeout": {
-        "request": 10000,
-        "socket": 1000
-      },
-      "headersToPass": [
-        {
-          "source": "authorization",
-          "destination": "access_token"
-        }
-      ],
-      "requiredPathParams": ["customerSfid"],
-      "staticHeaders": {
-        "Content-Type": "application/json"
-      }
     }
   },
   {
@@ -4003,5 +3977,24 @@
       },
       "requiredParams": ["page", "size"]
     }
-}
+  },
+  {
+    "path": "/xp-mi/public/v1/auth/refresh",
+    "method": "POST",
+    "routeHandler": "TRANSFORM",
+    "isCacheRequired": false,
+    "target": {
+      "name": "auth-refresh",
+      "url": "https://qa.msme.jswone.in/auth/v1/refresh",
+      "method": "POST",
+      "timeout": {
+        "request": 10000,
+        "socket": 1000
+      },
+      "staticHeaders": {
+        "Content-Type": "application/json"
+      },
+      "requiredParams": ["*"]
+    }
+  }
 ]
