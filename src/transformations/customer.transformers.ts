@@ -156,3 +156,52 @@ export function mergeCustomerProfile(aggregatedResponses: AggregatedResponse[]):
     ...gstData,
   };
 }
+
+export function transformFetchUserRequest(request: BaseRequest): BaseRequest {
+  const email = request.url.searchParams.get('email')?.trim();
+  const phoneNumber = request.url.searchParams.get('phoneNumber')?.trim();
+
+  const contactSfId = request.url.searchParams.get('contactSfId')?.trim();
+
+  const providedParams = [email, phoneNumber, contactSfId].filter(Boolean);
+
+  if (providedParams.length !== 1) {
+    throw new CustomError(
+      'Exactly one of email, phoneNumber, or contactSfId must be provided.',
+      400,
+    );
+  }
+
+  const includePermission =
+    request.url.searchParams.get('includePermission')?.toLowerCase() === 'true';
+
+  request.url.searchParams.delete('email');
+  request.url.searchParams.delete('phoneNumber');
+  request.url.searchParams.delete('contactSfId');
+  request.url.searchParams.delete('includePermission');
+
+  if (email) request.url.searchParams.set('email', email);
+  if (phoneNumber) request.url.searchParams.set('phoneNumber', phoneNumber);
+  if (contactSfId) request.url.searchParams.set('contactSfId', contactSfId);
+
+  // Default false, true only when explicitly true
+  request.url.searchParams.set('includePermission', String(includePermission));
+
+  const hasAccessToken =
+    Boolean(request.headers?.access_token) || Boolean(request.headers?.authorization);
+
+  const isInvitationAcceptanceFlow = Boolean(contactSfId) && !hasAccessToken;
+
+  return {
+    ...request,
+    body: undefined,
+    headers: {
+      ...request.headers,
+      ...(isInvitationAcceptanceFlow
+        ? {
+            'X-API-KEY': process.env.CUSTOMER_X_API_KEY_CONSTRUCT,
+          }
+        : {}),
+    },
+  };
+}

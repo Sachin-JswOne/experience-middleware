@@ -348,7 +348,7 @@ export class ProxyService {
 
         try {
           const buildStart = this.nowMs();
-          const transformedRequestBody: BaseRequest = await this.buildRequestFromSource(
+          transformedRequestBody = await this.buildRequestFromSource(
             req,
             target.url,
             target.reqTransform,

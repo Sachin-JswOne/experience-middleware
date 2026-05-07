@@ -57,6 +57,7 @@ export class ProxyController {
         `Request completed ${req.method} ${req.path} status=${HttpStatus.OK} trace_id=${req.traceId ?? ''} span_id=${req.spanId ?? ''} duration_ms=${Date.now() - startTime}`,
       );
     } catch (err: unknown) {
+
       const statusCode =
         err instanceof AxiosError
           ? err.response?.status || HttpStatus.INTERNAL_SERVER_ERROR

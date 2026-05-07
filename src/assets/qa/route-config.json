@@ -3679,5 +3679,224 @@
         }
       ]
     }
+  },
+  {
+    "path": "/xp-mi/public/v1/create-secondary-user",
+    "method": "POST",
+    "routeHandler": "TRANSFORM",
+    "isCacheRequired": false,
+    "target": {
+      "name": "create-customer-user",
+      "url": "https://qa.msme.jswone.in/customer/user/v1/create",
+      "method": "POST",
+      "timeout": {
+        "request": 10000,
+        "socket": 1000
+      },
+      "headersToPass": [
+        {
+          "source": "authorization",
+          "destination": "access_token"
+        }
+      ],
+      "staticHeaders": {
+        "Content-Type": "application/json"
+      },
+      "requiredParams": ["*"]
+    }
+  },
+  {
+    "path": "/xp-mi/public/v1/fetch-user",
+    "method": "GET",
+    "routeHandler": "TRANSFORM",
+    "isCacheRequired": false,
+    "target": {
+      "name": "fetch-user",
+      "url": "https://qa.msme.jswone.in/customer/user/v1/get",
+      "method": "GET",
+      "timeout": {
+        "request": 10000,
+        "socket": 1000
+      },
+      "headersToPass": [
+        {
+          "source": "authorization",
+          "destination": "access_token"
+        }
+      ],
+      "staticHeaders": {
+        "Content-Type": "application/json"
+      },
+      "requiredParams": ["*"],
+      "reqTransform": "customer.transformers.transformFetchUserRequest"
+    }
+  },
+  {
+    "path": "/xp-mi/public/v1/customer-user/update",
+    "method": "POST",
+    "routeHandler": "TRANSFORM",
+    "isCacheRequired": false,
+    "target": {
+      "name": "update-customer-user",
+      "url": "https://qa.msme.jswone.in/customer/user/v1/update/*contactsfId",
+      "method": "POST",
+      "timeout": {
+        "request": 10000,
+        "socket": 1000
+      },
+      "headersToPass": [
+        {
+          "source": "authorization",
+          "destination": "access_token"
+        }
+      ],
+      "staticHeaders": {
+        "Content-Type": "application/json"
+      },
+      "requiredParams": ["*"]
+    }
+  },
+  {
+    "path": "/xp-mi/public/v1/customer-users/:customerSfid",
+    "method": "GET",
+    "routeHandler": "TRANSFORM",
+    "isCacheRequired": false,
+    "target": {
+      "name": "get-all-customer-users",
+      "url": "https://qa.msme.jswone.in/customer/user/v1/get-all/*customerSfid",
+      "method": "GET",
+      "timeout": {
+        "request": 10000,
+        "socket": 1000
+      },
+      "headersToPass": [
+        {
+          "source": "authorization",
+          "destination": "access_token"
+        }
+      ],
+      "requiredPathParams": ["customerSfid"],
+      "staticHeaders": {
+        "Content-Type": "application/json"
+      }
+    }
+  },
+  {
+    "path": "/xp-mi/public/v1/customer-user/send-invite/:contactsfId",
+    "method": "POST",
+    "routeHandler": "TRANSFORM",
+    "isCacheRequired": false,
+    "target": {
+      "name": "send-invite-customer-user",
+      "url": "https://qa.msme.jswone.in/customer/user/v1/send-invite/*contactsfId",
+      "method": "POST",
+      "timeout": {
+        "request": 10000,
+        "socket": 1000
+      },
+      "headersToPass": [
+        {
+          "source": "authorization",
+          "destination": "access_token"
+        }
+      ],
+      "requiredPathParams": ["contactsfId"],
+      "staticHeaders": {
+        "Content-Type": "application/json"
+      }
+    }
+  },
+  {
+    "path": "/xp-mi/public/v1/departments",
+    "method": "GET",
+    "routeHandler": "TRANSFORM",
+    "isCacheRequired": false,
+    "target": {
+      "name": "get-all-departments",
+      "url": "https://qa.msme.jswone.in/customer/v1/departments/get-all",
+      "method": "GET",
+      "timeout": {
+        "request": 10000,
+        "socket": 1000
+      },
+      "headersToPass": [
+        {
+          "source": "authorization",
+          "destination": "access_token"
+        }
+      ],
+      "staticHeaders": {
+        "Content-Type": "application/json"
+      },
+      "requiredParams": ["page", "size"]
+    }
+  },
+  {
+    "path": "/xp-mi/public/v1/customer/profile/merged",
+    "method": "GET",
+    "routeHandler": "TRANSFORM",
+    "isCacheRequired": false,
+    "target": {
+      "name": "customer-profile-merged",
+      "url": "https://qa.msme.jswone.in/customer/v2/profile/merged",
+      "method": "GET",
+      "timeout": {
+        "request": 10000,
+        "socket": 1000
+      },
+      "headersToPass": [
+        {
+          "source": "authorization",
+          "destination": "access_token"
+        }
+      ],
+      "staticHeaders": {
+        "Content-Type": "application/json"
+      }
+    }
+  },
+  {
+    "path": "/xp-mi/public/v1/fetch-all-roles",
+    "method": "GET",
+    "routeHandler": "TRANSFORM",
+    "isCacheRequired": false,
+    "target": {
+      "name": "get-all-roles",
+      "url": "https://qa.msme.jswone.in/customer/v1/roles/get-all",
+      "method": "GET",
+      "timeout": {
+        "request": 20000,
+        "socket": 1000
+      },
+      "headersToPass": [
+        {
+          "source": "authorization",
+          "destination": "access_token"
+        }
+      ],
+      "staticHeaders": {
+        "Content-Type": "application/json"
+      },
+      "requiredParams": ["page", "size"]
+    }
+  },
+  {
+    "path": "/xp-mi/public/v1/auth/refresh",
+    "method": "POST",
+    "routeHandler": "TRANSFORM",
+    "isCacheRequired": false,
+    "target": {
+      "name": "auth-refresh",
+      "url": "https://qa.msme.jswone.in/auth/v1/refresh",
+      "method": "POST",
+      "timeout": {
+        "request": 10000,
+        "socket": 1000
+      },
+      "staticHeaders": {
+        "Content-Type": "application/json"
+      },
+      "requiredParams": ["*"]
+    }
   }
 ]
