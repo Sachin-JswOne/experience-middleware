@@ -3701,7 +3701,7 @@
     "isCacheRequired": false,
     "target": {
       "name": "update-customer-user",
-      "url": "https://www.jswonemsme.com/customer/user/v1/update/*contactsfId",
+      "url": "https://www.jswonemsme.com/customer/user/v1/update",
       "method": "POST",
       "timeout": {
         "request": 10000,
@@ -3769,6 +3769,31 @@
       }
     }
   },
+  {
+    "path": "/xp-mi/public/v1/fetch-all-customers/:customerSfId",
+    "method": "GET",
+    "routeHandler": "TRANSFORM",
+    "isCacheRequired": false,
+    "target": {
+      "name": "get-all-customers",
+      "url": "https://www.jswonemsme.com/customer/user/v1/get-all/*customerSfId",
+      "method": "GET",
+      "timeout": {
+        "request": 10000,
+        "socket": 1000
+      },
+      "headersToPass": [
+        {
+          "source": "authorization",
+          "destination": "access_token"
+        }
+      ],
+      "staticHeaders": {
+        "Content-Type": "application/json"
+      },
+      "requiredParams": ["customerSfId"]
+    }
+  },  
   {
     "path": "/xp-mi/public/v1/departments",
     "method": "GET",
