@@ -188,7 +188,7 @@ export function transformFetchUserRequest(request: BaseRequest): BaseRequest {
   request.url.searchParams.set('includePermission', String(includePermission));
 
   const hasAccessToken =
-    Boolean(request.headers?.access_token) || Boolean(request.headers?.authorization);
+    Boolean(request.headers?.access_token) || Boolean(request.headers?.Access_Token) || Boolean(request.headers?.authorization) || Boolean(request.headers?.Authorization);
 
   const isInvitationAcceptanceFlow = Boolean(contactSfId) && !hasAccessToken;
 
