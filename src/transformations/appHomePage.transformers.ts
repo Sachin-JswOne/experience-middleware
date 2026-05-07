@@ -647,5 +647,49 @@ export function mergeAppHomePageResponseV4(aggregatedResponses: AggregatedRespon
     page.recently_viewed_component.removedMmids = removedMmids;
   }
 
+  const finalSortedResponse = sortResponseByOrder(mergedWrapper.data[0]);
+  mergedWrapper.data[0] = finalSortedResponse;
   return mergedWrapper;
+}
+
+function sortResponseByOrder(response: any) {
+  const fixedKeys = ['id', 'documentId', 'industries'];
+
+  const dynamicEntries = Object.entries(response)
+    .filter(([key]) => !fixedKeys.includes(key))
+    .sort(([, valueA], [, valueB]) => {
+      const getOrder = (value: any) => {
+        if (!value) return 999;
+
+        // Array components
+        if (Array.isArray(value)) {
+          return Number(value?.[0]?.order || 999);
+        }
+
+        // Object components
+        if (typeof value === 'object') {
+          return Number(value?.order || 999);
+        }
+
+        return 999;
+      };
+
+      return getOrder(valueA) - getOrder(valueB);
+    });
+
+  // Preserve fixed keys at top
+  const sortedResponse: any = {};
+
+  fixedKeys.forEach((key) => {
+    if (response[key] !== undefined) {
+      sortedResponse[key] = response[key];
+    }
+  });
+
+  // Add sorted components
+  dynamicEntries.forEach(([key, value]) => {
+    sortedResponse[key] = value;
+  });
+
+  return sortedResponse;
 }
