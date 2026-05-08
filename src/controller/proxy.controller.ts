@@ -45,12 +45,19 @@ export class ProxyController {
 
     try {
       const data = await this.proxyService.handleRequest(req);
+      const downstreamSetCookie = (req as any).__downstreamSetCookie;
+
+      if (Array.isArray(downstreamSetCookie) && downstreamSetCookie.length > 0) {
+        res.setHeader('Set-Cookie', downstreamSetCookie);
+      }
+      
       res.status(HttpStatus.OK).json(data);
 
       this.logger.log(
         `Request completed ${req.method} ${req.path} status=${HttpStatus.OK} trace_id=${req.traceId ?? ''} span_id=${req.spanId ?? ''} duration_ms=${Date.now() - startTime}`,
       );
     } catch (err: unknown) {
+
       const statusCode =
         err instanceof AxiosError
           ? err.response?.status || HttpStatus.INTERNAL_SERVER_ERROR
@@ -69,7 +76,14 @@ export class ProxyController {
         `Request failed ${req.method} ${req.path} status=${statusCode} trace_id=${req.traceId ?? ''} span_id=${req.spanId ?? ''} duration_ms=${Date.now() - startTime} error=${errorMessage}`,
       );
 
-      res.status(statusCode).json({ error: errorMessage });
+      const downstreamResponse =
+        err instanceof CustomError ? (err as any).downstreamResponse : null;
+
+      if (downstreamResponse) {
+        return res.status(statusCode).json(downstreamResponse);
+      }
+
+      return res.status(statusCode).json({ error: errorMessage });
     }
   }
 }
