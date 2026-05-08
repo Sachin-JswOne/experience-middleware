@@ -214,7 +214,7 @@ export function addCustomerApiKeyIfNoAuth(
     ...request,
     headers: {
       ...request.headers,
-      'X-API-KEY': process.env.CUSTOMER_X_API_KEY_CONSTRUCT,
+      'X-API-KEY': process.env.CUSTOMER_SERVICE_X_API_KEY,
     },
   };
 }
