@@ -2400,6 +2400,14 @@
         "resTransform": "cms.transformers.replaceUriPrefix"
       },
       {
+        "name": "app-blogs",
+        "url": "https://cms-ext.preprod.jswonemsme.com/api/jsw-blogs-articless",
+        "method": "GET",
+        "timeout": { "request": 5000, "socket": 1000 },
+        "reqTransform": "web.transformers.homeBlogsFromParallelPayload",
+        "resTransform": "cms.transformers.replaceUriPrefix"
+      },
+      {
         "name": "web-central-catalogue-categories",
         "url": "https://preprod.jswonemsme.com/central_commerce/categories/tree/list",
         "method": "POST",
@@ -2529,7 +2537,7 @@
       },
       {
         "name": "app-blogs",
-        "url": "${CMS_MSME_URL}/jsw-blogs-articless",
+        "url": "https://cms-ext.preprod.jswonemsme.com/api/jsw-blogs-articless",
         "method": "GET",
         "timeout": { "request": 5000, "socket": 1000 },
         "reqTransform": "web.transformers.homeBlogsFromParallelPayload",

@@ -2389,6 +2389,14 @@
         "resTransform": "cms.transformers.replaceUriPrefix"
       },
       {
+        "name": "app-blogs",
+        "url": "https://qa-cms-ext.msme.jswone.in/api/jsw-blogs-articless",
+        "method": "GET",
+        "timeout": { "request": 5000, "socket": 1000 },
+        "reqTransform": "web.transformers.homeBlogsFromParallelPayload",
+        "resTransform": "cms.transformers.replaceUriPrefix"
+      },
+      {
         "name": "web-central-top-brand-categories",
         "url": "https://qa.msme.jswone.in/central_commerce/categories/tree/list",
         "method": "POST",
@@ -2518,7 +2526,7 @@
       },
       {
         "name": "app-blogs",
-        "url": "${CMS_MSME_URL}/jsw-blogs-articless",
+        "url": "https://qa-cms-ext.msme.jswone.in/api/jsw-blogs-articless",
         "method": "GET",
         "timeout": { "request": 5000, "socket": 1000 },
         "reqTransform": "web.transformers.homeBlogsFromParallelPayload",
