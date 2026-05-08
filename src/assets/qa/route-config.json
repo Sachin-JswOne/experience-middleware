@@ -3940,5 +3940,45 @@
       },
       "requiredParams": ["*"]
     }
+  },
+  {
+    "path": "/xp-mi/public/v1/central_commerce/ai/invoke",
+    "method": "POST",
+    "routeHandler": "TRANSFORM",
+    "isCacheRequired": false,
+    "target": {
+      "name": "ai-invoke",
+      "url": "https://qa-ssr.msme.jswone.in/central_commerce/ai/invoke",
+      "method": "POST",
+      "timeout": {
+        "request": 10000,
+        "socket": 2000
+      },
+      "staticHeaders": {
+        "Content-Type": "application/json",
+        "x-api-key": "${AI_INVOKE_X_API_KEY}"
+      },
+      "requiredParams": ["*"]
+    }
+  },
+  {
+    "path": "/xp-mi/public/v1/central_commerce/ai/invoke-business-classification",
+    "method": "POST",
+    "routeHandler": "TRANSFORM",
+    "isCacheRequired": false,
+    "target": {
+      "name": "ai-invoke-business-classification",
+      "url": "https://qa-ssr.msme.jswone.in/central_commerce/ai/invoke-business-classification",
+      "method": "POST",
+      "timeout": {
+        "request": 10000,
+        "socket": 2000
+      },
+      "staticHeaders": {
+        "Content-Type": "application/json",
+        "x-api-key": "${AI_INVOKE_X_API_KEY}"
+      },
+      "requiredParams": ["*"]
+    }
   }
 ]
