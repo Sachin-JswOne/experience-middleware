@@ -2188,7 +2188,7 @@
       },
       {
         "name": "app-blogs",
-        "url": "${CMS_MSME_URL}/jsw-blogs-articless",
+        "url": "https://qa-cms-ext.msme.jswone.in/api/jsw-blogs-articless",
         "method": "GET",
         "timeout": { "request": 5000, "socket": 1000 },
         "reqTransform": "web.transformers.homeBlogsFromParallelPayload",
@@ -2324,7 +2324,7 @@
       },
       {
         "name": "app-blogs",
-        "url": "${CMS_MSME_URL}/jsw-blogs-articless",
+        "url": "https://qa-cms-ext.msme.jswone.in/api/jsw-blogs-articless",
         "method": "GET",
         "timeout": { "request": 5000, "socket": 1000 },
         "reqTransform": "web.transformers.homeBlogsFromParallelPayload",
