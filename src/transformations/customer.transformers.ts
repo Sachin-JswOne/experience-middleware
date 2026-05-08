@@ -192,16 +192,29 @@ export function transformFetchUserRequest(request: BaseRequest): BaseRequest {
 
   const isInvitationAcceptanceFlow = Boolean(contactSfId) && !hasAccessToken;
 
-  return {
+  return addCustomerApiKeyIfNoAuth({
     ...request,
     body: undefined,
+  });
+}
+
+export function addCustomerApiKeyIfNoAuth(
+  request: BaseRequest,
+): BaseRequest {
+  const hasAccessToken =
+    Boolean(request.headers?.access_token) ||
+    Boolean(request.headers?.authorization) ||
+    Boolean(request.headers?.Authorization);
+
+  if (hasAccessToken) {
+    return request;
+  }
+
+  return {
+    ...request,
     headers: {
       ...request.headers,
-      ...(isInvitationAcceptanceFlow
-        ? {
-            'X-API-KEY': process.env.CUSTOMER_X_API_KEY_CONSTRUCT,
-          }
-        : {}),
+      'X-API-KEY': process.env.CUSTOMER_X_API_KEY_CONSTRUCT,
     },
   };
 }

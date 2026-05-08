@@ -3745,6 +3745,10 @@
       },
       "headersToPass": [
         {
+          "source": "access_token",
+          "destination": "access_token"
+        },
+        {
           "source": "authorization",
           "destination": "access_token"
         }
@@ -3771,6 +3775,10 @@
       },
       "headersToPass": [
         {
+          "source": "access_token",
+          "destination": "access_token"
+        },
+        {
           "source": "authorization",
           "destination": "access_token"
         }
@@ -3778,6 +3786,7 @@
       "staticHeaders": {
         "Content-Type": "application/json"
       },
+      "reqTransform": "customer.transformers.addCustomerApiKeyIfNoAuth",
       "requiredParams": ["*"]
     }
   },
