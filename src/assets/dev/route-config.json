@@ -4049,7 +4049,7 @@
       "url": "https://qa-ssr.msme.jswone.in/central_commerce/ai/invoke",
       "method": "POST",
       "timeout": {
-        "request": 10000,
+        "request": 20000,
         "socket": 2000
       },
       "staticHeaders": {
@@ -4069,7 +4069,7 @@
       "url": "https://qa-ssr.msme.jswone.in/central_commerce/ai/invoke-business-classification",
       "method": "POST",
       "timeout": {
-        "request": 10000,
+        "request": 20000,
         "socket": 2000
       },
       "staticHeaders": {
