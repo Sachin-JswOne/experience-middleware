@@ -3281,7 +3281,7 @@
       "url": "https://preprod.jswonemsme.com/central_commerce/ai/invoke",
       "method": "POST",
       "timeout": {
-        "request": 20000,
+        "request": 60000,
         "socket": 2000
       },
       "staticHeaders": {
@@ -3301,7 +3301,7 @@
       "url": "https://preprod.jswonemsme.com/central_commerce/ai/invoke-business-classification",
       "method": "POST",
       "timeout": {
-        "request": 20000,
+        "request": 60000,
         "socket": 2000
       },
       "staticHeaders": {

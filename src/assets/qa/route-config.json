@@ -3968,7 +3968,7 @@
       "url": "https://qa-ssr.msme.jswone.in/central_commerce/ai/invoke",
       "method": "POST",
       "timeout": {
-        "request": 20000,
+        "request": 60000,
         "socket": 2000
       },
       "staticHeaders": {
@@ -3988,7 +3988,7 @@
       "url": "https://qa-ssr.msme.jswone.in/central_commerce/ai/invoke-business-classification",
       "method": "POST",
       "timeout": {
-        "request": 20000,
+        "request": 60000,
         "socket": 2000
       },
       "staticHeaders": {
