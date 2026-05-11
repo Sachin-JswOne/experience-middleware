@@ -2429,7 +2429,7 @@
     "targets": [
       {
         "name": "web-home-page-v3-guest",
-        "url": "https://experience-middleware.preprod.jswonemsme.com/xp-mi/public/v1/web-home-page-v3-guest",
+        "url": "http://localhost:3000/xp-mi/public/v1/web-home-page-v3-guest",
         "method": "POST",
         "timeout": { "request": 20000, "socket": 1000 },
         "headersToPass": [
@@ -2443,7 +2443,7 @@
       },
       {
         "name": "web-home-page-v3-registered",
-        "url": "https://experience-middleware.preprod.jswonemsme.com/xp-mi/public/v1/web-home-page-v3-registered",
+        "url": "http://localhost:3000/xp-mi/public/v1/web-home-page-v3-registered",
         "method": "POST",
         "timeout": { "request": 20000, "socket": 1000 },
         "headersToPass": [
@@ -2473,7 +2473,7 @@
       },
       {
         "name": "web-home-page-v3-guest-parallel-helper",
-        "url": "https://experience-middleware.preprod.jswonemsme.com/xp-mi/public/v1/web-home-page-v3-guest-parallel-helper",
+        "url": "http://localhost:3000/xp-mi/public/v1/web-home-page-v3-guest-parallel-helper",
         "method": "POST",
         "timeout": { "request": 10000, "socket": 1000 },
         "reqTransform": "web.transformers.prepareWebHomePageV3ParallelPayload",
@@ -2578,7 +2578,7 @@
       },
       {
         "name": "web-home-page-v3-registered-parallel-helper",
-        "url": "https://experience-middleware.preprod.jswonemsme.com/xp-mi/public/v1/web-home-page-v3-registered-parallel-helper",
+        "url": "http://localhost:3000/xp-mi/public/v1/web-home-page-v3-registered-parallel-helper",
         "method": "POST",
         "timeout": { "request": 20000, "socket": 1000 },
         "reqTransform": "web.transformers.prepareWebHomePageV3ParallelPayload",
