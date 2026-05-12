@@ -104,13 +104,6 @@ export function getSearchPageDetails(aggregatedResponses: AggregatedResponse[]):
       blocks.length = 0;
       blocks.push(...filteredBlocks);
     }
-  } else if (!buyAgainResponse?.success && hasBuyAgainBlock) {
-    const filteredBlocks = blocks.filter(
-      (b) => b.__component !== 'app-components.app-search-top-items',
-    );
-
-    blocks.length = 0;
-    blocks.push(...filteredBlocks);
   }
   if (isCentralCatalogueEnabled) {
     const ccpProducts = topItemsResponse?.data?.products;
