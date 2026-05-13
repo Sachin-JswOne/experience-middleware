@@ -702,16 +702,27 @@ export class ProxyService {
   }
 
   private sanitizeSetCookieForBff(cookie: string): string | null {
-  const lowerCookie = cookie.toLowerCase();
+    const lowerCookie = cookie.toLowerCase();
 
-  if (!lowerCookie.startsWith('jsw_session_id=')) {
-    return null;
-  }
-  const isLocal = process.env.NODE_ENV !== 'production';
+    if (!lowerCookie.startsWith('jsw_session_id=')) {
+      return null;
+    }
 
-  return cookie
-    .replace(/;\s*Domain=[^;]*/gi, '') // remove downstream domain
-    .replace(/;\s*Path=[^;]*/gi, '; Path=/') // normalize path
-    .replace(isLocal ? /;\s*Secure/gi : /$^/, ''); // remove Secure only in local
+    const isLocal =
+      process.env.NODE_ENV === 'local'
+
+    let sanitizedCookie = cookie
+      .replace(/;\s*Domain=[^;]*/gi, '')
+      .replace(/;\s*Path=[^;]*/gi, '; Path=/')
+      .replace(/;\s*SameSite=[^;]*/gi, '')
+      .replace(/;\s*Secure/gi, '');
+
+    if (isLocal) {
+      sanitizedCookie += '; SameSite=Lax';
+    } else {
+      sanitizedCookie += '; SameSite=None; Secure';
+    }
+
+    return sanitizedCookie;
   }
 }
