@@ -37,7 +37,7 @@ async function bootstrap() {
       }
     },
     methods: 'GET,POST,DELETE,OPTIONS,PUT',
-    allowedHeaders: '*',
+    allowedHeaders: '*, authorization, content-type',
     preflightContinue: false,
     credentials: true,
     optionsSuccessStatus: 204,
