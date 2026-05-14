@@ -429,59 +429,62 @@ export function mergeAppHomePageResponseV4(aggregatedResponses: AggregatedRespon
   const buyAgainList = page?.buy_again_component?.listOfBuyAgainProducts;
   const hasBuyAgainData = Array.isArray(buyAgainList) && buyAgainList.length > 0;
 
-  if (hasBuyAgainData) {
-    page.mweb_top_item.isTopItem = false;
-    if ('top_items_product_details' in page.mweb_top_item) {
-      delete page.mweb_top_item.top_items_product_details;
-    }
-  } else if (isCentralCatalogueEnabled) {
-    page.mweb_top_item.isTopItem = true;
-
-    if (topItemsResponse?.success && Array.isArray(topItemsResponse.data?.data?.products)) {
-      const ccpProducts = topItemsResponse?.success
-        ? (topItemsResponse.data?.data?.products ?? topItemsResponse.data?.products ?? [])
-        : null;
-
-      if (!Array.isArray(ccpProducts) || ccpProducts.length === 0) {
-        safeDebug(Logger, () => `Top Items: CCP empty/fail; keeping CMS top items as-is.`);
-      } else {
-        // Map CCP products by MMID
-        const productMap = new Map<string, any>(
-          ccpProducts
-            .filter((p: any) => typeof p?.product_mmid === 'string' && p.product_mmid.length > 0)
-            .map((p: any) => [p.product_mmid, p]),
-        );
-        const cmsItems = page.mweb_top_item.app_search_top_items;
-        page.mweb_top_item.app_search_top_items = cmsItems.map((cmsItem: any) => {
-          const mmid = cmsItem?.MMID;
-          if (typeof mmid !== 'string' || !mmid) return cmsItem;
-          const product = productMap.get(mmid);
-          if (!product) {
-            safeDebug(Logger, () => `Top Items: MMID not found in CCP → ${inspect(mmid)}`);
-            return cmsItem; // keep CMS item if CCP doesn't have it
-          }
-          page.mweb_top_item.app_search_top_items = {
-            brand: product?.attributes?.brand,
-            categoryName: product?.associated_categories?.find((cat) =>
-              cat?.path?.toLowerCase().includes('all products'),
-            )?.attributes?.category_title,
-            title: product.attributes?.product_title,
-            webUrl: product.attributes?.slug,
-            MMID: product.product_mmid,
-            image: product.meta_data?.product_media?.[0]?.public_url,
-          };
-          return page.mweb_top_item.app_search_top_items;
-        });
+  if (page?.mweb_top_item) {
+    if (hasBuyAgainData) {
+      page.mweb_top_item.isTopItem = false;
+      if ('top_items_product_details' in page.mweb_top_item) {
+        delete page.mweb_top_item.top_items_product_details;
       }
+    } else if (isCentralCatalogueEnabled) {
+      page.mweb_top_item.isTopItem = true;
+
+      if (topItemsResponse?.success && Array.isArray(topItemsResponse.data?.data?.products)) {
+        const ccpProducts = topItemsResponse?.success
+          ? (topItemsResponse.data?.data?.products ?? topItemsResponse.data?.products ?? [])
+          : null;
+
+        if (!Array.isArray(ccpProducts) || ccpProducts.length === 0) {
+          safeDebug(Logger, () => `Top Items: CCP empty/fail; keeping CMS top items as-is.`);
+        } else {
+          // Map CCP products by MMID
+          const productMap = new Map<string, any>(
+            ccpProducts
+              .filter((p: any) => typeof p?.product_mmid === 'string' && p.product_mmid.length > 0)
+              .map((p: any) => [p.product_mmid, p]),
+          );
+          const cmsItems = page.mweb_top_item.app_search_top_items;
+          page.mweb_top_item.app_search_top_items = cmsItems.map((cmsItem: any) => {
+            const mmid = cmsItem?.MMID;
+            if (typeof mmid !== 'string' || !mmid) return cmsItem;
+            const product = productMap.get(mmid);
+            if (!product) {
+              safeDebug(Logger, () => `Top Items: MMID not found in CCP → ${inspect(mmid)}`);
+              return cmsItem; // keep CMS item if CCP doesn't have it
+            }
+            page.mweb_top_item.app_search_top_items = {
+              brand: product?.attributes?.brand,
+              categoryName: product?.associated_categories?.find((cat) =>
+                cat?.path?.toLowerCase().includes('all products'),
+              )?.attributes?.category_title,
+              title: product.attributes?.product_title,
+              webUrl: product.attributes?.slug,
+              MMID: product.product_mmid,
+              image: product.meta_data?.product_media?.[0]?.public_url,
+            };
+            return page.mweb_top_item.app_search_top_items;
+          });
+        }
+      }
+    } else {
+      page.mweb_top_item.isTopItem = true;
+      safeDebug(
+        Logger,
+        () => 'Central Catalogue Global flag is disabled. Returning CMS top items as-is.',
+      );
     }
   } else {
-    page.mweb_top_item.isTopItem = true;
-    safeDebug(
-      Logger,
-      () => 'Central Catalogue Global flag is disabled. Returning CMS top items as-is.',
-    );
+    page.mweb_top_item = {};
   }
-
   //top brands integrated with central catalogue
   if (
     topBrandCategoriesResponse?.success &&
