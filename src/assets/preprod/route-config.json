@@ -84,7 +84,7 @@
     "resTransform": "app.transformers.mergeHomePageResponses"
   },
   {
-    "path": "${PATH_URL}/v1/app-slc-cart-details",
+    "path": "/xp-mi/public/v1/app-slc-cart-details",
     "method": "GET",
     "routeHandler": "TRANSFORM",
     "target": {
@@ -95,12 +95,11 @@
         "request": 10000,
         "socket": 1000
       },
-      "reqTransform": "general.transformers.convertAuthorizationToAccessTokenInHeader",
       "resTransform": "slc.transformers.convertSlcResponse",
       "headersToPass": [
         {
           "source": "authorization",
-          "destination": "authorization"
+          "destination": "access_token"
         }
       ]
     }
@@ -1674,7 +1673,7 @@
     }
   },
   {
-    "path": "${PATH_URL}/v1/get-cart-size",
+    "path": "/xp-mi/public/v1/get-cart-size",
     "method": "GET",
     "routeHandler": "TRANSFORM",
     "target": {
@@ -3785,6 +3784,22 @@
         "Content-Type": "application/json"
       },
       "requiredParams": ["*"]
+    }
+  },
+  {
+    "path": "/xp-mi/public/v3/app-global-v3",
+    "method": "POST",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "app-global-page-v3",
+      "url": "https://cms-ext.preprod.jswonemsme.com/api/app-global-v2",
+      "method": "GET",
+      "timeout": {
+        "request": 5000,
+        "socket": 1000
+      },
+      "reqTransform": "general.transformers.moveBodyToQueryParams",
+      "resTransform": "cms.transformers.replaceUriPrefix"
     }
   }
 ]

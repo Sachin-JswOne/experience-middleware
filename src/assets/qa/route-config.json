@@ -99,23 +99,22 @@
     "resTransform": "app.transformers.mergeHomePageResponses"
   },
   {
-    "path": "${PATH_URL}/v1/app-slc-cart-details",
+    "path": "/xp-mi/public/v1/app-slc-cart-details",
     "method": "GET",
     "routeHandler": "TRANSFORM",
     "target": {
       "name": "app-slc-cart-details",
-      "url": "${APP_SLC_CART_URL}",
+      "url": "https://one.qa.jswone.in/v2/cart/get?onlySlc=true",
       "method": "GET",
       "timeout": {
         "request": "${TIMEOUTS.REQUEST_MIN}",
         "socket": "${TIMEOUTS.SOCKET}"
       },
-      "reqTransform": "general.transformers.convertAuthorizationToAccessTokenInHeader",
       "resTransform": "slc.transformers.convertSlcResponse",
       "headersToPass": [
         {
           "source": "authorization",
-          "destination": "authorization"
+          "destination": "access_token"
         }
       ]
     }
@@ -1399,7 +1398,7 @@
     }
   },
   {
-    "path": "${PATH_URL}/v1/get-cart-size",
+    "path": "/xp-mi/public/v1/get-cart-size",
     "method": "GET",
     "routeHandler": "TRANSFORM",
     "target": {
@@ -3996,6 +3995,22 @@
         "x-api-key": "${AI_INVOKE_X_API_KEY}"
       },
       "requiredParams": ["*"]
+    }
+  },
+  {
+    "path": "/xp-mi/public/v3/app-global-v3",
+    "method": "POST",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "app-global-page-v3",
+      "url": "https://qa-cms-ext.msme.jswone.in/api/app-global-v2",
+      "method": "GET",
+      "timeout": {
+        "request": 5000,
+        "socket": 1000
+      },
+      "reqTransform": "general.transformers.moveBodyToQueryParams",
+      "resTransform": "cms.transformers.replaceUriPrefix"
     }
   }
 ]
