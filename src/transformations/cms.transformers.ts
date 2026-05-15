@@ -1,6 +1,9 @@
 import { CMS_ASSETS_URLS } from 'src/config/app.config';
 import * as qs from 'qs';
 import { BaseRequest } from 'src/models/base-request.model';
+import { AggregatedResponse } from 'src/models/aggregated-response.model';
+import { CustomError } from 'src/utils/CustomError';
+import { moveBodyToQueryParams } from './general.transformers';
 
 export function replaceUriPrefix(response: any): any {
   if (Array.isArray(response)) {
@@ -60,4 +63,74 @@ export function homeBlogs(request: BaseRequest): BaseRequest {
   transformedRequest.url.search = qs.stringify(blogParams);
 
   return transformedRequest;
+}
+
+function removeEmptyArraysDeep(value: any): any {
+  if (Array.isArray(value)) {
+    return value.map((item) => removeEmptyArraysDeep(item));
+  }
+
+  if (value && typeof value === 'object') {
+    const cleaned: Record<string, any> = {};
+
+    for (const [key, val] of Object.entries(value)) {
+      if (Array.isArray(val) && val.length === 0) {
+        continue;
+      }
+
+      cleaned[key] = removeEmptyArraysDeep(val);
+    }
+
+    return cleaned;
+  }
+
+  return value;
+}
+
+export function raiseIssueTypesQueryParams(request: BaseRequest): BaseRequest {
+  return moveBodyToQueryParams({
+    ...request,
+    body: request.body?.issueTypesQuery ?? {},
+  });
+}
+
+export function raiseBrowseTopicsQueryParams(request: BaseRequest): BaseRequest {
+  return moveBodyToQueryParams({
+    ...request,
+    body: request.body?.browseTopicsQuery ?? {},
+  });
+}
+
+export function mergeRaiseIssueHelpResponse(
+  aggregatedResponses: AggregatedResponse[],
+): any {
+  const responses = aggregatedResponses.reduce(
+    (acc, response) => {
+      acc[response.target] = response;
+      return acc;
+    },
+    {} as Record<string, AggregatedResponse>,
+  );
+
+  const issueTypesResponse = responses['raise-issue-types'];
+  const browseTopicsResponse = responses['raise-browse-topics'];
+
+  if (!issueTypesResponse?.success) {
+    throw new CustomError(
+      issueTypesResponse?.error || 'raise-issue-types API failed',
+      issueTypesResponse?.httpStatus ?? 500,
+    );
+  }
+
+  if (!browseTopicsResponse?.success) {
+    throw new CustomError(
+      browseTopicsResponse?.error || 'raise-browse-topics API failed',
+      browseTopicsResponse?.httpStatus ?? 500,
+    );
+  }
+
+  return {
+    raiseIssueTypes: removeEmptyArraysDeep(issueTypesResponse.data.data ?? []),
+    raiseBrowseTopics: browseTopicsResponse.data.data ?? []
+  };
 }

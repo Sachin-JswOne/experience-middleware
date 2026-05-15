@@ -4110,5 +4110,81 @@
       "reqTransform": "general.transformers.moveBodyToQueryParams",
       "resTransform": "cms.transformers.replaceUriPrefix"
     }
+  },
+  {
+    "path": "/xp-mi/public/v1/raise-issue-help",
+    "method": "POST",
+    "routeHandler": "AGGREGATE",
+    "aggregationType": "PARALLEL",
+    "isCacheRequired": false,
+    "targets": [
+      {
+        "name": "raise-issue-types",
+        "url": "https://qa-cms-ext.msme.jswone.in/api/raise-issue-types",
+        "method": "GET",
+        "timeout": {
+          "request": 10000,
+          "socket": 1000
+        },
+        "reqTransform": "cms.transformers.raiseIssueTypesQueryParams",
+        "resTransform": "cms.transformers.replaceUriPrefix"
+      },
+      {
+        "name": "raise-browse-topics",
+        "url": "https://qa-cms-ext.msme.jswone.in/api/raise-browse-topics",
+        "method": "GET",
+        "timeout": {
+          "request": 10000,
+          "socket": 1000
+        },
+        "reqTransform": "cms.transformers.raiseBrowseTopicsQueryParams",
+        "resTransform": "cms.transformers.replaceUriPrefix"
+      }
+    ],
+    "resTransform": "cms.transformers.mergeRaiseIssueHelpResponse"
+  },
+  {
+    "path": "/xp-mi/public/v1/create-ticket",
+    "method": "POST",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "create-ticket",
+      "url": "https://qa-ssr.msme.jswone.in/central_commerce/api/v1/tickets",
+      "method": "POST",
+      "timeout": {
+        "request": 10000,
+        "socket": 1000
+      },
+      "reqTransform": "ticket.transformers.validateAndTransformTicketRequest",
+      "headersToPass": [
+        {
+          "source": "cookie",
+          "destination": "cookie"
+        }
+      ]
+    }
+  },
+  {
+  "path": "/xp-mi/public/v1/service-case-attach",
+    "method": "POST",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "service-case-attach",
+      "url": "https://jswoneplatforms--uat.sandbox.my.salesforce.com/services/apexrest/v1/ServiceCaseAttach",
+      "method": "POST",
+      "timeout": {
+        "request": 50000,
+        "socket": 1000
+      },
+      "headersToPass": [
+        {
+          "source": "authorization",
+          "destination": "Authorization"
+        }
+      ],
+      "staticHeaders": {
+        "Content-Type": "application/json"
+      }
+    }
   }
 ]
