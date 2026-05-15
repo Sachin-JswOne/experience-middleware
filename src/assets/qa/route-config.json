@@ -1398,7 +1398,7 @@
     }
   },
   {
-    "path": "${PATH_URL}/v1/get-cart-size",
+    "path": "/xp-mi/public/v1/get-cart-size",
     "method": "GET",
     "routeHandler": "TRANSFORM",
     "target": {
