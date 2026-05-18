@@ -1,4 +1,4 @@
-﻿﻿/* eslint-disable @typescript-eslint/no-unsafe-argument */
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { trace, context, SpanStatusCode } from '@opentelemetry/api';
 import { createHttpClient } from '../utils/http-client.factory';
@@ -436,7 +436,8 @@ export class ProxyService {
               500,
             ) as any;
             error.status = response.status;
-            error.response = response;
+            // Only attach data to avoid circular structures from the native Axios response
+            error.response = { data: response.data };
             throw error;
           }
 
@@ -516,7 +517,8 @@ export class ProxyService {
 
                 const clientError = new CustomError(downstreamMessage, errorResponse.status) as any;
                 clientError.httpStatusCode = errorResponse.status;
-                clientError.response = errorResponse;
+                // Prevent circular JSON stringify errors by only including the data payload
+                clientError.response = { data: errorResponse.data };
                 throw clientError;
               }
             }
