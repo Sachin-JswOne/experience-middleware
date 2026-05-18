@@ -393,6 +393,19 @@ export function prepareWebHomePageV3ParallelPayload(
   prevResponses: AggregatedResponse[],
 ): BaseRequest {
   const cmsAgg = prevResponses.find((r) => r.target === 'layout-mweb-homepages');
+
+  const isCentralCatalogueEnabled =
+    String(
+      request.headers?.['central-catalogue-global'] ??
+        request.headers?.['central_catalogue_global'] ??
+        request.body?.central_catalogue_global ??
+        '',
+    ).toLowerCase() === 'true';
+
+  if (cmsAgg?.data?.data?.[0]) {
+    cmsAgg.data.data[0].central_catalogue_global = isCentralCatalogueEnabled;
+  }
+
   const compactCms = buildCompactWebHomePageV3Payload(cmsAgg?.data);
 
   return {
@@ -559,10 +572,8 @@ export function mergeWebHomePageResponsesV3(aggregatedResponses: AggregatedRespo
   const webTopBrandCategoriesResponse = responses['web-central-top-brand-categories'];
   const productsListingResponse = responses['products-listing'];
   const industryProductsListingResponse = responses['industry-products-listing'];
-  const featureFlags = responses['cmsFeatureFlag']?.data?.data ?? [];
   const isCentralCatalogueEnabled =
-    Array.isArray(featureFlags) &&
-    featureFlags.some((f: any) => f?.name === 'central_catalogue_global' && f?.isActive === true);
+  cmsResponse?.data?.data?.[0]?.central_catalogue_global === true;
 
   safeDebug(Logger, () => `isCentralCatalogueEnabled → ${String(isCentralCatalogueEnabled)}`);
 

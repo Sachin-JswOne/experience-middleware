@@ -2320,7 +2320,8 @@
           { "source": "access_token", "destination": "authorization" },
           { "source": "access_token", "destination": "access_token" },
           { "source": "x-user-state", "destination": "x-user-state" },
-          { "source": "user-type", "destination": "user-type" }
+          { "source": "user-type", "destination": "user-type" },
+          { "source": "central-catalogue-global", "destination": "central-catalogue-global"}
         ]
       },
       {
@@ -2334,7 +2335,9 @@
           { "source": "access_token", "destination": "authorization" },
           { "source": "access_token", "destination": "access_token" },
           { "source": "x-user-state", "destination": "x-user-state" },
-          { "source": "user-type", "destination": "user-type" }
+          { "source": "user-type", "destination": "user-type" },
+          { "source": "central-catalogue-global", "destination": "central-catalogue-global"
+      }
         ]
       }
     ]
@@ -2364,7 +2367,8 @@
           { "source": "authorization", "destination": "access_token" },
           { "source": "access_token", "destination": "authorization" },
           { "source": "access_token", "destination": "access_token" },
-          { "source": "x-user-state", "destination": "x-user-state" }
+          { "source": "x-user-state", "destination": "x-user-state" },
+          { "source": "central-catalogue-global", "destination": "central-catalogue-global" }
         ]
       }
     ],
@@ -2376,17 +2380,6 @@
     "routeHandler": "AGGREGATE",
     "aggregationType": "PARALLEL",
     "targets": [
-      {
-        "name": "cmsFeatureFlag",
-        "url": "${CMS_MSME_URL}/ccp-feature-flags",
-        "method": "GET",
-        "timeout": {
-          "request": "${TIMEOUTS.REQUEST}",
-          "socket": "${TIMEOUTS.SOCKET}"
-        },
-        "reqTransform": "web.transformers.addFeatureFlagQueryParamsFromParallelPayload",
-        "resTransform": "cms.transformers.replaceUriPrefix"
-      },
       {
         "name": "app-blogs",
         "url": "https://qa-cms-ext.msme.jswone.in/api/jsw-blogs-articless",
@@ -2470,7 +2463,8 @@
           { "source": "access_token", "destination": "authorization" },
           { "source": "access_token", "destination": "access_token" },
           { "source": "x-user-state", "destination": "x-user-state" },
-          { "source": "user-type", "destination": "user-type" }
+          { "source": "user-type", "destination": "user-type" },
+          { "source": "central-catalogue-global", "destination": "central-catalogue-global" }
         ]
       }
     ],
@@ -2482,14 +2476,6 @@
     "routeHandler": "AGGREGATE",
     "aggregationType": "PARALLEL",
     "targets": [
-      {
-        "name": "cmsFeatureFlag",
-        "url": "${CMS_MSME_URL}/ccp-feature-flags",
-        "method": "GET",
-        "timeout": { "request": 10000, "socket": 1000 },
-        "reqTransform": "web.transformers.addFeatureFlagQueryParamsFromParallelPayload",
-        "resTransform": "cms.transformers.replaceUriPrefix"
-      },
       {
         "name": "ccp-buy-again-with-prices",
         "url": "https://qa.msme.jswone.in/central_commerce/buy-again-list",
