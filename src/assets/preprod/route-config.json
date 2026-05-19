@@ -3283,10 +3283,12 @@
         "request": 60000,
         "socket": 2000
       },
-      "staticHeaders": {
-        "Content-Type": "application/json",
-        "x-api-key": "${AI_INVOKE_X_API_KEY}"
-      },
+      "headersToPass": [
+        {
+          "source": "authorization",
+          "destination": "access_token"
+        }
+      ],
       "requiredParams": ["*"]
     }
   },
@@ -3303,10 +3305,12 @@
         "request": 60000,
         "socket": 2000
       },
-      "staticHeaders": {
-        "Content-Type": "application/json",
-        "x-api-key": "${AI_INVOKE_X_API_KEY}"
-      },
+      "headersToPass": [
+        {
+          "source": "authorization",
+          "destination": "access_token"
+        }
+      ],
       "requiredParams": ["*"]
     }
   },
