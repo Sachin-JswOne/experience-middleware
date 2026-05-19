@@ -4015,8 +4015,8 @@
       "reqTransform": "ticket.transformers.validateAndTransformTicketRequest",
       "headersToPass": [
         {
-          "source": "cookie",
-          "destination": "cookie"
+          "source": "authorization",
+          "destination": "access_token"
         }
       ]
     }
@@ -4027,7 +4027,7 @@
     "routeHandler": "TRANSFORM",
     "target": {
       "name": "service-case-attach",
-      "url": "https://jswoneplatforms--uat.sandbox.my.salesforce.com/services/apexrest/v1/ServiceCaseAttach",
+      "url": "https://www.jswonemsme.com/data-sync/customer/ticket/attachment",
       "method": "POST",
       "timeout": {
         "request": 50000,
@@ -4036,7 +4036,7 @@
       "headersToPass": [
         {
           "source": "authorization",
-          "destination": "Authorization"
+          "destination": "access_token"
         }
       ],
       "staticHeaders": {
@@ -4100,6 +4100,27 @@
       "headersToPass": [
         {
           "source": "access_token",
+          "destination": "access_token"
+        }
+      ],
+      "requiredParams": ["*"]
+    }
+  },
+  {
+    "path": "/xp-mi/public/v1/guided/classify",
+    "method": "POST",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "guided-ticket-classification",
+      "url": "https://www.jswonemsme.com/central_commerce/api/v1/tickets/classify",
+      "method": "POST",
+      "timeout": {
+        "request": 10000,
+        "socket": 1000
+      },
+      "headersToPass": [
+        {
+          "source": "authorization",
           "destination": "access_token"
         }
       ],
