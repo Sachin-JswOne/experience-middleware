@@ -95,6 +95,12 @@ export function mergeCustomerProfile(aggregatedResponses: AggregatedResponse[]):
   const mouResp = responses['mou-eligibility'];
   const profileV2Resp = responses['customerData'];
   const gstResp = responses['gstin-customer-profile'];
+  const transactingResp = responses['transacting'];
+
+  safeDebug(
+    Logger,
+    () => `Transacting response from mergeCustomerProfile: ${safeToLog(transactingResp)}`,
+  );
 
   safeDebug(
     Logger,
@@ -129,6 +135,7 @@ export function mergeCustomerProfile(aggregatedResponses: AggregatedResponse[]):
           error: profileResp.error || 'Unknown error',
           httpStatus: profileResp.httpStatus,
         };
+  const isTransacting = transactingResp?.data.data ?? false;
 
   const customerData =
     profileV2Resp && profileV2Resp.data && typeof profileV2Resp.data === 'object'
@@ -151,7 +158,7 @@ export function mergeCustomerProfile(aggregatedResponses: AggregatedResponse[]):
       : {};
 
   return {
-    profile: { ...profile, mouEligibilityPayload },
+    profile: { ...profile, mouEligibilityPayload, isTransacting },
     customerData,
     ...gstData,
   };

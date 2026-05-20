@@ -1136,6 +1136,21 @@
         ]
       },
       {
+        "name": "transacting",
+        "url": "https://www.jswonemsme.com/central_commerce/customer/transacting",
+        "method": "GET",
+        "timeout": {
+          "request": "${TIMEOUTS.REQUEST}",
+          "socket": "${TIMEOUTS.SOCKET}"
+        },
+        "headersToPass": [
+          {
+            "source": "access_token",
+            "destination": "access_token"
+          }
+        ]
+      },
+      {
         "name": "gstin-customer-profile",
         "url": "https://tms.jswonemsme.com/account-master/profile/v1",
         "method": "GET",
