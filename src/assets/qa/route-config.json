@@ -4175,5 +4175,26 @@
       ],
       "requiredParams": ["*"]
     }
+  },
+  {
+    "path": "/xp-mi/public/v1/guided/search/faq",
+    "method": "POST",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "guided-ticket-classification",
+      "url": "https://qa-ssr.msme.jswone.in/central_commerce/api/v1/faq/search",
+      "method": "POST",
+      "timeout": {
+        "request": 10000,
+        "socket": 1000
+      },
+      "headersToPass": [
+        {
+          "source": "authorization",
+          "destination": "access_token"
+        }
+      ],
+      "requiredParams": ["*"]
+    }
   }
 ]
