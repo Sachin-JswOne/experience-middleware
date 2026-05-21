@@ -3898,7 +3898,7 @@
     }
   },
   {
-    "path": "/xp-mi/public/order-service/order/v1/guided-ticket/invoice-numbers",
+    "path": "/xp-mi/public/v1/order-service/order/v1/guided-ticket/invoice-numbers",
     "method": "GET",
     "routeHandler": "TRANSFORM",
     "target": {
@@ -3918,7 +3918,7 @@
     }
   },
   {
-    "path": "/xp-mi/public/order-service/order/v1/guided-ticket/order-numbers",
+    "path": "/xp-mi/public/v1/order-service/order/v1/guided-ticket/order-numbers",
     "method": "GET",
     "routeHandler": "TRANSFORM",
     "target": {
@@ -3938,7 +3938,7 @@
     }
   },
   {
-    "path": "/xp-mi/public/order-service/order/v1/guided-ticket/sku",
+    "path": "/xp-mi/public/v1/order-service/order/v1/guided-ticket/sku",
     "method": "GET",
     "routeHandler": "TRANSFORM",
     "target": {
@@ -3954,6 +3954,10 @@
         {
           "source": "authorization",
           "destination": "access_token"
+        },
+        {
+          "source": "central_catalogue_enabled",
+          "destination": "central_catalogue_enabled"
         }
       ],
       "requiredParams": ["*"]
