@@ -4375,5 +4375,59 @@
       ],
       "requiredParams": ["*"]
     }
+  },
+  {
+    "path": "/xp-mi/public/v1/central_commerce/customer/v1",
+    "method": "GET",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "msmeCustomerV1",
+      "url": "https://qa.msme.jswone.in/central_commerce/customer/v1",
+      "method": "GET",
+      "timeout": {
+        "request": "${TIMEOUTS.REQUEST}",
+        "socket": "${TIMEOUTS.SOCKET}"
+      },
+      "headersToPass": [
+        {
+          "source": "authorization",
+          "destination": "access_token"
+        },
+        {
+          "source": "access_token",
+          "destination": "access_token"
+        }
+      ],
+      "requiredParams": ["*"]
+    }
+  },
+  {
+    "path": "/xp-mi/public/v1/central_commerce/customer/v1/customer-industry",
+    "method": "POST",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "msmeCustomerIndustry",
+      "url": "https://qa.msme.jswone.in/central_commerce/customer/v1/customer-industry",
+      "method": "POST",
+      "timeout": {
+        "request": "${TIMEOUTS.REQUEST}",
+        "socket": "${TIMEOUTS.SOCKET}"
+      },
+      "headersToPass": [
+        {
+          "source": "authorization",
+          "destination": "access_token"
+        },
+        {
+          "source": "access_token",
+          "destination": "access_token"
+        },
+        {
+          "source": "content-type",
+          "destination": "content-type"
+        }
+      ],
+      "requiredParams": ["*"]
+    }
   }
 ]
