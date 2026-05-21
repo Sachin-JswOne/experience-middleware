@@ -4294,10 +4294,6 @@
         {
           "source": "authorization",
           "destination": "access_token"
-        },
-        {
-          "source": "access_token",
-          "destination": "access_token"
         }
       ],
       "requiredParams": ["*"]
@@ -4318,10 +4314,6 @@
       "headersToPass": [
         {
           "source": "authorization",
-          "destination": "access_token"
-        },
-        {
-          "source": "access_token",
           "destination": "access_token"
         },
         {
