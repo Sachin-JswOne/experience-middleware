@@ -4407,7 +4407,7 @@
       "method": "POST",
       "timeout": {
         "request": "${TIMEOUTS.REQUEST}",
-        "socket": "${TIMEOUTS.SOCKET}"
+        "socket": 5000
       },
       "headersToPass": [
         {
