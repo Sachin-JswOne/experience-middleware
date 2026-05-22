@@ -95,6 +95,12 @@ export function mergeCustomerProfile(aggregatedResponses: AggregatedResponse[]):
   const mouResp = responses['mou-eligibility'];
   const profileV2Resp = responses['customerData'];
   const gstResp = responses['gstin-customer-profile'];
+  const transactingResp = responses['transacting'];
+
+  safeDebug(
+    Logger,
+    () => `Transacting response from mergeCustomerProfile: ${safeToLog(transactingResp)}`,
+  );
 
   safeDebug(
     Logger,
@@ -129,6 +135,7 @@ export function mergeCustomerProfile(aggregatedResponses: AggregatedResponse[]):
           error: profileResp.error || 'Unknown error',
           httpStatus: profileResp.httpStatus,
         };
+  const isTransacting = transactingResp?.data.data ?? false;
 
   const customerData =
     profileV2Resp && profileV2Resp.data && typeof profileV2Resp.data === 'object'
@@ -151,7 +158,7 @@ export function mergeCustomerProfile(aggregatedResponses: AggregatedResponse[]):
       : {};
 
   return {
-    profile: { ...profile, mouEligibilityPayload },
+    profile: { ...profile, mouEligibilityPayload, isTransacting },
     customerData,
     ...gstData,
   };
@@ -165,7 +172,20 @@ export function transformFetchUserRequest(request: BaseRequest): BaseRequest {
 
   const providedParams = [email, phoneNumber, contactSfId].filter(Boolean);
 
-  if (providedParams.length !== 1) {
+  const hasAccessToken =
+    Boolean(request.headers?.access_token) ||
+    Boolean(request.headers?.Access_Token) ||
+    Boolean(request.headers?.authorization) ||
+    Boolean(request.headers?.Authorization);
+
+  if (providedParams.length > 1) {
+    throw new CustomError(
+      'Exactly one of email, phoneNumber, or contactSfId must be provided.',
+      400,
+    );
+  }
+
+  if (!hasAccessToken && providedParams.length !== 1) {
     throw new CustomError(
       'Exactly one of email, phoneNumber, or contactSfId must be provided.',
       400,
@@ -187,9 +207,6 @@ export function transformFetchUserRequest(request: BaseRequest): BaseRequest {
   // Default false, true only when explicitly true
   request.url.searchParams.set('includePermission', String(includePermission));
 
-  const hasAccessToken =
-    Boolean(request.headers?.access_token) || Boolean(request.headers?.Access_Token) || Boolean(request.headers?.authorization) || Boolean(request.headers?.Authorization);
-
   const isInvitationAcceptanceFlow = Boolean(contactSfId) && !hasAccessToken;
 
   return addCustomerApiKeyIfNoAuth({
@@ -198,9 +215,7 @@ export function transformFetchUserRequest(request: BaseRequest): BaseRequest {
   });
 }
 
-export function addCustomerApiKeyIfNoAuth(
-  request: BaseRequest,
-): BaseRequest {
+export function addCustomerApiKeyIfNoAuth(request: BaseRequest): BaseRequest {
   const hasAccessToken =
     Boolean(request.headers?.access_token) ||
     Boolean(request.headers?.authorization) ||

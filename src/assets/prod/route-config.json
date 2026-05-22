@@ -1136,6 +1136,21 @@
         ]
       },
       {
+        "name": "transacting",
+        "url": "https://www.jswonemsme.com/central_commerce/customer/transacting",
+        "method": "GET",
+        "timeout": {
+          "request": "${TIMEOUTS.REQUEST}",
+          "socket": "${TIMEOUTS.SOCKET}"
+        },
+        "headersToPass": [
+          {
+            "source": "access_token",
+            "destination": "access_token"
+          }
+        ]
+      },
+      {
         "name": "gstin-customer-profile",
         "url": "https://tms.jswonemsme.com/account-master/profile/v1",
         "method": "GET",
@@ -3809,10 +3824,12 @@
         "request": 60000,
         "socket": 2000
       },
-      "staticHeaders": {
-        "Content-Type": "application/json",
-        "x-api-key": "${AI_INVOKE_X_API_KEY}"
-      },
+      "headersToPass": [
+        {
+          "source": "authorization",
+          "destination": "access_token"
+        }
+      ],
       "requiredParams": ["*"]
     }
   },
@@ -3829,10 +3846,12 @@
         "request": 60000,
         "socket": 2000
       },
-      "staticHeaders": {
-        "Content-Type": "application/json",
-        "x-api-key": "${AI_INVOKE_X_API_KEY}"
-      },
+      "headersToPass": [
+        {
+          "source": "authorization",
+          "destination": "access_token"
+        }
+      ],
       "requiredParams": ["*"]
     }
   },
@@ -3899,8 +3918,8 @@
       "reqTransform": "ticket.transformers.validateAndTransformTicketRequest",
       "headersToPass": [
         {
-          "source": "cookie",
-          "destination": "cookie"
+          "source": "authorization",
+          "destination": "access_token"
         }
       ]
     }
@@ -3911,7 +3930,7 @@
     "routeHandler": "TRANSFORM",
     "target": {
       "name": "service-case-attach",
-      "url": "https://jswoneplatforms--uat.sandbox.my.salesforce.com/services/apexrest/v1/ServiceCaseAttach",
+      "url": "https://www.jswonemsme.com/data-sync/customer/ticket/attachment",
       "method": "POST",
       "timeout": {
         "request": 50000,
@@ -3920,7 +3939,7 @@
       "headersToPass": [
         {
           "source": "authorization",
-          "destination": "Authorization"
+          "destination": "access_token"
         }
       ],
       "staticHeaders": {
@@ -4162,5 +4181,221 @@
         "reqTransform": "app.transformers.transformInTransitRequest"
       }
     ]
-  } 
+  },
+    {
+    "path": "/xp-mi/public/v1/order-service/order/guided-ticket/invoice-numbers",
+    "method": "GET",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "get-invoice-numbers",
+      "url": "https://www.jswonemsme.com/order-service/order/v1/guided-ticket/invoice-numbers",
+      "method": "GET",
+      "timeout": {
+        "request": 5000,
+        "socket": 1000
+      },
+      "headersToPass": [
+        {
+          "source": "authorization",
+          "destination": "access_token"
+        }
+      ]
+    }
+  },
+  {
+    "path": "/xp-mi/public/v1/order-service/order/guided-ticket/order-numbers",
+    "method": "GET",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "get-order-numbers",
+      "url": "https://www.jswonemsme.com/order-service/order/v1/guided-ticket/order-numbers",
+      "method": "GET",
+      "timeout": {
+        "request": 5000,
+        "socket": 1000
+      },
+      "headersToPass": [
+        {
+          "source": "authorization",
+          "destination": "access_token"
+        }
+      ]
+    }
+  },
+  {
+    "path": "/xp-mi/public/v1/order-service/order/guided-ticket/sku",
+    "method": "GET",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "get-sku-invoice-number",
+      "url": "https://www.jswonemsme.com/order-service/order/v1/guided-ticket/sku",
+      "method": "GET",
+      "reqTransform": "general.transformers.convertToGetRequest",
+      "timeout": {
+        "request": 10000,
+        "socket": 1000
+      },
+      "headersToPass": [
+        {
+          "source": "authorization",
+          "destination": "access_token"
+        },
+        {
+          "source": "central_catalogue_enabled",
+          "destination": "central_catalogue_enabled"
+        }
+      ],
+      "requiredParams": ["*"]
+    }
+  },
+  {
+    "path": "/xp-mi/public/v1/guided/classify",
+    "method": "POST",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "guided-ticket-classification",
+      "url": "https://www.jswonemsme.com/central_commerce/api/v1/tickets/classify",
+      "method": "POST",
+      "timeout": {
+        "request": 10000,
+        "socket": 1000
+      },
+      "headersToPass": [
+        {
+          "source": "authorization",
+          "destination": "access_token"
+        }
+      ],
+      "requiredParams": ["*"]
+    }
+  },
+  {
+    "path": "/xp-mi/public/v1/guided/search/faq",
+    "method": "POST",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "guided-ticket-classification",
+      "url": "https://www.jswonemsme.com/central_commerce/api/v1/faq/search",
+      "method": "POST",
+      "timeout": {
+        "request": 10000,
+        "socket": 1000
+      },
+      "headersToPass": [
+        {
+          "source": "authorization",
+          "destination": "access_token"
+        }
+      ],
+      "requiredParams": ["*"]
+    }
+  },
+  {
+    "path": "/xp-mi/public/v1/central_commerce/industry/segments",
+    "method": "GET",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "get-industry-segments",
+      "url": "https://www.jswonemsme.com/central_commerce/industry/v1/segments",
+      "method": "GET",
+      "timeout": {
+        "request": 5000,
+        "socket": 1000
+      },
+      "headersToPass": [
+        {
+          "source": "authorization",
+          "destination": "access_token"
+        }
+      ]
+    }
+  },
+  {
+    "path": "/xp-mi/public/v1/central_commerce/industry/sub-segments",
+    "method": "GET",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "get-industry-sub-segments",
+      "url": "https://www.jswonemsme.com/central_commerce/industry/v1/sub-segments",
+      "method": "GET",
+      "timeout": {
+        "request": 5000,
+        "socket": 1000
+      },
+      "headersToPass": [
+        {
+          "source": "authorization",
+          "destination": "access_token"
+        }
+      ],
+      "requiredParams": ["*"]
+    }
+  },
+  {
+    "path": "/xp-mi/public/v1/central_commerce/industry/segments/hierarchy",
+    "method": "GET",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "get-industry-segments-hierarchy",
+      "url": "https://www.jswonemsme.com/central_commerce/industry/v1/segments/hierarchy",
+      "method": "GET",
+      "timeout": {
+        "request": 5000,
+        "socket": 1000
+      },
+      "headersToPass": [
+        {
+          "source": "authorization",
+          "destination": "access_token"
+        }
+      ],
+      "requiredParams": ["*"]
+    }
+  },
+  {
+    "path": "/xp-mi/public/v1/central_commerce/customer/v1",
+    "method": "GET",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "msmeCustomerV1",
+      "url": "https://www.jswonemsme.com/central_commerce/customer/v1",
+      "method": "GET",
+      "timeout": {
+        "request": "${TIMEOUTS.REQUEST}",
+        "socket": "${TIMEOUTS.SOCKET}"
+      },
+      "headersToPass": [
+        {
+          "source": "authorization",
+          "destination": "access_token"
+        }
+      ],
+      "requiredParams": ["*"]
+    }
+  },
+  {
+    "path": "/xp-mi/public/v1/central_commerce/customer/v1/customer-industry",
+    "method": "POST",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "msmeCustomerIndustry",
+      "url": "https://www.jswonemsme.com/central_commerce/customer/v1/customer-industry",
+      "method": "POST",
+      "timeout": {
+        "request": "${TIMEOUTS.REQUEST}",
+        "socket": 5000
+      },
+      "headersToPass": [
+        {
+          "source": "authorization",
+          "destination": "access_token"
+        },
+        {
+          "source": "content-type",
+          "destination": "content-type"
+        }
+      ],
+      "requiredParams": ["*"]
+    }
+  }
 ]
