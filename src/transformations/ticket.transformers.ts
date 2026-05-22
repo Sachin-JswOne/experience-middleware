@@ -9,7 +9,6 @@ export function validateAndTransformTicketRequest(
   const {
     orderNumber,
     invoiceNumber,
-    opportunitySKUIds,
     shipmentSKUIds,
   } = body;
 
@@ -21,17 +20,17 @@ export function validateAndTransformTicketRequest(
   }
 
   if (invoiceNumber) {
-    const hasOpportunitySkus =
-      Array.isArray(opportunitySKUIds) &&
-      opportunitySKUIds.length > 0;
+    // const hasOpportunitySkus =
+    //   Array.isArray(opportunitySKUIds) &&
+    //   opportunitySKUIds.length > 0;
 
     const hasShipmentSkus =
       Array.isArray(shipmentSKUIds) &&
       shipmentSKUIds.length > 0;
 
-    if (!hasOpportunitySkus && !hasShipmentSkus) {
+    if (!hasShipmentSkus) {
       throw new CustomError(
-        'When invoiceNumber is provided, either opportunitySKUIds or shipmentSKUIds is required',
+        'When invoiceNumber is provided, shipmentSKUIds is required',
         400,
       );
     }
