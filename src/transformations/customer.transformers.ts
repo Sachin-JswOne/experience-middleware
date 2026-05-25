@@ -5,10 +5,10 @@ import { CustomError } from 'src/utils/CustomError';
 import { BaseRequest } from 'src/models/base-request.model';
 
 /**
-* Transforms aggregated customer profile responses to ensure they are JSON-serializable
-* and removes any circular references by deep cloning the data
-* Returns a structured object with meaningful keys: profile and customerData
-*/
+ * Transforms aggregated customer profile responses to ensure they are JSON-serializable
+ * and removes any circular references by deep cloning the data
+ * Returns a structured object with meaningful keys: profile and customerData
+ */
 export function transformCustomerProfileResponses(aggregatedResponses: AggregatedResponse[]): any {
   safeDebug(
     Logger,
@@ -95,6 +95,12 @@ export function mergeCustomerProfile(aggregatedResponses: AggregatedResponse[]):
   const mouResp = responses['mou-eligibility'];
   const profileV2Resp = responses['customerData'];
   const gstResp = responses['gstin-customer-profile'];
+  const transactingResp = responses['transacting'];
+
+  safeDebug(
+    Logger,
+    () => `Transacting response from mergeCustomerProfile: ${safeToLog(transactingResp)}`,
+  );
 
   safeDebug(
     Logger,
@@ -129,6 +135,7 @@ export function mergeCustomerProfile(aggregatedResponses: AggregatedResponse[]):
           error: profileResp.error || 'Unknown error',
           httpStatus: profileResp.httpStatus,
         };
+  const isTransacting = transactingResp?.data.data ?? false;
 
   const customerData =
     profileV2Resp && profileV2Resp.data && typeof profileV2Resp.data === 'object'
@@ -151,9 +158,78 @@ export function mergeCustomerProfile(aggregatedResponses: AggregatedResponse[]):
       : {};
 
   return {
-    profile: { ...profile, mouEligibilityPayload },
+    profile: { ...profile, mouEligibilityPayload, isTransacting },
     customerData,
     ...gstData,
   };
 }
- 
+
+export function transformFetchUserRequest(request: BaseRequest): BaseRequest {
+  const email = request.url.searchParams.get('email')?.trim();
+  const phoneNumber = request.url.searchParams.get('phoneNumber')?.trim();
+
+  const contactSfId = request.url.searchParams.get('contactSfId')?.trim();
+
+  const providedParams = [email, phoneNumber, contactSfId].filter(Boolean);
+
+  const hasAccessToken =
+    Boolean(request.headers?.access_token) ||
+    Boolean(request.headers?.Access_Token) ||
+    Boolean(request.headers?.authorization) ||
+    Boolean(request.headers?.Authorization);
+
+  if (providedParams.length > 1) {
+    throw new CustomError(
+      'Exactly one of email, phoneNumber, or contactSfId must be provided.',
+      400,
+    );
+  }
+
+  if (!hasAccessToken && providedParams.length !== 1) {
+    throw new CustomError(
+      'Exactly one of email, phoneNumber, or contactSfId must be provided.',
+      400,
+    );
+  }
+
+  const includePermission =
+    request.url.searchParams.get('includePermission')?.toLowerCase() === 'true';
+
+  request.url.searchParams.delete('email');
+  request.url.searchParams.delete('phoneNumber');
+  request.url.searchParams.delete('contactSfId');
+  request.url.searchParams.delete('includePermission');
+
+  if (email) request.url.searchParams.set('email', email);
+  if (phoneNumber) request.url.searchParams.set('phoneNumber', phoneNumber);
+  if (contactSfId) request.url.searchParams.set('contactSfId', contactSfId);
+
+  // Default false, true only when explicitly true
+  request.url.searchParams.set('includePermission', String(includePermission));
+
+  const isInvitationAcceptanceFlow = Boolean(contactSfId) && !hasAccessToken;
+
+  return addCustomerApiKeyIfNoAuth({
+    ...request,
+    body: undefined,
+  });
+}
+
+export function addCustomerApiKeyIfNoAuth(request: BaseRequest): BaseRequest {
+  const hasAccessToken =
+    Boolean(request.headers?.access_token) ||
+    Boolean(request.headers?.authorization) ||
+    Boolean(request.headers?.Authorization);
+
+  if (hasAccessToken) {
+    return request;
+  }
+
+  return {
+    ...request,
+    headers: {
+      ...request.headers,
+      'X-API-KEY': process.env.CUSTOMER_SERVICE_X_API_KEY,
+    },
+  };
+}
