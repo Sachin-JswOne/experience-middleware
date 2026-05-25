@@ -54,8 +54,7 @@ export function mergeInvoiceAndShipmentsResponse(aggregatedResponses: Aggregated
     const shipments = transformShipmentDetails(orderShipmentDetailsSRO, listOfDocuments);
     return { listOfShipments: shipments };
   } catch (error) {
-    Logger.log(`Transforming Shipment Request  method: mergeInvoiceAndShipmentResponse`);
-    console.error('Error in mergeInvoiceAndShipmentsResponse:', error);
+    Logger.error(`Transforming Shipment Request  method: mergeInvoiceAndShipmentResponse error: ${error}`);
     throw error;
   }
 }

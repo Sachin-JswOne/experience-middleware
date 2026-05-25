@@ -167,7 +167,6 @@ export function getSfIdFromHeaders(request) {
     return (decoded as any).sfCustomerId ?? null;
   } catch (err) {
     Logger.error(`Error for ${request.url} method: getSfIdFromHeaders Error decoding JWT: ${err}`);
-    console.error('Error decoding JWT:', err);
     return null;
   }
 }
