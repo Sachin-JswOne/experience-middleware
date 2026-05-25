@@ -1117,7 +1117,7 @@
         "url": "https://oms.preprod.jswonemsme.com/opportunity/retail/fetch-order-list",
         "method": "GET",
         "staticHeaders": {
-          "Authorization": "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJPbmxpbmUgSldUIEJ1aWxkZXIiLCJpYXQiOjE3NTI0ODI2NzksImV4cCI6MjUzMzg3NTU3ODc5LCJhdWQiOiJyZXRhaWxzLWFwcCIsInN1YiI6InJldGFpbHNAanN3b25lLmluIiwiR2l2ZW5OYW1lIjoiUmV0YWlscyIsIkVtYWlsIjoicmV0YWlsc0Bqc3dvbmUuaW4iLCJSb2xlIjoiQURNSU4ifQ.NlGWFVVxEMtCVqz4tyMFX-R_qLoOjg_7alWl1MVcmnI"
+          "Authorization": "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJKU1dPTkUiLCJpYXQiOjE3NTE1MzY4NTMsImV4cCI6MTc4MzA3Mjg1MywiYXVkIjoiIiwic3ViIjoib3JkZXJ1bmlmaWNhdGlvbkBqc3dvbmUuY29tIiwiRW1haWwiOiJvcmRlcnVuaWZpY2F0aW9uQGpzd29uZS5jb20iLCJSb2xlIjoiQWRtaW4ifQ.pf4XPzgeoZXIuTcQ4JAqpfln7UfBLkvYQcnqEyrbSqA"
         },
         "timeout": {
           "request": 5000,
@@ -2424,93 +2424,104 @@
   {
     "path": "/xp-mi/public/v1/web-home-page-v3",
     "method": "POST",
+    "routeHandler": "CONDITIONAL",
+    "conditionTransform": "web.transformers.selectWebHomePageV3TargetByUserType",
+    "targets": [
+      {
+        "name": "web-home-page-v3-guest",
+        "url": "http://127.0.0.1:3000/xp-mi/public/v1/web-home-page-v3-guest",
+        "method": "POST",
+        "timeout": { "request": 20000, "socket": 1000 },
+        "headersToPass": [
+          { "source": "authorization", "destination": "authorization" },
+          { "source": "authorization", "destination": "access_token" },
+          { "source": "access_token", "destination": "authorization" },
+          { "source": "access_token", "destination": "access_token" },
+          { "source": "x-user-state", "destination": "x-user-state" },
+          { "source": "user-type", "destination": "user-type" }
+        ]
+      },
+      {
+        "name": "web-home-page-v3-registered",
+        "url": "http://127.0.0.1:3000/xp-mi/public/v1/web-home-page-v3-registered",
+        "method": "POST",
+        "timeout": { "request": 20000, "socket": 1000 },
+        "headersToPass": [
+          { "source": "authorization", "destination": "authorization" },
+          { "source": "authorization", "destination": "access_token" },
+          { "source": "access_token", "destination": "authorization" },
+          { "source": "access_token", "destination": "access_token" },
+          { "source": "x-user-state", "destination": "x-user-state" },
+          { "source": "user-type", "destination": "user-type" }
+        ]
+      }
+    ]
+  },
+  {
+    "path": "/xp-mi/public/v1/web-home-page-v3-guest",
+    "method": "POST",
     "routeHandler": "AGGREGATE",
     "aggregationType": "SEQUENTIAL",
     "targets": [
       {
         "name": "layout-mweb-homepages",
-        "url": "https://cms-ext.preprod.jswonemsme.com/api/layout-mweb-homepages",
+        "url": "${CMS_MSME_URL}/layout-mweb-homepages",
         "method": "GET",
-        "timeout": {
-          "request": 10000,
-          "socket": 1000
-        },
+        "timeout": { "request": 10000, "socket": 1000 },
         "reqTransform": "general.transformers.moveBodyToQueryParams",
         "resTransform": "cms.transformers.replaceUriPrefix"
       },
       {
-        "name": "ccp-buy-again-with-prices",
-        "url": "https://preprod.jswonemsme.com/central_commerce/buy-again-list",
-        "method": "GET",
-        "timeout": {
-          "request": 5000,
-          "socket": 1000
-        },
-        "reqTransform": "general.transformers.convertToGetRequest",
-        "headersToPass": [
-          {
-            "source": "authorization",
-            "destination": "access_token"
-          }
-        ]
-      },
-      {
-        "name": "ccp-top-items-product-details",
-        "url": "https://preprod.jswonemsme.com/central_commerce/catalogue/product-details",
+        "name": "web-home-page-v3-guest-parallel-helper",
+        "url": "http://127.0.0.1:3000/xp-mi/public/v1/web-home-page-v3-guest-parallel-helper",
         "method": "POST",
-        "timeout": {
-          "request": 5000,
-          "socket": 1000
-        },
-        "reqTransform": "web.transformers.transformWebHomePageTopItemsMMIDRequestV3",
+        "timeout": { "request": 10000, "socket": 1000 },
+        "reqTransform": "web.transformers.prepareWebHomePageV3ParallelPayload",
         "headersToPass": [
-          {
-            "source": "authorization",
-            "destination": "access_token"
-          }
+          { "source": "authorization", "destination": "authorization" },
+          { "source": "authorization", "destination": "access_token" },
+          { "source": "access_token", "destination": "authorization" },
+          { "source": "access_token", "destination": "access_token" },
+          { "source": "x-user-state", "destination": "x-user-state" }
         ]
-      },
+      }
+    ],
+    "resTransform": "web.transformers.mergeWebHomePageResponsesV3FromNestedParallel"
+  },
+  {
+    "path": "/xp-mi/public/v1/web-home-page-v3-guest-parallel-helper",
+    "method": "POST",
+    "routeHandler": "AGGREGATE",
+    "aggregationType": "PARALLEL",
+    "targets": [
       {
-        "name": "pending-dispatch-quantity",
-        "url": "https://preprod.jswonemsme.com/order-service/order/v1/material-tracking/pending-dispatch-quantity",
+        "name": "cmsFeatureFlag",
+        "url": "${CMS_MSME_URL}/ccp-feature-flags",
         "method": "GET",
         "timeout": {
           "request": "${TIMEOUTS.REQUEST}",
           "socket": "${TIMEOUTS.SOCKET}"
         },
-        "reqTransform": "general.transformers.convertToGetRequest",
-        "headersToPass": [
-          {
-            "source": "authorization",
-            "destination": "access_token"
-          }
-        ]
+        "reqTransform": "web.transformers.addFeatureFlagQueryParamsFromParallelPayload",
+        "resTransform": "cms.transformers.replaceUriPrefix"
       },
       {
         "name": "app-blogs",
         "url": "https://cms-ext.preprod.jswonemsme.com/api/jsw-blogs-articless",
         "method": "GET",
-        "timeout": {
-          "request": 5000,
-          "socket": 1000
-        },
-        "reqTransform": "cms.transformers.homeBlogs",
+        "timeout": { "request": 5000, "socket": 1000 },
+        "reqTransform": "web.transformers.homeBlogsFromParallelPayload",
         "resTransform": "cms.transformers.replaceUriPrefix"
       },
       {
-        "name": "web-homepage-products",
-        "url": "https://experience-middleware.preprod.jswonemsme.com/xp-mi/public/v1/web-products",
-        "method": "GET",
-        "timeout": {
-          "request": 10000,
-          "socket": 1000
-        },
-        "reqTransform": "general.transformers.convertToGetRequest",
+        "name": "web-central-catalogue-categories",
+        "url": "https://preprod.jswonemsme.com/central_commerce/categories/tree/list",
+        "method": "POST",
+        "timeout": { "request": 5000, "socket": 1000 },
+        "reqTransform": "web.transformers.extractCentralCatalogueCategoryIdsv3FromCmsBody",
         "headersToPass": [
-          {
-            "source": "authorization",
-            "destination": "authorization"
-          }
+          { "source": "authorization", "destination": "access_token" },
+          { "source": "access_token", "destination": "access_token" }
         ]
       },
       {
@@ -2521,96 +2532,201 @@
           "request": 5000,
           "socket": 1000
         },
-        "reqTransform": "web.transformers.extractBrandCategoryIdsv3",
+        "reqTransform": "web.transformers.extractBrandCategoryIdsv3FromCmsBody",
         "headersToPass": [
-          {
-            "source": "authorization",
-            "destination": "access_token"
-          }
-        ]
-      },
-      {
-        "name": "web-central-catalogue-categories",
-        "url": "https://preprod.jswonemsme.com/central_commerce/categories/tree/list",
-        "method": "POST",
-        "timeout": {
-          "request": 5000,
-          "socket": 1000
-        },
-        "reqTransform": "web.transformers.extractCentralCatalogueCategoryIdsv3",
-        "headersToPass": [
-          {
-            "source": "authorization",
-            "destination": "access_token"
-          }
-        ]
-      },
-      {
-        "name": "products-listing",
-        "url": "https://preprod.jswonemsme.com/central_commerce/products/listing",
-        "method": "POST",
-        "timeout": {
-          "request": 5000,
-          "socket": 1000
-        },
-        "reqTransform": "web.transformers.extractProductListingSlugv3",
-        "headersToPass": [
-          {
-            "source": "authorization",
-            "destination": "access_token"
-          }
-        ]
-      },
-      {
-        "name": "industry-products-listing",
-        "url": "https://preprod.jswonemsme.com/central_commerce/products/listing",
-        "method": "POST",
-        "timeout": {
-          "request": 5000,
-          "socket": 1000
-        },
-        "reqTransform": "web.segment.transformers.extractProductListingSlugSegment",
-        "headersToPass": [
-          {
-            "source": "authorization",
-            "destination": "access_token"
-          }
+          { "source": "authorization", "destination": "access_token" },
+          { "source": "access_token", "destination": "access_token" }
         ]
       },
       {
         "name": "recent-viewed-remove",
         "url": "https://preprod.jswonemsme.com/central_commerce/recent-viewed/remove",
         "method": "GET",
-        "timeout": {
-          "request": 5000,
-          "socket": 1000
-        },
-        "reqTransform": "general.transformers.convertToGetRequest",
+        "timeout": { "request": 5000, "socket": 1000 },
+        "reqTransform": "web.transformers.convertOriginalBodyToGetRequestFromParallelPayload",
         "headersToPass": [
-          {
-            "source": "authorization",
-            "destination": "access_token"
-          }
+          { "source": "authorization", "destination": "access_token" },
+          { "source": "access_token", "destination": "access_token" }
         ]
       },
       {
         "name": "recently-viewed-product-details",
         "url": "https://preprod.jswonemsme.com/central_commerce/catalogue/product-details",
         "method": "POST",
-        "timeout": {
-          "request": 5000,
-          "socket": 1000
-        },
-        "reqTransform": "web.transformers.transformRecentlyViewedMMIDsRequest",
+        "timeout": { "request": 5000, "socket": 1000 },
+        "reqTransform": "web.transformers.transformRecentlyViewedMMIDsRequestFromParallelPayload",
         "headersToPass": [
-          {
-            "source": "authorization",
-            "destination": "access_token"
-          }
+          { "source": "authorization", "destination": "access_token" },
+          { "source": "access_token", "destination": "access_token" }
+        ]
+      }
+    ]
+  },
+  {
+    "path": "/xp-mi/public/v1/web-home-page-v3-registered",
+    "method": "POST",
+    "routeHandler": "AGGREGATE",
+    "aggregationType": "SEQUENTIAL",
+    "targets": [
+      {
+        "name": "layout-mweb-homepages",
+        "url": "${CMS_MSME_URL}/layout-mweb-homepages",
+        "method": "GET",
+        "timeout": { "request": 10000, "socket": 1000 },
+        "reqTransform": "general.transformers.moveBodyToQueryParams",
+        "resTransform": "cms.transformers.replaceUriPrefix"
+      },
+      {
+        "name": "web-home-page-v3-registered-parallel-helper",
+        "url": "http://127.0.0.1:3000/xp-mi/public/v1/web-home-page-v3-registered-parallel-helper",
+        "method": "POST",
+        "timeout": { "request": 20000, "socket": 1000 },
+        "reqTransform": "web.transformers.prepareWebHomePageV3ParallelPayload",
+        "headersToPass": [
+          { "source": "authorization", "destination": "authorization" },
+          { "source": "authorization", "destination": "access_token" },
+          { "source": "access_token", "destination": "authorization" },
+          { "source": "access_token", "destination": "access_token" },
+          { "source": "x-user-state", "destination": "x-user-state" },
+          { "source": "user-type", "destination": "user-type" }
         ]
       }
     ],
-    "resTransform": "web.transformers.mergeWebHomePageResponsesV3"
+    "resTransform": "web.transformers.mergeWebHomePageResponsesV3FromNestedParallel"
+  },
+  {
+    "path": "/xp-mi/public/v1/web-home-page-v3-registered-parallel-helper",
+    "method": "POST",
+    "routeHandler": "AGGREGATE",
+    "aggregationType": "PARALLEL",
+    "targets": [
+      {
+        "name": "cmsFeatureFlag",
+        "url": "${CMS_MSME_URL}/ccp-feature-flags",
+        "method": "GET",
+        "timeout": { "request": 10000, "socket": 1000 },
+        "reqTransform": "web.transformers.addFeatureFlagQueryParamsFromParallelPayload",
+        "resTransform": "cms.transformers.replaceUriPrefix"
+      },
+      {
+        "name": "ccp-buy-again-with-prices",
+        "url": "https://preprod.jswonemsme.com/central_commerce/buy-again-list",
+        "method": "GET",
+        "timeout": { "request": 5000, "socket": 1000 },
+        "reqTransform": "web.transformers.convertOriginalBodyToGetRequestFromParallelPayload",
+        "headersToPass": [
+          { "source": "authorization", "destination": "access_token" },
+          { "source": "access_token", "destination": "access_token" }
+        ]
+      },
+      {
+        "name": "ccp-top-items-product-details",
+        "url": "https://preprod.jswonemsme.com/central_commerce/catalogue/product-details",
+        "method": "POST",
+        "timeout": { "request": 5000, "socket": 1000 },
+        "reqTransform": "web.transformers.transformWebHomePageTopItemsMMIDRequestV3FromCmsBody",
+        "headersToPass": [
+          { "source": "authorization", "destination": "access_token" },
+          { "source": "access_token", "destination": "access_token" }
+        ]
+      },
+      {
+        "name": "pending-dispatch-quantity",
+        "url": "https://preprod.jswonemsme.com/order-service/order/v1/material-tracking/pending-dispatch-quantity",
+        "method": "GET",
+        "timeout": { "request": "${TIMEOUTS.REQUEST}", "socket": "${TIMEOUTS.SOCKET}" },
+        "reqTransform": "web.transformers.convertOriginalBodyToGetRequestFromParallelPayload",
+        "headersToPass": [
+          { "source": "authorization", "destination": "access_token" },
+          { "source": "access_token", "destination": "access_token" }
+        ]
+      },
+      {
+        "name": "app-blogs",
+        "url": "https://cms-ext.preprod.jswonemsme.com/api/jsw-blogs-articless",
+        "method": "GET",
+        "timeout": { "request": 5000, "socket": 1000 },
+        "reqTransform": "web.transformers.homeBlogsFromParallelPayload",
+        "resTransform": "cms.transformers.replaceUriPrefix"
+      },
+      {
+        "name": "web-homepage-products",
+        "url": "https://experience-middleware.preprod.jswonemsme.com/xp-mi/public/v1/web-products",
+        "method": "GET",
+        "timeout": { "request": 10000, "socket": 1000 },
+        "reqTransform": "web.transformers.convertOriginalBodyToGetRequestFromParallelPayload",
+        "headersToPass": [
+          { "source": "authorization", "destination": "authorization" },
+          { "source": "access_token", "destination": "authorization" }
+        ]
+      },
+      {
+        "name": "web-central-top-brand-categories",
+        "url": "https://preprod.jswonemsme.com/central_commerce/categories/tree/list",
+        "method": "POST",
+        "timeout": { "request": 5000, "socket": 1000 },
+        "reqTransform": "web.transformers.extractBrandCategoryIdsv3FromCmsBody",
+        "headersToPass": [
+          { "source": "authorization", "destination": "access_token" },
+          { "source": "access_token", "destination": "access_token" }
+        ]
+      },
+      {
+        "name": "web-central-catalogue-categories",
+        "url": "https://preprod.jswonemsme.com/central_commerce/categories/tree/list",
+        "method": "POST",
+        "timeout": { "request": 5000, "socket": 1000 },
+        "reqTransform": "web.transformers.extractCentralCatalogueCategoryIdsv3FromCmsBody",
+        "headersToPass": [
+          { "source": "authorization", "destination": "access_token" },
+          { "source": "access_token", "destination": "access_token" }
+        ]
+      },
+      {
+        "name": "products-listing",
+        "url": "https://preprod.jswonemsme.com/central_commerce/products/listing",
+        "method": "POST",
+        "timeout": { "request": 5000, "socket": 1000 },
+        "reqTransform": "web.transformers.extractProductListingSlugv3FromCmsBody",
+        "headersToPass": [
+          { "source": "authorization", "destination": "access_token" },
+          { "source": "access_token", "destination": "access_token" }
+        ]
+      },
+      {
+        "name": "industry-products-listing",
+        "url": "https://preprod.jswonemsme.com/central_commerce/products/listing",
+        "method": "POST",
+        "timeout": { "request": 5000, "socket": 1000 },
+        "reqTransform": "web.segment.transformers.extractProductListingSlugSegmentFromCmsBody",
+        "headersToPass": [
+          { "source": "authorization", "destination": "access_token" },
+          { "source": "access_token", "destination": "access_token" }
+        ]
+      },
+      {
+        "name": "recent-viewed-remove",
+        "url": "https://preprod.jswonemsme.com/central_commerce/recent-viewed/remove",
+        "method": "GET",
+        "timeout": { "request": 5000, "socket": 1000 },
+        "reqTransform": "web.transformers.convertOriginalBodyToGetRequestFromParallelPayload",
+        "headersToPass": [
+          { "source": "authorization", "destination": "access_token" },
+          { "source": "access_token", "destination": "access_token" }
+        ]
+      },
+      {
+        "name": "recently-viewed-product-details",
+        "url": "https://preprod.jswonemsme.com/central_commerce/catalogue/product-details",
+        "method": "POST",
+        "timeout": { "request": 5000, "socket": 1000 },
+        "reqTransform": "web.transformers.transformRecentlyViewedMMIDsRequestFromParallelPayload",
+        "headersToPass": [
+          { "source": "authorization", "destination": "access_token" },
+          { "source": "access_token", "destination": "access_token" }
+        ]
+      }
+    ]
   },
   {
     "path": "/xp-mi/public/v1/customer-industry",
@@ -3070,6 +3186,72 @@
       }
     ],
     "resTransform": "web.genericPage.transformers.mergeWebGenericPageResponses"
+  },
+  {
+    "path": "/xp-mi/public/v1/resend-otp",
+    "method": "POST",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "app-resend-otp",
+      "url": "https://preprod.jswonemsme.com/auth/api/v1/construct/otp/resend",
+      "method": "POST",
+      "staticHeaders": {
+        "X-API-KEY": "${X_API_KEY_FOR_LOGIN}"
+      },
+      "timeout": {
+        "request": 5000,
+        "socket": 1000
+      },
+      "reqTransform": "general.transformers.moveBodyToQueryParams",
+      "resTransform": "login.transformers.transformResendOtpResponse"
+    }
+  },
+  {
+    "path": "/xp-mi/public/v2/cart/update-shipping-address",
+    "method": "POST",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "update-shipping-address",
+      "url": "https://preprod.jswonemsme.com/v2/cart/update-shipping-address",
+      "method": "POST",
+      "timeout": {
+        "request": 10000,
+        "socket": 1000
+      },
+      "headersToPass": [
+        {
+          "source": "access_token",
+          "destination": "access_token"
+        }
+      ],
+      "requiredParams": ["*"]
+    }
+  },
+  {
+    "path": "/xp-mi/public/health",
+    "method": "GET",
+    "routeHandler": "PASS_THROUGH",
+    "response": "OK"
+  },
+  {
+    "path": "/xp-mi/public/v2/cart",
+    "method": "GET",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "get-cart",
+      "url": "https://preprod.jswonemsme.com/v2/cart/get",
+      "method": "GET",
+      "timeout": {
+        "request": 10000,
+        "socket": 1000
+      },
+      "headersToPass": [
+        {
+          "source": "access_token",
+          "destination": "access_token"
+        }
+      ]
+    }
   },
   {
     "path": "/xp-mi/public/v1/category-consolidated",
