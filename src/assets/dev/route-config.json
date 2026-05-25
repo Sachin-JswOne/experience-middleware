@@ -3580,5 +3580,109 @@
       }
     ],
     "resTransform": "category.transformers.mergeLegacyCategoryConsolidatedResponse"
+  },
+  {
+    "path": "/xp-mi/public/v1/recent-viewed/remove",
+    "method": "GET",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "url": "https://qa.msme.jswone.in/central_commerce/recent-viewed/remove",
+      "method": "GET",
+      "timeout": {
+        "request": 5000,
+        "socket": 1000
+      },
+      "headersToPass": [
+        {
+          "source": "authorization",
+          "destination": "access_token"
+        }
+      ]
+    }
+  },
+  {
+    "path": "/xp-mi/public/v1/resend-otp",
+    "method": "POST",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "app-resend-otp",
+      "url": "https://qa-ssr.msme.jswone.in/auth/api/v1/construct/otp/resend",
+      "method": "POST",
+      "staticHeaders": {
+        "X-API-KEY": "${X_API_KEY_FOR_LOGIN}"
+      },
+      "timeout": {
+        "request": 5000,
+        "socket": 1000
+      },
+      "reqTransform": "general.transformers.moveBodyToQueryParams",
+      "resTransform": "login.transformers.transformResendOtpResponse"
+    }
+  },
+  {
+    "path": "/xp-mi/public/v2/cart/update-shipping-address",
+    "method": "POST",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "update-shipping-address",
+      "url": "https://qa.msme.jswone.in/v2/cart/update-shipping-address",
+      "method": "POST",
+      "timeout": {
+        "request": 10000,
+        "socket": 1000
+      },
+      "headersToPass": [
+        {
+          "source": "access_token",
+          "destination": "access_token"
+        }
+      ],
+      "requiredParams": ["*"]
+    }
+  },
+  {
+    "path": "/xp-mi/public/health",
+    "method": "GET",
+    "routeHandler": "PASS_THROUGH",
+    "response": "OK"
+  },
+  {
+    "path": "/xp-mi/public/v2/cart",
+    "method": "GET",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "get-cart",
+      "url": "https://qa.msme.jswone.in/v2/cart/get",
+      "method": "GET",
+      "timeout": {
+        "request": 10000,
+        "socket": 1000
+      },
+      "headersToPass": [
+        {
+          "source": "access_token",
+          "destination": "access_token"
+        }
+      ]
+    }
+  },
+  {
+    "path": "/xp-mi/public/v1/auth/refresh",
+    "method": "POST",
+    "routeHandler": "TRANSFORM",
+    "isCacheRequired": false,
+    "target": {
+      "name": "auth-refresh",
+      "url": "https://qa.msme.jswone.in/auth/v1/refresh",
+      "method": "POST",
+      "timeout": {
+        "request": 10000,
+        "socket": 1000
+      },
+      "staticHeaders": {
+        "Content-Type": "application/json"
+      },
+      "requiredParams": ["*"]
+    }
   }
 ]
