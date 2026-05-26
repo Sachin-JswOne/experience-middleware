@@ -4446,5 +4446,46 @@
       ],
       "requiredParams": ["*"]
     }
+  },
+  {
+    "path": "/xp-mi/public/v1/register-user",
+    "method": "POST",
+    "routeHandler": "AGGREGATE",
+    "aggregationType": "SEQUENTIAL",
+    "isCacheRequired": false,
+    "targets": [
+      {
+        "name": "register-user",
+        "url": "https://one.qa.jswone.in/internal/construct/v1/internal/construct/v1/customer/register",
+        "method": "POST",
+        "timeout": {
+          "request": 20000,
+          "socket": 1000
+        },
+        "staticHeaders": {
+          "Content-Type": "application/json",
+          "X-API-KEY": "${X_API_KEY_FOR_REGISTRATION}"
+        },
+        "headersToPass": [
+          {
+            "source": "x-forwarded-for",
+            "destination": "consent-x-forward-for"
+          }
+        ],
+        "reqTransform": "appRegistration.transformers.transformRegisterUserRequest",
+        "resTransform": "appRegistration.transformers.transformRegisterUserResponse"
+      },
+      {
+        "name": "fetch-access-token",
+        "url": "https://qa.msme.jswone.in/auth/login",
+        "method": "POST",
+        "timeout": {
+          "request": 20000,
+          "socket": 1000
+        },
+        "reqTransform": "appRegistration.transformers.transformFetchAccessTokenRequest"
+      }
+    ],
+    "resTransform": "appRegistration.transformers.mergeRegisterUserAndAccessTokenResponse"
   }
 ]
