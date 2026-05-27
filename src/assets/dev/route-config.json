@@ -3962,5 +3962,21 @@
       },
       "requiredParams": ["page", "size"]
     }
-  }  
+  },
+  {
+    "path": "/xp-mi/public/v1/pdp-trusted-banner",
+    "method": "POST",
+    "routeHandler": "TRANSFORM",
+    "targets": {
+        "name": "strapi-banner-from-cart",
+        "url": "https://qa-cms-ext.msme.jswone.in/api/app-cart-page-v2",
+        "method": "GET",
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
+        "reqTransform": "general.transformers.moveBodyToQueryParams",
+        "resTransform": "cms.transformers.replaceUriPrefix"
+      }
+  }
 ]
