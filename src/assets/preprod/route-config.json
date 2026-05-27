@@ -2490,7 +2490,7 @@
     "targets": [
       {
         "name": "mweb-cart-page",
-        "url": "https://cms-ext.preprod.jswonemsme.com/api/api/app-cart-page-v2",
+        "url": "https://cms-ext.preprod.jswonemsme.com/api/app-cart-page-v2",
         "method": "GET",
         "timeout": {
           "request": 5000,
