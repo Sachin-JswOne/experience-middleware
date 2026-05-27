@@ -1268,6 +1268,10 @@
         {
           "source": "traceId",
           "destination": "traceId"
+        },
+        {
+          "source": "jsw_session_id",
+          "destination": "jsw_session_id"
         }
       ],
       "requiredParams": ["*"]
@@ -1608,7 +1612,11 @@
           {
             "source": "authorization",
             "destination": "access_token"
-          }
+          },
+          {
+          "source": "jsw_session_id",
+          "destination": "jsw_session_id"
+        }
         ]
       },
       {
@@ -1624,7 +1632,11 @@
           {
             "source": "authorization",
             "destination": "access_token"
-          }
+          },
+          {
+          "source": "jsw_session_id",
+          "destination": "jsw_session_id"
+        }
         ]
       },
       {
@@ -1640,7 +1652,11 @@
           {
             "source": "authorization",
             "destination": "access_token"
-          }
+          },
+          {
+          "source": "jsw_session_id",
+          "destination": "jsw_session_id"
+        }
         ]
       },
       {
@@ -1656,7 +1672,11 @@
           {
             "source": "authorization",
             "destination": "access_token"
-          }
+          },
+          {
+          "source": "jsw_session_id",
+          "destination": "jsw_session_id"
+        }
         ]
       },
       {
@@ -1672,7 +1692,11 @@
           {
             "source": "authorization",
             "destination": "access_token"
-          }
+          },
+          {
+          "source": "jsw_session_id",
+          "destination": "jsw_session_id"
+        }
         ]
       },
       {
@@ -1699,7 +1723,11 @@
           {
             "source": "authorization",
             "destination": "access_token"
-          }
+          },
+          {
+          "source": "jsw_session_id",
+          "destination": "jsw_session_id"
+        }
         ]
       },
       {
@@ -1715,7 +1743,11 @@
           {
             "source": "authorization",
             "destination": "access_token"
-          }
+          },
+          {
+          "source": "jsw_session_id",
+          "destination": "jsw_session_id"
+        }
         ]
       }
     ],
@@ -1751,7 +1783,11 @@
           {
             "source": "authorization",
             "destination": "access_token"
-          }
+          },
+          {
+          "source": "jsw_session_id",
+          "destination": "jsw_session_id"
+        }
         ]
       }
     ],
@@ -1922,6 +1958,10 @@
         {
           "source": "access_token",
           "destination": "access_token"
+        },
+        {
+          "source": "jsw_session_id",
+          "destination": "jsw_session_id"
         }
       ],
       "requiredParams": ["*"]
@@ -1964,6 +2004,10 @@
         {
           "source": "access_token",
           "destination": "access_token"
+        },
+        {
+          "source": "jsw_session_id",
+          "destination": "jsw_session_id"
         }
       ],
       "requiredParams": ["*"]
