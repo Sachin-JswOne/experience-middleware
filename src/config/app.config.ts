@@ -256,3 +256,5 @@ export const KEY_AND_DISPLAY_NAME_MAPPING = {
 export const country = 'IN';
 
 export const USER_TYPE = 'R';
+
+export const CONSTRUCT = 'construct';

@@ -1,13 +1,15 @@
 import { AggregatedResponse } from 'src/models/aggregated-response.model';
 import { Logger } from '@nestjs/common';
-import { safeDebug } from 'src/utils/common-functions.util';
+import { safeDebug, safeToLog } from 'src/utils/common-functions.util';
 import { BaseRequest } from 'src/models/base-request.model';
 import {
   extractMMIDs,
+  getAllCentralCatalogueCategoryIds,
   normalizeRecentlyViewedProducts,
   RecentlyViewedProduct,
 } from './web.transformers';
 import { inspect } from 'util';
+import { CustomError } from 'src/utils/CustomError';
 
 export function mergeAppHomePageResponses(aggregatedResponses: AggregatedResponse[]): any {
   const responses = aggregatedResponses.reduce(
@@ -71,17 +73,17 @@ export function mergeAppHomePageResponses(aggregatedResponses: AggregatedRespons
   }
 
   // Clone the strapi response data to avoid mutating the original
-  const mergedData: Record<string, unknown> = { ...strapiResponse.data.data };
+  const mergedData: Record<string, unknown> = { ...strapiResponse?.data?.data };
 
   // Find the blocks array in the strapi response
   let originalBlocks: unknown[] = [];
   if (
-    typeof strapiResponse.data === 'object' &&
-    strapiResponse.data.data !== null &&
-    Array.isArray((strapiResponse.data.data as { blocks?: unknown[] }).blocks)
+    typeof strapiResponse?.data === 'object' &&
+    strapiResponse.data?.data !== null &&
+    Array.isArray((strapiResponse?.data?.data as { blocks?: unknown[] }).blocks)
   ) {
     originalBlocks = [
-      ...((strapiResponse.data.data as { blocks?: unknown[] }).blocks as unknown[]),
+      ...((strapiResponse?.data?.data as { blocks?: unknown[] }).blocks as unknown[]),
     ];
   }
   const blocks: any[] = originalBlocks;
@@ -98,7 +100,7 @@ export function mergeAppHomePageResponses(aggregatedResponses: AggregatedRespons
   }
 
   // inject top brand categories data into app-top-brands blocks
-  if (topBrandsResponse?.success && Array.isArray(topBrandsResponse.data?.data?.navigation)) {
+  if (topBrandsResponse?.success && Array.isArray(topBrandsResponse?.data?.data?.navigation)) {
     const topBrandNavigation = topBrandsResponse.data.data.navigation;
 
     const topBrandsBlocks = blocks.filter(
@@ -131,7 +133,7 @@ export function mergeAppHomePageResponses(aggregatedResponses: AggregatedRespons
     }
   }
 
-  if (topItemsResponse?.success && Array.isArray(topItemsResponse.data?.data?.products)) {
+  if (topItemsResponse?.success && Array.isArray(topItemsResponse?.data?.data?.products)) {
     const topItems = topItemsResponse?.success
       ? (topItemsResponse?.data?.data?.products ?? topItemsResponse.data?.products ?? [])
       : null;
@@ -215,24 +217,13 @@ export function mergeAppHomePageResponses(aggregatedResponses: AggregatedRespons
     }
   }
 
-  const blogs = (blogResponse?.data as { data?: unknown })?.data;
-  if (Array.isArray(blogs)) {
-    const blogBlock = blocks.find(
-      (block) => block.__component === 'app-components.app-blog-list-component',
-    );
-    if (blogBlock) {
-      blogBlock.blogs = blogs;
-    }
-  }
-
-  const inTransitApiResponse = inTransitResponse;
   let inTransit = false;
   if (
-    inTransitApiResponse.success &&
-    inTransitApiResponse.data.success &&
-    inTransitApiResponse.data.data.success
+    inTransitResponse?.success &&
+    inTransitResponse?.data?.success &&
+    inTransitResponse?.data?.data?.success
   ) {
-    const inTransitData = inTransitApiResponse.data.data.response.data;
+    const inTransitData = inTransitResponse.data.data.response.data;
     if (inTransitData && inTransitData.length > 0) {
       inTransit = true;
     }
@@ -253,26 +244,75 @@ export function mergeAppHomePageResponses(aggregatedResponses: AggregatedRespons
 }
 
 // This transformer is used to extract MMIDs from request
-export function transformTopItemsRequest(
-  request: BaseRequest,
-  aggregatedResponses: AggregatedResponse[],
-) {
-  const responses = aggregatedResponses.reduce(
-    (acc, response) => {
-      acc[response.target] = response;
-      return acc;
-    },
-    {} as Record<string, AggregatedResponse>,
-  );
-  const aggregateResponse = responses['app-home-page'].data.data;
-
-  const topItemsResponse = aggregateResponse.blocks.find(
+export function transformTopItemsRequest(request: BaseRequest) {
+  const topItemsResponse = request.body.blocks.find(
     (block) => block.__component === 'app-components.app-search-top-items',
   ).app_search_top_items;
   const mmids = extractMMIDs(topItemsResponse);
   return {
     ...request,
     body: mmids,
+  };
+}
+
+export function extractBrandCategoryIds(request: BaseRequest): BaseRequest {
+  const blocks = request.body.blocks ?? [];
+
+  // Extract category IDs from web_central_catalogue_categories array in app-top-brands blocks
+  const brandCategoryIds = blocks
+    .filter(
+      (b: any) =>
+        b.__component === 'app-components.app-top-brands' &&
+        Array.isArray(b.web_central_catalogue_categories) &&
+        b.web_central_catalogue_categories.length > 0,
+    )
+    .flatMap((b: any) =>
+      b.web_central_catalogue_categories.map((c: any) => c.categoryId).filter(Boolean),
+    );
+
+  if (brandCategoryIds.length === 0) {
+    const topBrandBlocks = blocks.filter(
+      (b: any) => b.__component === 'app-components.app-top-brands',
+    );
+    const blocksWithCategories = topBrandBlocks.filter(
+      (b: any) =>
+        Array.isArray(b.web_central_catalogue_categories) &&
+        b.web_central_catalogue_categories.length > 0,
+    );
+    Logger.warn(
+      `[extractBrandCategoryIds] No categoryId found in top-brand component. Total app-top-brands blocks: ${topBrandBlocks.length}, Blocks with web_central_catalogue_categories: ${blocksWithCategories.length}`,
+    );
+    // Return with empty array to make API call with valid structure
+    return {
+      ...request,
+      body: {
+        brandCategoryIds: [],
+      },
+    };
+  }
+
+  return {
+    ...request,
+    body: {
+      brandCategoryIds,
+    },
+  };
+}
+
+export function extractCentralCatalogueCategoryIds(request: BaseRequest): BaseRequest {
+  const blocks = request.body.blocks ?? [];
+  const categoryIds = getAllCentralCatalogueCategoryIds(blocks);
+
+  if (categoryIds.length === 0) {
+    Logger.warn(`No central catalogue category IDs found in any blocks`);
+    return request;
+  }
+
+  return {
+    ...request,
+    body: {
+      categoryIds,
+    },
   };
 }
 
@@ -695,4 +735,63 @@ function sortResponseByOrder(response: any) {
   });
 
   return sortedResponse;
+}
+
+export function selectAppHomePageV3TargetByUserType(req: Request): string {
+  const userType = String(req.headers?.['x-user-state'] ?? '').toUpperCase();
+
+  if (userType === 'G') {
+    return 'app-home-page-v3-guest';
+  } else return 'app-home-page-v3-registered';
+}
+
+export function mergeAppHomePageResponsesV3FromNestedParallel(
+  aggregatedResponses: AggregatedResponse[],
+): any {
+  const cmsAgg = aggregatedResponses.find((r) => r.target === 'app-home-page');
+
+  const helperAgg = aggregatedResponses.find((r) => r.target?.includes('parallel-helper'));
+
+  if (!helperAgg) {
+    throw new CustomError('app-home-page-v3 parallel helper response missing', 500);
+  }
+
+  if (!helperAgg.success) {
+    Logger.error(
+      `app-home-page-v3 parallel helper failed: ${safeToLog(helperAgg.error)} | downstream=${safeToLog(
+        helperAgg.downstreamResponse,
+      )}`,
+    );
+
+    throw new CustomError(
+      `app-home-page-v3 parallel helper failed: ${helperAgg.error ?? 'unknown error'}`,
+      helperAgg.httpStatus ?? 500,
+    );
+  }
+
+  if (!Array.isArray(helperAgg.data)) {
+    Logger.error(
+      `app-home-page-v3 parallel helper returned non-array data: ${safeToLog(helperAgg.data)}`,
+    );
+    throw new CustomError('app-home-page-v3 parallel helper returned non-array data', 500);
+  }
+  return mergeAppHomePageResponses([...(cmsAgg ? [cmsAgg] : []), ...helperAgg.data]);
+}
+
+export function prepareWebHomePageV3ParallelPayload(
+  request: BaseRequest,
+  prevResponses: AggregatedResponse[],
+): BaseRequest {
+  const responses = prevResponses.reduce(
+    (acc, response) => {
+      acc[response.target] = response;
+      return acc;
+    },
+    {} as Record<string, AggregatedResponse>,
+  );
+  const aggregateResponse = responses['app-home-page'].data.data;
+  return {
+    ...request,
+    body: aggregateResponse,
+  };
 }
