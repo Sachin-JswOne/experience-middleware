@@ -2507,7 +2507,17 @@
           "request": 5000,
           "socket": 1000
         },
-        "reqTransform": "general.transformers.convertToGetRequest"
+        "reqTransform": "general.transformers.convertToGetRequest",
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "access_token"
+          },
+          {
+            "source": "access_token",
+            "destination": "access_token"
+          }
+        ]
       }
     ],
     "resTransform": "cart.transformers.mergeMmebCartPageResponses"
