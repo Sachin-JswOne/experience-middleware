@@ -1,0 +1,115 @@
+name: Release Tag
+
+on:
+  workflow_dispatch:
+    inputs:
+      is_hotfix:
+        description: 'Is this a hotfix release?'
+        required: true
+        type: boolean
+        default: false
+      release_notes:
+        description: 'Release notes / changelog summary'
+        required: false
+        type: string
+        default: ''
+
+jobs:
+  create-release-tag:
+    name: Create Release Tag
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/master-gke'
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout master-gke
+        uses: actions/checkout@v4
+        with:
+          ref: master-gke
+          fetch-depth: 0
+
+      - name: Compute next version
+        id: version
+        run: |
+          TIMESTAMP=$(date -u +"%Y%m%d%H%M%S")
+          BASE_VERSION="1.115.0"
+
+          # Fetch all tags
+          git fetch --tags
+
+          # Find the latest semver tag matching our versioning scheme (vMAJOR.MINOR.PATCH-*)
+          LATEST_TAG=$(git tag --list 'v[0-9]*.[0-9]*.[0-9]*' \
+            | sort -t. -k1,1V -k2,2n -k3,3n \
+            | tail -1)
+
+          echo "Latest tag found: '${LATEST_TAG}'"
+
+          if [ -z "$LATEST_TAG" ]; then
+            # No existing tag → start from base version
+            NEXT_VERSION="v${BASE_VERSION}-${TIMESTAMP}"
+          else
+            # Strip leading 'v' and any pre-release suffix (e.g. v1.115.0-20240101 → 1.115.0)
+            CORE=$(echo "$LATEST_TAG" | sed 's/^v//' | cut -d'-' -f1)
+            MAJOR=$(echo "$CORE" | cut -d'.' -f1)
+            MINOR=$(echo "$CORE" | cut -d'.' -f2)
+            PATCH=$(echo "$CORE" | cut -d'.' -f3)
+
+            if [ "${{ github.event.inputs.is_hotfix }}" = "true" ]; then
+              # Hotfix → bump patch
+              PATCH=$((PATCH + 1))
+            else
+              # Regular release → bump minor, reset patch
+              MINOR=$((MINOR + 1))
+              PATCH=0
+            fi
+
+            NEXT_VERSION="v${MAJOR}.${MINOR}.${PATCH}-${TIMESTAMP}"
+          fi
+
+          echo "Next version: ${NEXT_VERSION}"
+          echo "version=${NEXT_VERSION}" >> "$GITHUB_OUTPUT"
+          echo "timestamp=${TIMESTAMP}" >> "$GITHUB_OUTPUT"
+
+      - name: Check tag does not already exist
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          if git rev-parse "$VERSION" >/dev/null 2>&1; then
+            echo "❌ Tag '$VERSION' already exists. Aborting."
+            exit 1
+          fi
+          echo "✅ Tag '$VERSION' is free to use."
+
+      - name: Configure Git identity
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Create and push tag
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          RELEASE_TYPE=${{ github.event.inputs.is_hotfix == 'true' && '\"Hotfix\"' || '\"Release\"' }}
+          git tag -a "$VERSION" -m "$RELEASE_TYPE $VERSION from master-gke"
+          git push origin "$VERSION"
+          echo "✅ Tag '$VERSION' created and pushed."
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.version }}
+          name: "${{ github.event.inputs.is_hotfix == 'true' && '🔥 Hotfix' || '🚀 Release' }} ${{ steps.version.outputs.version }}"
+          body: |
+            ## ${{ github.event.inputs.is_hotfix == 'true' && '🔥 Hotfix' || '🚀 Release' }} ${{ steps.version.outputs.version }}
+
+            | Field | Value |
+            |---|---|
+            | **Branch** | `master-gke` |
+            | **Type** | ${{ github.event.inputs.is_hotfix == 'true' && 'Hotfix 🔥' || 'Regular Release 🚀' }} |
+            | **Triggered by** | @${{ github.actor }} |
+            | **Commit** | `${{ github.sha }}` |
+            | **Timestamp** | `${{ steps.version.outputs.timestamp }}` |
+
+            ${{ github.event.inputs.release_notes }}
+          draft: false
+          prerelease: ${{ github.event.inputs.is_hotfix }}

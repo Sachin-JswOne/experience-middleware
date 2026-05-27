@@ -947,6 +947,13 @@ export function transformRecentlyViewedMMIDsRequest(request: BaseRequest): BaseR
   // Ensure unique MMIDs just in case
   mmids = Array.from(new Set(mmids));
 
+  if (mmids.length === 0) {
+    // Throwing an error here prevents the downstream API call.
+    // The parallel aggregator will capture this as a soft failure 
+    // ({ success: false, error: ... }) and the merge function will handle it gracefully.
+    throw new CustomError('No MMIDs provided, skipping recently-viewed API call', 400);
+  }
+
   return {
     ...request,
     body: mmids,

@@ -127,6 +127,10 @@ export function mergeCustomerProfile(aggregatedResponses: AggregatedResponse[]):
     () => `GstIn Customer data response from mergeCustomerProfile: ${safeToLog(gstResp)}`,
   );
 
+  if (profileResp?.httpStatus === 401 || profileV2Resp?.httpStatus === 401) {
+    throw new CustomError('Unauthorized', 401);
+  }
+
   const profile =
     profileResp && profileResp.data && typeof profileResp.data === 'object'
       ? profileResp.data

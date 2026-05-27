@@ -9,6 +9,7 @@ import { safeToLog } from 'src/utils/common-functions.util';
 import {
   AggregateRouteConfig,
   ConditionalRouteConfig,
+  PassThroughRouteConfig,
   TargetConfig,
 } from 'src/models/route-config.model';
 import { Request } from 'express';
@@ -26,7 +27,7 @@ import axios from 'axios';
 export class ProxyService {
   private readonly tracer = trace.getTracer('experience-middleware');
   private readonly logger = new Logger(ProxyService.name);
-  constructor(@Inject('REDIS_CLIENT') private readonly redis: Redis) {}
+  constructor(@Inject('REDIS_CLIENT') private readonly redis: Redis) { }
   // constructor() { }
 
   private getCacheKey(req: Request): string {
@@ -134,6 +135,9 @@ export class ProxyService {
       case RouteHandler.CONDITIONAL:
         data = await this.handleConditionalRequest(route, req);
         break;
+      case RouteHandler.PASS_THROUGH:
+        data = await this.handlePassThroughRequest(route, req);
+        break;
       default:
         throw new Error('Unsupported route handler');
     }
@@ -152,6 +156,9 @@ export class ProxyService {
     }
 
     return data;
+  }
+  handlePassThroughRequest(route: PassThroughRouteConfig, req: Request): any {
+    return route.response;
   }
 
   private findRoute(req: Request) {
@@ -237,9 +244,9 @@ export class ProxyService {
           res.status === 'fulfilled'
             ? res.value
             : {
-                success: false,
-                error: 'Unexpected failure',
-              },
+              success: false,
+              error: 'Unexpected failure',
+            },
         );
         const isAggregatedResponse = (r: any): r is AggregatedResponse =>
           'target' in r && 'success' in r;
@@ -429,7 +436,7 @@ export class ProxyService {
           );
 
           if (responseData) {
-            const responseStr = JSON.stringify(responseData);
+            const responseStr = inspect(responseData);
             span.setAttribute('api.response.size', responseStr.length);
 
             if (responseStr.length > 1000) {
@@ -446,7 +453,8 @@ export class ProxyService {
               500,
             ) as any;
             error.status = response.status;
-            error.response = response;
+            // Only attach data to avoid circular structures from the native Axios response
+            error.response = { data: response.data };
             throw error;
           }
 
