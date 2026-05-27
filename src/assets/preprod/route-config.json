@@ -4106,7 +4106,7 @@
     "path": "/xp-mi/public/v1/pdp-trusted-banner",
     "method": "POST",
     "routeHandler": "TRANSFORM",
-    "targets": {
+    "target": {
         "name": "strapi-banner-from-cart",
         "url": "https://cms-ext.preprod.jswonemsme.com/api/app-cart-page-v2",
         "method": "GET",
