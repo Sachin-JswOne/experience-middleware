@@ -60,8 +60,14 @@
         },
         "reqTransform": "general.transformers.convertToGetRequest",
         "headersToPass": [
-          { "source": "authorization", "destination": "authorization" },
-          { "source": "x-user-state", "destination": "x-user-state" }
+          {
+            "source": "authorization",
+            "destination": "authorization"
+          },
+          {
+            "source": "x-user-state",
+            "destination": "x-user-state"
+          }
         ],
         "requiredParams": ["pincode"]
       },
@@ -75,8 +81,14 @@
         },
         "reqTransform": "general.transformers.convertToGetRequest",
         "headersToPass": [
-          { "source": "authorization", "destination": "authorization" },
-          { "source": "x-user-state", "destination": "x-user-state" }
+          {
+            "source": "authorization",
+            "destination": "authorization"
+          },
+          {
+            "source": "x-user-state",
+            "destination": "x-user-state"
+          }
         ],
         "requiredParams": ["pincode"]
       },
@@ -90,8 +102,14 @@
         },
         "reqTransform": "general.transformers.convertToGetRequest",
         "headersToPass": [
-          { "source": "authorization", "destination": "authorization" },
-          { "source": "x-user-state", "destination": "x-user-state" }
+          {
+            "source": "authorization",
+            "destination": "authorization"
+          },
+          {
+            "source": "x-user-state",
+            "destination": "x-user-state"
+          }
         ],
         "requiredParams": ["pincode"]
       }
@@ -260,8 +278,14 @@
         },
         "reqTransform": "general.transformers.convertToGetRequest",
         "headersToPass": [
-          { "source": "authorization", "destination": "authorization" },
-          { "source": "x-user-state", "destination": "x-user-state" }
+          {
+            "source": "authorization",
+            "destination": "authorization"
+          },
+          {
+            "source": "x-user-state",
+            "destination": "x-user-state"
+          }
         ],
         "requiredParams": ["pincode"]
       }
@@ -295,8 +319,14 @@
         },
         "reqTransform": "general.transformers.convertToGetRequest",
         "headersToPass": [
-          { "source": "authorization", "destination": "authorization" },
-          { "source": "x-user-state", "destination": "x-user-state" }
+          {
+            "source": "authorization",
+            "destination": "authorization"
+          },
+          {
+            "source": "x-user-state",
+            "destination": "x-user-state"
+          }
         ],
         "requiredParams": ["pincode"]
       },
@@ -327,8 +357,14 @@
         },
         "reqTransform": "general.transformers.convertToGetRequest",
         "headersToPass": [
-          { "source": "authorization", "destination": "authorization" },
-          { "source": "x-user-state", "destination": "x-user-state" }
+          {
+            "source": "authorization",
+            "destination": "authorization"
+          },
+          {
+            "source": "x-user-state",
+            "destination": "x-user-state"
+          }
         ],
         "requiredParams": ["pincode"]
       },
@@ -347,8 +383,16 @@
         "name": "app-in-transit",
         "url": "https://qa-ssr.msme.jswone.in/order-service/order/v1/material-tracking/dispatched-shipments",
         "method": "GET",
-        "timeout": { "request": 5000, "socket": 1000 },
-        "headersToPass": [{ "source": "authorization", "destination": "access_token" }],
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "access_token"
+          }
+        ],
         "reqTransform": "app.transformers.transformInTransitRequest"
       }
     ],
@@ -401,7 +445,12 @@
           "socket": "${TIMEOUTS.SOCKET}"
         },
         "reqTransform": "general.transformers.convertToGetRequest",
-        "headersToPass": [{ "source": "authorization", "destination": "authorization" }],
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "authorization"
+          }
+        ],
         "requiredParams": ["pincode"]
       },
       {
@@ -413,7 +462,12 @@
           "socket": "${TIMEOUTS.SOCKET}"
         },
         "reqTransform": "general.transformers.convertToGetRequest",
-        "headersToPass": [{ "source": "authorization", "destination": "authorization" }],
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "authorization"
+          }
+        ],
         "requiredParams": ["pincode"]
       }
     ],
@@ -488,15 +542,26 @@
         "name": "strapi-project-detail",
         "url": "https://cms-qa.onejswhomes.in/api/project-page",
         "method": "GET",
-        "timeout": { "request": 5000, "socket": 1000 },
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
         "reqTransform": "general.transformers.moveBodyToQueryParams"
       },
       {
         "name": "homes-project-details",
         "url": "https://services-dev.onejswhomes.in/homes-service/v1/project/project-details",
         "method": "GET",
-        "timeout": { "request": 5000, "socket": 1000 },
-        "headersToPass": [{ "source": "authorization", "destination": "Authorization" }],
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "Authorization"
+          }
+        ],
         "reqTransform": "general.transformers.convertToGetRequest",
         "requiredParams": ["project_id"]
       }
@@ -513,15 +578,26 @@
         "name": "strapi-user-detail",
         "url": "https://cms-qa.onejswhomes.in/api/user-info",
         "method": "GET",
-        "timeout": { "request": 5000, "socket": 1000 },
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
         "reqTransform": "general.transformers.moveBodyToQueryParams"
       },
       {
         "name": "homes-user-details",
         "url": "https://services-dev.onejswhomes.in/homes-service/v1/user/details",
         "method": "GET",
-        "timeout": { "request": 5000, "socket": 1000 },
-        "headersToPass": [{ "source": "authorization", "destination": "Authorization" }],
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "Authorization"
+          }
+        ],
         "reqTransform": "general.transformers.convertToGetRequest"
       }
     ],
@@ -535,8 +611,16 @@
       "name": "homes-progress-report",
       "url": "https://services-dev.onejswhomes.in/homes-service/v1/project/progress-reports",
       "method": "GET",
-      "timeout": { "request": 5000, "socket": 1000 },
-      "headersToPass": [{ "source": "authorization", "destination": "Authorization" }],
+      "timeout": {
+        "request": 5000,
+        "socket": 1000
+      },
+      "headersToPass": [
+        {
+          "source": "authorization",
+          "destination": "Authorization"
+        }
+      ],
       "requiredParams": ["project_id"]
     }
   },
@@ -658,8 +742,16 @@
       "name": "homes-design-documents",
       "url": "https://services-dev.onejswhomes.in/homes-service/v1/project/design-documents",
       "method": "GET",
-      "timeout": { "request": 5000, "socket": 1000 },
-      "headersToPass": [{ "source": "authorization", "destination": "Authorization" }],
+      "timeout": {
+        "request": 5000,
+        "socket": 1000
+      },
+      "headersToPass": [
+        {
+          "source": "authorization",
+          "destination": "Authorization"
+        }
+      ],
       "requiredParams": ["project_id"]
     }
   },
@@ -671,8 +763,16 @@
       "name": "homes-construction-documents",
       "url": "https://services-dev.onejswhomes.in/homes-service/v1/project/construction-documents",
       "method": "GET",
-      "timeout": { "request": 5000, "socket": 1000 },
-      "headersToPass": [{ "source": "authorization", "destination": "Authorization" }],
+      "timeout": {
+        "request": 5000,
+        "socket": 1000
+      },
+      "headersToPass": [
+        {
+          "source": "authorization",
+          "destination": "Authorization"
+        }
+      ],
       "requiredParams": ["project_id"]
     }
   },
@@ -689,7 +789,12 @@
         "request": "${TIMEOUTS.REQUEST}",
         "socket": "${TIMEOUTS.SOCKET}"
       },
-      "headersToPass": [{ "source": "authorization", "destination": "access_token" }],
+      "headersToPass": [
+        {
+          "source": "authorization",
+          "destination": "access_token"
+        }
+      ],
       "requiredParams": ["entityName"]
     }
   },
@@ -720,7 +825,10 @@
         "name": "app-material-tracking",
         "url": "https://cms-msme-ext.qa.jswone.in/api/app-order-page",
         "method": "GET",
-        "timeout": { "request": 5000, "socket": 1000 },
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
         "reqTransform": "general.transformers.moveBodyToQueryParams"
       },
       {
@@ -730,7 +838,10 @@
         "staticHeaders": {
           "Authorization": "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJKU1dPTkUiLCJpYXQiOjE3NTE1MzY4NTMsImV4cCI6MTc4MzA3Mjg1MywiYXVkIjoiIiwic3ViIjoib3JkZXJ1bmlmaWNhdGlvbkBqc3dvbmUuY29tIiwiRW1haWwiOiJvcmRlcnVuaWZpY2F0aW9uQGpzd29uZS5jb20iLCJSb2xlIjoiQWRtaW4ifQ.pf4XPzgeoZXIuTcQ4JAqpfln7UfBLkvYQcnqEyrbSqA"
         },
-        "timeout": { "request": 5000, "socket": 1000 },
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
         "reqTransform": "orderListing.transformers.transformOrderListingRequest",
         "resTransform": "orderListing.transformers.transformOrderListingResponse",
         "requiredParams": ["gstin", "customerType"]
@@ -748,7 +859,10 @@
         "name": "order-detail",
         "url": "https://qa-oms.msme.jswone.in/external-connector-inbound/api/internal/v1/retail/fetch-order-details",
         "method": "GET",
-        "timeout": { "request": 5000, "socket": 1000 },
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
         "staticHeaders": {
           "Authorization": "${X_API_KEY_FOR_ORDER_LISTING}",
           "client_id": "${ERP_CLIENT_ID}"
@@ -764,7 +878,10 @@
           "Authorization": "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJPbmxpbmUgSldUIEJ1aWxkZXIiLCJpYXQiOjE3NDQ4ODcyMzgsImV4cCI6MTc3NjQyMzIzOCwiYXVkIjoiZnJpZWdodCB0aWdlciIsInN1YiI6IiJ9.6Ib-8yeVhRuolg5ko0SMxjcjQK8za1mkpVVaLFtPMyE",
           "Content-Type": "application/json"
         },
-        "timeout": { "request": 5000, "socket": 1000 },
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
         "reqTransform": "orderDetails.transformers.transformOpportunityDetailsRequest",
         "resTransform": "orderDetails.transformers.transformOpportunityDetailsResponse",
         "requiredParams": ["customerType"]
@@ -1340,7 +1457,12 @@
         "request": 5000,
         "socket": 1000
       },
-      "headersToPass": [{ "source": "authorization", "destination": "access_token" }],
+      "headersToPass": [
+        {
+          "source": "authorization",
+          "destination": "access_token"
+        }
+      ],
       "requiredParams": ["entityName"],
       "appendParams": true,
       "resTransform": "paymentdue.transformers.getPaymentDueDetails"
@@ -1372,7 +1494,12 @@
           "socket": 1000
         },
         "reqTransform": "general.transformers.convertToGetRequest",
-        "headersToPass": [{ "source": "authorization", "destination": "authorization" }],
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "authorization"
+          }
+        ],
         "requiredParams": ["pincode"]
       },
       {
@@ -1384,7 +1511,12 @@
           "socket": 1000
         },
         "reqTransform": "general.transformers.convertToGetRequest",
-        "headersToPass": [{ "source": "authorization", "destination": "authorization" }],
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "authorization"
+          }
+        ],
         "requiredParams": ["pincode"]
       }
     ],
@@ -1692,8 +1824,16 @@
       "name": "homes-construction-documents",
       "url": "https://services-dev.onejswhomes.in/homes-service/v1/project/progress-gallery",
       "method": "GET",
-      "timeout": { "request": 5000, "socket": 1000 },
-      "headersToPass": [{ "source": "authorization", "destination": "Authorization" }],
+      "timeout": {
+        "request": 5000,
+        "socket": 1000
+      },
+      "headersToPass": [
+        {
+          "source": "authorization",
+          "destination": "Authorization"
+        }
+      ],
       "requiredParams": ["project_id"]
     }
   },
@@ -1867,8 +2007,16 @@
       "name": "homes-activity-schedule",
       "url": "https://services-dev.onejswhomes.in/homes-service/v1/project/activity-schedule",
       "method": "GET",
-      "timeout": { "request": 5000, "socket": 1000 },
-      "headersToPass": [{ "source": "authorization", "destination": "Authorization" }],
+      "timeout": {
+        "request": 5000,
+        "socket": 1000
+      },
+      "headersToPass": [
+        {
+          "source": "authorization",
+          "destination": "Authorization"
+        }
+      ],
       "requiredParams": ["project_id"]
     }
   },
@@ -2186,28 +2334,70 @@
         "name": "web-home-page-v3-guest",
         "url": "https://experience-middleware.qa.jswone.in/xp-mi/public/v1/web-home-page-v3-guest",
         "method": "POST",
-        "timeout": { "request": 20000, "socket": 1000 },
+        "timeout": {
+          "request": 20000,
+          "socket": 1000
+        },
         "headersToPass": [
-          { "source": "authorization", "destination": "authorization" },
-          { "source": "authorization", "destination": "access_token" },
-          { "source": "access_token", "destination": "authorization" },
-          { "source": "access_token", "destination": "access_token" },
-          { "source": "x-user-state", "destination": "x-user-state" },
-          { "source": "user-type", "destination": "user-type" }
+          {
+            "source": "authorization",
+            "destination": "authorization"
+          },
+          {
+            "source": "authorization",
+            "destination": "access_token"
+          },
+          {
+            "source": "access_token",
+            "destination": "authorization"
+          },
+          {
+            "source": "access_token",
+            "destination": "access_token"
+          },
+          {
+            "source": "x-user-state",
+            "destination": "x-user-state"
+          },
+          {
+            "source": "user-type",
+            "destination": "user-type"
+          }
         ]
       },
       {
         "name": "web-home-page-v3-registered",
         "url": "https://experience-middleware.qa.jswone.in/xp-mi/public/v1/web-home-page-v3-registered",
         "method": "POST",
-        "timeout": { "request": 20000, "socket": 1000 },
+        "timeout": {
+          "request": 20000,
+          "socket": 1000
+        },
         "headersToPass": [
-          { "source": "authorization", "destination": "authorization" },
-          { "source": "authorization", "destination": "access_token" },
-          { "source": "access_token", "destination": "authorization" },
-          { "source": "access_token", "destination": "access_token" },
-          { "source": "x-user-state", "destination": "x-user-state" },
-          { "source": "user-type", "destination": "user-type" }
+          {
+            "source": "authorization",
+            "destination": "authorization"
+          },
+          {
+            "source": "authorization",
+            "destination": "access_token"
+          },
+          {
+            "source": "access_token",
+            "destination": "authorization"
+          },
+          {
+            "source": "access_token",
+            "destination": "access_token"
+          },
+          {
+            "source": "x-user-state",
+            "destination": "x-user-state"
+          },
+          {
+            "source": "user-type",
+            "destination": "user-type"
+          }
         ]
       }
     ]
@@ -2222,7 +2412,10 @@
         "name": "layout-mweb-homepages",
         "url": "${CMS_MSME_URL}/layout-mweb-homepages",
         "method": "GET",
-        "timeout": { "request": 10000, "socket": 1000 },
+        "timeout": {
+          "request": 10000,
+          "socket": 1000
+        },
         "reqTransform": "general.transformers.moveBodyToQueryParams",
         "resTransform": "cms.transformers.replaceUriPrefix"
       },
@@ -2230,14 +2423,32 @@
         "name": "web-home-page-v3-guest-parallel-helper",
         "url": "https://experience-middleware.qa.jswone.in/xp-mi/public/v1/web-home-page-v3-guest-parallel-helper",
         "method": "POST",
-        "timeout": { "request": 10000, "socket": 1000 },
+        "timeout": {
+          "request": 10000,
+          "socket": 1000
+        },
         "reqTransform": "web.transformers.prepareWebHomePageV3ParallelPayload",
         "headersToPass": [
-          { "source": "authorization", "destination": "authorization" },
-          { "source": "authorization", "destination": "access_token" },
-          { "source": "access_token", "destination": "authorization" },
-          { "source": "access_token", "destination": "access_token" },
-          { "source": "x-user-state", "destination": "x-user-state" }
+          {
+            "source": "authorization",
+            "destination": "authorization"
+          },
+          {
+            "source": "authorization",
+            "destination": "access_token"
+          },
+          {
+            "source": "access_token",
+            "destination": "authorization"
+          },
+          {
+            "source": "access_token",
+            "destination": "access_token"
+          },
+          {
+            "source": "x-user-state",
+            "destination": "x-user-state"
+          }
         ]
       }
     ],
@@ -2264,7 +2475,10 @@
         "name": "app-blogs",
         "url": "https://qa-cms-ext.msme.jswone.in/api/jsw-blogs-articless",
         "method": "GET",
-        "timeout": { "request": 5000, "socket": 1000 },
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
         "reqTransform": "web.transformers.homeBlogsFromParallelPayload",
         "resTransform": "cms.transformers.replaceUriPrefix"
       },
@@ -2272,11 +2486,20 @@
         "name": "web-central-catalogue-categories",
         "url": "https://qa.msme.jswone.in/central_commerce/categories/tree/list",
         "method": "POST",
-        "timeout": { "request": 5000, "socket": 1000 },
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
         "reqTransform": "web.transformers.extractCentralCatalogueCategoryIdsv3FromCmsBody",
         "headersToPass": [
-          { "source": "authorization", "destination": "access_token" },
-          { "source": "access_token", "destination": "access_token" }
+          {
+            "source": "authorization",
+            "destination": "access_token"
+          },
+          {
+            "source": "access_token",
+            "destination": "access_token"
+          }
         ]
       },
       {
@@ -2289,30 +2512,54 @@
         },
         "reqTransform": "web.transformers.extractBrandCategoryIdsv3FromCmsBody",
         "headersToPass": [
-          { "source": "authorization", "destination": "access_token" },
-          { "source": "access_token", "destination": "access_token" }
+          {
+            "source": "authorization",
+            "destination": "access_token"
+          },
+          {
+            "source": "access_token",
+            "destination": "access_token"
+          }
         ]
       },
       {
         "name": "recent-viewed-remove",
         "url": "https://qa.msme.jswone.in/central_commerce/recent-viewed/remove",
         "method": "GET",
-        "timeout": { "request": 5000, "socket": 1000 },
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
         "reqTransform": "web.transformers.convertOriginalBodyToGetRequestFromParallelPayload",
         "headersToPass": [
-          { "source": "authorization", "destination": "access_token" },
-          { "source": "access_token", "destination": "access_token" }
+          {
+            "source": "authorization",
+            "destination": "access_token"
+          },
+          {
+            "source": "access_token",
+            "destination": "access_token"
+          }
         ]
       },
       {
         "name": "recently-viewed-product-details",
         "url": "https://qa.msme.jswone.in/central_commerce/catalogue/product-details",
         "method": "POST",
-        "timeout": { "request": 5000, "socket": 1000 },
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
         "reqTransform": "web.transformers.transformRecentlyViewedMMIDsRequestFromParallelPayload",
         "headersToPass": [
-          { "source": "authorization", "destination": "access_token" },
-          { "source": "access_token", "destination": "access_token" }
+          {
+            "source": "authorization",
+            "destination": "access_token"
+          },
+          {
+            "source": "access_token",
+            "destination": "access_token"
+          }
         ]
       }
     ]
@@ -2327,7 +2574,10 @@
         "name": "layout-mweb-homepages",
         "url": "${CMS_MSME_URL}/layout-mweb-homepages",
         "method": "GET",
-        "timeout": { "request": 10000, "socket": 1000 },
+        "timeout": {
+          "request": 10000,
+          "socket": 1000
+        },
         "reqTransform": "general.transformers.moveBodyToQueryParams",
         "resTransform": "cms.transformers.replaceUriPrefix"
       },
@@ -2335,15 +2585,36 @@
         "name": "web-home-page-v3-registered-parallel-helper",
         "url": "https://experience-middleware.qa.jswone.in/xp-mi/public/v1/web-home-page-v3-registered-parallel-helper",
         "method": "POST",
-        "timeout": { "request": 20000, "socket": 1000 },
+        "timeout": {
+          "request": 20000,
+          "socket": 1000
+        },
         "reqTransform": "web.transformers.prepareWebHomePageV3ParallelPayload",
         "headersToPass": [
-          { "source": "authorization", "destination": "authorization" },
-          { "source": "authorization", "destination": "access_token" },
-          { "source": "access_token", "destination": "authorization" },
-          { "source": "access_token", "destination": "access_token" },
-          { "source": "x-user-state", "destination": "x-user-state" },
-          { "source": "user-type", "destination": "user-type" }
+          {
+            "source": "authorization",
+            "destination": "authorization"
+          },
+          {
+            "source": "authorization",
+            "destination": "access_token"
+          },
+          {
+            "source": "access_token",
+            "destination": "authorization"
+          },
+          {
+            "source": "access_token",
+            "destination": "access_token"
+          },
+          {
+            "source": "x-user-state",
+            "destination": "x-user-state"
+          },
+          {
+            "source": "user-type",
+            "destination": "user-type"
+          }
         ]
       }
     ],
@@ -2359,7 +2630,10 @@
         "name": "cmsFeatureFlag",
         "url": "${CMS_MSME_URL}/ccp-feature-flags",
         "method": "GET",
-        "timeout": { "request": 10000, "socket": 1000 },
+        "timeout": {
+          "request": 10000,
+          "socket": 1000
+        },
         "reqTransform": "web.transformers.addFeatureFlagQueryParamsFromParallelPayload",
         "resTransform": "cms.transformers.replaceUriPrefix"
       },
@@ -2367,40 +2641,70 @@
         "name": "ccp-buy-again-with-prices",
         "url": "https://qa.msme.jswone.in/central_commerce/buy-again-list",
         "method": "GET",
-        "timeout": { "request": 5000, "socket": 1000 },
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
         "reqTransform": "web.transformers.convertOriginalBodyToGetRequestFromParallelPayload",
         "headersToPass": [
-          { "source": "authorization", "destination": "access_token" },
-          { "source": "access_token", "destination": "access_token" }
+          {
+            "source": "authorization",
+            "destination": "access_token"
+          },
+          {
+            "source": "access_token",
+            "destination": "access_token"
+          }
         ]
       },
       {
         "name": "ccp-top-items-product-details",
         "url": "https://qa.msme.jswone.in/central_commerce/catalogue/product-details",
         "method": "POST",
-        "timeout": { "request": 5000, "socket": 1000 },
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
         "reqTransform": "web.transformers.transformWebHomePageTopItemsMMIDRequestV3FromCmsBody",
         "headersToPass": [
-          { "source": "authorization", "destination": "access_token" },
-          { "source": "access_token", "destination": "access_token" }
+          {
+            "source": "authorization",
+            "destination": "access_token"
+          },
+          {
+            "source": "access_token",
+            "destination": "access_token"
+          }
         ]
       },
       {
         "name": "pending-dispatch-quantity",
         "url": "https://qa.msme.jswone.in/order-service/order/v1/material-tracking/pending-dispatch-quantity",
         "method": "GET",
-        "timeout": { "request": "${TIMEOUTS.REQUEST}", "socket": "${TIMEOUTS.SOCKET}" },
+        "timeout": {
+          "request": "${TIMEOUTS.REQUEST}",
+          "socket": "${TIMEOUTS.SOCKET}"
+        },
         "reqTransform": "web.transformers.convertOriginalBodyToGetRequestFromParallelPayload",
         "headersToPass": [
-          { "source": "authorization", "destination": "access_token" },
-          { "source": "access_token", "destination": "access_token" }
+          {
+            "source": "authorization",
+            "destination": "access_token"
+          },
+          {
+            "source": "access_token",
+            "destination": "access_token"
+          }
         ]
       },
       {
         "name": "app-blogs",
         "url": "https://qa-cms-ext.msme.jswone.in/api/jsw-blogs-articless",
         "method": "GET",
-        "timeout": { "request": 5000, "socket": 1000 },
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
         "reqTransform": "web.transformers.homeBlogsFromParallelPayload",
         "resTransform": "cms.transformers.replaceUriPrefix"
       },
@@ -2408,77 +2712,140 @@
         "name": "web-homepage-products",
         "url": "https://experience-middleware.qa.jswone.in/xp-mi/public/v1/web-products",
         "method": "GET",
-        "timeout": { "request": 10000, "socket": 1000 },
+        "timeout": {
+          "request": 10000,
+          "socket": 1000
+        },
         "reqTransform": "web.transformers.convertOriginalBodyToGetRequestFromParallelPayload",
         "headersToPass": [
-          { "source": "authorization", "destination": "authorization" },
-          { "source": "access_token", "destination": "authorization" }
+          {
+            "source": "authorization",
+            "destination": "authorization"
+          },
+          {
+            "source": "access_token",
+            "destination": "authorization"
+          }
         ]
       },
       {
         "name": "web-central-top-brand-categories",
         "url": "https://qa.msme.jswone.in/central_commerce/categories/tree/list",
         "method": "POST",
-        "timeout": { "request": 5000, "socket": 1000 },
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
         "reqTransform": "web.transformers.extractBrandCategoryIdsv3FromCmsBody",
         "headersToPass": [
-          { "source": "authorization", "destination": "access_token" },
-          { "source": "access_token", "destination": "access_token" }
+          {
+            "source": "authorization",
+            "destination": "access_token"
+          },
+          {
+            "source": "access_token",
+            "destination": "access_token"
+          }
         ]
       },
       {
         "name": "web-central-catalogue-categories",
         "url": "https://qa.msme.jswone.in/central_commerce/categories/tree/list",
         "method": "POST",
-        "timeout": { "request": 5000, "socket": 1000 },
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
         "reqTransform": "web.transformers.extractCentralCatalogueCategoryIdsv3FromCmsBody",
         "headersToPass": [
-          { "source": "authorization", "destination": "access_token" },
-          { "source": "access_token", "destination": "access_token" }
+          {
+            "source": "authorization",
+            "destination": "access_token"
+          },
+          {
+            "source": "access_token",
+            "destination": "access_token"
+          }
         ]
       },
       {
         "name": "products-listing",
         "url": "https://qa.msme.jswone.in/central_commerce/products/listing",
         "method": "POST",
-        "timeout": { "request": 5000, "socket": 1000 },
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
         "reqTransform": "web.transformers.extractProductListingSlugv3FromCmsBody",
         "headersToPass": [
-          { "source": "authorization", "destination": "access_token" },
-          { "source": "access_token", "destination": "access_token" }
+          {
+            "source": "authorization",
+            "destination": "access_token"
+          },
+          {
+            "source": "access_token",
+            "destination": "access_token"
+          }
         ]
       },
       {
         "name": "industry-products-listing",
         "url": "https://qa.msme.jswone.in/central_commerce/products/listing",
         "method": "POST",
-        "timeout": { "request": 5000, "socket": 1000 },
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
         "reqTransform": "web.segment.transformers.extractProductListingSlugSegmentFromCmsBody",
         "headersToPass": [
-          { "source": "authorization", "destination": "access_token" },
-          { "source": "access_token", "destination": "access_token" }
+          {
+            "source": "authorization",
+            "destination": "access_token"
+          },
+          {
+            "source": "access_token",
+            "destination": "access_token"
+          }
         ]
       },
       {
         "name": "recent-viewed-remove",
         "url": "https://qa.msme.jswone.in/central_commerce/recent-viewed/remove",
         "method": "GET",
-        "timeout": { "request": 5000, "socket": 1000 },
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
         "reqTransform": "web.transformers.convertOriginalBodyToGetRequestFromParallelPayload",
         "headersToPass": [
-          { "source": "authorization", "destination": "access_token" },
-          { "source": "access_token", "destination": "access_token" }
+          {
+            "source": "authorization",
+            "destination": "access_token"
+          },
+          {
+            "source": "access_token",
+            "destination": "access_token"
+          }
         ]
       },
       {
         "name": "recently-viewed-product-details",
         "url": "https://qa.msme.jswone.in/central_commerce/catalogue/product-details",
         "method": "POST",
-        "timeout": { "request": 5000, "socket": 1000 },
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
         "reqTransform": "web.transformers.transformRecentlyViewedMMIDsRequestFromParallelPayload",
         "headersToPass": [
-          { "source": "authorization", "destination": "access_token" },
-          { "source": "access_token", "destination": "access_token" }
+          {
+            "source": "authorization",
+            "destination": "access_token"
+          },
+          {
+            "source": "access_token",
+            "destination": "access_token"
+          }
         ]
       }
     ]
@@ -2592,7 +2959,10 @@
         "name": "layout-mweb-segment-pages",
         "url": "${CMS_MSME_URL}/layout-mweb-segment-pages",
         "method": "GET",
-        "timeout": { "request": 10000, "socket": 1000 },
+        "timeout": {
+          "request": 10000,
+          "socket": 1000
+        },
         "reqTransform": "general.transformers.moveBodyToQueryParams",
         "resTransform": "cms.transformers.replaceUriPrefix"
       },
@@ -2600,7 +2970,10 @@
         "name": "app-blogs",
         "url": "${CMS_MSME_URL}/jsw-blogs-articless",
         "method": "GET",
-        "timeout": { "request": 5000, "socket": 1000 },
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
         "reqTransform": "cms.transformers.homeBlogs",
         "resTransform": "cms.transformers.replaceUriPrefix"
       },
@@ -2608,17 +2981,33 @@
         "name": "web-segment-products",
         "url": "https://experience-middleware.qa.jswone.in/xp-mi/public/v1/web-products",
         "method": "GET",
-        "timeout": { "request": 10000, "socket": 1000 },
+        "timeout": {
+          "request": 10000,
+          "socket": 1000
+        },
         "reqTransform": "general.transformers.convertToGetRequest",
-        "headersToPass": [{ "source": "authorization", "destination": "authorization" }]
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "authorization"
+          }
+        ]
       },
       {
         "name": "segment-products-listing",
         "url": "https://qa.msme.jswone.in/central_commerce/products/listing",
         "method": "POST",
-        "timeout": { "request": 5000, "socket": 1000 },
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
         "reqTransform": "web.segment.transformers.extractProductListingSlugSegment",
-        "headersToPass": [{ "source": "authorization", "destination": "access_token" }]
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "access_token"
+          }
+        ]
       }
     ],
     "resTransform": "web.segment.transformers.mergeWebSegmentPageResponsesV1"
@@ -4012,20 +4401,44 @@
         "name": "app-home-page-v3-guest",
         "url": "https://experience-middleware.qa.jswone.in/xp-mi/public/v3/app-home-page-v3-guest",
         "method": "POST",
-        "timeout": { "request": 20000, "socket": 1000 }
+        "timeout": {
+          "request": 20000,
+          "socket": 1000
+        }
       },
       {
         "name": "app-home-page-v3-registered",
         "url": "https://experience-middleware.qa.jswone.in/xp-mi/public/v3/app-home-page-v3-registered",
         "method": "POST",
-        "timeout": { "request": 20000, "socket": 1000 },
+        "timeout": {
+          "request": 20000,
+          "socket": 1000
+        },
         "headersToPass": [
-          { "source": "authorization", "destination": "authorization" },
-          { "source": "authorization", "destination": "access_token" },
-          { "source": "access_token", "destination": "authorization" },
-          { "source": "access_token", "destination": "access_token" },
-          { "source": "x-user-state", "destination": "x-user-state" },
-          { "source": "user-type", "destination": "user-type" }
+          {
+            "source": "authorization",
+            "destination": "authorization"
+          },
+          {
+            "source": "authorization",
+            "destination": "access_token"
+          },
+          {
+            "source": "access_token",
+            "destination": "authorization"
+          },
+          {
+            "source": "access_token",
+            "destination": "access_token"
+          },
+          {
+            "source": "x-user-state",
+            "destination": "x-user-state"
+          },
+          {
+            "source": "user-type",
+            "destination": "user-type"
+          }
         ]
       }
     ]
@@ -4051,7 +4464,10 @@
         "name": "app-home-page-v3-guest-parallel-helper",
         "url": "https://experience-middleware.qa.jswone.in/xp-mi/public/v3/app-home-page-v3-guest-parallel-helper",
         "method": "POST",
-        "timeout": { "request": 10000, "socket": 1000 },
+        "timeout": {
+          "request": 10000,
+          "socket": 1000
+        },
         "reqTransform": "appHomePage.transformers.prepareWebHomePageV3ParallelPayload"
       }
     ],
@@ -4134,14 +4550,35 @@
         "name": "app-home-page-v3-registered-parallel-helper",
         "url": "https://experience-middleware.qa.jswone.in/xp-mi/public/v3/app-home-page-v3-registered-parallel-helper",
         "method": "POST",
-        "timeout": { "request": 10000, "socket": 1000 },
+        "timeout": {
+          "request": 10000,
+          "socket": 1000
+        },
         "headersToPass": [
-          { "source": "authorization", "destination": "authorization" },
-          { "source": "authorization", "destination": "access_token" },
-          { "source": "access_token", "destination": "authorization" },
-          { "source": "access_token", "destination": "access_token" },
-          { "source": "x-user-state", "destination": "x-user-state" },
-          { "source": "user-type", "destination": "user-type" }
+          {
+            "source": "authorization",
+            "destination": "authorization"
+          },
+          {
+            "source": "authorization",
+            "destination": "access_token"
+          },
+          {
+            "source": "access_token",
+            "destination": "authorization"
+          },
+          {
+            "source": "access_token",
+            "destination": "access_token"
+          },
+          {
+            "source": "x-user-state",
+            "destination": "x-user-state"
+          },
+          {
+            "source": "user-type",
+            "destination": "user-type"
+          }
         ],
         "reqTransform": "appHomePage.transformers.prepareWebHomePageV3ParallelPayload"
       }
@@ -4287,21 +4724,21 @@
       "method": "GET",
       "reqTransform": "general.transformers.convertToGetRequest",
       "timeout": {
-         "request": 10000,
-         "socket": 1000
+        "request": 10000,
+        "socket": 1000
       },
       "headersToPass": [
         {
-         "source": "authorization",
-         "destination": "access_token"
+          "source": "authorization",
+          "destination": "access_token"
         },
         {
           "source": "central_catalogue_enabled",
           "destination": "central_catalogue_enabled"
         }
-    ],
-    "requiredParams": ["*"]
-   }
+      ],
+      "requiredParams": ["*"]
+    }
   },
   {
     "path": "/xp-mi/public/v1/guided/classify",
