@@ -1653,16 +1653,22 @@
       },
       {
         "name": "gstin-customer-profile",
-        "url": "https://tms.preprod.jswonemsme.com/account-master/profile/v1",
+        "url": "https://preprod.jswonemsme.com/central_commerce/customer/v1",
         "method": "GET",
         "timeout": {
           "request": "${TIMEOUTS.REQUEST}",
           "socket": "${TIMEOUTS.SOCKET}"
         },
-        "staticHeaders": {
-          "x-api-key": "${X_API_KEY_CONNECTOR}"
-        },
-        "reqTransform": "customer.transformers.injectGstinFromProfile"
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "access_token"
+          },
+          {
+            "source": "access_token",
+            "destination": "access_token"
+          }
+        ]
       }
     ],
     "resTransform": "customer.transformers.mergeCustomerProfile"
