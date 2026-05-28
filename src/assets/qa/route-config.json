@@ -12,9 +12,7 @@
         "request": "${TIMEOUTS.REQUEST}",
         "socket": "${TIMEOUTS.SOCKET}"
       },
-      "requiredParams": [
-        "*"
-      ]
+      "requiredParams": ["*"]
     }
   },
   {
@@ -71,9 +69,7 @@
             "destination": "x-user-state"
           }
         ],
-        "requiredParams": [
-          "pincode"
-        ]
+        "requiredParams": ["pincode"]
       },
       {
         "name": "app-buy-again",
@@ -94,9 +90,7 @@
             "destination": "x-user-state"
           }
         ],
-        "requiredParams": [
-          "pincode"
-        ]
+        "requiredParams": ["pincode"]
       },
       {
         "name": "app-categories",
@@ -117,9 +111,7 @@
             "destination": "x-user-state"
           }
         ],
-        "requiredParams": [
-          "pincode"
-        ]
+        "requiredParams": ["pincode"]
       }
     ],
     "resTransform": "app.transformers.mergeHomePageResponses"
@@ -236,9 +228,7 @@
             "destination": "authorization"
           }
         ],
-        "requiredParams": [
-          "pincode"
-        ]
+        "requiredParams": ["pincode"]
       }
     ],
     "resTransform": "app.transformers.mergeBuyAgainResponses"
@@ -297,9 +287,7 @@
             "destination": "x-user-state"
           }
         ],
-        "requiredParams": [
-          "pincode"
-        ]
+        "requiredParams": ["pincode"]
       }
     ],
     "resTransform": "app.transformers.mergeTopBrandsResponses"
@@ -340,9 +328,7 @@
             "destination": "x-user-state"
           }
         ],
-        "requiredParams": [
-          "pincode"
-        ]
+        "requiredParams": ["pincode"]
       },
       {
         "name": "app-buy-again",
@@ -380,9 +366,7 @@
             "destination": "x-user-state"
           }
         ],
-        "requiredParams": [
-          "pincode"
-        ]
+        "requiredParams": ["pincode"]
       },
       {
         "name": "app-blogs",
@@ -426,9 +410,7 @@
         "request": "${TIMEOUTS.REQUEST}",
         "socket": "${TIMEOUTS.SOCKET}"
       },
-      "requiredParams": [
-        "orderNumber"
-      ],
+      "requiredParams": ["orderNumber"],
       "staticHeaders": {
         "Authorization": "${X_API_KEY_FOR_ORDER_LISTING}",
         "client_id": "${ERP_CLIENT_ID}"
@@ -469,9 +451,7 @@
             "destination": "authorization"
           }
         ],
-        "requiredParams": [
-          "pincode"
-        ]
+        "requiredParams": ["pincode"]
       },
       {
         "name": "app-cart-summary",
@@ -488,9 +468,7 @@
             "destination": "authorization"
           }
         ],
-        "requiredParams": [
-          "pincode"
-        ]
+        "requiredParams": ["pincode"]
       }
     ],
     "resTransform": "cart.transformers.mergeCartPageResponses"
@@ -510,9 +488,7 @@
           "request": "${TIMEOUTS.REQUEST}",
           "socket": "${TIMEOUTS.SOCKET}"
         },
-        "requiredParams": [
-          "orderNumber"
-        ],
+        "requiredParams": ["orderNumber"],
         "staticHeaders": {
           "Authorization": "${X_API_KEY_FOR_ORDER_LISTING}",
           "client_id": "${ERP_CLIENT_ID}"
@@ -526,9 +502,7 @@
           "request": "${TIMEOUTS.REQUEST}",
           "socket": "${TIMEOUTS.SOCKET}"
         },
-        "requiredParams": [
-          "orderNumber"
-        ],
+        "requiredParams": ["orderNumber"],
         "staticHeaders": {
           "Authorization": "${X_API_KEY_FOR_ORDER_LISTING}",
           "client_id": "${ERP_CLIENT_ID}"
@@ -589,9 +563,7 @@
           }
         ],
         "reqTransform": "general.transformers.convertToGetRequest",
-        "requiredParams": [
-          "project_id"
-        ]
+        "requiredParams": ["project_id"]
       }
     ],
     "resTransform": "home.details.transformers.mergeProjectDetailsAndTrackerResponses"
@@ -649,9 +621,7 @@
           "destination": "Authorization"
         }
       ],
-      "requiredParams": [
-        "project_id"
-      ]
+      "requiredParams": ["project_id"]
     }
   },
   {
@@ -782,9 +752,7 @@
           "destination": "Authorization"
         }
       ],
-      "requiredParams": [
-        "project_id"
-      ]
+      "requiredParams": ["project_id"]
     }
   },
   {
@@ -805,9 +773,7 @@
           "destination": "Authorization"
         }
       ],
-      "requiredParams": [
-        "project_id"
-      ]
+      "requiredParams": ["project_id"]
     }
   },
   {
@@ -829,9 +795,7 @@
           "destination": "access_token"
         }
       ],
-      "requiredParams": [
-        "entityName"
-      ]
+      "requiredParams": ["entityName"]
     }
   },
   {
@@ -880,10 +844,7 @@
         },
         "reqTransform": "orderListing.transformers.transformOrderListingRequest",
         "resTransform": "orderListing.transformers.transformOrderListingResponse",
-        "requiredParams": [
-          "gstin",
-          "customerType"
-        ]
+        "requiredParams": ["gstin", "customerType"]
       }
     ],
     "resTransform": "orderListing.transformers.mergeMaterialTrackingAndOrderListingResponses"
@@ -923,9 +884,7 @@
         },
         "reqTransform": "orderDetails.transformers.transformOpportunityDetailsRequest",
         "resTransform": "orderDetails.transformers.transformOpportunityDetailsResponse",
-        "requiredParams": [
-          "customerType"
-        ]
+        "requiredParams": ["customerType"]
       }
     ]
   },
@@ -1285,9 +1244,7 @@
           "destination": "jsw_session_id"
         }
       ],
-      "requiredParams": [
-        "*"
-      ]
+      "requiredParams": ["*"]
     }
   },
   {
@@ -1309,9 +1266,7 @@
           "destination": "access_token"
         }
       ],
-      "requiredParams": [
-        "*"
-      ]
+      "requiredParams": ["*"]
     }
   },
   {
@@ -1402,9 +1357,7 @@
           "socket": "${TIMEOUTS.SOCKET}"
         },
         "reqTransform": "location.transformers.addGoogleMapsApiKeyRequest",
-        "requiredParams": [
-          "latlng"
-        ]
+        "requiredParams": ["latlng"]
       },
       {
         "name": "jsw-locality-data",
@@ -1514,9 +1467,7 @@
           "destination": "access_token"
         }
       ],
-      "requiredParams": [
-        "entityName"
-      ],
+      "requiredParams": ["entityName"],
       "appendParams": true,
       "resTransform": "paymentdue.transformers.getPaymentDueDetails"
     }
@@ -1553,9 +1504,7 @@
             "destination": "authorization"
           }
         ],
-        "requiredParams": [
-          "pincode"
-        ]
+        "requiredParams": ["pincode"]
       },
       {
         "name": "app-cart-summary",
@@ -1572,9 +1521,7 @@
             "destination": "authorization"
           }
         ],
-        "requiredParams": [
-          "pincode"
-        ]
+        "requiredParams": ["pincode"]
       }
     ],
     "resTransform": "cart.transformers.mergeCartPageResponses"
@@ -1604,9 +1551,7 @@
       "staticHeaders": {
         "content-type": "application/json"
       },
-      "requiredParams": [
-        "*"
-      ]
+      "requiredParams": ["*"]
     }
   },
   {
@@ -1857,9 +1802,7 @@
           "destination": "access_token"
         }
       ],
-      "requiredParams": [
-        "*"
-      ]
+      "requiredParams": ["*"]
     }
   },
   {
@@ -1884,9 +1827,7 @@
           "destination": "access_token"
         }
       ],
-      "requiredParams": [
-        "*"
-      ]
+      "requiredParams": ["*"]
     }
   },
   {
@@ -1907,9 +1848,7 @@
           "destination": "access_token"
         }
       ],
-      "requiredParams": [
-        "addressId"
-      ],
+      "requiredParams": ["addressId"],
       "resTransform": "setDefaultAddress.transformers.setDefaultAddress"
     }
   },
@@ -1931,9 +1870,7 @@
           "destination": "Authorization"
         }
       ],
-      "requiredParams": [
-        "project_id"
-      ]
+      "requiredParams": ["project_id"]
     }
   },
   {
@@ -1955,9 +1892,7 @@
           "destination": "access_token"
         }
       ],
-      "requiredParams": [
-        "*"
-      ]
+      "requiredParams": ["*"]
     }
   },
   {
@@ -1978,9 +1913,7 @@
           "destination": "access_token"
         }
       ],
-      "requiredParams": [
-        "*"
-      ]
+      "requiredParams": ["*"]
     }
   },
   {
@@ -2001,9 +1934,7 @@
           "destination": "access_token"
         }
       ],
-      "requiredParams": [
-        "*"
-      ]
+      "requiredParams": ["*"]
     }
   },
   {
@@ -2028,9 +1959,7 @@
           "destination": "jsw_session_id"
         }
       ],
-      "requiredParams": [
-        "*"
-      ]
+      "requiredParams": ["*"]
     }
   },
   {
@@ -2051,9 +1980,7 @@
           "destination": "access_token"
         }
       ],
-      "requiredParams": [
-        "*"
-      ]
+      "requiredParams": ["*"]
     }
   },
   {
@@ -2078,9 +2005,7 @@
           "destination": "jsw_session_id"
         }
       ],
-      "requiredParams": [
-        "*"
-      ]
+      "requiredParams": ["*"]
     }
   },
   {
@@ -2136,9 +2061,7 @@
           "destination": "Authorization"
         }
       ],
-      "requiredParams": [
-        "project_id"
-      ]
+      "requiredParams": ["project_id"]
     }
   },
   {
@@ -2205,9 +2128,7 @@
           "destination": "access_token"
         }
       ],
-      "requiredParams": [
-        "*"
-      ]
+      "requiredParams": ["*"]
     }
   },
   {
@@ -2228,9 +2149,7 @@
           "destination": "access_token"
         }
       ],
-      "requiredParams": [
-        "*"
-      ]
+      "requiredParams": ["*"]
     }
   },
   {
@@ -2265,9 +2184,7 @@
             "destination": "access_token"
           }
         ],
-        "requiredPathParams": [
-          "slugId"
-        ]
+        "requiredPathParams": ["slugId"]
       },
       {
         "name": "product-by-slug-v2",
@@ -2284,12 +2201,8 @@
             "destination": "access_token"
           }
         ],
-        "requiredParams": [
-          "*"
-        ],
-        "requiredPathParams": [
-          "slugId"
-        ]
+        "requiredParams": ["*"],
+        "requiredPathParams": ["slugId"]
       }
     ],
     "resTransform": "product.transformers.selectSlugProductResponse"
@@ -2433,9 +2346,7 @@
           "destination": "access_token"
         }
       ],
-      "requiredParams": [
-        "*"
-      ]
+      "requiredParams": ["*"]
     }
   },
   {
@@ -3162,9 +3073,7 @@
         "x-api-key": "${X_API_KEY_CONNECTOR}",
         "Content-Type": "application/json"
       },
-      "requiredParams": [
-        "*"
-      ]
+      "requiredParams": ["*"]
     }
   },
   {
@@ -3248,9 +3157,7 @@
         "staticHeaders": {
           "Content-Type": "application/x-www-form-urlencoded"
         },
-        "requiredParams": [
-          "*"
-        ],
+        "requiredParams": ["*"],
         "reqTransform": "general.transformers.createQueryParams",
         "resTransform": ""
       },
@@ -3264,9 +3171,7 @@
         },
         "reqTransform": "address.transformers.createAddress",
         "headersToPass": [],
-        "requiredParams": [
-          "*"
-        ]
+        "requiredParams": ["*"]
       }
     ],
     "resTransform": "general.transformers.successOnly"
@@ -3289,9 +3194,7 @@
         "staticHeaders": {
           "Content-Type": "application/x-www-form-urlencoded"
         },
-        "requiredParams": [
-          "*"
-        ],
+        "requiredParams": ["*"],
         "reqTransform": "general.transformers.createQueryParams"
       },
       {
@@ -3626,10 +3529,7 @@
         "socket": 1000
       },
       "reqTransform": "general.transformers.convertToGetRequest",
-      "requiredParams": [
-        "id",
-        "event"
-      ]
+      "requiredParams": ["id", "event"]
     }
   },
   {
@@ -3853,9 +3753,7 @@
           "destination": "access_token"
         }
       ],
-      "requiredParams": [
-        "*"
-      ]
+      "requiredParams": ["*"]
     }
   },
   {
@@ -4071,9 +3969,7 @@
           "destination": "access_token"
         }
       ],
-      "requiredParams": [
-        "*"
-      ]
+      "requiredParams": ["*"]
     }
   },
   {
@@ -4118,9 +4014,7 @@
       "staticHeaders": {
         "Content-Type": "application/json"
       },
-      "requiredParams": [
-        "*"
-      ]
+      "requiredParams": ["*"]
     }
   },
   {
@@ -4145,9 +4039,7 @@
       "staticHeaders": {
         "Content-Type": "application/json"
       },
-      "requiredParams": [
-        "*"
-      ]
+      "requiredParams": ["*"]
     }
   },
   {
@@ -4176,9 +4068,7 @@
       "staticHeaders": {
         "Content-Type": "application/json"
       },
-      "requiredParams": [
-        "*"
-      ],
+      "requiredParams": ["*"],
       "reqTransform": "customer.transformers.transformFetchUserRequest"
     }
   },
@@ -4209,9 +4099,7 @@
         "Content-Type": "application/json"
       },
       "reqTransform": "customer.transformers.addCustomerApiKeyIfNoAuth",
-      "requiredParams": [
-        "*"
-      ]
+      "requiredParams": ["*"]
     }
   },
   {
@@ -4233,9 +4121,7 @@
           "destination": "access_token"
         }
       ],
-      "requiredPathParams": [
-        "customerSfid"
-      ],
+      "requiredPathParams": ["customerSfid"],
       "staticHeaders": {
         "Content-Type": "application/json"
       }
@@ -4260,9 +4146,7 @@
           "destination": "access_token"
         }
       ],
-      "requiredPathParams": [
-        "contactsfId"
-      ],
+      "requiredPathParams": ["contactsfId"],
       "staticHeaders": {
         "Content-Type": "application/json"
       }
@@ -4290,9 +4174,7 @@
       "staticHeaders": {
         "Content-Type": "application/json"
       },
-      "requiredParams": [
-        "customerSfId"
-      ]
+      "requiredParams": ["customerSfId"]
     }
   },
   {
@@ -4317,10 +4199,7 @@
       "staticHeaders": {
         "Content-Type": "application/json"
       },
-      "requiredParams": [
-        "page",
-        "size"
-      ]
+      "requiredParams": ["page", "size"]
     }
   },
   {
@@ -4369,10 +4248,7 @@
       "staticHeaders": {
         "Content-Type": "application/json"
       },
-      "requiredParams": [
-        "page",
-        "size"
-      ]
+      "requiredParams": ["page", "size"]
     }
   },
   {
@@ -4380,15 +4256,15 @@
     "method": "POST",
     "routeHandler": "TRANSFORM",
     "targets": {
-        "name": "strapi-banner-from-cart",
-        "url": "https://qa-cms-ext.msme.jswone.in/api/app-cart-page-v2",
-        "method": "GET",
-        "timeout": {
-          "request": 5000,
-          "socket": 1000
-        },
-        "reqTransform": "general.transformers.moveBodyToQueryParams",
-        "resTransform": "cms.transformers.replaceUriPrefix"
-      }
+      "name": "strapi-banner-from-cart",
+      "url": "https://qa-cms-ext.msme.jswone.in/api/app-cart-page-v2",
+      "method": "GET",
+      "timeout": {
+        "request": 5000,
+        "socket": 1000
+      },
+      "reqTransform": "general.transformers.moveBodyToQueryParams",
+      "resTransform": "cms.transformers.replaceUriPrefix"
+    }
   }
 ]
