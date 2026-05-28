@@ -714,7 +714,7 @@ export function mergeWebHomePageResponsesV3(aggregatedResponses: AggregatedRespo
       }
     } else {
       page.mweb_top_item.isTopItem = true;
-      console.log('Central Catalogue Global flag is disabled. Returning CMS top items as-is.');
+      Logger.log('Central Catalogue Global flag is disabled. Returning CMS top items as-is.');
     }
   }
 
@@ -946,6 +946,13 @@ export function transformRecentlyViewedMMIDsRequest(request: BaseRequest): BaseR
 
   // Ensure unique MMIDs just in case
   mmids = Array.from(new Set(mmids));
+
+  if (mmids.length === 0) {
+    // Throwing an error here prevents the downstream API call.
+    // The parallel aggregator will capture this as a soft failure 
+    // ({ success: false, error: ... }) and the merge function will handle it gracefully.
+    throw new CustomError('No MMIDs provided, skipping recently-viewed API call', 400);
+  }
 
   return {
     ...request,

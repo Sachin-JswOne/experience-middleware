@@ -46,4 +46,9 @@ export interface ConditionalRouteConfig extends BaseRouteConfig {
   targets: TargetConfig[];
 }
 
-export type RouteConfig = TransformRouteConfig | AggregateRouteConfig | ConditionalRouteConfig;
+export interface PassThroughRouteConfig extends BaseRouteConfig {
+  routeHandler: RouteHandler.PASS_THROUGH;
+  response: string;
+}
+
+export type RouteConfig = TransformRouteConfig | AggregateRouteConfig | ConditionalRouteConfig | PassThroughRouteConfig;

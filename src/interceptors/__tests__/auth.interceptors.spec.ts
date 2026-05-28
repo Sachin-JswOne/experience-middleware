@@ -1,15 +1,24 @@
 import { AxiosRequestConfig } from 'axios';
 import * as jwt from 'jsonwebtoken';
+import { Logger } from '@nestjs/common';
 import { GUEST, GUEST_USER_STATE } from 'src/config/app.config';
 import { decryptAndAddUserDetails } from '../auth.interceptors';
 
 jest.mock('jsonwebtoken', () => ({
-  decode: jest.fn(),
+  verify: jest.fn(),
+}));
+
+jest.mock('src/config/app.config', () => ({
+  JWT_SECRET: 'test-secret',
+  GUEST: 'guest',
+  GUEST_USER_STATE: 'G',
 }));
 
 describe('decryptAndAddUserDetails', () => {
   let mockConfig: AxiosRequestConfig;
-  const mockJwt = jwt as jest.Mocked<typeof jwt>;
+  // jwt.verify has callback overloads that return void; cast to Mock to avoid TS errors
+  const mockVerify = jwt.verify as jest.Mock;
+  const mockJwt = { verify: mockVerify };
 
   beforeEach(() => {
     mockConfig = {
@@ -25,11 +34,11 @@ describe('decryptAndAddUserDetails', () => {
       userId: 'ct456',
     };
     mockConfig.headers = { authorization: `Bearer ${token}` };
-    mockJwt.decode.mockReturnValue(decodedPayload);
+    mockJwt.verify.mockReturnValue(decodedPayload);
 
     const result = decryptAndAddUserDetails(mockConfig);
 
-    expect(jwt.decode).toHaveBeenCalledWith(token);
+    expect(jwt.verify).toHaveBeenCalledWith(token, 'test-secret');
     expect(result.headers).toHaveProperty('SF-ID', 'sf123');
     expect(result.headers).toHaveProperty('CT-ID', 'ct456');
     expect(result.headers).not.toHaveProperty('authorization');
@@ -42,11 +51,11 @@ describe('decryptAndAddUserDetails', () => {
       userId: 'ct456',
     };
     mockConfig.headers = { authorization: token };
-    mockJwt.decode.mockReturnValue(decodedPayload);
+    mockJwt.verify.mockReturnValue(decodedPayload);
 
     const result = decryptAndAddUserDetails(mockConfig);
 
-    expect(jwt.decode).toHaveBeenCalledWith(token);
+    expect(jwt.verify).toHaveBeenCalledWith(token, 'test-secret');
     expect(result.headers).toHaveProperty('SF-ID', 'sf123');
     expect(result.headers).toHaveProperty('CT-ID', 'ct456');
     expect(result.headers).not.toHaveProperty('authorization');
@@ -56,7 +65,7 @@ describe('decryptAndAddUserDetails', () => {
     const token = 'valid.token.string';
     const decodedPayload = { sfCustomerId: 'sf123' };
     mockConfig.headers = { authorization: `Bearer ${token}` };
-    mockJwt.decode.mockReturnValue(decodedPayload);
+    mockJwt.verify.mockReturnValue(decodedPayload);
 
     const result = decryptAndAddUserDetails(mockConfig);
 
@@ -69,7 +78,7 @@ describe('decryptAndAddUserDetails', () => {
     const token = 'valid.token.string';
     const decodedPayload = { userId: 'ct456' };
     mockConfig.headers = { authorization: `Bearer ${token}` };
-    mockJwt.decode.mockReturnValue(decodedPayload);
+    mockJwt.verify.mockReturnValue(decodedPayload);
 
     const result = decryptAndAddUserDetails(mockConfig);
 
@@ -78,22 +87,22 @@ describe('decryptAndAddUserDetails', () => {
     expect(result.headers).not.toHaveProperty('authorization');
   });
 
-  it('should throw an error if jwt.decode fails', () => {
+  it('should throw an error if jwt.verify fails', () => {
     const token = 'invalid.token';
     mockConfig.headers = { authorization: `Bearer ${token}` };
-    const decodeError = new Error('Invalid token format');
-    mockJwt.decode.mockImplementation(() => {
-      throw decodeError;
+    const verifyError = new Error('Invalid token format');
+    mockJwt.verify.mockImplementation(() => {
+      throw verifyError;
     });
-    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    const loggerErrorSpy = jest.spyOn(Logger.prototype, 'error').mockImplementation(() => {});
 
-    expect(() => decryptAndAddUserDetails(mockConfig)).toThrow('Token decryption failed');
-    expect(consoleErrorSpy).toHaveBeenCalledWith(
-      'Failed to decode/decrypt token and add user details to headers',
-      decodeError,
+    expect(() => decryptAndAddUserDetails(mockConfig)).toThrow('Token verification failed');
+    expect(loggerErrorSpy).toHaveBeenCalledWith(
+      'Failed to verify token and add user details to headers',
+      verifyError,
     );
 
-    consoleErrorSpy.mockRestore();
+    loggerErrorSpy.mockRestore();
   });
 
   it('should add guest headers if x-user-state is GUEST_USER_STATE', () => {
@@ -119,7 +128,7 @@ describe('decryptAndAddUserDetails', () => {
 
     expect(result).toBe(mockConfig);
     expect(result.headers).toEqual({});
-    expect(jwt.decode).not.toHaveBeenCalled();
+    expect(jwt.verify).not.toHaveBeenCalled();
   });
 
   it('should return config unchanged if authorization header is empty', () => {
@@ -127,7 +136,8 @@ describe('decryptAndAddUserDetails', () => {
     const result = decryptAndAddUserDetails(mockConfig);
 
     expect(result.headers).toEqual({ authorization: '' });
-    expect(jwt.decode).not.toHaveBeenCalled();
+    expect(jwt.verify).not.toHaveBeenCalled();
+
   });
 
   it('should initialize headers object if it is null or undefined', () => {
@@ -148,7 +158,7 @@ describe('decryptAndAddUserDetails', () => {
       'SF-ID': 'old-sf-id',
       'CT-ID': 'old-ct-id',
     };
-    mockJwt.decode.mockReturnValue(decodedPayload);
+    mockJwt.verify.mockReturnValue(decodedPayload);
 
     const result = decryptAndAddUserDetails(mockConfig);
 
@@ -166,7 +176,7 @@ describe('decryptAndAddUserDetails', () => {
       authorization: `Bearer ${token}`,
       'x-user-state': GUEST_USER_STATE,
     };
-    mockJwt.decode.mockReturnValue(decodedPayload);
+    mockJwt.verify.mockReturnValue(decodedPayload);
 
     const result = decryptAndAddUserDetails(mockConfig);
 

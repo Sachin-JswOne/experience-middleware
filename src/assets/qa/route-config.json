@@ -458,8 +458,8 @@
         "url": "https://jswoneconstruct.in/jswretail/v3/seller/cart",
         "method": "GET",
         "timeout": {
-          "request": "${TIMEOUTS.REQUEST_MIN}",
-          "socket": "${TIMEOUTS.SOCKET}"
+          "request": 10000,
+          "socket": 1000
         },
         "reqTransform": "general.transformers.convertToGetRequest",
         "headersToPass": [
@@ -1238,6 +1238,10 @@
         {
           "source": "traceId",
           "destination": "traceId"
+        },
+        {
+          "source": "jsw_session_id",
+          "destination": "jsw_session_id"
         }
       ],
       "requiredParams": ["*"]
@@ -1430,7 +1434,7 @@
         "url": "https://qa.msme.jswone.in/v2/cart/size",
         "method": "GET",
         "timeout": {
-          "request": 5000,
+          "request": 10000,
           "socket": 1000
         },
         "headersToPass": [
@@ -1559,7 +1563,7 @@
       "url": "https://qa.msme.jswone.in/v2/cart/size",
       "method": "GET",
       "timeout": {
-        "request": 5000,
+        "request": 10000,
         "socket": 1000
       },
       "headersToPass": [
@@ -1599,6 +1603,10 @@
           {
             "source": "authorization",
             "destination": "access_token"
+          },
+          {
+            "source": "jsw_session_id",
+            "destination": "jsw_session_id"
           }
         ]
       },
@@ -1615,6 +1623,10 @@
           {
             "source": "authorization",
             "destination": "access_token"
+          },
+          {
+            "source": "jsw_session_id",
+            "destination": "jsw_session_id"
           }
         ]
       },
@@ -1631,6 +1643,10 @@
           {
             "source": "authorization",
             "destination": "access_token"
+          },
+          {
+            "source": "jsw_session_id",
+            "destination": "jsw_session_id"
           }
         ]
       },
@@ -1647,6 +1663,10 @@
           {
             "source": "authorization",
             "destination": "access_token"
+          },
+          {
+            "source": "jsw_session_id",
+            "destination": "jsw_session_id"
           }
         ]
       },
@@ -1663,6 +1683,10 @@
           {
             "source": "authorization",
             "destination": "access_token"
+          },
+          {
+            "source": "jsw_session_id",
+            "destination": "jsw_session_id"
           }
         ]
       },
@@ -1690,6 +1714,10 @@
           {
             "source": "authorization",
             "destination": "access_token"
+          },
+          {
+            "source": "jsw_session_id",
+            "destination": "jsw_session_id"
           }
         ]
       },
@@ -1706,6 +1734,10 @@
           {
             "source": "authorization",
             "destination": "access_token"
+          },
+          {
+            "source": "jsw_session_id",
+            "destination": "jsw_session_id"
           }
         ]
       }
@@ -1742,6 +1774,10 @@
           {
             "source": "access_token",
             "destination": "access_token"
+          },
+          {
+            "source": "jsw_session_id",
+            "destination": "jsw_session_id"
           }
         ]
       }
@@ -1917,6 +1953,10 @@
         {
           "source": "access_token",
           "destination": "access_token"
+        },
+        {
+          "source": "jsw_session_id",
+          "destination": "jsw_session_id"
         }
       ],
       "requiredParams": ["*"]
@@ -1959,6 +1999,10 @@
         {
           "source": "access_token",
           "destination": "access_token"
+        },
+        {
+          "source": "jsw_session_id",
+          "destination": "jsw_session_id"
         }
       ],
       "requiredParams": ["*"]
@@ -2968,7 +3012,7 @@
       },
       {
         "name": "app-blogs",
-        "url": "${CMS_MSME_URL}/jsw-blogs-articless",
+        "url": "https://qa-cms-ext.msme.jswone.in/api/jsw-blogs-articless",
         "method": "GET",
         "timeout": {
           "request": 5000,
@@ -3983,6 +4027,12 @@
     "resTransform": "appHomePage.transformers.mergeAppHomePageResponseV4"
   },
   {
+    "path": "/xp-mi/public/health",
+    "method": "GET",
+    "routeHandler": "PASS_THROUGH",
+    "response": "OK"
+  },
+  {
     "path": "/xp-mi/public/v2/cart",
     "method": "GET",
     "routeHandler": "TRANSFORM",
@@ -4306,6 +4356,22 @@
     "target": {
       "name": "app-global-page-v3",
       "url": "https://qa-cms-ext.msme.jswone.in/api/app-global-v2",
+      "method": "GET",
+      "timeout": {
+        "request": 5000,
+        "socket": 1000
+      },
+      "reqTransform": "general.transformers.moveBodyToQueryParams",
+      "resTransform": "cms.transformers.replaceUriPrefix"
+    }
+  },
+  {
+    "path": "/xp-mi/public/v1/pdp-trusted-banner",
+    "method": "POST",
+    "routeHandler": "TRANSFORM",
+    "targets": {
+      "name": "strapi-banner-from-cart",
+      "url": "https://qa-cms-ext.msme.jswone.in/api/app-cart-page-v2",
       "method": "GET",
       "timeout": {
         "request": 5000,

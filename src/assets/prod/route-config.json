@@ -27,10 +27,18 @@
         },
         "reqTransform": "general.transformers.convertToGetRequest",
         "headersToPass": [
-          { "source": "authorization", "destination": "authorization" },
-          { "source": "x-user-state", "destination": "x-user-state" }
+          {
+            "source": "authorization",
+            "destination": "authorization"
+          },
+          {
+            "source": "x-user-state",
+            "destination": "x-user-state"
+          }
         ],
-        "requiredParams": ["pincode"]
+        "requiredParams": [
+          "pincode"
+        ]
       },
       {
         "name": "app-buy-again",
@@ -42,10 +50,18 @@
         },
         "reqTransform": "general.transformers.convertToGetRequest",
         "headersToPass": [
-          { "source": "authorization", "destination": "authorization" },
-          { "source": "x-user-state", "destination": "x-user-state" }
+          {
+            "source": "authorization",
+            "destination": "authorization"
+          },
+          {
+            "source": "x-user-state",
+            "destination": "x-user-state"
+          }
         ],
-        "requiredParams": ["pincode"]
+        "requiredParams": [
+          "pincode"
+        ]
       },
       {
         "name": "app-categories",
@@ -57,10 +73,18 @@
         },
         "reqTransform": "general.transformers.convertToGetRequest",
         "headersToPass": [
-          { "source": "authorization", "destination": "authorization" },
-          { "source": "x-user-state", "destination": "x-user-state" }
+          {
+            "source": "authorization",
+            "destination": "authorization"
+          },
+          {
+            "source": "x-user-state",
+            "destination": "x-user-state"
+          }
         ],
-        "requiredParams": ["pincode"]
+        "requiredParams": [
+          "pincode"
+        ]
       }
     ],
     "resTransform": "app.transformers.mergeHomePageResponses"
@@ -131,7 +155,12 @@
         "request": "${TIMEOUTS.REQUEST}",
         "socket": "${TIMEOUTS.SOCKET}"
       },
-      "headersToPass": [{ "source": "authorization", "destination": "access_token" }],
+      "headersToPass": [
+        {
+          "source": "authorization",
+          "destination": "access_token"
+        }
+      ],
       "reqTransform": "price.transformers.transformLineItemPriceRequest",
       "resTransform": "price.transformers.transformLineItemPriceResponse"
     }
@@ -151,7 +180,12 @@
           "request": "${TIMEOUTS.REQUEST}",
           "socket": "${TIMEOUTS.SOCKET}"
         },
-        "headersToPass": [{ "source": "authorization", "destination": "access_token" }]
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "access_token"
+          }
+        ]
       },
       {
         "name": "app-buy-again",
@@ -161,8 +195,15 @@
           "request": "${TIMEOUTS.REQUEST_MIN}",
           "socket": "${TIMEOUTS.SOCKET}"
         },
-        "headersToPass": [{ "source": "authorization", "destination": "authorization" }],
-        "requiredParams": ["pincode"]
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "authorization"
+          }
+        ],
+        "requiredParams": [
+          "pincode"
+        ]
       }
     ],
     "resTransform": "app.transformers.mergeBuyAgainResponses"
@@ -212,10 +253,18 @@
         },
         "reqTransform": "general.transformers.convertToGetRequest",
         "headersToPass": [
-          { "source": "authorization", "destination": "authorization" },
-          { "source": "x-user-state", "destination": "x-user-state" }
+          {
+            "source": "authorization",
+            "destination": "authorization"
+          },
+          {
+            "source": "x-user-state",
+            "destination": "x-user-state"
+          }
         ],
-        "requiredParams": ["pincode"]
+        "requiredParams": [
+          "pincode"
+        ]
       }
     ],
     "resTransform": "app.transformers.mergeTopBrandsResponses"
@@ -247,14 +296,22 @@
         },
         "reqTransform": "general.transformers.convertToGetRequest",
         "headersToPass": [
-          { "source": "authorization", "destination": "authorization" },
-          { "source": "x-user-state", "destination": "x-user-state" }
+          {
+            "source": "authorization",
+            "destination": "authorization"
+          },
+          {
+            "source": "x-user-state",
+            "destination": "x-user-state"
+          }
         ],
-        "requiredParams": ["pincode"]
+        "requiredParams": [
+          "pincode"
+        ]
       },
       {
         "name": "app-buy-again",
-        "url": "https://www.jswonemsme.com/central_commerce/buy-again-list",
+        "url": "${RETAIL_URL}/v1/seller/buy-again",
         "method": "GET",
         "timeout": {
           "request": 15000,
@@ -264,10 +321,16 @@
         "headersToPass": [
           {
             "source": "authorization",
-            "destination": "access_token"
+            "destination": "authorization"
+          },
+          {
+            "source": "x-user-state",
+            "destination": "x-user-state"
           }
         ],
-        "resTransform": "buyAgain.transformers.transformBuyAgainResponse"
+        "requiredParams": [
+          "pincode"
+        ]
       },
       {
         "name": "app-categories",
@@ -279,10 +342,18 @@
         },
         "reqTransform": "general.transformers.convertToGetRequest",
         "headersToPass": [
-          { "source": "authorization", "destination": "authorization" },
-          { "source": "x-user-state", "destination": "x-user-state" }
+          {
+            "source": "authorization",
+            "destination": "authorization"
+          },
+          {
+            "source": "x-user-state",
+            "destination": "x-user-state"
+          }
         ],
-        "requiredParams": ["pincode"]
+        "requiredParams": [
+          "pincode"
+        ]
       },
       {
         "name": "app-blogs",
@@ -299,8 +370,16 @@
         "name": "app-in-transit",
         "url": "https://www.jswonemsme.com/order-service/order/v1/material-tracking/dispatched-shipments",
         "method": "GET",
-        "timeout": { "request": 5000, "socket": 1000 },
-        "headersToPass": [{ "source": "authorization", "destination": "access_token" }],
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "access_token"
+          }
+        ],
         "reqTransform": "app.transformers.transformInTransitRequest"
       }
     ],
@@ -318,7 +397,9 @@
         "request": "${TIMEOUTS.REQUEST}",
         "socket": "${TIMEOUTS.SOCKET}"
       },
-      "requiredParams": ["orderNumber"],
+      "requiredParams": [
+        "orderNumber"
+      ],
       "staticHeaders": {
         "Authorization": "${X_API_KEY_FOR_ORDER_LISTING}",
         "client_id": "${ERP_CLIENT_ID}"
@@ -352,20 +433,34 @@
           "socket": "${TIMEOUTS.SOCKET}"
         },
         "reqTransform": "general.transformers.convertToGetRequest",
-        "headersToPass": [{ "source": "authorization", "destination": "authorization" }],
-        "requiredParams": ["pincode"]
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "authorization"
+          }
+        ],
+        "requiredParams": [
+          "pincode"
+        ]
       },
       {
         "name": "app-cart-summary",
         "url": "${RETAIL_URL}/v3/seller/cart",
         "method": "GET",
         "timeout": {
-          "request": "${TIMEOUTS.REQUEST_MIN}",
-          "socket": "${TIMEOUTS.SOCKET}"
+          "request": 10000,
+          "socket": 1000
         },
         "reqTransform": "general.transformers.convertToGetRequest",
-        "headersToPass": [{ "source": "authorization", "destination": "authorization" }],
-        "requiredParams": ["pincode"]
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "authorization"
+          }
+        ],
+        "requiredParams": [
+          "pincode"
+        ]
       }
     ],
     "resTransform": "cart.transformers.mergeCartPageResponses"
@@ -385,7 +480,9 @@
           "request": "${TIMEOUTS.REQUEST}",
           "socket": "${TIMEOUTS.SOCKET}"
         },
-        "requiredParams": ["orderNumber"],
+        "requiredParams": [
+          "orderNumber"
+        ],
         "staticHeaders": {
           "Authorization": "${X_API_KEY_FOR_ORDER_LISTING}",
           "client_id": "${ERP_CLIENT_ID}"
@@ -399,7 +496,9 @@
           "request": "${TIMEOUTS.REQUEST}",
           "socket": "${TIMEOUTS.SOCKET}"
         },
-        "requiredParams": ["orderNumber"],
+        "requiredParams": [
+          "orderNumber"
+        ],
         "staticHeaders": {
           "Authorization": "${X_API_KEY_FOR_ORDER_LISTING}",
           "client_id": "${ERP_CLIENT_ID}"
@@ -439,17 +538,30 @@
         "name": "strapi-project-detail",
         "url": "https://cms.jswonehomes.com/api/project-page",
         "method": "GET",
-        "timeout": { "request": 5000, "socket": 1000 },
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
         "reqTransform": "general.transformers.moveBodyToQueryParams"
       },
       {
         "name": "homes-project-details",
         "url": "https://service.jswonehomes.com/homes-service/v1/project/project-details",
         "method": "GET",
-        "timeout": { "request": 5000, "socket": 1000 },
-        "headersToPass": [{ "source": "authorization", "destination": "Authorization" }],
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "Authorization"
+          }
+        ],
         "reqTransform": "general.transformers.convertToGetRequest",
-        "requiredParams": ["project_id"]
+        "requiredParams": [
+          "project_id"
+        ]
       }
     ],
     "resTransform": "home.details.transformers.mergeProjectDetailsAndTrackerResponses"
@@ -464,15 +576,26 @@
         "name": "strapi-user-detail",
         "url": "https://cms.jswonehomes.com/api/user-info",
         "method": "GET",
-        "timeout": { "request": 5000, "socket": 1000 },
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
         "reqTransform": "general.transformers.moveBodyToQueryParams"
       },
       {
         "name": "homes-user-details",
         "url": "https://service.jswonehomes.com/homes-service/v1/user/details",
         "method": "GET",
-        "timeout": { "request": 5000, "socket": 1000 },
-        "headersToPass": [{ "source": "authorization", "destination": "Authorization" }],
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "Authorization"
+          }
+        ],
         "reqTransform": "general.transformers.convertToGetRequest"
       }
     ],
@@ -486,9 +609,19 @@
       "name": "homes-progress-report",
       "url": "https://service.jswonehomes.com/homes-service/v1/project/progress-reports",
       "method": "GET",
-      "timeout": { "request": 5000, "socket": 1000 },
-      "headersToPass": [{ "source": "authorization", "destination": "Authorization" }],
-      "requiredParams": ["project_id"]
+      "timeout": {
+        "request": 5000,
+        "socket": 1000
+      },
+      "headersToPass": [
+        {
+          "source": "authorization",
+          "destination": "Authorization"
+        }
+      ],
+      "requiredParams": [
+        "project_id"
+      ]
     }
   },
   {
@@ -609,9 +742,19 @@
       "name": "homes-design-documents",
       "url": "https://service.jswonehomes.com/homes-service/v1/project/design-documents",
       "method": "GET",
-      "timeout": { "request": 5000, "socket": 1000 },
-      "headersToPass": [{ "source": "authorization", "destination": "Authorization" }],
-      "requiredParams": ["project_id"]
+      "timeout": {
+        "request": 5000,
+        "socket": 1000
+      },
+      "headersToPass": [
+        {
+          "source": "authorization",
+          "destination": "Authorization"
+        }
+      ],
+      "requiredParams": [
+        "project_id"
+      ]
     }
   },
   {
@@ -622,9 +765,19 @@
       "name": "homes-construction-documents",
       "url": "https://service.jswonehomes.com/homes-service/v1/project/construction-documents",
       "method": "GET",
-      "timeout": { "request": 5000, "socket": 1000 },
-      "headersToPass": [{ "source": "authorization", "destination": "Authorization" }],
-      "requiredParams": ["project_id"]
+      "timeout": {
+        "request": 5000,
+        "socket": 1000
+      },
+      "headersToPass": [
+        {
+          "source": "authorization",
+          "destination": "Authorization"
+        }
+      ],
+      "requiredParams": [
+        "project_id"
+      ]
     }
   },
   {
@@ -656,8 +809,15 @@
         "request": "${TIMEOUTS.REQUEST}",
         "socket": "${TIMEOUTS.SOCKET}"
       },
-      "headersToPass": [{ "source": "authorization", "destination": "access_token" }],
-      "requiredParams": ["entityName"]
+      "headersToPass": [
+        {
+          "source": "authorization",
+          "destination": "access_token"
+        }
+      ],
+      "requiredParams": [
+        "entityName"
+      ]
     }
   },
   {
@@ -671,7 +831,10 @@
         "name": "app-material-tracking",
         "url": "https://internal-cms-ext.jswonemsme.com/api/app-order-page",
         "method": "GET",
-        "timeout": { "request": 5000, "socket": 1000 },
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
         "reqTransform": "general.transformers.moveBodyToQueryParams"
       },
       {
@@ -681,10 +844,16 @@
         "staticHeaders": {
           "Authorization": "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJPbmxpbmUgSldUIEJ1aWxkZXIiLCJpYXQiOjE3NTI0ODI2NzksImV4cCI6MjUzMzg3NTU3ODc5LCJhdWQiOiJyZXRhaWxzLWFwcCIsInN1YiI6InJldGFpbHNAanN3b25lLmluIiwiR2l2ZW5OYW1lIjoiUmV0YWlscyIsIkVtYWlsIjoicmV0YWlsc0Bqc3dvbmUuaW4iLCJSb2xlIjoiQURNSU4ifQ.NlGWFVVxEMtCVqz4tyMFX-R_qLoOjg_7alWl1MVcmnI"
         },
-        "timeout": { "request": 5000, "socket": 1000 },
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
         "reqTransform": "orderListing.transformers.transformOrderListingRequest",
         "resTransform": "orderListing.transformers.transformOrderListingResponse",
-        "requiredParams": ["gstin", "customerType"]
+        "requiredParams": [
+          "gstin",
+          "customerType"
+        ]
       }
     ],
     "resTransform": "orderListing.transformers.mergeMaterialTrackingAndOrderListingResponses"
@@ -699,7 +868,10 @@
         "name": "order-detail",
         "url": "https://oms.jswonemsme.com/external-connector-inbound/api/internal/v1/retail/fetch-order-details",
         "method": "GET",
-        "timeout": { "request": 5000, "socket": 1000 },
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
         "staticHeaders": {
           "Authorization": "${X_API_KEY_FOR_ORDER_LISTING}",
           "client_id": "${ERP_CLIENT_ID}"
@@ -715,10 +887,15 @@
           "Authorization": "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJPbmxpbmUgSldUIEJ1aWxkZXIiLCJpYXQiOjE3NDQ4ODcyMzgsImV4cCI6MTc3NjQyMzIzOCwiYXVkIjoiZnJpZWdodCB0aWdlciIsInN1YiI6IiJ9.6Ib-8yeVhRuolg5ko0SMxjcjQK8za1mkpVVaLFtPMyE",
           "Content-Type": "application/json"
         },
-        "timeout": { "request": 5000, "socket": 1000 },
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
         "reqTransform": "orderDetails.transformers.transformOpportunityDetailsRequest",
         "resTransform": "orderDetails.transformers.transformOpportunityDetailsResponse",
-        "requiredParams": ["customerType"]
+        "requiredParams": [
+          "customerType"
+        ]
       }
     ]
   },
@@ -1072,9 +1249,15 @@
         {
           "source": "traceId",
           "destination": "traceId"
+        },
+        {
+          "source": "jsw_session_id",
+          "destination": "jsw_session_id"
         }
       ],
-      "requiredParams": ["*"]
+      "requiredParams": [
+        "*"
+      ]
     }
   },
   {
@@ -1096,7 +1279,9 @@
           "destination": "access_token"
         }
       ],
-      "requiredParams": ["*"]
+      "requiredParams": [
+        "*"
+      ]
     }
   },
   {
@@ -1187,7 +1372,9 @@
           "socket": "${TIMEOUTS.SOCKET}"
         },
         "reqTransform": "location.transformers.addGoogleMapsApiKeyRequest",
-        "requiredParams": ["latlng"]
+        "requiredParams": [
+          "latlng"
+        ]
       },
       {
         "name": "jsw-locality-data",
@@ -1264,7 +1451,7 @@
         "url": "https://www.jswonemsme.com/v2/cart/size",
         "method": "GET",
         "timeout": {
-          "request": 5000,
+          "request": 10000,
           "socket": 1000
         },
         "headersToPass": [
@@ -1291,8 +1478,15 @@
         "request": 5000,
         "socket": 1000
       },
-      "headersToPass": [{ "source": "authorization", "destination": "access_token" }],
-      "requiredParams": ["entityName"],
+      "headersToPass": [
+        {
+          "source": "authorization",
+          "destination": "access_token"
+        }
+      ],
+      "requiredParams": [
+        "entityName"
+      ],
       "appendParams": true,
       "resTransform": "paymentdue.transformers.getPaymentDueDetails"
     }
@@ -1323,8 +1517,15 @@
           "socket": 1000
         },
         "reqTransform": "general.transformers.convertToGetRequest",
-        "headersToPass": [{ "source": "authorization", "destination": "authorization" }],
-        "requiredParams": ["pincode"]
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "authorization"
+          }
+        ],
+        "requiredParams": [
+          "pincode"
+        ]
       },
       {
         "name": "app-cart-summary",
@@ -1335,8 +1536,15 @@
           "socket": 1000
         },
         "reqTransform": "general.transformers.convertToGetRequest",
-        "headersToPass": [{ "source": "authorization", "destination": "authorization" }],
-        "requiredParams": ["pincode"]
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "authorization"
+          }
+        ],
+        "requiredParams": [
+          "pincode"
+        ]
       }
     ],
     "resTransform": "cart.transformers.mergeCartPageResponses"
@@ -1366,7 +1574,9 @@
       "staticHeaders": {
         "content-type": "application/json"
       },
-      "requiredParams": ["*"]
+      "requiredParams": [
+        "*"
+      ]
     }
   },
   {
@@ -1378,7 +1588,7 @@
       "url": "https://www.jswonemsme.com/v2/cart/size",
       "method": "GET",
       "timeout": {
-        "request": 5000,
+        "request": 10000,
         "socket": 1000
       },
       "headersToPass": [
@@ -1418,6 +1628,10 @@
           {
             "source": "authorization",
             "destination": "access_token"
+          },
+          {
+            "source": "jsw_session_id",
+            "destination": "jsw_session_id"
           }
         ]
       },
@@ -1434,6 +1648,10 @@
           {
             "source": "authorization",
             "destination": "access_token"
+          },
+          {
+            "source": "jsw_session_id",
+            "destination": "jsw_session_id"
           }
         ]
       },
@@ -1450,6 +1668,10 @@
           {
             "source": "authorization",
             "destination": "access_token"
+          },
+          {
+            "source": "jsw_session_id",
+            "destination": "jsw_session_id"
           }
         ]
       },
@@ -1466,6 +1688,10 @@
           {
             "source": "authorization",
             "destination": "access_token"
+          },
+          {
+            "source": "jsw_session_id",
+            "destination": "jsw_session_id"
           }
         ]
       },
@@ -1482,6 +1708,10 @@
           {
             "source": "authorization",
             "destination": "access_token"
+          },
+          {
+            "source": "jsw_session_id",
+            "destination": "jsw_session_id"
           }
         ]
       },
@@ -1509,6 +1739,10 @@
           {
             "source": "authorization",
             "destination": "access_token"
+          },
+          {
+            "source": "jsw_session_id",
+            "destination": "jsw_session_id"
           }
         ]
       },
@@ -1525,6 +1759,10 @@
           {
             "source": "authorization",
             "destination": "access_token"
+          },
+          {
+            "source": "jsw_session_id",
+            "destination": "jsw_session_id"
           }
         ]
       }
@@ -1561,6 +1799,10 @@
           {
             "source": "access_token",
             "destination": "access_token"
+          },
+          {
+            "source": "jsw_session_id",
+            "destination": "jsw_session_id"
           }
         ]
       }
@@ -1585,7 +1827,9 @@
           "destination": "access_token"
         }
       ],
-      "requiredParams": ["*"]
+      "requiredParams": [
+        "*"
+      ]
     }
   },
   {
@@ -1610,7 +1854,9 @@
           "destination": "access_token"
         }
       ],
-      "requiredParams": ["*"]
+      "requiredParams": [
+        "*"
+      ]
     }
   },
   {
@@ -1631,7 +1877,9 @@
           "destination": "access_token"
         }
       ],
-      "requiredParams": ["addressId"],
+      "requiredParams": [
+        "addressId"
+      ],
       "resTransform": "setDefaultAddress.transformers.setDefaultAddress"
     }
   },
@@ -1643,16 +1891,26 @@
       "name": "homes-design-documents",
       "url": "https://service.jswonehomes.com/homes-service/v1/project/progress-gallery",
       "method": "GET",
-      "timeout": { "request": 5000, "socket": 1000 },
-      "headersToPass": [{ "source": "authorization", "destination": "Authorization" }],
-      "requiredParams": ["project_id"]
+      "timeout": {
+        "request": 5000,
+        "socket": 1000
+      },
+      "headersToPass": [
+        {
+          "source": "authorization",
+          "destination": "Authorization"
+        }
+      ],
+      "requiredParams": [
+        "project_id"
+      ]
     }
   },
   {
     "path": "/xp-mi/public/v1/categories/tree",
     "method": "GET",
     "routeHandler": "TRANSFORM",
-    "isCacheRequired": true,
+    "isCacheRequired": false,
     "target": {
       "name": "categories-tree",
       "url": "https://www.jswonemsme.com/central_commerce/categories/tree",
@@ -1667,7 +1925,9 @@
           "destination": "access_token"
         }
       ],
-      "requiredParams": ["*"]
+      "requiredParams": [
+        "*"
+      ]
     }
   },
   {
@@ -1688,7 +1948,9 @@
           "destination": "access_token"
         }
       ],
-      "requiredParams": ["*"]
+      "requiredParams": [
+        "*"
+      ]
     }
   },
   {
@@ -1709,7 +1971,9 @@
           "destination": "access_token"
         }
       ],
-      "requiredParams": ["*"]
+      "requiredParams": [
+        "*"
+      ]
     }
   },
   {
@@ -1728,9 +1992,15 @@
         {
           "source": "access_token",
           "destination": "access_token"
+        },
+        {
+          "source": "jsw_session_id",
+          "destination": "jsw_session_id"
         }
       ],
-      "requiredParams": ["*"]
+      "requiredParams": [
+        "*"
+      ]
     }
   },
   {
@@ -1751,7 +2021,9 @@
           "destination": "access_token"
         }
       ],
-      "requiredParams": ["*"]
+      "requiredParams": [
+        "*"
+      ]
     }
   },
   {
@@ -1770,9 +2042,15 @@
         {
           "source": "access_token",
           "destination": "access_token"
+        },
+        {
+          "source": "jsw_session_id",
+          "destination": "jsw_session_id"
         }
       ],
-      "requiredParams": ["*"]
+      "requiredParams": [
+        "*"
+      ]
     }
   },
   {
@@ -1818,9 +2096,19 @@
       "name": "homes-activity-schedule",
       "url": "https://service.jswonehomes.com/homes-service/v1/project/activity-schedule",
       "method": "GET",
-      "timeout": { "request": 5000, "socket": 1000 },
-      "headersToPass": [{ "source": "authorization", "destination": "Authorization" }],
-      "requiredParams": ["project_id"]
+      "timeout": {
+        "request": 5000,
+        "socket": 1000
+      },
+      "headersToPass": [
+        {
+          "source": "authorization",
+          "destination": "Authorization"
+        }
+      ],
+      "requiredParams": [
+        "project_id"
+      ]
     }
   },
   {
@@ -1887,7 +2175,9 @@
           "destination": "access_token"
         }
       ],
-      "requiredParams": ["*"]
+      "requiredParams": [
+        "*"
+      ]
     }
   },
   {
@@ -1908,7 +2198,9 @@
           "destination": "access_token"
         }
       ],
-      "requiredParams": ["*"]
+      "requiredParams": [
+        "*"
+      ]
     }
   },
   {
@@ -1943,7 +2235,9 @@
             "destination": "access_token"
           }
         ],
-        "requiredPathParams": ["slugId"]
+        "requiredPathParams": [
+          "slugId"
+        ]
       },
       {
         "name": "product-by-slug-v2",
@@ -1960,8 +2254,12 @@
             "destination": "access_token"
           }
         ],
-        "requiredParams": ["*"],
-        "requiredPathParams": ["slugId"]
+        "requiredParams": [
+          "*"
+        ],
+        "requiredPathParams": [
+          "slugId"
+        ]
       }
     ],
     "resTransform": "product.transformers.selectSlugProductResponse"
@@ -2105,7 +2403,9 @@
           "destination": "access_token"
         }
       ],
-      "requiredParams": ["*"]
+      "requiredParams": [
+        "*"
+      ]
     }
   },
   {
@@ -2431,8 +2731,127 @@
           { "source": "authorization", "destination": "access_token" },
           { "source": "access_token", "destination": "access_token" }
         ]
+      },
+      {
+        "name": "recent-viewed-remove",
+        "url": "https://www.jswonemsme.com/central_commerce/recent-viewed/remove",
+        "method": "GET",
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
+        "reqTransform": "web.transformers.convertOriginalBodyToGetRequestFromParallelPayload",
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "access_token"
+          },
+          {
+            "source": "access_token",
+            "destination": "access_token"
+          }
+        ]
+      },
+      {
+        "name": "recently-viewed-product-details",
+        "url": "https://www.jswonemsme.com/central_commerce/catalogue/product-details",
+        "method": "POST",
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
+        "reqTransform": "web.transformers.transformRecentlyViewedMMIDsRequestFromParallelPayload",
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "access_token"
+          },
+          {
+            "source": "access_token",
+            "destination": "access_token"
+          }
+        ]
       }
     ]
+  },
+  {
+    "path": "/xp-mi/public/v1/web-generic-page",
+    "method": "POST",
+    "routeHandler": "AGGREGATE",
+    "aggregationType": "SEQUENTIAL",
+    "targets": [
+      {
+        "name": "layout-landing-pages",
+        "url": "${CMS_MSME_URL}/layout-landing-pages",
+        "method": "GET",
+        "timeout": {
+          "request": 10000,
+          "socket": 1000
+        },
+        "reqTransform": "general.transformers.moveBodyToQueryParams",
+        "resTransform": "cms.transformers.replaceUriPrefix"
+      },
+      {
+        "name": "web-products",
+        "url": "https://experience-middleware.jswonemsme.com/xp-mi/public/v1/web-products",
+        "method": "GET",
+        "timeout": {
+          "request": 10000,
+          "socket": 1000
+        },
+        "reqTransform": "general.transformers.convertToGetRequest",
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "authorization"
+          }
+        ]
+      },
+      {
+        "name": "web-categories",
+        "url": "https://www.jswonemsme.com/central_commerce/categories/tree/list",
+        "method": "POST",
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
+        "reqTransform": "web.transformers.extractCentralCatalogueCategoryIdsv3",
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "access_token"
+          }
+        ]
+      },
+      {
+        "name": "products-listing",
+        "url": "https://www.jswonemsme.com/central_commerce/products/listing",
+        "method": "POST",
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
+        "reqTransform": "web.genericPage.transformers.extractProductListingSlugv3",
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "access_token"
+          }
+        ]
+      },
+      {
+        "name": "app-blogs",
+        "url": "${CMS_MSME_URL}/jsw-blogs-articless",
+        "method": "GET",
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
+        "reqTransform": "cms.transformers.homeBlogs",
+        "resTransform": "cms.transformers.replaceUriPrefix"
+      }
+    ],
+    "resTransform": "web.genericPage.transformers.mergeWebGenericPageResponses"
   },
   {
     "path": "/xp-mi/public/v1/web-generic-page",
@@ -2530,7 +2949,9 @@
         "x-api-key": "${X_API_KEY_CONNECTOR}",
         "Content-Type": "application/json"
       },
-      "requiredParams": ["*"]
+      "requiredParams": [
+        "*"
+      ]
     }
   },
   {
@@ -2543,7 +2964,10 @@
         "name": "layout-mweb-segment-pages",
         "url": "${CMS_MSME_URL}/layout-mweb-segment-pages",
         "method": "GET",
-        "timeout": { "request": 10000, "socket": 1000 },
+        "timeout": {
+          "request": 10000,
+          "socket": 1000
+        },
         "reqTransform": "general.transformers.moveBodyToQueryParams",
         "resTransform": "cms.transformers.replaceUriPrefix"
       },
@@ -2551,7 +2975,10 @@
         "name": "app-blogs",
         "url": "${CMS_MSME_URL}/jsw-blogs-articless",
         "method": "GET",
-        "timeout": { "request": 5000, "socket": 1000 },
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
         "reqTransform": "cms.transformers.homeBlogs",
         "resTransform": "cms.transformers.replaceUriPrefix"
       },
@@ -2559,17 +2986,33 @@
         "name": "web-segment-products",
         "url": "https://experience-middleware.jswonemsme.com/xp-mi/public/v1/web-products",
         "method": "GET",
-        "timeout": { "request": 10000, "socket": 1000 },
+        "timeout": {
+          "request": 10000,
+          "socket": 1000
+        },
         "reqTransform": "general.transformers.convertToGetRequest",
-        "headersToPass": [{ "source": "authorization", "destination": "authorization" }]
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "authorization"
+          }
+        ]
       },
       {
         "name": "segment-products-listing",
         "url": "https://www.jswonemsme.com/central_commerce/products/listing",
         "method": "POST",
-        "timeout": { "request": 5000, "socket": 1000 },
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
         "reqTransform": "web.segment.transformers.extractProductListingSlugSegment",
-        "headersToPass": [{ "source": "authorization", "destination": "access_token" }]
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "access_token"
+          }
+        ]
       }
     ],
     "resTransform": "web.segment.transformers.mergeWebSegmentPageResponsesV1"
@@ -2592,7 +3035,9 @@
         "staticHeaders": {
           "Content-Type": "application/x-www-form-urlencoded"
         },
-        "requiredParams": ["*"],
+        "requiredParams": [
+          "*"
+        ],
         "reqTransform": "general.transformers.createQueryParams",
         "resTransform": ""
       },
@@ -2606,7 +3051,9 @@
         },
         "reqTransform": "address.transformers.createAddress",
         "headersToPass": [],
-        "requiredParams": ["*"]
+        "requiredParams": [
+          "*"
+        ]
       }
     ],
     "resTransform": "general.transformers.successOnly"
@@ -2629,7 +3076,9 @@
         "staticHeaders": {
           "Content-Type": "application/x-www-form-urlencoded"
         },
-        "requiredParams": ["*"],
+        "requiredParams": [
+          "*"
+        ],
         "reqTransform": "general.transformers.createQueryParams"
       },
       {
@@ -2964,7 +3413,10 @@
         "socket": 1000
       },
       "reqTransform": "general.transformers.convertToGetRequest",
-      "requiredParams": ["id", "event"]
+      "requiredParams": [
+        "id",
+        "event"
+      ]
     }
   },
   {
@@ -3110,7 +3562,7 @@
       },
       {
         "name": "one-helix-task",
-        "url": "https://tms.jswonemsme.com/jswone/subject/task",
+        "url": "https://oms.jswonemsme.com/jswone/subject/task",
         "method": "POST",
         "timeout": {
           "request": 10000,
@@ -3132,7 +3584,7 @@
     "isCacheRequired": false,
     "target": {
       "name": "one-helix-task",
-      "url": "https://tms.jswonemsme.com/jswone/subject/task",
+      "url": "https://oms.jswonemsme.com/jswone/subject/task",
       "method": "POST",
       "timeout": {
         "request": 10000,
@@ -3149,6 +3601,74 @@
         }
       ],
       "reqTransform": "one-helix.transformers.transformLoggedInOneHelixTaskRequest"
+    }
+  },
+  {
+    "path": "/xp-mi/public/v1/resend-otp",
+    "method": "POST",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "app-resend-otp",
+      "url": "https://www.jswonemsme.com/auth/api/v1/construct/otp/resend",
+      "method": "POST",
+      "staticHeaders": {
+        "X-API-KEY": "${X_API_KEY_FOR_LOGIN}"
+      },
+      "timeout": {
+        "request": 5000,
+        "socket": 1000
+      },
+      "reqTransform": "general.transformers.moveBodyToQueryParams",
+      "resTransform": "login.transformers.transformResendOtpResponse"
+    }
+  },
+  {
+    "path": "/xp-mi/public/v2/cart/update-shipping-address",
+    "method": "POST",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "update-shipping-address",
+      "url": "https://www.jswonemsme.com/v2/cart/update-shipping-address",
+      "method": "POST",
+      "timeout": {
+        "request": 10000,
+        "socket": 1000
+      },
+      "headersToPass": [
+        {
+          "source": "access_token",
+          "destination": "access_token"
+        }
+      ],
+      "requiredParams": [
+        "*"
+      ]
+    }
+  },
+  {
+    "path": "/xp-mi/public/health",
+    "method": "GET",
+    "routeHandler": "PASS_THROUGH",
+    "response": "OK"
+  },
+  {
+    "path": "/xp-mi/public/v2/cart",
+    "method": "GET",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "get-cart",
+      "url": "https://www.jswonemsme.com/v2/cart/get",
+      "method": "GET",
+      "timeout": {
+        "request": 10000,
+        "socket": 1000
+      },
+      "headersToPass": [
+        {
+          "source": "access_token",
+          "destination": "access_token"
+        }
+      ]
     }
   },
   {
@@ -3338,7 +3858,9 @@
           "destination": "access_token"
         }
       ],
-      "requiredParams": ["*"]
+      "requiredParams": [
+        "*"
+      ]
     }
   },
   {
@@ -3543,6 +4065,10 @@
       }
     ],
     "resTransform": "appHomePage.transformers.mergeAppHomePageResponseV4"
+    "path": "/xp-mi/public/health",
+    "method": "GET",
+    "routeHandler": "PASS_THROUGH",
+    "response": "OK"
   },
   {
     "path": "/xp-mi/public/v2/cart",
@@ -3561,6 +4087,27 @@
           "source": "access_token",
           "destination": "access_token"
         }
+      ]
+    }
+  },
+  {
+    "path": "/xp-mi/public/v1/auth/refresh",
+    "method": "POST",
+    "routeHandler": "TRANSFORM",
+    "isCacheRequired": false,
+    "target": {
+      "name": "auth-refresh",
+      "url": "https://www.jswonemsme.com/auth/v1/refresh",
+      "method": "POST",
+      "timeout": {
+        "request": 10000,
+        "socket": 1000
+      },
+      "staticHeaders": {
+        "Content-Type": "application/json"
+      },
+      "requiredParams": [
+        "*"
       ]
     }
   },
@@ -3615,7 +4162,9 @@
       "staticHeaders": {
         "Content-Type": "application/json"
       },
-      "requiredParams": ["*"],
+      "requiredParams": [
+        "*"
+      ],
       "reqTransform": "customer.transformers.transformFetchUserRequest"
     }
   },
@@ -3668,7 +4217,9 @@
           "destination": "access_token"
         }
       ],
-      "requiredPathParams": ["customerSfid"],
+      "requiredPathParams": [
+        "customerSfid"
+      ],
       "staticHeaders": {
         "Content-Type": "application/json"
       }
@@ -3693,7 +4244,9 @@
           "destination": "access_token"
         }
       ],
-      "requiredPathParams": ["contactsfId"],
+      "requiredPathParams": [
+        "contactsfId"
+      ],
       "staticHeaders": {
         "Content-Type": "application/json"
       }
@@ -3721,7 +4274,9 @@
       "staticHeaders": {
         "Content-Type": "application/json"
       },
-      "requiredParams": ["customerSfId"]
+      "requiredParams": [
+        "customerSfId"
+      ]
     }
   },
   {
@@ -3746,7 +4301,10 @@
       "staticHeaders": {
         "Content-Type": "application/json"
       },
-      "requiredParams": ["page", "size"]
+      "requiredParams": [
+        "page",
+        "size"
+      ]
     }
   },
   {
@@ -3927,11 +4485,11 @@
           "source": "authorization",
           "destination": "access_token"
         }
-      ]
+      ]        
     }
-  },
+   },
   {
-  "path": "/xp-mi/public/v1/service-case-attach",
+    "path": "/xp-mi/public/v1/service-case-attach",
     "method": "POST",
     "routeHandler": "TRANSFORM",
     "target": {
@@ -3990,6 +4548,12 @@
       {
         "name": "app-home-page",
         "url": "https://cms-ext.jswonemsme.com/api/app-home-page-v3",
+    "path": "/xp-mi/public/v1/pdp-trusted-banner",
+    "method": "POST",
+    "routeHandler": "TRANSFORM",
+    "targets": {
+        "name": "strapi-banner-from-cart",
+        "url": "https://internal-cms-ext.jswonemsme.com/api/app-cart-page-v2",
         "method": "GET",
         "timeout": {
           "request": 5000,
@@ -4443,6 +5007,7 @@
         "reqTransform": "appRegistration.transformers.transformFetchAccessTokenRequest"
       }
     ],
-    "resTransform": "appRegistration.transformers.mergeRegisterUserAndAccessTokenResponse"
-  }
+        "reqTransform": "general.transformers.moveBodyToQueryParams",
+        "resTransform": "cms.transformers.replaceUriPrefix"
+      }
 ]
