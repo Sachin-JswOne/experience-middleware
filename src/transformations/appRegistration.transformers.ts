@@ -1,9 +1,10 @@
 import { CONSENT_EVENT_NAME, CONSENT_REGISTRATION_SOURCE, CONSTRUCT } from 'src/config/app.config';
 import { HttpStatus, Logger } from '@nestjs/common';
-import { CustomError } from 'src/utils/CustomError';
+import { CustomError, extractErrorMessage } from 'src/utils/CustomError';
 import { AggregatedResponse } from 'src/models/aggregated-response.model';
 import { safeDebug } from 'src/utils/common-functions.util';
 import { inspect } from 'util';
+import { validateSellerData } from './login.transformers';
 
 export function transformRegisterUserRequest(request: any): any {
   safeDebug(Logger, () => `Original Register User Request: ${inspect(request)}`);
@@ -52,7 +53,10 @@ export function transformRegisterUserResponse(response: any): any {
   safeDebug(Logger, () => `Original Register User Response: ${inspect(response)}`);
   if (response && response.error) {
     Logger.error('Error occurred while registering user:', response.error);
-    throw new CustomError(response.error.message, HttpStatus.BAD_REQUEST);
+    throw new CustomError(
+      extractErrorMessage(response.error),
+      response?.error?.code || HttpStatus.BAD_REQUEST,
+    );
   }
   if (response && response.success) {
     const validationResult = validateSellerData(response.data);
@@ -74,76 +78,74 @@ export function transformRegisterUserResponse(response: any): any {
   }
 }
 
-export function validateSellerData(data) {
-  const requiredFields = ['sfId', 'ctId', 'billingAddress'];
-
-  for (const field of requiredFields) {
-    if (
-      !Object.prototype.hasOwnProperty.call(data, field) ||
-      data[field] === undefined ||
-      data[field] === null ||
-      data[field] === ''
-    ) {
-      safeDebug(Logger, () => `Validation failed for field: ${field}, value: ${data[field]}`);
-      return {
-        isValid: false,
-        errorMessage: `Field ${field} is missing or empty.`,
-      };
-    }
-  }
-  return { isValid: true };
-}
-
 export function transformFetchAccessTokenRequest(
   request: any,
   aggregatedResponses: AggregatedResponse[],
 ): any {
-  const responses = aggregatedResponses.reduce(
-    (acc, response) => {
-      acc[response.target] = response;
-      return acc;
-    },
-    {} as Record<string, AggregatedResponse>,
-  );
-
-  const registerUserResponse = responses['register-user'];
-  if (registerUserResponse) {
-    const transformedRequest = {
-      ...request,
-      body: {
-        email: request?.body?.emailId,
-        phoneNumber: request?.body?.mobileNumber,
-        password: Buffer.from(request.body.password).toString('base64'),
-        storeKey: CONSTRUCT,
+  try {
+    const responses = aggregatedResponses.reduce(
+      (acc, response) => {
+        acc[response.target] = response;
+        return acc;
       },
-    };
-    safeDebug(
-      Logger,
-      () => `Transformed Fetch Access Token Request: ${inspect(transformedRequest)}`,
+      {} as Record<string, AggregatedResponse>,
     );
-    return transformedRequest;
+    const registerUserResponse = responses['register-user'];
+    if (registerUserResponse && !registerUserResponse.error) {
+      const transformedRequest = {
+        ...request,
+        body: {
+          email: request?.body?.emailId,
+          phoneNumber: request?.body?.mobileNumber,
+          password: Buffer.from(request.body.password).toString('base64'),
+          storeKey: CONSTRUCT,
+        },
+      };
+      safeDebug(
+        Logger,
+        () => `Transformed Fetch Access Token Request: ${inspect(transformedRequest)}`,
+      );
+      return transformedRequest;
+    }
+  } catch (error) {
+    Logger.error('Error transforming fetch access token request:', error);
+    throw new CustomError('Something went wrong. Please try again later.', HttpStatus.BAD_REQUEST);
   }
 }
 
 export function mergeRegisterUserAndAccessTokenResponse(
   aggregatedResponses: AggregatedResponse[],
 ): any {
-  const responses = aggregatedResponses.reduce(
-    (acc, response) => {
-      acc[response.target] = response;
-      return acc;
-    },
-    {} as Record<string, AggregatedResponse>,
-  );
-  const accessToken = responses['fetch-access-token'];
-
-  if (!accessToken?.success) {
-    safeDebug(Logger, () => `Access token fetch failed with response: ${inspect(accessToken)}`);
-    Logger.error('Failed to fetch access token', accessToken?.error);
-    throw new CustomError(
-      accessToken?.error || 'Failed to fetch access token',
-      accessToken?.httpStatus ? accessToken?.httpStatus : HttpStatus.BAD_REQUEST,
+  try {
+    const responses = aggregatedResponses.reduce(
+      (acc, response) => {
+        acc[response.target] = response;
+        return acc;
+      },
+      {} as Record<string, AggregatedResponse>,
     );
+    const registerUserResponse = responses['register-user'];
+    if (registerUserResponse && !registerUserResponse.success) {
+      safeDebug(
+        Logger,
+        () => `Register user API failed with response: ${inspect(registerUserResponse)}`,
+      );
+      throw new CustomError(
+        registerUserResponse?.error || 'Something went wrong. Please try again later.',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+    const accessToken = responses['fetch-access-token'];
+    if (accessToken?.error) {
+      safeDebug(Logger, () => `Access token fetch failed with response: ${inspect(accessToken)}`);
+      throw new CustomError(
+        accessToken?.error || 'Failed to fetch access token',
+        accessToken?.httpStatus ? accessToken?.httpStatus : HttpStatus.BAD_REQUEST,
+      );
+    }
+    return accessToken?.data;
+  } catch (error) {
+    Logger.error('Error merging register user and access token response:', error);
+    throw new CustomError('Something went wrong. Please try again later.', HttpStatus.BAD_REQUEST);
   }
-  return accessToken?.data;
 }

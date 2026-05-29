@@ -317,6 +317,10 @@ export class ProxyService {
               'proxy.target': target.name || target.url,
               'proxy.error': err?.message || String(err),
             });
+            // Stop executing further targets on failure, introducing stopOnError flag in target config to decide this behavior
+            if (target.stopOnError) {
+              throw err;
+            }
           }
         }
 
