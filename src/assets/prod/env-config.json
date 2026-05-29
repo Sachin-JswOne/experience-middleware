@@ -1,0 +1,22 @@
+{
+  "CMS_MSME_URL": "",
+  "CUSTOMER_SERVICE_X_API_KEY": "",
+  "ERP_BASE_URI": "",
+  "ERP_CLIENT_ID": "",
+  "EXPERIENCE_MIDDLEWARE_URL": "",
+  "GOOGLE_MAPS_URL": "https://maps.googleapis.com/maps/api",
+  "GSTIN_X_API_KEY": "",
+  "HOMES_CMS_URL": "",
+  "HOMES_SERVICE_URL": "",
+  "MSME_BASE_URL": "",
+  "OMS_URL": "",
+  "ONE_HELIX_TASK_API_AUTHORIZATION": "",
+  "PATH_URL": "/xp-mi/public",
+  "RETAIL_URL": "",
+  "SF_BASE_URI": "",
+  "TMS_BASE_URI": "",
+  "X_API_KEY_CONNECTOR": "",
+  "X_API_KEY_FOR_LOGIN": "",
+  "X_API_KEY_FOR_ORDER_LISTING": "",
+  "X_API_KEY_FOR_REGISTRATION": ""
+}

@@ -13,7 +13,16 @@ const CONSTANTS_MAP: Record<string, any> = {
   TIMEOUTS,
 };
 
-const configFilePath = path.resolve(__dirname, `../assets/${APP_ENV}/route-config.json`);
+// Per-environment defaults — overridden by actual env vars at runtime
+let ENV_CONFIG: Record<string, any> = {};
+const envConfigFilePath = path.resolve(__dirname, `../assets/${APP_ENV}/env-config.json`);
+try {
+  ENV_CONFIG = JSON.parse(fs.readFileSync(envConfigFilePath, 'utf-8'));
+} catch {
+  // env-config.json is optional; fall back to env vars + CONSTANTS_MAP only
+}
+
+const configFilePath = path.resolve(__dirname, `../assets/route-config.json`);
 let ROUTE_CONFIG: RouteConfig[] = [];
 const enumFieldsMap: Record<string, any> = {
   routeHandler: RouteHandler,
@@ -24,20 +33,27 @@ export function replaceEnvPlaceholders(obj: any): any {
   const PLACEHOLDER_RE = /\$\{([^}]+)\}/g;
 
   function resolveKey(key: string): any {
-    //supports dot-notation like TIMEOUTS.REQUEST
-    const parts = key.split('.');
-    let value: any = CONSTANTS_MAP;
-    for (const p of parts) {
-      value = value?.[p];
-    }
-    if (value !== undefined) return value;
-
-    // fallback to env var
+    // 1. env var — highest precedence
     const envVal = process.env[key];
-    if (envVal !== undefined) {
-      // env values are strings, conversion handled later if needed
-      return envVal;
+    if (envVal !== undefined) return envVal;
+
+    const parts = key.split('.');
+
+    // 2. env-config.json — flat key, then dot-notation traversal
+    if (key in ENV_CONFIG) {
+      const v = ENV_CONFIG[key];
+      if (v !== '') return v;
     }
+    if (parts.length > 1) {
+      let nested: any = ENV_CONFIG;
+      for (const p of parts) nested = nested?.[p];
+      if (nested !== undefined && nested !== '') return nested;
+    }
+
+    // 3. CONSTANTS_MAP fallback (e.g. TIMEOUTS.REQUEST)
+    let value: any = CONSTANTS_MAP;
+    for (const p of parts) value = value?.[p];
+    if (value !== undefined) return value;
 
     throw new Error(`Missing config for: ${key}`);
   }
