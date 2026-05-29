@@ -1,5 +1,5 @@
 ﻿﻿/* eslint-disable @typescript-eslint/no-unsafe-argument */
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { trace, context, SpanStatusCode } from '@opentelemetry/api';
 import { createHttpClient } from '../utils/http-client.factory';
 import { applyTransform } from '../utils/transformer.util';
@@ -20,15 +20,13 @@ import { IncomingHttpHeaders } from 'http';
 import { inspect } from 'util';
 import { CustomError } from 'src/utils/CustomError';
 import { match } from 'path-to-regexp';
-import Redis from 'ioredis';
 import axios from 'axios';
 
 @Injectable()
 export class ProxyService {
   private readonly tracer = trace.getTracer('experience-middleware');
   private readonly logger = new Logger(ProxyService.name);
-  constructor(@Inject('REDIS_CLIENT') private readonly redis: Redis) { }
-  // constructor() { }
+  constructor() {}
 
   private getCacheKey(req: Request): string {
     const explicitKey =
@@ -88,25 +86,28 @@ export class ProxyService {
       throw new Error('Route config not found');
     }
 
-    const isCacheRequired = (route as any).isCacheRequired === true;
-    let cacheKey: string | null = null;
+    // TODO: disabling cache will enable with valkey integration
+    // const isCacheRequired = (route as any).isCacheRequired === true;
+    // let cacheKey: string | null = null;
 
-    if (isCacheRequired) {
-      cacheKey = this.getCacheKey(req);
-      try {
-        const cached = await this.redis.get(cacheKey);
-        if (cached) {
-          this.logger.debug(`Cache HIT for ${cacheKey}`);
-          return JSON.parse(cached);
-        }
-        this.logger.debug(`Cache MISS for ${cacheKey}`);
-      } catch (err) {
-        // Don't break the request if Redis is unhappy; just log and continue
-        this.logger.error('Redis GET error, bypassing cache', err);
-      }
-    } else {
-      this.logger.debug(`Caching disabled for route ${req.method} ${route.path} (isCacheRequired=false)`);
-    }
+    // if (isCacheRequired) {
+    //   cacheKey = this.getCacheKey(req);
+    //   try {
+    //     const cached = await this.redis.get(cacheKey);
+    //     if (cached) {
+    //       this.logger.debug(`Cache HIT for ${cacheKey}`);
+    //       return JSON.parse(cached);
+    //     }
+    //     this.logger.debug(`Cache MISS for ${cacheKey}`);
+    //   } catch (err) {
+    //     // Don't break the request if Redis is unhappy; just log and continue
+    //     this.logger.error('Redis GET error, bypassing cache', err);
+    //   }
+    // } else {
+    //   this.logger.debug(
+    //     `Caching disabled for route ${req.method} ${route.path} (isCacheRequired=false)`,
+    //   );
+    // }
 
     const activeSpan = trace.getSpan(context.active());
     const spanContext = activeSpan?.spanContext();
@@ -142,18 +143,18 @@ export class ProxyService {
         throw new Error('Unsupported route handler');
     }
 
-    if (isCacheRequired && cacheKey) {
-      try {
-        const ttlSeconds = process.env.CACHE_TTL_SECONDS
-          ? parseInt(process.env.CACHE_TTL_SECONDS, 10)
-          : 30 * 60;
+    // if (isCacheRequired && cacheKey) {
+    //   try {
+    //     const ttlSeconds = process.env.CACHE_TTL_SECONDS
+    //       ? parseInt(process.env.CACHE_TTL_SECONDS, 10)
+    //       : 30 * 60;
 
-        await this.redis.set(cacheKey, JSON.stringify(data), 'EX', ttlSeconds);
-        this.logger.debug(`Cached response for ${cacheKey}`);
-      } catch (err) {
-        this.logger.error('Redis SET error, continuing without cache', err);
-      }
-    }
+    //     await this.redis.set(cacheKey, JSON.stringify(data), 'EX', ttlSeconds);
+    //     this.logger.debug(`Cached response for ${cacheKey}`);
+    //   } catch (err) {
+    //     this.logger.error('Redis SET error, continuing without cache', err);
+    //   }
+    // }
 
     return data;
   }
@@ -244,9 +245,9 @@ export class ProxyService {
           res.status === 'fulfilled'
             ? res.value
             : {
-              success: false,
-              error: 'Unexpected failure',
-            },
+                success: false,
+                error: 'Unexpected failure',
+              },
         );
         const isAggregatedResponse = (r: any): r is AggregatedResponse =>
           'target' in r && 'success' in r;
@@ -368,15 +369,19 @@ export class ProxyService {
 
           maskedHeaders = {
             ...transformedRequestBody.headers,
-            authorization: transformedRequestBody.headers?.authorization ? '***masked***' : undefined,
-            Authorization: transformedRequestBody.headers?.Authorization ? '***masked***' : undefined,
+            authorization: transformedRequestBody.headers?.authorization
+              ? '***masked***'
+              : undefined,
+            Authorization: transformedRequestBody.headers?.Authorization
+              ? '***masked***'
+              : undefined,
             access_token: transformedRequestBody.headers?.access_token ? '***masked***' : undefined,
           };
 
           this.logger.log(
             `[DOWNSTREAM REQUEST] target=${target.name || target.url} route=${req.path} method=${target.method} url=${transformedRequestBody.url.href} headers=${JSON.stringify(maskedHeaders)} body=${JSON.stringify(transformedRequestBody.body ?? null)}`,
           );
-          
+
           const buildMs = this.nowMs() - buildStart;
 
           const clientCreateStart = this.nowMs();
@@ -474,8 +479,7 @@ export class ProxyService {
 
           span.setAttribute('proxy.target.duration_ms', totalMs);
 
-          const errorResponse =
-            axios.isAxiosError(err) && err.response ? err.response : null;
+          const errorResponse = axios.isAxiosError(err) && err.response ? err.response : null;
 
           this.logger.error(
             `[DOWNSTREAM ERROR] target=${target.name || target.url} route=${req.path} method=${target.method} url=${transformedRequestBody?.url?.href ?? 'NA'} duration_ms=${totalMs} error=${err?.message || String(err)} status=${errorResponse?.status ?? 'NA'} body=${JSON.stringify(transformedRequestBody?.body ?? null)} response=${JSON.stringify(errorResponse?.data ?? null)}`,
@@ -519,17 +523,17 @@ export class ProxyService {
               }
 
               if (errorResponse.status >= 400 && errorResponse.status < 500) {
-              const downstreamMessage = Array.isArray(errorResponse.data)
-                ? errorResponse.data[0]?.message ||
-                  errorResponse.data[0]?.error ||
-                  errorResponse.data[0]?.error_description ||
-                  errorResponse.statusText ||
-                  'Bad Request'
-                : errorResponse.data?.error?.message ||
-                  errorResponse.data?.message ||
-                  errorResponse.data?.error_description ||
-                  errorResponse.statusText ||
-                  'Bad Request';
+                const downstreamMessage = Array.isArray(errorResponse.data)
+                  ? errorResponse.data[0]?.message ||
+                    errorResponse.data[0]?.error ||
+                    errorResponse.data[0]?.error_description ||
+                    errorResponse.statusText ||
+                    'Bad Request'
+                  : errorResponse.data?.error?.message ||
+                    errorResponse.data?.message ||
+                    errorResponse.data?.error_description ||
+                    errorResponse.statusText ||
+                    'Bad Request';
 
                 const clientError = new CustomError(
                   typeof downstreamMessage === 'string'
@@ -621,7 +625,7 @@ export class ProxyService {
         }
       }
     }
-    
+
     const incomingCookie = reqHeaders.cookie;
 
     if (incomingCookie && !headers.cookie) {
@@ -716,8 +720,7 @@ export class ProxyService {
       return null;
     }
 
-    const isLocal =
-      process.env.NODE_ENV === 'local'
+    const isLocal = process.env.NODE_ENV === 'local';
 
     let sanitizedCookie = cookie
       .replace(/;\s*Domain=[^;]*/gi, '')
