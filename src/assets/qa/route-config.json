@@ -4982,7 +4982,8 @@
           }
         ],
         "reqTransform": "appRegistration.transformers.transformRegisterUserRequest",
-        "resTransform": "appRegistration.transformers.transformRegisterUserResponse"
+        "resTransform": "appRegistration.transformers.transformRegisterUserResponse",
+        "stopOnError": true
       },
       {
         "name": "fetch-access-token",
@@ -4992,7 +4993,8 @@
           "request": 20000,
           "socket": 1000
         },
-        "reqTransform": "appRegistration.transformers.transformFetchAccessTokenRequest"
+        "reqTransform": "appRegistration.transformers.transformFetchAccessTokenRequest",
+        "stopOnError": true
       }
     ],
     "resTransform": "appRegistration.transformers.mergeRegisterUserAndAccessTokenResponse"

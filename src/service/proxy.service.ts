@@ -316,6 +316,10 @@ export class ProxyService {
               'proxy.target': target.name || target.url,
               'proxy.error': err?.message || String(err),
             });
+            // Stop executing further targets on failure, introducing stopOnError flag in target config to decide this behavior
+            if (target.stopOnError) {
+              throw err;
+            }
           }
         }
 
@@ -368,15 +372,19 @@ export class ProxyService {
 
           maskedHeaders = {
             ...transformedRequestBody.headers,
-            authorization: transformedRequestBody.headers?.authorization ? '***masked***' : undefined,
-            Authorization: transformedRequestBody.headers?.Authorization ? '***masked***' : undefined,
+            authorization: transformedRequestBody.headers?.authorization
+              ? '***masked***'
+              : undefined,
+            Authorization: transformedRequestBody.headers?.Authorization
+              ? '***masked***'
+              : undefined,
             access_token: transformedRequestBody.headers?.access_token ? '***masked***' : undefined,
           };
 
           this.logger.log(
             `[DOWNSTREAM REQUEST] target=${target.name || target.url} route=${req.path} method=${target.method} url=${transformedRequestBody.url.href} headers=${JSON.stringify(maskedHeaders)} body=${JSON.stringify(transformedRequestBody.body ?? null)}`,
           );
-          
+
           const buildMs = this.nowMs() - buildStart;
 
           const clientCreateStart = this.nowMs();
@@ -474,8 +482,7 @@ export class ProxyService {
 
           span.setAttribute('proxy.target.duration_ms', totalMs);
 
-          const errorResponse =
-            axios.isAxiosError(err) && err.response ? err.response : null;
+          const errorResponse = axios.isAxiosError(err) && err.response ? err.response : null;
 
           this.logger.error(
             `[DOWNSTREAM ERROR] target=${target.name || target.url} route=${req.path} method=${target.method} url=${transformedRequestBody?.url?.href ?? 'NA'} duration_ms=${totalMs} error=${err?.message || String(err)} status=${errorResponse?.status ?? 'NA'} body=${JSON.stringify(transformedRequestBody?.body ?? null)} response=${JSON.stringify(errorResponse?.data ?? null)}`,
@@ -519,17 +526,17 @@ export class ProxyService {
               }
 
               if (errorResponse.status >= 400 && errorResponse.status < 500) {
-              const downstreamMessage = Array.isArray(errorResponse.data)
-                ? errorResponse.data[0]?.message ||
-                  errorResponse.data[0]?.error ||
-                  errorResponse.data[0]?.error_description ||
-                  errorResponse.statusText ||
-                  'Bad Request'
-                : errorResponse.data?.error?.message ||
-                  errorResponse.data?.message ||
-                  errorResponse.data?.error_description ||
-                  errorResponse.statusText ||
-                  'Bad Request';
+                const downstreamMessage = Array.isArray(errorResponse.data)
+                  ? errorResponse.data[0]?.message ||
+                    errorResponse.data[0]?.error ||
+                    errorResponse.data[0]?.error_description ||
+                    errorResponse.statusText ||
+                    'Bad Request'
+                  : errorResponse.data?.error?.message ||
+                    errorResponse.data?.message ||
+                    errorResponse.data?.error_description ||
+                    errorResponse.statusText ||
+                    'Bad Request';
 
                 const clientError = new CustomError(
                   typeof downstreamMessage === 'string'
@@ -621,7 +628,7 @@ export class ProxyService {
         }
       }
     }
-    
+
     const incomingCookie = reqHeaders.cookie;
 
     if (incomingCookie && !headers.cookie) {
@@ -716,8 +723,7 @@ export class ProxyService {
       return null;
     }
 
-    const isLocal =
-      process.env.NODE_ENV === 'local'
+    const isLocal = process.env.NODE_ENV === 'local';
 
     let sanitizedCookie = cookie
       .replace(/;\s*Domain=[^;]*/gi, '')

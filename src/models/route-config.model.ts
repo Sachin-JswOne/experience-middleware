@@ -2,6 +2,7 @@ import { AggregatorType } from 'src/enum/aggregation-type.enum';
 import { RouteHandler } from 'src/enum/route-handler.enum';
 
 export interface TargetConfig {
+  stopOnError: boolean;
   name?: string;
   url: string;
   method: string;
