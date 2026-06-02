@@ -476,10 +476,9 @@ export function mergeMaterialTrackingAndOrderListingResponses(
       data: materialTrackingResponseData,
     };
   } catch (error) {
-    Logger.log(
-      `Transforming Shipment Request  method: mergeMaterialTrackingAndOrderListingResponses`,
+    Logger.error(
+      `Transforming Shipment Request  method: mergeMaterialTrackingAndOrderListingResponses error: ${error}`,
     );
-    console.error('Error in mergeMaterialTrackingAndOrderListingResponses:', error);
     throw error;
   }
 }

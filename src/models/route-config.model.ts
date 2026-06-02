@@ -2,6 +2,7 @@ import { AggregatorType } from 'src/enum/aggregation-type.enum';
 import { RouteHandler } from 'src/enum/route-handler.enum';
 
 export interface TargetConfig {
+  stopOnError: boolean;
   name?: string;
   url: string;
   method: string;
@@ -46,4 +47,9 @@ export interface ConditionalRouteConfig extends BaseRouteConfig {
   targets: TargetConfig[];
 }
 
-export type RouteConfig = TransformRouteConfig | AggregateRouteConfig | ConditionalRouteConfig;
+export interface PassThroughRouteConfig extends BaseRouteConfig {
+  routeHandler: RouteHandler.PASS_THROUGH;
+  response: string;
+}
+
+export type RouteConfig = TransformRouteConfig | AggregateRouteConfig | ConditionalRouteConfig | PassThroughRouteConfig;

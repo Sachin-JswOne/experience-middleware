@@ -35,7 +35,6 @@ export function convertSlcResponse(response: any): any {
     Logger.error(
       `Error for SLC API method: convertSlcResponse Error in convertSlcResponse: ${error}`,
     );
-    console.error('Error in convertSlcResponse:', error);
     return { cartSummary: null };
   }
 }

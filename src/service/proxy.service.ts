@@ -1,5 +1,5 @@
 ﻿﻿/* eslint-disable @typescript-eslint/no-unsafe-argument */
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { trace, context, SpanStatusCode } from '@opentelemetry/api';
 import { createHttpClient } from '../utils/http-client.factory';
 import { applyTransform } from '../utils/transformer.util';
@@ -9,6 +9,7 @@ import { safeToLog } from 'src/utils/common-functions.util';
 import {
   AggregateRouteConfig,
   ConditionalRouteConfig,
+  PassThroughRouteConfig,
   TargetConfig,
 } from 'src/models/route-config.model';
 import { Request } from 'express';
@@ -19,15 +20,13 @@ import { IncomingHttpHeaders } from 'http';
 import { inspect } from 'util';
 import { CustomError } from 'src/utils/CustomError';
 import { match } from 'path-to-regexp';
-import Redis from 'ioredis';
 import axios from 'axios';
 
 @Injectable()
 export class ProxyService {
   private readonly tracer = trace.getTracer('experience-middleware');
   private readonly logger = new Logger(ProxyService.name);
-  constructor(@Inject('REDIS_CLIENT') private readonly redis: Redis) {}
-  // constructor() { }
+  constructor() {}
 
   private getCacheKey(req: Request): string {
     const explicitKey =
@@ -66,7 +65,7 @@ export class ProxyService {
   }
 
   async handleRequest(req: Request) {
-    console.log(`Incoming ${req.method} request: ${req.url}`);
+    this.logger.debug(`Incoming ${req.method} request: ${req.url}`);
     const route = this.findRoute(req);
 
     if (!route) {
@@ -87,25 +86,28 @@ export class ProxyService {
       throw new Error('Route config not found');
     }
 
-    const isCacheRequired = (route as any).isCacheRequired === true;
-    let cacheKey: string | null = null;
+    // TODO: disabling cache will enable with valkey integration
+    // const isCacheRequired = (route as any).isCacheRequired === true;
+    // let cacheKey: string | null = null;
 
-    if (isCacheRequired) {
-      cacheKey = this.getCacheKey(req);
-      try {
-        const cached = await this.redis.get(cacheKey);
-        if (cached) {
-          console.log(`**Cache HIT for ${cacheKey}`);
-          return JSON.parse(cached);
-        }
-        console.log(`**Cache MISS for ${cacheKey}`);
-      } catch (err) {
-        // Don't break the request if Redis is unhappy; just log and continue
-        console.error('Redis GET error, bypassing cache:', err);
-      }
-    } else {
-      console.log(`Caching disabled for route ${req.method} ${route.path} (isCacheRequired=false)`);
-    }
+    // if (isCacheRequired) {
+    //   cacheKey = this.getCacheKey(req);
+    //   try {
+    //     const cached = await this.redis.get(cacheKey);
+    //     if (cached) {
+    //       this.logger.debug(`Cache HIT for ${cacheKey}`);
+    //       return JSON.parse(cached);
+    //     }
+    //     this.logger.debug(`Cache MISS for ${cacheKey}`);
+    //   } catch (err) {
+    //     // Don't break the request if Redis is unhappy; just log and continue
+    //     this.logger.error('Redis GET error, bypassing cache', err);
+    //   }
+    // } else {
+    //   this.logger.debug(
+    //     `Caching disabled for route ${req.method} ${route.path} (isCacheRequired=false)`,
+    //   );
+    // }
 
     const activeSpan = trace.getSpan(context.active());
     const spanContext = activeSpan?.spanContext();
@@ -134,24 +136,30 @@ export class ProxyService {
       case RouteHandler.CONDITIONAL:
         data = await this.handleConditionalRequest(route, req);
         break;
+      case RouteHandler.PASS_THROUGH:
+        data = await this.handlePassThroughRequest(route, req);
+        break;
       default:
         throw new Error('Unsupported route handler');
     }
 
-    if (isCacheRequired && cacheKey) {
-      try {
-        const ttlSeconds = process.env.CACHE_TTL_SECONDS
-          ? parseInt(process.env.CACHE_TTL_SECONDS, 10)
-          : 30 * 60;
+    // if (isCacheRequired && cacheKey) {
+    //   try {
+    //     const ttlSeconds = process.env.CACHE_TTL_SECONDS
+    //       ? parseInt(process.env.CACHE_TTL_SECONDS, 10)
+    //       : 30 * 60;
 
-        await this.redis.set(cacheKey, JSON.stringify(data), 'EX', ttlSeconds);
-        console.log(`**Cached response for ${cacheKey}`);
-      } catch (err) {
-        console.error('Redis SET error, continuing without cache:', err);
-      }
-    }
+    //     await this.redis.set(cacheKey, JSON.stringify(data), 'EX', ttlSeconds);
+    //     this.logger.debug(`Cached response for ${cacheKey}`);
+    //   } catch (err) {
+    //     this.logger.error('Redis SET error, continuing without cache', err);
+    //   }
+    // }
 
     return data;
+  }
+  handlePassThroughRequest(route: PassThroughRouteConfig, req: Request): any {
+    return route.response;
   }
 
   private findRoute(req: Request) {
@@ -210,7 +218,7 @@ export class ProxyService {
       span.setAttribute('cache.hit', false);
 
       try {
-        console.log(`Processing PARALLEL request for ${req.url}`);
+        this.logger.log(`Processing PARALLEL request for ${req.url}`);
         const results = await Promise.allSettled<AggregatedResponse>(
           route.targets.map(async (target: TargetConfig): Promise<AggregatedResponse> => {
             try {
@@ -286,7 +294,7 @@ export class ProxyService {
       const results: AggregatedResponse[] = [];
 
       try {
-        console.log(`Processing SEQUENTIAL request for ${req.url}`);
+        this.logger.log(`Processing SEQUENTIAL request for ${req.url}`);
 
         for (const target of route.targets) {
           try {
@@ -309,6 +317,10 @@ export class ProxyService {
               'proxy.target': target.name || target.url,
               'proxy.error': err?.message || String(err),
             });
+            // Stop executing further targets on failure, introducing stopOnError flag in target config to decide this behavior
+            if (target.stopOnError) {
+              throw err;
+            }
           }
         }
 
@@ -361,15 +373,19 @@ export class ProxyService {
 
           maskedHeaders = {
             ...transformedRequestBody.headers,
-            authorization: transformedRequestBody.headers?.authorization ? '***masked***' : undefined,
-            Authorization: transformedRequestBody.headers?.Authorization ? '***masked***' : undefined,
+            authorization: transformedRequestBody.headers?.authorization
+              ? '***masked***'
+              : undefined,
+            Authorization: transformedRequestBody.headers?.Authorization
+              ? '***masked***'
+              : undefined,
             access_token: transformedRequestBody.headers?.access_token ? '***masked***' : undefined,
           };
 
           this.logger.log(
             `[DOWNSTREAM REQUEST] target=${target.name || target.url} route=${req.path} method=${target.method} url=${transformedRequestBody.url.href} headers=${JSON.stringify(maskedHeaders)} body=${JSON.stringify(transformedRequestBody.body ?? null)}`,
           );
-          
+
           const buildMs = this.nowMs() - buildStart;
 
           const clientCreateStart = this.nowMs();
@@ -429,7 +445,7 @@ export class ProxyService {
           );
 
           if (responseData) {
-            const responseStr = JSON.stringify(responseData);
+            const responseStr = inspect(responseData);
             span.setAttribute('api.response.size', responseStr.length);
 
             if (responseStr.length > 1000) {
@@ -446,7 +462,8 @@ export class ProxyService {
               500,
             ) as any;
             error.status = response.status;
-            error.response = response;
+            // Only attach data to avoid circular structures from the native Axios response
+            error.response = { data: response.data };
             throw error;
           }
 
@@ -466,8 +483,7 @@ export class ProxyService {
 
           span.setAttribute('proxy.target.duration_ms', totalMs);
 
-          const errorResponse =
-            axios.isAxiosError(err) && err.response ? err.response : null;
+          const errorResponse = axios.isAxiosError(err) && err.response ? err.response : null;
 
           this.logger.error(
             `[DOWNSTREAM ERROR] target=${target.name || target.url} route=${req.path} method=${target.method} url=${transformedRequestBody?.url?.href ?? 'NA'} duration_ms=${totalMs} error=${err?.message || String(err)} status=${errorResponse?.status ?? 'NA'} body=${JSON.stringify(transformedRequestBody?.body ?? null)} response=${JSON.stringify(errorResponse?.data ?? null)}`,
@@ -511,17 +527,17 @@ export class ProxyService {
               }
 
               if (errorResponse.status >= 400 && errorResponse.status < 500) {
-              const downstreamMessage = Array.isArray(errorResponse.data)
-                ? errorResponse.data[0]?.message ||
-                  errorResponse.data[0]?.error ||
-                  errorResponse.data[0]?.error_description ||
-                  errorResponse.statusText ||
-                  'Bad Request'
-                : errorResponse.data?.error?.message ||
-                  errorResponse.data?.message ||
-                  errorResponse.data?.error_description ||
-                  errorResponse.statusText ||
-                  'Bad Request';
+                const downstreamMessage = Array.isArray(errorResponse.data)
+                  ? errorResponse.data[0]?.message ||
+                    errorResponse.data[0]?.error ||
+                    errorResponse.data[0]?.error_description ||
+                    errorResponse.statusText ||
+                    'Bad Request'
+                  : errorResponse.data?.error?.message ||
+                    errorResponse.data?.message ||
+                    errorResponse.data?.error_description ||
+                    errorResponse.statusText ||
+                    'Bad Request';
 
                 const clientError = new CustomError(
                   typeof downstreamMessage === 'string'
@@ -613,7 +629,7 @@ export class ProxyService {
         }
       }
     }
-    
+
     const incomingCookie = reqHeaders.cookie;
 
     if (incomingCookie && !headers.cookie) {
@@ -708,8 +724,7 @@ export class ProxyService {
       return null;
     }
 
-    const isLocal =
-      process.env.NODE_ENV === 'local'
+    const isLocal = process.env.NODE_ENV === 'local';
 
     let sanitizedCookie = cookie
       .replace(/;\s*Domain=[^;]*/gi, '')

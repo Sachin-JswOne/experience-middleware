@@ -365,6 +365,7 @@ export function transformPasscodeResponse(response) {
     accessToken: '',
     userExists: responseData?.customerRegister,
     userType: USER_TYPE,
+    refreshToken: '',
   };
   if (!responseData?.customerRegister) {
     return verifyPasscodeResponse;
@@ -389,6 +390,7 @@ export function transformPasscodeResponse(response) {
   return {
     ...verifyPasscodeResponse,
     accessToken: responseData.jwtToken,
+    refreshToken: responseData.refreshToken,
   };
 }
 
@@ -427,6 +429,7 @@ export function validateSellerData(data) {
       data[field] === null ||
       data[field] === ''
     ) {
+      safeDebug(Logger, () => `Validation failed for field: ${field}, value: ${data[field]}`);
       return {
         isValid: false,
         errorMessage: `Field ${field} is missing or empty.`,

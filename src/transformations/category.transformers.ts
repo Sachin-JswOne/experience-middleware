@@ -249,7 +249,7 @@ export function mergeWebGlobalResponse(results: AggregatedResponse[]): any {
   }
   // If CCA failed or has no data, return Strapi data as is (fallback)
   if (!centralCatalogueResult || !centralCatalogueResult.success) {
-    console.warn('CCA fetch failed, returning original Strapi data');
+    Logger.warn('CCA fetch failed, returning original Strapi data');
     return strapiResult.data;
   }
   const appGlobalData = strapiResult.data; // This is the full response object

@@ -2,6 +2,7 @@ import * as dotenv from 'dotenv';
 dotenv.config();
 
 export const APP_ENV = process.env.APP_ENV || 'dev';
+export const JWT_SECRET = process.env.JWT_SECRET;
 
 // Below line is Getting imported in tranformer.
 export const CMS_MSME_URL = process.env.CMS_MSME_URL;

@@ -1,0 +1,22 @@
+{
+  "CMS_MSME_URL": "https://qa-cms-ext.msme.jswone.in/api",
+  "CUSTOMER_SERVICE_X_API_KEY": "7sf7",
+  "ERP_BASE_URI": "https://next.qa.jswone.in/external-connector-inbound/api/internal/v1/retail",
+  "ERP_CLIENT_ID": "CLIEX3",
+  "EXPERIENCE_MIDDLEWARE_URL": "https://experience-middleware.qa.jswone.in",
+  "GOOGLE_MAPS_URL": "https://maps.googleapis.com/maps/api",
+  "GSTIN_X_API_KEY": "CustomerService-v1-4iy665w9f64u0h87wpoevhi5zflxy8cwa7y09rjvhu24sinjlcmlq8bdfmdz5hh6",
+  "HOMES_CMS_URL": "https://cms-qa.onejswhomes.in/api",
+  "HOMES_SERVICE_URL": "https://services-dev.onejswhomes.in",
+  "MSME_BASE_URL": "https://qa.msme.jswone.in",
+  "OMS_URL": "https://qa-oms.msme.jswone.in",
+  "ONE_HELIX_TASK_API_AUTHORIZATION": "vdf9",
+  "PATH_URL": "/xp-mi/public",
+  "RETAIL_URL": "https://jswoneconstruct.in/jswretail",
+  "SF_BASE_URI": "https://jswoneplatforms--uat.sandbox.my.salesforce.com",
+  "TMS_BASE_URI": "https://tms.qa.jswone.in",
+  "X_API_KEY_CONNECTOR": "14dfv",
+  "X_API_KEY_FOR_LOGIN": "AuthService-v1-53zgm5wrxbb6q74p04ilw8tql3jx4p4ci7301l0ua9pv1q5ddg3o0r84mnesog1f",
+  "X_API_KEY_FOR_ORDER_LISTING": "Zoho.Connector.Yrt664kT",
+  "X_API_KEY_FOR_REGISTRATION": "CustomerService-v1-4iy665w9f64u0h87wpoevhi5zflxy8cwa7y09rjvhu24sinjlcmlq8bdfmdz5hh6"
+}
