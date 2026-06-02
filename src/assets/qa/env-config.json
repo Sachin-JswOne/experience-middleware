@@ -8,7 +8,7 @@
   "GSTIN_X_API_KEY": "CustomerService-v1-4iy665w9f64u0h87wpoevhi5zflxy8cwa7y09rjvhu24sinjlcmlq8bdfmdz5hh6",
   "HOMES_CMS_URL": "https://cms-qa.onejswhomes.in/api",
   "HOMES_SERVICE_URL": "https://services-dev.onejswhomes.in",
-  "MSME_BASE_URL": "https://qa.msme.jswone.in",
+  "MSME_BASE_URL": "https://qa-ssr.msme.jswone.in",
   "OMS_URL": "https://qa-oms.msme.jswone.in",
   "ONE_HELIX_TASK_API_AUTHORIZATION": "vdf9",
   "PATH_URL": "/xp-mi/public",
