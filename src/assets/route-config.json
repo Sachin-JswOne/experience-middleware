@@ -2400,6 +2400,10 @@
           {
             "source": "user-type",
             "destination": "user-type"
+          },
+          {
+            "source": "central-catalogue-global",
+            "destination": "central-catalogue-global"
           }
         ]
       },
@@ -2435,6 +2439,10 @@
           {
             "source": "user-type",
             "destination": "user-type"
+          },
+          {
+            "source": "central-catalogue-global",
+            "destination": "central-catalogue-global"
           }
         ]
       }
@@ -2486,6 +2494,10 @@
           {
             "source": "x-user-state",
             "destination": "x-user-state"
+          },
+          {
+            "source": "central-catalogue-global",
+            "destination": "central-catalogue-global"
           }
         ]
       }
@@ -2498,17 +2510,6 @@
     "routeHandler": "AGGREGATE",
     "aggregationType": "PARALLEL",
     "targets": [
-      {
-        "name": "cmsFeatureFlag",
-        "url": "${CMS_MSME_URL}/ccp-feature-flags",
-        "method": "GET",
-        "timeout": {
-          "request": "${TIMEOUTS.REQUEST}",
-          "socket": "${TIMEOUTS.SOCKET}"
-        },
-        "reqTransform": "web.transformers.addFeatureFlagQueryParamsFromParallelPayload",
-        "resTransform": "cms.transformers.replaceUriPrefix"
-      },
       {
         "name": "app-blogs",
         "url": "${CMS_MSME_URL}/jsw-blogs-articless",
@@ -2549,6 +2550,26 @@
           "socket": 1000
         },
         "reqTransform": "web.transformers.extractBrandCategoryIdsv3FromCmsBody",
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "access_token"
+          },
+          {
+            "source": "access_token",
+            "destination": "access_token"
+          }
+        ]
+      },
+      {
+        "name": "ccp-top-items-product-details",
+        "url": "${MSME_BASE_URL}/central_commerce/catalogue/product-details",
+        "method": "POST",
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
+        "reqTransform": "web.transformers.transformWebHomePageTopItemsMMIDRequestV3FromCmsBody",
         "headersToPass": [
           {
             "source": "authorization",
@@ -2664,17 +2685,6 @@
     "routeHandler": "AGGREGATE",
     "aggregationType": "PARALLEL",
     "targets": [
-      {
-        "name": "cmsFeatureFlag",
-        "url": "${CMS_MSME_URL}/ccp-feature-flags",
-        "method": "GET",
-        "timeout": {
-          "request": 10000,
-          "socket": 1000
-        },
-        "reqTransform": "web.transformers.addFeatureFlagQueryParamsFromParallelPayload",
-        "resTransform": "cms.transformers.replaceUriPrefix"
-      },
       {
         "name": "ccp-buy-again-with-prices",
         "url": "${MSME_BASE_URL}/central_commerce/buy-again-list",
