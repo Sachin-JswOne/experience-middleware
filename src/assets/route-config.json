@@ -1,6 +1,6 @@
 [
   {
-    "path": "${PATH_URL}/v1/app-home-page",
+    "path": "/xp-mi/public/v1/app-home-page",
     "method": "GET",
     "routeHandler": "TRANSFORM",
     "isCacheRequired": false,
@@ -16,7 +16,7 @@
     }
   },
   {
-    "path": "${PATH_URL}/v1/app-home-page",
+    "path": "/xp-mi/public/v1/app-home-page",
     "method": "POST",
     "routeHandler": "TRANSFORM",
     "isCacheRequired": false,
@@ -33,7 +33,7 @@
     }
   },
   {
-    "path": "${PATH_URL}/v1/app-home-page",
+    "path": "/xp-mi/public/v1/app-home-page",
     "method": "POST",
     "routeHandler": "AGGREGATE",
     "aggregationType": "PARALLEL",
@@ -120,7 +120,7 @@
     }
   },
   {
-    "path": "${PATH_URL}/v1/app-global",
+    "path": "/xp-mi/public/v1/app-global",
     "method": "POST",
     "routeHandler": "TRANSFORM",
     "isCacheRequired": false,
@@ -137,7 +137,7 @@
     }
   },
   {
-    "path": "${PATH_URL}/v1/app-product-categories",
+    "path": "/xp-mi/public/v1/app-product-categories",
     "method": "POST",
     "routeHandler": "TRANSFORM",
     "target": {
@@ -153,7 +153,7 @@
     }
   },
   {
-    "path": "${PATH_URL}/v1/line-item-price",
+    "path": "/xp-mi/public/v1/line-item-price",
     "method": "POST",
     "routeHandler": "TRANSFORM",
     "target": {
@@ -175,7 +175,7 @@
     }
   },
   {
-    "path": "${PATH_URL}/v1/buy-again-with-prices",
+    "path": "/xp-mi/public/v1/buy-again-with-prices",
     "method": "GET",
     "routeHandler": "AGGREGATE",
     "aggregationType": "PARALLEL",
@@ -216,7 +216,7 @@
     "resTransform": "app.transformers.mergeBuyAgainResponses"
   },
   {
-    "path": "${PATH_URL}/v1/app-pdp-pages",
+    "path": "/xp-mi/public/v1/app-pdp-pages",
     "method": "POST",
     "routeHandler": "TRANSFORM",
     "isCacheRequired": false,
@@ -233,7 +233,7 @@
     }
   },
   {
-    "path": "${PATH_URL}/v1/app-top-brands",
+    "path": "/xp-mi/public/v1/app-top-brands",
     "method": "POST",
     "routeHandler": "AGGREGATE",
     "aggregationType": "PARALLEL",
@@ -269,7 +269,7 @@
     "resTransform": "app.transformers.mergeTopBrandsResponses"
   },
   {
-    "path": "${PATH_URL}/v2/app-home-page-v2",
+    "path": "/xp-mi/public/v2/app-home-page-v2",
     "method": "POST",
     "routeHandler": "AGGREGATE",
     "aggregationType": "PARALLEL",
@@ -355,7 +355,7 @@
     "resTransform": "app.transformers.mergeHomePageResponses"
   },
   {
-    "path": "${PATH_URL}/v1/app-invoice-and-documents",
+    "path": "/xp-mi/public/v1/app-invoice-and-documents",
     "method": "GET",
     "routeHandler": "TRANSFORM",
     "target": {
@@ -375,7 +375,7 @@
     }
   },
   {
-    "path": "${PATH_URL}/v1/app-cart-page",
+    "path": "/xp-mi/public/v1/app-cart-page",
     "method": "POST",
     "routeHandler": "AGGREGATE",
     "aggregationType": "PARALLEL",
@@ -420,7 +420,7 @@
     "resTransform": "cart.transformers.mergeCartPageResponses"
   },
   {
-    "path": "${PATH_URL}/v1/app-shipments",
+    "path": "/xp-mi/public/v1/app-shipments",
     "method": "GET",
     "routeHandler": "AGGREGATE",
     "aggregationType": "PARALLEL",
@@ -458,7 +458,7 @@
     "resTransform": "shipments.transformers.mergeInvoiceAndShipmentsResponse"
   },
   {
-    "path": "${PATH_URL}/v1/verify-gst",
+    "path": "/xp-mi/public/v1/verify-gst",
     "method": "POST",
     "routeHandler": "TRANSFORM",
     "isCacheRequired": false,
@@ -541,7 +541,7 @@
     }
   },
   {
-    "path": "${PATH_URL}/v1/reset-password",
+    "path": "/xp-mi/public/v1/reset-password",
     "method": "POST",
     "routeHandler": "TRANSFORM",
     "target": {
@@ -560,7 +560,7 @@
     }
   },
   {
-    "path": "${PATH_URL}/v1/verify-mobile-number",
+    "path": "/xp-mi/public/v1/verify-mobile-number",
     "method": "POST",
     "routeHandler": "TRANSFORM",
     "target": {
@@ -579,7 +579,7 @@
     }
   },
   {
-    "path": "${PATH_URL}/v1/app-login-page",
+    "path": "/xp-mi/public/v1/app-login-page",
     "method": "POST",
     "routeHandler": "TRANSFORM",
     "target": {
@@ -595,7 +595,7 @@
     }
   },
   {
-    "path": "${PATH_URL}/v1/verify-mobile-number-with-otp",
+    "path": "/xp-mi/public/v1/verify-mobile-number-with-otp",
     "method": "POST",
     "routeHandler": "TRANSFORM",
     "target": {
@@ -731,7 +731,7 @@
     }
   },
   {
-    "path": "${PATH_URL}/v1/paymentsdue",
+    "path": "/xp-mi/public/v1/paymentsdue",
     "method": "GET",
     "routeHandler": "TRANSFORM",
     "isCacheRequired": false,
@@ -753,7 +753,7 @@
     }
   },
   {
-    "path": "${PATH_URL}/v1/feature-flags",
+    "path": "/xp-mi/public/v1/feature-flags",
     "method": "POST",
     "routeHandler": "TRANSFORM",
     "target": {
@@ -769,7 +769,7 @@
     }
   },
   {
-    "path": "${PATH_URL}/v1/app-orders",
+    "path": "/xp-mi/public/v1/app-orders",
     "method": "POST",
     "routeHandler": "AGGREGATE",
     "aggregationType": "PARALLEL",
@@ -798,7 +798,7 @@
     "resTransform": "orderListing.transformers.mergeMaterialTrackingAndOrderListingResponses"
   },
   {
-    "path": "${PATH_URL}/v1/order-detail/:id",
+    "path": "/xp-mi/public/v1/order-detail/:id",
     "method": "GET",
     "routeHandler": "CONDITIONAL",
     "conditionTransform": "orderDetails.transformers.selectOrderDetailTarget",
@@ -831,7 +831,7 @@
     ]
   },
   {
-    "path": "${PATH_URL}/v1/otp-implicit-consent",
+    "path": "/xp-mi/public/v1/otp-implicit-consent",
     "method": "POST",
     "routeHandler": "TRANSFORM",
     "isCacheRequired": false,
@@ -1026,7 +1026,7 @@
     "resTransform": "web.transformers.handleProductResponse"
   },
   {
-    "path": "${PATH_URL}/v1/login",
+    "path": "/xp-mi/public/v1/login",
     "method": "POST",
     "routeHandler": "CONDITIONAL",
     "conditionTransform": "login.transformers.selectLoginTarget",
@@ -1063,7 +1063,7 @@
     ]
   },
   {
-    "path": "${PATH_URL}/v1/web-global",
+    "path": "/xp-mi/public/v1/web-global",
     "method": "POST",
     "routeHandler": "AGGREGATE",
     "aggregationType": "SEQUENTIAL",
@@ -1110,7 +1110,7 @@
     "resTransform": "category.transformers.mergeWebGlobalResponse"
   },
   {
-    "path": "${PATH_URL}/v1/web-sitemap-categories",
+    "path": "/xp-mi/public/v1/web-sitemap-categories",
     "method": "POST",
     "routeHandler": "TRANSFORM",
     "isCacheRequired": false,
@@ -1127,7 +1127,7 @@
     }
   },
   {
-    "path": "${PATH_URL}/v1/web-industries",
+    "path": "/xp-mi/public/v1/web-industries",
     "method": "POST",
     "routeHandler": "TRANSFORM",
     "isCacheRequired": false,
@@ -1144,7 +1144,7 @@
     }
   },
   {
-    "path": "${PATH_URL}/v1/web-header-links",
+    "path": "/xp-mi/public/v1/web-header-links",
     "method": "POST",
     "routeHandler": "TRANSFORM",
     "isCacheRequired": false,
@@ -1212,7 +1212,7 @@
     }
   },
   {
-    "path": "${PATH_URL}/v1/customer-profile",
+    "path": "/xp-mi/public/v1/customer-profile",
     "method": "GET",
     "routeHandler": "AGGREGATE",
     "aggregationType": "SEQUENTIAL",
@@ -1285,7 +1285,7 @@
     "resTransform": "customer.transformers.mergeCustomerProfile"
   },
   {
-    "path": "${PATH_URL}/v1/getCustomerLocation",
+    "path": "/xp-mi/public/v1/getCustomerLocation",
     "method": "POST",
     "routeHandler": "AGGREGATE",
     "aggregationType": "SEQUENTIAL",
@@ -1454,7 +1454,7 @@
     "resTransform": "cart.transformers.mergeCartPageResponses"
   },
   {
-    "path": "${PATH_URL}/v1/add-to-cart",
+    "path": "/xp-mi/public/v1/add-to-cart",
     "method": "POST",
     "routeHandler": "TRANSFORM",
     "target": {
@@ -3839,8 +3839,203 @@
   {
     "path": "/xp-mi/public/v4/app-home-page-v4",
     "method": "POST",
+    "routeHandler": "CONDITIONAL",
+    "conditionTransform": "appHomePage.transformers.selectAppHomePageTargetByUserType",
+    "targets": [
+      {
+        "name": "app-home-page-guest",
+        "url": "http://localhost:3000/xp-mi/public/v4/app-home-page-v4-guest",
+        "method": "POST",
+        "timeout": {
+          "request": 20000,
+          "socket": 1000
+        }
+      },
+      {
+        "name": "app-home-page-registered",
+        "url": "http://localhost:3000/xp-mi/public/v4/app-home-page-v4-registered",
+        "method": "POST",
+        "timeout": {
+          "request": 20000,
+          "socket": 1000
+        },
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "authorization"
+          },
+          {
+            "source": "authorization",
+            "destination": "access_token"
+          },
+          {
+            "source": "access_token",
+            "destination": "authorization"
+          },
+          {
+            "source": "access_token",
+            "destination": "access_token"
+          },
+          {
+            "source": "x-user-state",
+            "destination": "x-user-state"
+          },
+          {
+            "source": "user-type",
+            "destination": "user-type"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "path": "/xp-mi/public/v4/app-home-page-v4-guest",
+    "method": "POST",
     "routeHandler": "AGGREGATE",
-    "aggregationType": "SEQUENTIAL",
+    "aggregationType": "SEQUENTIAL_THEN_PARALLEL",
+    "targets": [
+      {
+        "name": "layout-mweb-homepages",
+        "url": "${CMS_MSME_URL}/layout-mweb-homepages",
+        "method": "GET",
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
+        "reqTransform": "general.transformers.moveBodyToQueryParams",
+        "resTransform": "cms.transformers.replaceUriPrefix"
+      },
+      {
+        "name": "app-search-top-items",
+        "url": "${MSME_BASE_URL}/central_commerce/catalogue/product-details",
+        "method": "POST",
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
+        "reqTransform": "web.transformers.transformWebHomePageTopItemsMMIDRequestV3",
+        "headersToPass": [
+          {
+            "source": "Authorization",
+            "destination": "Access_token"
+          }
+        ]
+      },
+      {
+        "name": "app-top-brands",
+        "url": "${MSME_BASE_URL}/central_commerce/categories/tree/list",
+        "method": "POST",
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
+        "reqTransform": "web.transformers.extractBrandCategoryIdsv3",
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "access_token"
+          }
+        ]
+      },
+      {
+        "name": "app-categories",
+        "url": "${MSME_BASE_URL}/central_commerce/categories/tree/list",
+        "method": "POST",
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
+        "reqTransform": "web.transformers.extractCentralCatalogueCategoryIdsv3",
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "access_token"
+          }
+        ]
+      },
+      {
+        "name": "app-blogs",
+        "url": "${CMS_MSME_URL}/jsw-blogs-articless",
+        "method": "GET",
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
+        "reqTransform": "cms.transformers.homeBlogs",
+        "resTransform": "cms.transformers.replaceUriPrefix"
+      },
+      {
+        "name": "web-homepage-products",
+        "url": "${EXPERIENCE_MIDDLEWARE_URL}/xp-mi/public/v1/web-products",
+        "method": "GET",
+        "timeout": {
+          "request": 10000,
+          "socket": 1000
+        },
+        "reqTransform": "general.transformers.convertToGetRequest",
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "authorization"
+          }
+        ]
+      },
+      {
+        "name": "industry-products-listing",
+        "url": "${MSME_BASE_URL}/central_commerce/products/listing",
+        "method": "POST",
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
+        "reqTransform": "web.segment.transformers.extractProductListingSlugSegment",
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "access_token"
+          }
+        ]
+      },
+      {
+        "name": "recent-viewed-remove",
+        "url": "${MSME_BASE_URL}/central_commerce/recent-viewed/remove",
+        "method": "GET",
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
+        "reqTransform": "general.transformers.convertToGetRequest",
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "access_token"
+          }
+        ]
+      },
+      {
+        "name": "recently-viewed-product-details",
+        "url": "${MSME_BASE_URL}/central_commerce/catalogue/product-details",
+        "method": "POST",
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
+        "reqTransform": "web.transformers.transformRecentlyViewedMMIDsRequest",
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "access_token"
+          }
+        ]
+      }
+    ],
+    "resTransform": "appHomePage.transformers.mergeAppHomePageResponseV4"
+  },
+  {
+    "path": "/xp-mi/public/v4/app-home-page-v4-registered",
+    "method": "POST",
+    "routeHandler": "AGGREGATE",
+    "aggregationType": "SEQUENTIAL_THEN_PARALLEL",
     "targets": [
       {
         "name": "layout-mweb-homepages",
@@ -3962,22 +4157,6 @@
         ]
       },
       {
-        "name": "products-listing",
-        "url": "${MSME_BASE_URL}/central_commerce/products/listing",
-        "method": "POST",
-        "timeout": {
-          "request": 5000,
-          "socket": 1000
-        },
-        "reqTransform": "web.transformers.extractProductListingSlugv3",
-        "headersToPass": [
-          {
-            "source": "authorization",
-            "destination": "access_token"
-          }
-        ]
-      },
-      {
         "name": "industry-products-listing",
         "url": "${MSME_BASE_URL}/central_commerce/products/listing",
         "method": "POST",
@@ -4024,17 +4203,6 @@
             "destination": "access_token"
           }
         ]
-      },
-      {
-        "name": "cmsFeatureFlag",
-        "url": "${CMS_MSME_URL}/ccp-feature-flags",
-        "method": "GET",
-        "timeout": {
-          "request": "${TIMEOUTS.REQUEST}",
-          "socket": "${TIMEOUTS.SOCKET}"
-        },
-        "reqTransform": "category.transformers.addFeatureFlagQueryParams",
-        "resTransform": "cms.transformers.replaceUriPrefix"
       }
     ],
     "resTransform": "appHomePage.transformers.mergeAppHomePageResponseV4"
@@ -4474,10 +4642,10 @@
     "path": "/xp-mi/public/v3/app-home-page-v3",
     "method": "POST",
     "routeHandler": "CONDITIONAL",
-    "conditionTransform": "appHomePage.transformers.selectAppHomePageV3TargetByUserType",
+    "conditionTransform": "appHomePage.transformers.selectAppHomePageTargetByUserType",
     "targets": [
       {
-        "name": "app-home-page-v3-guest",
+        "name": "app-home-page-guest",
         "url": "${EXPERIENCE_MIDDLEWARE_URL}/xp-mi/public/v3/app-home-page-v3-guest",
         "method": "POST",
         "timeout": {
@@ -4486,7 +4654,7 @@
         }
       },
       {
-        "name": "app-home-page-v3-registered",
+        "name": "app-home-page-registered",
         "url": "${EXPERIENCE_MIDDLEWARE_URL}/xp-mi/public/v3/app-home-page-v3-registered",
         "method": "POST",
         "timeout": {
@@ -4526,7 +4694,7 @@
     "path": "/xp-mi/public/v3/app-home-page-v3-guest",
     "method": "POST",
     "routeHandler": "AGGREGATE",
-    "aggregationType": "SEQUENTIAL",
+    "aggregationType": "SEQUENTIAL_THEN_PARALLEL",
     "targets": [
       {
         "name": "app-home-page",
@@ -4539,25 +4707,6 @@
         "reqTransform": "general.transformers.transformAppHomePageRequest",
         "resTransform": "cms.transformers.replaceUriPrefix"
       },
-      {
-        "name": "app-home-page-v3-guest-parallel-helper",
-        "url": "${EXPERIENCE_MIDDLEWARE_URL}/xp-mi/public/v3/app-home-page-v3-guest-parallel-helper",
-        "method": "POST",
-        "timeout": {
-          "request": 10000,
-          "socket": 1000
-        },
-        "reqTransform": "appHomePage.transformers.prepareWebHomePageV3ParallelPayload"
-      }
-    ],
-    "resTransform": "appHomePage.transformers.mergeAppHomePageResponsesV3FromNestedParallel"
-  },
-  {
-    "path": "/xp-mi/public/v3/app-home-page-v3-guest-parallel-helper",
-    "method": "POST",
-    "routeHandler": "AGGREGATE",
-    "aggregationType": "PARALLEL",
-    "targets": [
       {
         "name": "app-search-top-items",
         "url": "${MSME_BASE_URL}/central_commerce/catalogue/product-details",
@@ -4606,13 +4755,14 @@
           }
         ]
       }
-    ]
+    ],
+    "resTransform": "appHomePage.transformers.mergeAppHomePageResponses"
   },
   {
     "path": "/xp-mi/public/v3/app-home-page-v3-registered",
     "method": "POST",
     "routeHandler": "AGGREGATE",
-    "aggregationType": "SEQUENTIAL",
+    "aggregationType": "SEQUENTIAL_THEN_PARALLEL",
     "targets": [
       {
         "name": "app-home-page",
@@ -4625,51 +4775,6 @@
         "reqTransform": "general.transformers.transformAppHomePageRequest",
         "resTransform": "cms.transformers.replaceUriPrefix"
       },
-      {
-        "name": "app-home-page-v3-registered-parallel-helper",
-        "url": "${EXPERIENCE_MIDDLEWARE_URL}/xp-mi/public/v3/app-home-page-v3-registered-parallel-helper",
-        "method": "POST",
-        "timeout": {
-          "request": 10000,
-          "socket": 1000
-        },
-        "headersToPass": [
-          {
-            "source": "authorization",
-            "destination": "authorization"
-          },
-          {
-            "source": "authorization",
-            "destination": "access_token"
-          },
-          {
-            "source": "access_token",
-            "destination": "authorization"
-          },
-          {
-            "source": "access_token",
-            "destination": "access_token"
-          },
-          {
-            "source": "x-user-state",
-            "destination": "x-user-state"
-          },
-          {
-            "source": "user-type",
-            "destination": "user-type"
-          }
-        ],
-        "reqTransform": "appHomePage.transformers.prepareWebHomePageV3ParallelPayload"
-      }
-    ],
-    "resTransform": "appHomePage.transformers.mergeAppHomePageResponsesV3FromNestedParallel"
-  },
-  {
-    "path": "/xp-mi/public/v3/app-home-page-v3-registered-parallel-helper",
-    "method": "POST",
-    "routeHandler": "AGGREGATE",
-    "aggregationType": "PARALLEL",
-    "targets": [
       {
         "name": "app-search-top-items",
         "url": "${MSME_BASE_URL}/central_commerce/catalogue/product-details",
@@ -4751,7 +4856,8 @@
         ],
         "reqTransform": "app.transformers.transformInTransitRequest"
       }
-    ]
+    ],
+    "resTransform": "appHomePage.transformers.mergeAppHomePageResponses"
   },
   {
     "path": "/xp-mi/public/v1/order-service/order/guided-ticket/invoice-numbers",
