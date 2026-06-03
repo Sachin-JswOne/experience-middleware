@@ -1322,22 +1322,16 @@
       },
       {
         "name": "gstin-customer-profile",
-        "url": "${MSME_BASE_URL}/central_commerce/customer/v1",
+        "url": "${TMS_BASE_URI}/account-master/profile/v1",
         "method": "GET",
         "timeout": {
           "request": "${TIMEOUTS.REQUEST}",
           "socket": "${TIMEOUTS.SOCKET}"
         },
-        "headersToPass": [
-          {
-            "source": "authorization",
-            "destination": "access_token"
-          },
-          {
-            "source": "access_token",
-            "destination": "access_token"
-          }
-        ]
+        "staticHeaders": {
+          "x-api-key": "${X_API_KEY_CONNECTOR}"
+        },
+        "reqTransform": "customer.transformers.injectGstinFromProfile"
       }
     ],
     "resTransform": "customer.transformers.mergeCustomerProfile"
