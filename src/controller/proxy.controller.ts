@@ -42,6 +42,11 @@ export class ProxyController {
   @All('public/*path')
   async handle(@Req() req: TracedRequest, @Res() res: Response) {
     const startTime = Date.now();
+    const startIso = new Date(startTime).toISOString();
+
+    this.logger.log(
+      `[REQUEST START] method=${req.method} path=${req.path} timestamp=${startIso} trace_id=${req.traceId ?? ''} span_id=${req.spanId ?? ''}`,
+    );
 
     try {
       const data = await this.proxyService.handleRequest(req);
@@ -50,14 +55,15 @@ export class ProxyController {
       if (Array.isArray(downstreamSetCookie) && downstreamSetCookie.length > 0) {
         res.setHeader('Set-Cookie', downstreamSetCookie);
       }
-      
+      const endTime = Date.now();
       res.status(HttpStatus.OK).json(data);
 
       this.logger.log(
-        `Request completed ${req.method} ${req.path} status=${HttpStatus.OK} trace_id=${req.traceId ?? ''} span_id=${req.spanId ?? ''} duration_ms=${Date.now() - startTime}`,
+      `[REQUEST END] method=${req.method} path=${req.path} status=${HttpStatus.OK} start=${startIso} end=${new Date(endTime).toISOString()} duration_ms=${endTime - startTime} trace_id=${req.traceId ?? ''} span_id=${req.spanId ?? ''}`,
       );
     } catch (err: unknown) {
 
+      const endTime = Date.now();
       const statusCode =
         err instanceof AxiosError
           ? err.response?.status || HttpStatus.INTERNAL_SERVER_ERROR
@@ -73,7 +79,7 @@ export class ProxyController {
             : 'Internal server error';
 
       this.logger.error(
-        `Request failed ${req.method} ${req.path} status=${statusCode} trace_id=${req.traceId ?? ''} span_id=${req.spanId ?? ''} duration_ms=${Date.now() - startTime} error=${errorMessage}`,
+        `[REQUEST END] method=${req.method} path=${req.path} status=${statusCode} start=${startIso} end=${new Date(endTime).toISOString()} duration_ms=${endTime - startTime} trace_id=${req.traceId ?? ''} span_id=${req.spanId ?? ''} error=${errorMessage}`,
       );
 
       const downstreamResponse =

@@ -200,7 +200,9 @@ export class ProxyService {
   private async handleAggregateRequest(route: AggregateRouteConfig, req: Request) {
     const activeSpan = trace.getSpan(context.active());
     activeSpan?.setAttribute('proxy.aggregation_type', AggregatorType[route.aggregationType]);
-
+    this.logger.log(
+    `[AGGREGATE START] route=${route.path} method=${req.method} aggregationType=${AggregatorType[route.aggregationType]} timestamp=${new Date().toISOString()}`,
+    );
     switch (route?.aggregationType) {
       case AggregatorType.PARALLEL:
         return await this.handleParallelAggregation(route, req);
@@ -814,6 +816,6 @@ export class ProxyService {
       sanitizedCookie += '; SameSite=None; Secure';
     }
 
-    return sanitizedCookie;
+  return sanitizedCookie
   }
 }
