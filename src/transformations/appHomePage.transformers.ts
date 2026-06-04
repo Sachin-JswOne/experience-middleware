@@ -1,15 +1,13 @@
 import { AggregatedResponse } from 'src/models/aggregated-response.model';
 import { Logger } from '@nestjs/common';
-import { safeDebug, safeToLog } from 'src/utils/common-functions.util';
+import { safeDebug } from 'src/utils/common-functions.util';
 import { BaseRequest } from 'src/models/base-request.model';
 import {
   extractMMIDs,
-  getAllCentralCatalogueCategoryIds,
   normalizeRecentlyViewedProducts,
   RecentlyViewedProduct,
 } from './web.transformers';
 import { inspect } from 'util';
-import { CustomError } from 'src/utils/CustomError';
 
 export function mergeAppHomePageResponses(aggregatedResponses: AggregatedResponse[]): any {
   const responses = aggregatedResponses.reduce(
@@ -74,7 +72,6 @@ export function mergeAppHomePageResponses(aggregatedResponses: AggregatedRespons
 
   // Clone the strapi response data to avoid mutating the original
   const mergedData: Record<string, unknown> = { ...strapiResponse?.data?.data };
-
   // Find the blocks array in the strapi response
   let originalBlocks: unknown[] = [];
   if (
@@ -87,7 +84,6 @@ export function mergeAppHomePageResponses(aggregatedResponses: AggregatedRespons
     ];
   }
   const blocks: any[] = originalBlocks;
-
   const buyAgainProducts = (buyAgainResponse?.data as { listOfBuyAgainProducts?: unknown })
     ?.listOfBuyAgainProducts;
   if (Array.isArray(buyAgainProducts)) {
@@ -244,75 +240,26 @@ export function mergeAppHomePageResponses(aggregatedResponses: AggregatedRespons
 }
 
 // This transformer is used to extract MMIDs from request
-export function transformTopItemsRequest(request: BaseRequest) {
-  const topItemsResponse = request.body.blocks.find(
+export function transformTopItemsRequest(
+  request: BaseRequest,
+  aggregatedResponses: AggregatedResponse[],
+) {
+  const responses = aggregatedResponses.reduce(
+    (acc, response) => {
+      acc[response.target] = response;
+      return acc;
+    },
+    {} as Record<string, AggregatedResponse>,
+  );
+  const aggregateResponse = responses['app-home-page'].data.data;
+
+  const topItemsResponse = aggregateResponse.blocks.find(
     (block) => block.__component === 'app-components.app-search-top-items',
   ).app_search_top_items;
   const mmids = extractMMIDs(topItemsResponse);
   return {
     ...request,
     body: mmids,
-  };
-}
-
-export function extractBrandCategoryIds(request: BaseRequest): BaseRequest {
-  const blocks = request.body.blocks ?? [];
-
-  // Extract category IDs from web_central_catalogue_categories array in app-top-brands blocks
-  const brandCategoryIds = blocks
-    .filter(
-      (b: any) =>
-        b.__component === 'app-components.app-top-brands' &&
-        Array.isArray(b.web_central_catalogue_categories) &&
-        b.web_central_catalogue_categories.length > 0,
-    )
-    .flatMap((b: any) =>
-      b.web_central_catalogue_categories.map((c: any) => c.categoryId).filter(Boolean),
-    );
-
-  if (brandCategoryIds.length === 0) {
-    const topBrandBlocks = blocks.filter(
-      (b: any) => b.__component === 'app-components.app-top-brands',
-    );
-    const blocksWithCategories = topBrandBlocks.filter(
-      (b: any) =>
-        Array.isArray(b.web_central_catalogue_categories) &&
-        b.web_central_catalogue_categories.length > 0,
-    );
-    Logger.warn(
-      `[extractBrandCategoryIds] No categoryId found in top-brand component. Total app-top-brands blocks: ${topBrandBlocks.length}, Blocks with web_central_catalogue_categories: ${blocksWithCategories.length}`,
-    );
-    // Return with empty array to make API call with valid structure
-    return {
-      ...request,
-      body: {
-        brandCategoryIds: [],
-      },
-    };
-  }
-
-  return {
-    ...request,
-    body: {
-      brandCategoryIds,
-    },
-  };
-}
-
-export function extractCentralCatalogueCategoryIds(request: BaseRequest): BaseRequest {
-  const blocks = request.body.blocks ?? [];
-  const categoryIds = getAllCentralCatalogueCategoryIds(blocks);
-
-  if (categoryIds.length === 0) {
-    Logger.warn(`No central catalogue category IDs found in any blocks`);
-    return request;
-  }
-
-  return {
-    ...request,
-    body: {
-      categoryIds,
-    },
   };
 }
 
