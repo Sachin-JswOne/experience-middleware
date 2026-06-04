@@ -4712,7 +4712,7 @@
           "request": 5000,
           "socket": 1000
         },
-        "reqTransform": "appHomePage.transformers.extractBrandCategoryIds",
+        "reqTransform": "web.transformers.extractBrandCategoryIds",
         "headersToPass": [
           {
             "source": "authorization",
@@ -4728,7 +4728,7 @@
           "request": 5000,
           "socket": 1000
         },
-        "reqTransform": "appHomePage.transformers.extractCentralCatalogueCategoryIds",
+        "reqTransform": "web.transformers.extractCentralCatalogueCategoryIds",
         "headersToPass": [
           {
             "source": "authorization",
@@ -4780,7 +4780,7 @@
           "request": 5000,
           "socket": 1000
         },
-        "reqTransform": "appHomePage.transformers.extractBrandCategoryIds",
+        "reqTransform": "web.transformers.extractBrandCategoryIds",
         "headersToPass": [
           {
             "source": "authorization",
@@ -4796,7 +4796,7 @@
           "request": 5000,
           "socket": 1000
         },
-        "reqTransform": "appHomePage.transformers.extractCentralCatalogueCategoryIds",
+        "reqTransform": "web.transformers.extractCentralCatalogueCategoryIds",
         "headersToPass": [
           {
             "source": "authorization",
