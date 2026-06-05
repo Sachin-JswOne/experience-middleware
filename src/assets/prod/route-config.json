@@ -3163,7 +3163,7 @@
     "targets": [
       {
         "name": "app-home-page-v3-guest",
-        "url": "${EXPERIENCE_MIDDLEWARE_URL}/xp-mi/public/v3/app-home-page-v3-guest",
+        "url": "https://experience-middleware.jswonemsme.com/xp-mi/public/v3/app-home-page-v3-guest",
         "method": "POST",
         "timeout": {
           "request": 20000,
@@ -3172,7 +3172,7 @@
       },
       {
         "name": "app-home-page-v3-registered",
-        "url": "${EXPERIENCE_MIDDLEWARE_URL}/xp-mi/public/v3/app-home-page-v3-registered",
+        "url": "https://experience-middleware.jswonemsme.com/xp-mi/public/v3/app-home-page-v3-registered",
         "method": "POST",
         "timeout": {
           "request": 20000,
@@ -3226,7 +3226,7 @@
       },
       {
         "name": "app-home-page-v3-guest-parallel-helper",
-        "url": "${EXPERIENCE_MIDDLEWARE_URL}/xp-mi/public/v3/app-home-page-v3-guest-parallel-helper",
+        "url": "https://experience-middleware.jswonemsme.com/xp-mi/public/v3/app-home-page-v3-guest-parallel-helper",
         "method": "POST",
         "timeout": {
           "request": 10000,
@@ -3245,7 +3245,7 @@
     "targets": [
       {
         "name": "app-search-top-items",
-        "url": "${MSME_BASE_URL}/central_commerce/catalogue/product-details",
+        "url": "https://www.jswonemsme.com/central_commerce/catalogue/product-details",
         "method": "POST",
         "timeout": {
           "request": 5000,
@@ -3261,7 +3261,7 @@
       },
       {
         "name": "app-top-brands",
-        "url": "${MSME_BASE_URL}/central_commerce/categories/tree/list",
+        "url": "https://www.jswonemsme.com/central_commerce/categories/tree/list",
         "method": "POST",
         "timeout": {
           "request": 5000,
@@ -3277,7 +3277,7 @@
       },
       {
         "name": "app-categories",
-        "url": "${MSME_BASE_URL}/central_commerce/categories/tree/list",
+        "url": "https://www.jswonemsme.com/central_commerce/categories/tree/list",
         "method": "POST",
         "timeout": {
           "request": 5000,
@@ -3312,7 +3312,7 @@
       },
       {
         "name": "app-home-page-v3-registered-parallel-helper",
-        "url": "${EXPERIENCE_MIDDLEWARE_URL}/xp-mi/public/v3/app-home-page-v3-registered-parallel-helper",
+        "url": "https://experience-middleware.jswonemsme.com/xp-mi/public/v3/app-home-page-v3-registered-parallel-helper",
         "method": "POST",
         "timeout": {
           "request": 10000,
@@ -3357,7 +3357,7 @@
     "targets": [
       {
         "name": "app-search-top-items",
-        "url": "${MSME_BASE_URL}/central_commerce/catalogue/product-details",
+        "url": "https://www.jswonemsme.com/central_commerce/catalogue/product-details",
         "method": "POST",
         "timeout": {
           "request": 5000,
@@ -3373,7 +3373,7 @@
       },
       {
         "name": "app-top-brands",
-        "url": "${MSME_BASE_URL}/central_commerce/categories/tree/list",
+        "url": "https://www.jswonemsme.com/central_commerce/categories/tree/list",
         "method": "POST",
         "timeout": {
           "request": 5000,
@@ -3389,7 +3389,7 @@
       },
       {
         "name": "app-categories",
-        "url": "${MSME_BASE_URL}/central_commerce/categories/tree/list",
+        "url": "https://www.jswonemsme.com/central_commerce/categories/tree/list",
         "method": "POST",
         "timeout": {
           "request": 5000,
@@ -3405,7 +3405,7 @@
       },
       {
         "name": "app-buy-again",
-        "url": "${MSME_BASE_URL}/central_commerce/buy-again-list",
+        "url": "https://www.jswonemsme.com/central_commerce/buy-again-list",
         "method": "GET",
         "timeout": {
           "request": 15000,
@@ -3422,7 +3422,7 @@
       },
       {
         "name": "app-in-transit",
-        "url": "${MSME_BASE_URL}/order-service/order/v1/material-tracking/dispatched-shipments",
+        "url": "https://www.jswonemsme.com/order-service/order/v1/material-tracking/dispatched-shipments",
         "method": "GET",
         "timeout": {
           "request": 5000,
