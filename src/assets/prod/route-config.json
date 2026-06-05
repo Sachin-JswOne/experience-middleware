@@ -3158,12 +3158,64 @@
   {
     "path": "/xp-mi/public/v3/app-home-page-v3",
     "method": "POST",
+    "routeHandler": "CONDITIONAL",
+    "conditionTransform": "appHomePage.transformers.selectAppHomePageV3TargetByUserType",
+    "targets": [
+      {
+        "name": "app-home-page-v3-guest",
+        "url": "https://experience-middleware.jswonemsme.com/xp-mi/public/v3/app-home-page-v3-guest",
+        "method": "POST",
+        "timeout": {
+          "request": 20000,
+          "socket": 1000
+        }
+      },
+      {
+        "name": "app-home-page-v3-registered",
+        "url": "https://experience-middleware.jswonemsme.com/xp-mi/public/v3/app-home-page-v3-registered",
+        "method": "POST",
+        "timeout": {
+          "request": 20000,
+          "socket": 1000
+        },
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "authorization"
+          },
+          {
+            "source": "authorization",
+            "destination": "access_token"
+          },
+          {
+            "source": "access_token",
+            "destination": "authorization"
+          },
+          {
+            "source": "access_token",
+            "destination": "access_token"
+          },
+          {
+            "source": "x-user-state",
+            "destination": "x-user-state"
+          },
+          {
+            "source": "user-type",
+            "destination": "user-type"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "path": "/xp-mi/public/v3/app-home-page-v3-guest",
+    "method": "POST",
     "routeHandler": "AGGREGATE",
     "aggregationType": "SEQUENTIAL",
     "targets": [
       {
         "name": "app-home-page",
-        "url": "https://internal-cms-ext.jswonemsme.com/api/app-home-page-v3",
+        "url": "${CMS_MSME_URL}/app-home-page-v3",
         "method": "GET",
         "timeout": {
           "request": 5000,
@@ -3173,22 +3225,24 @@
         "resTransform": "cms.transformers.replaceUriPrefix"
       },
       {
-        "name": "app-buy-again",
-        "url": "https://www.jswonemsme.com/central_commerce/buy-again-list",
-        "method": "GET",
+        "name": "app-home-page-v3-guest-parallel-helper",
+        "url": "https://experience-middleware.jswonemsme.com/xp-mi/public/v3/app-home-page-v3-guest-parallel-helper",
+        "method": "POST",
         "timeout": {
-          "request": 15000,
+          "request": 10000,
           "socket": 1000
         },
-        "reqTransform": "general.transformers.convertToGetRequest",
-        "headersToPass": [
-          {
-            "source": "authorization",
-            "destination": "access_token"
-          }
-        ],
-        "resTransform": "buyAgain.transformers.transformBuyAgainResponse"
-      },
+        "reqTransform": "appHomePage.transformers.prepareWebHomePageV3ParallelPayload"
+      }
+    ],
+    "resTransform": "appHomePage.transformers.mergeAppHomePageResponsesV3FromNestedParallel"
+  },
+  {
+    "path": "/xp-mi/public/v3/app-home-page-v3-guest-parallel-helper",
+    "method": "POST",
+    "routeHandler": "AGGREGATE",
+    "aggregationType": "PARALLEL",
+    "targets": [
       {
         "name": "app-search-top-items",
         "url": "https://www.jswonemsme.com/central_commerce/catalogue/product-details",
@@ -3213,7 +3267,7 @@
           "request": 5000,
           "socket": 1000
         },
-        "reqTransform": "web.transformers.extractBrandCategoryIds",
+        "reqTransform": "appHomePage.transformers.extractBrandCategoryIds",
         "headersToPass": [
           {
             "source": "authorization",
@@ -3229,7 +3283,87 @@
           "request": 5000,
           "socket": 1000
         },
-        "reqTransform": "web.transformers.extractCentralCatalogueCategoryIds",
+        "reqTransform": "appHomePage.transformers.extractCentralCatalogueCategoryIds",
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "access_token"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "path": "/xp-mi/public/v3/app-home-page-v3-registered",
+    "method": "POST",
+    "routeHandler": "AGGREGATE",
+    "aggregationType": "SEQUENTIAL",
+    "targets": [
+      {
+        "name": "app-home-page",
+        "url": "${CMS_MSME_URL}/app-home-page-v3",
+        "method": "GET",
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
+        "reqTransform": "general.transformers.transformAppHomePageRequest",
+        "resTransform": "cms.transformers.replaceUriPrefix"
+      },
+      {
+        "name": "app-home-page-v3-registered-parallel-helper",
+        "url": "https://experience-middleware.jswonemsme.com/xp-mi/public/v3/app-home-page-v3-registered-parallel-helper",
+        "method": "POST",
+        "timeout": {
+          "request": 10000,
+          "socket": 1000
+        },
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "authorization"
+          },
+          {
+            "source": "authorization",
+            "destination": "access_token"
+          },
+          {
+            "source": "access_token",
+            "destination": "authorization"
+          },
+          {
+            "source": "access_token",
+            "destination": "access_token"
+          },
+          {
+            "source": "x-user-state",
+            "destination": "x-user-state"
+          },
+          {
+            "source": "user-type",
+            "destination": "user-type"
+          }
+        ],
+        "reqTransform": "appHomePage.transformers.prepareWebHomePageV3ParallelPayload"
+      }
+    ],
+    "resTransform": "appHomePage.transformers.mergeAppHomePageResponsesV3FromNestedParallel"
+  },
+  {
+    "path": "/xp-mi/public/v3/app-home-page-v3-registered-parallel-helper",
+    "method": "POST",
+    "routeHandler": "AGGREGATE",
+    "aggregationType": "PARALLEL",
+    "targets": [
+      {
+        "name": "app-search-top-items",
+        "url": "https://www.jswonemsme.com/central_commerce/catalogue/product-details",
+        "method": "POST",
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
+        "reqTransform": "appHomePage.transformers.transformTopItemsRequest",
         "headersToPass": [
           {
             "source": "authorization",
@@ -3238,15 +3372,53 @@
         ]
       },
       {
-        "name": "app-blogs",
-        "url": "https://internal-cms-ext.jswonemsme.com/api/jsw-blogs-articless",
-        "method": "GET",
+        "name": "app-top-brands",
+        "url": "https://www.jswonemsme.com/central_commerce/categories/tree/list",
+        "method": "POST",
         "timeout": {
           "request": 5000,
           "socket": 1000
         },
-        "reqTransform": "cms.transformers.homeBlogs",
-        "resTransform": "cms.transformers.replaceUriPrefix"
+        "reqTransform": "appHomePage.transformers.extractBrandCategoryIds",
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "access_token"
+          }
+        ]
+      },
+      {
+        "name": "app-categories",
+        "url": "https://www.jswonemsme.com/central_commerce/categories/tree/list",
+        "method": "POST",
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
+        "reqTransform": "appHomePage.transformers.extractCentralCatalogueCategoryIds",
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "access_token"
+          }
+        ]
+      },
+      {
+        "name": "app-buy-again",
+        "url": "https://www.jswonemsme.com/central_commerce/buy-again-list",
+        "method": "GET",
+        "timeout": {
+          "request": 15000,
+          "socket": 1000
+        },
+        "reqTransform": "general.transformers.convertToGetRequest",
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "access_token"
+          }
+        ],
+        "resTransform": "buyAgain.transformers.transformBuyAgainResponse"
       },
       {
         "name": "app-in-transit",
@@ -3264,8 +3436,7 @@
         ],
         "reqTransform": "app.transformers.transformInTransitRequest"
       }
-    ],
-    "resTransform": "appHomePage.transformers.mergeAppHomePageResponses"
+    ]
   },
   {
     "path": "${PATH_URL}/v1/create-sf-address",
