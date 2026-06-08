@@ -7,6 +7,7 @@ import { applyTransform } from '../utils/transformer.util';
 import { ROUTE_CONFIG } from '../config/route.config';
 import { BaseRequest } from '../models/base-request.model';
 import { safeToLog } from 'src/utils/common-functions.util';
+import { performance } from 'perf_hooks';
 import {
   AggregateRouteConfig,
   ConditionalRouteConfig,
@@ -63,6 +64,45 @@ export class ProxyService {
     const queryPart = queryString ? `q:${queryString}` : 'q:';
 
     return `:m:${methodPart}|p:${pathPart}|${queryPart}`;
+  }
+
+  private nowMs(): number {
+    return performance.now();
+  }
+
+  private toPerfName(value: string): string {
+    return value
+      .replace(/^\/xp-mi\/public\/v\d+\//i, '')
+      .replace(/^\/api\//i, '')
+      .replace(/[/?#].*$/, '')
+      .replace(/-/g, '_')
+      .toUpperCase();
+  }
+
+  private getPerfRoot(req: Request): string {
+    return String(req.headers['x-perf-root'] || this.toPerfName(req.path));
+  }
+
+  private getPerfUser(req: Request): 'G' | 'R' {
+    const userType = String(req.headers['user-type'] || req.headers['x-perf-user-type'] || '');
+    if (userType.toUpperCase() === 'G') return 'G';
+    if (userType.toUpperCase() === 'R') return 'R';
+
+    return req.headers.authorization || req.headers.access_token ? 'R' : 'G';
+  }
+
+  private getPerfChain(req: Request, targetName: string): string {
+    const existing = String(req.headers['x-perf-chain'] || '');
+    return existing ? `${existing} -> ${targetName}` : targetName;
+  }
+
+  private getEndpoint(url?: string): string {
+    if (!url) return 'NA';
+    try {
+      return new URL(url).pathname;
+    } catch {
+      return url;
+    }
   }
 
   async handleRequest(req: Request) {
@@ -449,6 +489,18 @@ export class ProxyService {
             prevResponses,
           );
 
+          const perfRoot = this.getPerfRoot(req);
+          const perfUser = this.getPerfUser(req);
+          const targetName = target.name || this.getEndpoint(transformedRequestBody.url.href);
+          const perfChain = this.getPerfChain(req, targetName);
+
+          transformedRequestBody.headers = {
+            ...transformedRequestBody.headers,
+            'x-perf-root': perfRoot,
+            'x-perf-user-type': perfUser,
+            'x-perf-chain': perfChain,
+          };
+
           maskedHeaders = {
             ...transformedRequestBody.headers,
             authorization: transformedRequestBody.headers?.authorization
@@ -482,6 +534,20 @@ export class ProxyService {
             headers: transformedRequestBody.headers,
           });
 
+          const downstreamMs = this.nowMs() - downstreamStart;
+
+          this.logger.log(
+            `[${perfRoot}] [${perfUser}] [${perfChain}] [${this.getEndpoint(
+              transformedRequestBody.url.href,
+            )}] took ${downstreamMs.toFixed(2)}ms`,
+          );
+
+          console.log(
+            `[${perfRoot}] [${perfUser}] [${perfChain}] [${this.getEndpoint(
+              transformedRequestBody.url.href,
+            )}] took ${downstreamMs.toFixed(2)}ms`,
+          );
+
           const downstreamSetCookie = response.headers?.['set-cookie'];
 
           if (downstreamSetCookie) {
@@ -500,7 +566,6 @@ export class ProxyService {
               ];
             }
           }
-          const downstreamMs = this.nowMs() - downstreamStart;
 
           span.setAttribute('http.status_code', response.status);
 
@@ -789,10 +854,6 @@ export class ProxyService {
     out = out.replace(/(^|\/):(\w+)(?=\/|$)/g, (_, prefix, key) => `${prefix}${getEncoded(key)}`);
 
     return out;
-  }
-
-  private nowMs(): number {
-    return Number(process.hrtime.bigint() / 1000000n);
   }
 
   private sanitizeSetCookieForBff(cookie: string): string | null {
