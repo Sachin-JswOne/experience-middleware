@@ -4903,21 +4903,21 @@
       "method": "GET",
       "reqTransform": "general.transformers.convertToGetRequest",
       "timeout": {
-         "request": 10000,
-         "socket": 1000
+        "request": 10000,
+        "socket": 1000
       },
       "headersToPass": [
         {
-         "source": "authorization",
-         "destination": "access_token"
+          "source": "authorization",
+          "destination": "access_token"
         },
         {
           "source": "central_catalogue_enabled",
           "destination": "central_catalogue_enabled"
         }
-    ],
-    "requiredParams": ["*"]
-   }
+      ],
+      "requiredParams": ["*"]
+    }
   },
   {
     "path": "/xp-mi/public/v1/guided/classify",

@@ -211,7 +211,7 @@ export function transformAddress(addressList) {
     }
     return {
       state: address.state,
-      siteId: address.siteId,
+      id: address.siteId,
       shiptoAddressTag: address.shiptoAddressTag,
       sfAddressId: address.sfAddressId,
       pincode: address.pincode,
