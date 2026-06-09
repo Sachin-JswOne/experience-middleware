@@ -51,6 +51,9 @@ export function homeBlogs(request: BaseRequest): BaseRequest {
       thumbnail: {
         fields: ['url', 'alternativeText', 'name'],
       },
+      industries: {
+        fields: ['name', 'link'],
+      },
     },
     pagination: {
       pageSize: 5,
