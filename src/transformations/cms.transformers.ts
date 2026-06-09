@@ -4,6 +4,7 @@ import { BaseRequest } from 'src/models/base-request.model';
 import { AggregatedResponse } from 'src/models/aggregated-response.model';
 import { CustomError } from 'src/utils/CustomError';
 import { moveBodyToQueryParams } from './general.transformers';
+import { populate } from 'dotenv';
 
 export function replaceUriPrefix(response: any): any {
   if (Array.isArray(response)) {
@@ -53,6 +54,11 @@ export function homeBlogs(request: BaseRequest): BaseRequest {
       },
       industries: {
         fields: ['name', 'link'],
+        populate: {
+          image: {
+            fields: ['url', 'alternativeText', 'name'],
+          },
+        },
       },
     },
     pagination: {
