@@ -53,6 +53,11 @@ export function homeBlogs(request: BaseRequest): BaseRequest {
       },
       industries: {
         fields: ['name', 'link'],
+        populate: {
+          image: {
+            fields: ['url', 'alternativeText', 'name'],
+          },
+        },
       },
     },
     pagination: {
