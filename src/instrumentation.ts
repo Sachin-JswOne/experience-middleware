@@ -55,12 +55,10 @@ if (!OTEL_ENABLED) {
 
   // Store URLs for logging
   const traceEndpoint =
-    process.env.OTEL_EXPORTER_OTLP_TRACES_ENDPOINT ||
-    process.env.OTEL_EXPORTER_OTLP_ENDPOINT ||
-    'http://localhost:4318/v1/traces';
+    process.env.OTEL_EXPORTER_OTLP_ENDPOINT + '/v1/traces' || 'http://localhost:4318/v1/traces';
 
   const metricsEndpoint =
-    process.env.OTEL_EXPORTER_OTLP_METRICS_ENDPOINT || 'http://localhost:4318/v1/metrics';
+    process.env.OTEL_EXPORTER_OTLP_ENDPOINT + '/v1/metrics' || 'http://localhost:4318/v1/metrics';
 
   // Configure trace exporter
   const traceExporter = new OTLPTraceExporter({
