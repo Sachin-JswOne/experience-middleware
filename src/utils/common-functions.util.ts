@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
 import * as jwt from 'jsonwebtoken';
-import { GUEST, GUEST_USER_STATE } from 'src/config/app.config';
+import { GUEST, GUEST_USER_STATE, JWT_SECRET } from 'src/config/app.config';
 
 export function formatDate(opportunityCreatedDate: string) {
   const date: Date = new Date(opportunityCreatedDate);
@@ -76,7 +76,10 @@ export function getUserIdentifiers(headers: any): {
   try {
     const token = authHeader.startsWith('Bearer ') ? authHeader.substring(7) : authHeader;
 
-    const decoded = jwt.decode(token) as {
+    if (!JWT_SECRET) {
+      return { sfId: null, ctId: null };
+    }
+    const decoded = jwt.verify(token, JWT_SECRET) as {
       sfCustomerId?: string;
       userId?: string;
     } | null;

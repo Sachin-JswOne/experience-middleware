@@ -7,13 +7,14 @@ import {
   PRODUCT_TYPES,
   UOM_LIST,
 } from 'src/config/app.config';
+import { inspect } from 'util';
 
 export function transformBuyAgainResponse(response: any) {
   const buyAgainResponse = response?.data;
   safeDebug(
     Logger,
     () =>
-      ` CCP Buy Again Api response from method: transformBuyAgainResponse : ${JSON.stringify(
+      ` CCP Buy Again Api response from method: transformBuyAgainResponse : ${inspect(
         buyAgainResponse,
       )}`,
   );

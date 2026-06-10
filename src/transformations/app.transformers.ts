@@ -2,6 +2,7 @@ import { AggregatedResponse } from 'src/models/aggregated-response.model';
 import { Logger } from '@nestjs/common';
 import { BaseRequest } from 'src/models/base-request.model';
 import { safeDebug } from 'src/utils/common-functions.util';
+import { inspect } from 'util';
 
 export function mergeHomePageResponses(aggregatedResponses: AggregatedResponse[]): any {
   const responses = aggregatedResponses.reduce(
@@ -21,41 +22,35 @@ export function mergeHomePageResponses(aggregatedResponses: AggregatedResponse[]
   safeDebug(
     Logger,
     () =>
-      `Strapi Home Page Api response from method: mergeHomePageResponses : ${JSON.stringify(
+      `Strapi Home Page Api response from method: mergeHomePageResponses : ${inspect(
         strapiResponse,
       )}`,
   );
   safeDebug(
     Logger,
     () =>
-      `Top Items Api response from method: mergeHomePageResponses : ${JSON.stringify(
-        topItemsResponse,
-      )}`,
+      `Top Items Api response from method: mergeHomePageResponses : ${inspect(topItemsResponse)}`,
   );
   safeDebug(
     Logger,
     () =>
-      `Buy Again Api response from method: mergeHomePageResponses : ${JSON.stringify(
-        buyAgainResponse,
-      )}`,
+      `Buy Again Api response from method: mergeHomePageResponses : ${inspect(buyAgainResponse)}`,
   );
   safeDebug(
     Logger,
     () =>
-      `Categories Api response from method: mergeHomePageResponses : ${JSON.stringify(
+      `Categories Api response from method: mergeHomePageResponses : ${inspect(
         categoriesResponse,
       )}`,
   );
   safeDebug(
     Logger,
-    () => `Blog Api response from method: mergeHomePageResponses : ${JSON.stringify(blogResponse)}`,
+    () => `Blog Api response from method: mergeHomePageResponses : ${inspect(blogResponse)}`,
   );
   safeDebug(
     Logger,
     () =>
-      `In Transit Api response from method: mergeHomePageResponses : ${JSON.stringify(
-        inTransitResponse,
-      )}`,
+      `In Transit Api response from method: mergeHomePageResponses : ${inspect(inTransitResponse)}`,
   );
   if (!strapiResponse || typeof strapiResponse.data !== 'object' || strapiResponse.data === null) {
     Logger.error(
@@ -202,7 +197,7 @@ export function mergeBuyAgainResponses(aggregatedResponses: AggregatedResponse[]
   safeDebug(
     Logger,
     () =>
-      ` Buy Again Price Api response from method: mergeBuyAgainResponses : ${JSON.stringify(
+      ` Buy Again Price Api response from method: mergeBuyAgainResponses : ${inspect(
         buyAgainPriceApiResponse,
       )}`,
   );
@@ -210,7 +205,7 @@ export function mergeBuyAgainResponses(aggregatedResponses: AggregatedResponse[]
   safeDebug(
     Logger,
     () =>
-      `Buy Again Retail Api response from method: mergeBuyAgainResponses : ${JSON.stringify(
+      `Buy Again Retail Api response from method: mergeBuyAgainResponses : ${inspect(
         buyAgainRetailApiResponse,
       )}`,
   );
@@ -266,7 +261,7 @@ export function mergeTopBrandsResponses(aggregatedResponses) {
   safeDebug(
     Logger,
     () =>
-      ` Strapi Top Brands Api response from method: mergeTopBrandsResponses : ${JSON.stringify(
+      ` Strapi Top Brands Api response from method: mergeTopBrandsResponses : ${inspect(
         strapiTopBrandsData,
       )}`,
   );
@@ -274,7 +269,7 @@ export function mergeTopBrandsResponses(aggregatedResponses) {
   safeDebug(
     Logger,
     () =>
-      ` Top Brands Api response from method: mergeTopBrandsResponses : ${JSON.stringify(
+      ` Top Brands Api response from method: mergeTopBrandsResponses : ${inspect(
         topBrandsApiData,
       )}`,
   );

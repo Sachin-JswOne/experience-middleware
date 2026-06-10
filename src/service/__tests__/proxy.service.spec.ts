@@ -1,6 +1,5 @@
 import Redis from 'ioredis';
 import { ProxyService } from '../proxy.service';
-import { CustomError } from 'src/utils/CustomError';
 import { RouteHandler } from 'src/enum/route-handler.enum';
 
 describe('ProxyService - auth gate before cache', () => {

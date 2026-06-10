@@ -2,6 +2,7 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { TraceContextInterceptor } from './common/trace-context.interceptor';
+import { AllExceptionsFilter } from './filters/http-exception.filter';
 import { WinstonModule } from 'nest-winston';
 import { winstonConfig } from './logger/winston.config';
 
@@ -10,6 +11,7 @@ async function bootstrap() {
     logger: WinstonModule.createLogger(winstonConfig),
   });
   app.useGlobalInterceptors(new TraceContextInterceptor());
+  app.useGlobalFilters(new AllExceptionsFilter());
   app.setGlobalPrefix('xp-mi');
   app.enableShutdownHooks();
   app.enableCors({
@@ -37,9 +39,9 @@ async function bootstrap() {
       }
     },
     methods: 'GET,POST,DELETE,OPTIONS,PUT',
-    allowedHeaders: '*',
+    allowedHeaders: '*, authorization, content-type',
     preflightContinue: false,
-    credentials: false,
+    credentials: true,
     optionsSuccessStatus: 204,
   });
 

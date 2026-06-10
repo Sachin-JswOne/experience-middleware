@@ -32,31 +32,6 @@ export function convertToGetRequest(request: BaseRequest): BaseRequest {
   return transformedRequest;
 }
 
-export function convertAuthorizationToAccessTokenInHeader(request: BaseRequest): BaseRequest {
-  try {
-    const transformedRequest: BaseRequest = {
-      ...request,
-      body: null,
-    };
-
-    const authorization = request.headers?.authorization;
-    if (authorization) {
-      transformedRequest.headers = {
-        ...request.headers,
-        access_token: authorization,
-      };
-      // Remove the authorization header
-      delete transformedRequest.headers.authorization;
-    }
-    return transformedRequest;
-  } catch (error) {
-    Logger.error(
-      `Error for ${request.url} method: convertAuthorizationToAccessTokenInHeader ${error}`,
-    );
-    return request;
-  }
-}
-
 export function createQueryParams(request: BaseRequest): BaseRequest {
   const transformedRequest: BaseRequest = {
     ...request,
@@ -101,14 +76,28 @@ export function transformAppHomePageRequest(request: BaseRequest): BaseRequest {
   return moveBodyToQueryParams(transformedRequest);
 }
 
-const addChannelFilter = (query) => {
+export const addChannelFilter = (query) => {
   if (Array.isArray(query)) {
     query.forEach(addChannelFilter);
     return;
   }
 
   if (typeof query === 'object' && query !== null) {
-    // Check if this object has $and array
+    // Replace null customer type / business division
+    if (query?.customer_types?.type?.$eqi === null) {
+      query.customer_types.type.$eqi = 'Small';
+    }
+
+    if (query?.business_divisions?.division?.$eqi === null) {
+      query.business_divisions.division.$eqi = 'Manufacturing';
+    }
+
+    // Optional: app_customer_types support
+    if (query?.app_customer_types?.type?.$eqi === null) {
+      query.app_customer_types.type.$eqi = 'Small';
+    }
+
+    // Existing $and logic
     if (query.$and && Array.isArray(query.$and)) {
       const hasCustomerType = query.$and.some(
         (item) =>

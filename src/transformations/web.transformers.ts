@@ -714,7 +714,7 @@ export function mergeWebHomePageResponsesV3(aggregatedResponses: AggregatedRespo
       }
     } else {
       page.mweb_top_item.isTopItem = true;
-      console.log('Central Catalogue Global flag is disabled. Returning CMS top items as-is.');
+      Logger.log('Central Catalogue Global flag is disabled. Returning CMS top items as-is.');
     }
   }
 

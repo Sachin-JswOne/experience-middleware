@@ -1,7 +1,21 @@
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
-import { mergeAppHomePageResponses } from '../appHomePage.transformers';
+jest.mock('./../web.transformers', () => ({
+  normalizeRecentlyViewedProducts: jest.fn(() => [
+    {
+      mmid: '1000-10005',
+      productTitle: 'JSW Steel Hot Rolled Sheets IS 2062:2011 E350A',
+      imageUrl:
+        'https://catalogue-assets.qa.jsw1msme.in/assets/media/aeca9767-a194-45ea-88bd-9f51b4ba4f80',
+      productSlug: 'jsw-steel-hot-rolled-sheet-2062-2011-e350a',
+    },
+  ]),
+}));
+import { beforeEach, describe, expect, it, jest } from '@jest/globals';
+import { mergeAppHomePageResponses, mergeAppHomePageResponseV4 } from '../appHomePage.transformers';
+import { responses } from './__mocks__/appHomePageV4MockData';
+// import * as RecentlyViewed from './../web.transformers';
 
 describe('mergeAppHomePageResponses', () => {
   let aggregatedResponses: any[];
@@ -206,5 +220,138 @@ describe('mergeAppHomePageResponses', () => {
     );
 
     expect(bannerBlock.inTransit).toBe(true);
+  });
+});
+
+describe.only('mergeAppHomePageResponseV4', () => {
+  let aggregatedResponses: any[];
+
+  beforeEach(() => {
+    aggregatedResponses = responses;
+    aggregatedResponses.push({
+      target: 'app-in-transit',
+      success: true,
+      data: {
+        success: true,
+        data: {
+          success: true,
+          response: {
+            data: [{ id: 1 }],
+          },
+        },
+      },
+    });
+  });
+
+  it('should return empty response when cms response is invalid', () => {
+    const result = mergeAppHomePageResponseV4([]);
+
+    expect(result).toEqual({
+      data: {},
+      meta: {},
+    });
+  });
+
+  it('should fallback to app-home-page when layout-mweb-homepages is absent', () => {
+    const responses = [
+      {
+        target: 'app-home-page',
+        success: true,
+        data: {
+          data: {
+            id: 4,
+            blocks: [
+              {
+                __component: 'app-components.app-buy-again',
+                id: 1,
+              },
+              {
+                __component: 'app-components.app-category-component',
+                id: 2,
+                web_central_catalogue_categories: [
+                  { categoryId: 'cat-1' },
+                  { categoryId: 'cat-2' },
+                ],
+              },
+              {
+                __component: 'app-components.app-top-brands',
+                id: 3,
+                web_central_catalogue_categories: [
+                  { categoryId: 'brand-1' },
+                  { categoryId: 'brand-2' },
+                ],
+              },
+            ],
+          },
+        },
+      },
+    ];
+
+    const result = mergeAppHomePageResponseV4(responses as any);
+
+    expect(result.data).toBeDefined();
+  });
+
+  it('should inject blogs into blog_list_component_material_matter', () => {
+    const result = mergeAppHomePageResponseV4(aggregatedResponses);
+
+    expect(result.data[0].blog_list_component_material_matter.blogs).toBeDefined();
+  });
+
+  it('should inject buy again products', () => {
+    const result = mergeAppHomePageResponseV4(aggregatedResponses);
+
+    expect(result.data[0].buy_again_component).toBeDefined();
+  });
+
+  it('should map CCP products into top items', () => {
+    const result = mergeAppHomePageResponseV4(aggregatedResponses);
+
+    expect(result.data[0].mweb_top_item).toBeDefined();
+    expect(result.data[0].mweb_top_item.app_search_top_items[0].MMID).toBe('1001-10007');
+  });
+
+  it('should populate central catalogue brand list in Top Brands', () => {
+    const result = mergeAppHomePageResponseV4(aggregatedResponses);
+
+    expect(result.data[0].top_brand_component).toBeDefined();
+
+    expect(result.data[0].top_brand_component.centralCatalogueBrandsList).toContainEqual(
+      expect.objectContaining({
+        name: 'JSW Steel',
+        slug: 'jsw-steel',
+      }),
+    );
+  });
+
+  it('should populate product category list in Categories', () => {
+    const result = mergeAppHomePageResponseV4(aggregatedResponses);
+
+    expect(result.data[0].category_component).toBeDefined();
+    expect(result.data[0].category_component.product_categories).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          displayName: 'JSW Steel products',
+          description: 'Cold Rolled Sheets & Coils',
+        }),
+      ]),
+    );
+  });
+
+  it('should set inTransit to true when transit data exists', () => {
+    const result = mergeAppHomePageResponseV4(aggregatedResponses);
+
+    expect(result.data[0].link_banner_component.inTransit).toBe(true);
+  });
+
+  it('should filter removed recently viewed products', () => {
+    const result = mergeAppHomePageResponseV4(aggregatedResponses);
+
+    expect(result.data[0].recently_viewed_component).toBeDefined();
+    expect(result.data[0].recently_viewed_component.recentlyViewedProducts).toContainEqual(
+      expect.objectContaining({
+        mmid: '1000-10005',
+      }),
+    );
   });
 });

@@ -1,6 +1,9 @@
 import { AxiosRequestConfig } from 'axios';
 import * as jwt from 'jsonwebtoken';
-import { GUEST, GUEST_USER_STATE } from 'src/config/app.config';
+import { Logger } from '@nestjs/common';
+import { GUEST, GUEST_USER_STATE, JWT_SECRET } from 'src/config/app.config';
+
+const logger = new Logger('AuthInterceptor');
 
 export function decryptAndAddUserDetails(config: AxiosRequestConfig): AxiosRequestConfig {
   config.headers = config.headers ?? {};
@@ -12,20 +15,26 @@ export function decryptAndAddUserDetails(config: AxiosRequestConfig): AxiosReque
 
     if (token) {
       try {
-        const decodedPayload: any = jwt.decode(token);
+        if (!JWT_SECRET) {
+          throw new Error('Server misconfiguration: JWT_SECRET is not set');
+        }
+        const decodedPayload = jwt.verify(token, JWT_SECRET) as {
+          sfCustomerId?: string;
+          userId?: string;
+        };
 
-        if (decodedPayload && decodedPayload.sfCustomerId) {
+        if (decodedPayload.sfCustomerId) {
           config.headers['SF-ID'] = decodedPayload.sfCustomerId;
         }
-        if (decodedPayload && decodedPayload.userId) {
+        if (decodedPayload.userId) {
           config.headers['CT-ID'] = decodedPayload.userId;
         }
         delete config.headers.authorization;
 
         return config;
       } catch (error) {
-        console.error('Failed to decode/decrypt token and add user details to headers', error);
-        throw new Error('Token decryption failed');
+        logger.error('Failed to verify token and add user details to headers', error);
+        throw new Error('Token verification failed');
       }
     }
   }
