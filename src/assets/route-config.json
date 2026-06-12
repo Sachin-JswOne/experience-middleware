@@ -4992,5 +4992,77 @@
       }
     ],
     "resTransform": "appRegistration.transformers.mergeRegisterUserAndAccessTokenResponse"
+  },
+  {
+    "path": "/xp-mi/public/v1/token",
+    "method": "POST",
+    "routeHandler": "CONDITIONAL",
+    "conditionTransform": "salesapp.transformers.selectAccessTokenTarget",
+    "targets": [
+      {
+        "name": "access-token",
+        "url": "http://localhost:3000/xp-mi/public/v1/token/access-token",
+        "method": "POST",
+        "timeout": {
+          "request": 50000,
+          "socket": 1000
+        },
+        "staticHeaders": {
+          "Content-Type": "application/x-www-form-urlencoded"
+        },
+        "requiredParams": ["*"]
+      },
+      {
+        "name": "refresh-token",
+        "url": "http://localhost:3000/xp-mi/public/v1/token/refresh-token",
+        "method": "POST",
+        "timeout": {
+          "request": 50000,
+          "socket": 1000
+        },
+        "staticHeaders": {
+          "Content-Type": "application/x-www-form-urlencoded"
+        },
+        "requiredParams": ["*"]
+      }
+    ]
+  },
+  {
+    "path": "/xp-mi/public/v1/token/access-token",
+    "method": "POST",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "access-token",
+      "url": "${SF_BASE_URI}/services/oauth2/token",
+      "method": "POST",
+      "timeout": {
+        "request": 50000,
+        "socket": 1000
+      },
+      "staticHeaders": {
+        "Content-Type": "application/x-www-form-urlencoded"
+      },
+      "requiredParams": ["*"],
+      "reqTransform": "salesapp.transformers.transformAccessTokenRequest"
+    }
+  },
+  {
+    "path": "/xp-mi/public/v1/token/refresh-token",
+    "method": "POST",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "refresh-token",
+      "url": "${SF_BASE_URI}/services/oauth2/token",
+      "method": "POST",
+      "timeout": {
+        "request": 50000,
+        "socket": 1000
+      },
+      "staticHeaders": {
+        "Content-Type": "application/x-www-form-urlencoded"
+      },
+      "requiredParams": ["*"],
+      "reqTransform": "salesapp.transformers.transformRefreshTokenRequest"
+    }
   }
 ]
