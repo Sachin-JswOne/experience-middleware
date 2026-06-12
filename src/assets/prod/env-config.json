@@ -7,7 +7,7 @@
   "GOOGLE_MAPS_URL": "https://maps.googleapis.com/maps/api",
   "GSTIN_X_API_KEY": "CustomerService-v1-4iy665w9f64u0h87wpoevhi5zflxy8cwa7y09rjvhu24sinjlcmlq8bdfmdz5hh6",
   "HOMES_CMS_URL": "https://cms.jswonehomes.com/api",
-  "HOMES_SERVICE_URL": "https://services.jswonehomes.com",
+  "HOMES_SERVICE_URL": "https://service.jswonehomes.com",
   "MSME_BASE_URL": "https://www.jswonemsme.com",
   "OMS_URL": "https://oms.jswonemsme.com",
   "ONE_HELIX_TASK_API_AUTHORIZATION": "vdf9",

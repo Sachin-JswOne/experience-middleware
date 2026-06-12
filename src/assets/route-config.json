@@ -2561,6 +2561,26 @@
         ]
       },
       {
+        "name": "ccp-top-items-product-details",
+        "url": "${MSME_BASE_URL}/central_commerce/catalogue/product-details",
+        "method": "POST",
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
+        "reqTransform": "web.transformers.transformWebHomePageTopItemsMMIDRequestV3FromCmsBody",
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "access_token"
+          },
+          {
+            "source": "access_token",
+            "destination": "access_token"
+          }
+        ]
+      },      
+      {
         "name": "recent-viewed-remove",
         "url": "${MSME_BASE_URL}/central_commerce/recent-viewed/remove",
         "method": "GET",
