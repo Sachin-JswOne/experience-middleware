@@ -5316,5 +5316,24 @@
       "requiredParams": ["*"],
       "reqTransform": "salesapp.transformers.transformRefreshTokenRequest"
     }
+  },
+  {
+    "path": "/xp-mi/public/v1/register-user-validation",
+    "routeHandler": "TRANSFORM",
+    "method": "POST",
+    "isCacheRequired": false,
+    "target": {
+      "name": "register-user-validation",
+      "url": "${MSME_BASE_URL}/customer/validate/registration-details",
+      "method": "POST",
+      "timeout": {
+        "request": 20000,
+        "socket": 1000
+      },
+      "staticHeaders": {
+        "Content-Type": "application/json"
+      },
+      "reqTransform": "appRegistration.transformers.transformRegisterUserValidationRequest"
+    }
   }
 ]
