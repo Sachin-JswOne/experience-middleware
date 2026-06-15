@@ -1572,7 +1572,7 @@
     "path": "/xp-mi/public/v1/web-search-page",
     "method": "POST",
     "routeHandler": "AGGREGATE",
-    "aggregationType": "SEQUENTIAL",
+    "aggregationType": "SEQUENTIAL_THEN_PARALLEL",
     "targets": [
       {
         "name": "app-search-page",
@@ -1683,17 +1683,6 @@
             "destination": "jsw_session_id"
           }
         ]
-      },
-      {
-        "name": "cmsFeatureFlag",
-        "url": "${CMS_MSME_URL}/ccp-feature-flags",
-        "method": "GET",
-        "timeout": {
-          "request": "${TIMEOUTS.REQUEST}",
-          "socket": "${TIMEOUTS.SOCKET}"
-        },
-        "reqTransform": "category.transformers.addFeatureFlagQueryParams",
-        "resTransform": "cms.transformers.replaceUriPrefix"
       },
       {
         "name": "recent-viewed-remove",
