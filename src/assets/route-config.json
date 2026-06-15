@@ -5253,7 +5253,7 @@
     "targets": [
       {
         "name": "access-token",
-        "url": "http://localhost:3000/xp-mi/public/v1/token/access-token",
+        "url": "${EXPERIENCE_MIDDLEWARE_URL}/xp-mi/public/v1/token/access-token",
         "method": "POST",
         "timeout": {
           "request": 50000,
@@ -5266,7 +5266,7 @@
       },
       {
         "name": "refresh-token",
-        "url": "http://localhost:3000/xp-mi/public/v1/token/refresh-token",
+        "url": "${EXPERIENCE_MIDDLEWARE_URL}/xp-mi/public/v1/token/refresh-token",
         "method": "POST",
         "timeout": {
           "request": 50000,
