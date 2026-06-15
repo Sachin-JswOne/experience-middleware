@@ -149,3 +149,21 @@ export function mergeRegisterUserAndAccessTokenResponse(
     throw new CustomError('Something went wrong. Please try again later.', HttpStatus.BAD_REQUEST);
   }
 }
+
+export function transformRegisterUserValidationRequest(request: any): any {
+  safeDebug(Logger, () => `Original Register User Validation Request: ${inspect(request)}`);
+  const transformedRequest = {
+    ...request,
+    body: {
+      fullName: request.body.name,
+      email: request.body.emailId,
+      gstin: request.body.gstin,
+      phoneNumber: request.body.mobileNumber,
+    },
+  };
+  safeDebug(
+    Logger,
+    () => `Transformed Register User Validation Request: ${inspect(transformedRequest)}`,
+  );
+  return transformedRequest;
+}
