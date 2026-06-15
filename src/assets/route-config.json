@@ -836,7 +836,7 @@
         "url": "${TMS_BASE_URI}/opportunity/retail/fetch-order-list",
         "method": "GET",
         "staticHeaders": {
-          "Authorization": "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJKU1dPTkUiLCJpYXQiOjE3NTE1MzY4NTMsImV4cCI6MTc4MzA3Mjg1MywiYXVkIjoiIiwic3ViIjoib3JkZXJ1bmlmaWNhdGlvbkBqc3dvbmUuY29tIiwiRW1haWwiOiJvcmRlcnVuaWZpY2F0aW9uQGpzd29uZS5jb20iLCJSb2xlIjoiQWRtaW4ifQ.pf4XPzgeoZXIuTcQ4JAqpfln7UfBLkvYQcnqEyrbSqA"
+          "Authorization": "Bearer ${TMS_AUTH_TOKEN_ORDER_LISTING}"
         },
         "timeout": {
           "request": 5000,
