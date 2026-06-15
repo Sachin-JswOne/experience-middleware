@@ -206,7 +206,7 @@ export class ProxyService {
       case AggregatorType.SEQUENTIAL:
         return await this.handleSequentialAggregation(route, req);
       case AggregatorType.SEQUENTIAL_THEN_PARALLEL:
-        return await this.handleSequentialThenParallelAggregation(route, req);  
+        return await this.handleSequentialThenParallelAggregation(route, req);
       default:
         throw new Error('Unsupported aggregation type');
     }
@@ -221,66 +221,61 @@ export class ProxyService {
         span.setAttribute('http.method', req.method);
         span.setAttribute('cache.hit', false);
         const results: AggregatedResponse[] = [];
+        this.logger.log(`Processing SEQUENTIAL_THEN_PARALLEL request for ${req.url}`);
 
-        try {
-          this.logger.log(`Processing SEQUENTIAL_THEN_PARALLEL request for ${req.url}`);
+        // First target executes alone
+        const firstTarget = route.targets[0];
 
-          // First target executes alone
-          const firstTarget = route.targets[0];
+        const firstResponse = await this.handleTransformRequest(firstTarget, req, []);
 
-          const firstResponse = await this.handleTransformRequest(firstTarget, req, []);
+        results.push({
+          target: firstTarget.name || firstTarget.url,
+          success: true,
+          data: firstResponse,
+        });
 
-          results.push({
-            target: firstTarget.name || firstTarget.url,
-            success: true,
-            data: firstResponse,
-          });
+        // All remaining targets get CMS response
+        const previousResponses = [...results];
 
-          // All remaining targets get CMS response
-          const previousResponses = [...results];
+        const parallelResults = await Promise.allSettled(
+          route.targets.slice(1).map(async (target) => {
+            try {
+              const responseData = await this.handleTransformRequest(
+                target,
+                req,
+                previousResponses,
+              );
 
-          const parallelResults = await Promise.allSettled(
-            route.targets.slice(1).map(async (target) => {
-              try {
-                const responseData = await this.handleTransformRequest(
-                  target,
-                  req,
-                  previousResponses,
-                );
+              return {
+                target: target.name || target.url,
+                success: true,
+                data: responseData,
+              };
+            } catch (err: any) {
+              return {
+                target: target.name || target.url,
+                success: false,
+                error: err?.message || String(err),
+                httpStatus: err?.httpStatusCode || err?.status || 500,
+                downstreamResponse: err?.response?.data || null,
+              };
+            }
+          }),
+        );
 
-                return {
-                  target: target.name || target.url,
-                  success: true,
-                  data: responseData,
-                };
-              } catch (err: any) {
-                return {
-                  target: target.name || target.url,
-                  success: false,
-                  error: err?.message || String(err),
-                  httpStatus: err?.httpStatusCode || err?.status || 500,
-                  downstreamResponse: err?.response?.data || null,
-                };
-              }
-            }),
-          );
+        const normalizedResults: AggregatedResponse[] = parallelResults.map((r, index) =>
+          r.status === 'fulfilled'
+            ? r.value
+            : {
+                target: route.targets[index + 1].name || route.targets[index + 1].url,
+                success: false,
+                error: 'Unexpected failure',
+                httpStatus: 500,
+              },
+        );
+        results.push(...normalizedResults);
 
-          const normalizedResults: AggregatedResponse[] = parallelResults.map((r, index) =>
-            r.status === 'fulfilled'
-              ? r.value
-              : {
-                  target: route.targets[index + 1].name || route.targets[index + 1].url,
-                  success: false,
-                  error: 'Unexpected failure',
-                  httpStatus: 500,
-                },
-          );
-          results.push(...normalizedResults);
-
-          return route.resTransform ? await applyTransform(route.resTransform, results) : results;
-        } catch (err) {
-          throw err;
-        }
+        return route.resTransform ? await applyTransform(route.resTransform, results) : results;
       },
     );
   }
