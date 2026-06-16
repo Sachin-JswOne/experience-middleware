@@ -5218,5 +5218,67 @@
       },
       "reqTransform": "appRegistration.transformers.transformRegisterUserValidationRequest"
     }
+  },
+  {
+    "path": "/xp-mi/public/v1/vijai/user-detail",
+    "method": "GET",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "vijai-user-details",
+      "url": "${SF_BASE_URI}/services/data/v59.0/chatter/users/me",
+      "method": "GET",
+      "timeout": {
+        "request": "${TIMEOUTS.REQUEST}",
+        "socket": 5000
+      },
+      "headersToPass": [
+        {
+          "source": "Authorization",
+          "destination": "Authorization"
+        }
+      ]
+    }
+  },
+  {
+    "path": "/xp-mi/public/v1/vijai/user/notification",
+    "method": "GET",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "vijai-user-notifications",
+      "url": "${SF_BASE_URI}/services/data/v59.0/connect/notifications",
+      "method": "GET",
+      "timeout": {
+        "request": "${TIMEOUTS.REQUEST}",
+        "socket": 5000
+      },
+      "headersToPass": [
+        {
+          "source": "Authorization",
+          "destination": "Authorization"
+        }
+      ]
+    }
+  },
+  {
+    "path": "/xp-mi/public/v1/vijai/user/list",
+    "method": "GET",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "vijai-user-list",
+      "url": "${SF_BASE_URI}/services/data/v59.0/query",
+      "method": "GET",
+      "timeout": {
+        "request": "${TIMEOUTS.REQUEST}",
+        "socket": 5000
+      },
+      "headersToPass": [
+        {
+          "source": "Authorization",
+          "destination": "Authorization"
+        }
+      ],
+      "reqTransform": "vijai.transformers.transformVijaiUserListRequest",
+      "requiredParams": ["*"]
+    }
   }
 ]
