@@ -1,4 +1,5 @@
-﻿﻿/* eslint-disable @typescript-eslint/no-unsafe-argument */
+﻿﻿/* eslint-disable no-useless-catch */
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
 import { Injectable, Logger } from '@nestjs/common';
 import { trace, context, SpanStatusCode } from '@opentelemetry/api';
 import { createHttpClient } from '../utils/http-client.factory';
@@ -205,6 +206,8 @@ export class ProxyService {
         return await this.handleParallelAggregation(route, req);
       case AggregatorType.SEQUENTIAL:
         return await this.handleSequentialAggregation(route, req);
+      case AggregatorType.SEQUENTIAL_THEN_PARALLEL:
+        return await this.handleSequentialThenParallelAggregation(route, req);
       default:
         throw new Error('Unsupported aggregation type');
     }
