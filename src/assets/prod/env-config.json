@@ -7,7 +7,7 @@
   "GOOGLE_MAPS_URL": "https://maps.googleapis.com/maps/api",
   "GSTIN_X_API_KEY": "CustomerService-v1-4iy665w9f64u0h87wpoevhi5zflxy8cwa7y09rjvhu24sinjlcmlq8bdfmdz5hh6",
   "HOMES_CMS_URL": "https://cms.jswonehomes.com/api",
-  "HOMES_SERVICE_URL": "https://services.jswonehomes.com",
+  "HOMES_SERVICE_URL": "https://service.jswonehomes.com",
   "MSME_BASE_URL": "https://www.jswonemsme.com",
   "OMS_URL": "https://oms.jswonemsme.com",
   "ONE_HELIX_TASK_API_AUTHORIZATION": "vdf9",
@@ -18,5 +18,6 @@
   "X_API_KEY_CONNECTOR": "14dfv",
   "X_API_KEY_FOR_LOGIN": "AuthService-v1-53zgm5wrxbb6q74p04ilw8tql3jx4p4ci7301l0ua9pv1q5ddg3o0r84mnesog1f",
   "X_API_KEY_FOR_ORDER_LISTING": "Zoho.Connector.Yrt664kT",
-  "X_API_KEY_FOR_REGISTRATION": "CustomerService-v1-4iy665w9f64u0h87wpoevhi5zflxy8cwa7y09rjvhu24sinjlcmlq8bdfmdz5hh6"
+  "X_API_KEY_FOR_REGISTRATION": "CustomerService-v1-4iy665w9f64u0h87wpoevhi5zflxy8cwa7y09rjvhu24sinjlcmlq8bdfmdz5hh6",
+  "TMS_AUTH_TOKEN_ORDER_LISTING": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJPbmxpbmUgSldUIEJ1aWxkZXIiLCJpYXQiOjE3NTI0ODI2NzksImV4cCI6MjUzMzg3NTU3ODc5LCJhdWQiOiJyZXRhaWxzLWFwcCIsInN1YiI6InJldGFpbHNAanN3b25lLmluIiwiR2l2ZW5OYW1lIjoiUmV0YWlscyIsIkVtYWlsIjoicmV0YWlsc0Bqc3dvbmUuaW4iLCJSb2xlIjoiQURNSU4ifQ.NlGWFVVxEMtCVqz4tyMFX-R_qLoOjg_7alWl1MVcmnI"
 }

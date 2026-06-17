@@ -277,6 +277,13 @@ export class ProxyService {
                 },
           );
           results.push(...normalizedResults);
+          results.push({
+            target: '__request-context',
+            success: true,
+            data: {
+              headers: req.headers,
+            },
+          });
 
           return route.resTransform ? await applyTransform(route.resTransform, results) : results;
         } catch (err) {
