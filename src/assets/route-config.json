@@ -833,7 +833,7 @@
       },
       {
         "name": "app-order-listing",
-        "url": "${OMS_URL}/opportunity/retail/fetch-order-list",
+        "url": "${TMS_BASE_URI}/opportunity/retail/fetch-order-list",
         "method": "GET",
         "staticHeaders": {
           "Authorization": "Bearer ${TMS_AUTH_TOKEN_ORDER_LISTING}"
@@ -872,7 +872,7 @@
       },
       {
         "name": "opportunity-detail",
-        "url": "${OMS_URL}/jswone/retail/fetch-opportunity-details",
+        "url": "${TMS_BASE_URI}/jswone/retail/fetch-opportunity-details",
         "method": "GET",
         "staticHeaders": {
           "Authorization": "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJPbmxpbmUgSldUIEJ1aWxkZXIiLCJpYXQiOjE3NDQ4ODcyMzgsImV4cCI6MTc3NjQyMzIzOCwiYXVkIjoiZnJpZWdodCB0aWdlciIsInN1YiI6IiJ9.6Ib-8yeVhRuolg5ko0SMxjcjQK8za1mkpVVaLFtPMyE",
@@ -3658,7 +3658,7 @@
       },
       {
         "name": "one-helix-task",
-        "url": "${OMS_URL}/jswone/subject/task",
+        "url": "${TMS_BASE_URI}/jswone/subject/task",
         "method": "POST",
         "timeout": {
           "request": 10000,
@@ -3680,7 +3680,7 @@
     "isCacheRequired": false,
     "target": {
       "name": "one-helix-task",
-      "url": "${OMS_URL}/jswone/subject/task",
+      "url": "${TMS_BASE_URI}/jswone/subject/task",
       "method": "POST",
       "timeout": {
         "request": 10000,
