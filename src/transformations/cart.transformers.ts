@@ -240,11 +240,7 @@ export function mergeWebCartPageResponses(aggregatedResponses: AggregatedRespons
     () => `web-credit-instrument response: ${JSON.stringify(creditInstrumentResponse)}`,
   );
 
-  if (
-    !cmsResponse?.success ||
-    typeof cmsResponse.data !== 'object' ||
-    cmsResponse.data === null
-  ) {
+  if (!cmsResponse?.success || typeof cmsResponse.data !== 'object' || cmsResponse.data === null) {
     Logger.error(
       `Error for Web Cart Page API method: mergeWebCartPageResponses - CMS response missing or invalid`,
     );
