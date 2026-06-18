@@ -56,3 +56,8 @@ pids
 report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 /.claude
 /graphify-out
+frontend/node_modules
+frontend/dist
+# Admin UI build output
+dist-admin
+public/admin

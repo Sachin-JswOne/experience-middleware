@@ -6,8 +6,9 @@
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
+    "prebuild": "ts-node -r tsconfig-paths/register scripts/validate-route-config.ts",
     "build": "nest build",
-    "start": "nest start",
+    "build:admin": "cd frontend && npm install --include=dev && npm run build",
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",
@@ -51,7 +52,8 @@
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
     "typescript-eslint": "^8.49.0",
-    "winston": "^3.18.3"
+    "winston": "^3.18.3",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.2.0",

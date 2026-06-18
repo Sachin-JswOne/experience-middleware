@@ -1,34 +1,28 @@
-// import { PrometheusModule } from '@willsoto/nestjs-prometheus';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
+import { RequestContextMiddleware } from './utils/request-context.middleware';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { ConfigModule } from '@nestjs/config';
 import { ProxyService } from './service/proxy.service';
 import { ProxyController } from './controller/proxy.controller';
+import { AdminController } from './controller/admin.controller';
+import { AdminUIController } from './controller/admin-ui.controller';
 import { join } from 'path';
 import { AppService } from './app.service';
 import { WinstonModule } from 'nest-winston';
 import { winstonConfig } from './logger/winston.config';
-import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
-import { RequestContextMiddleware } from './utils/request-context.middleware';
-import { APP_ENV } from './config/app.config';
 
 @Module({
   imports: [
-    // PrometheusModule.register({
-    //   path: '/metrics',
-    // }),
-    // PrometheusModule.register({
-    //   path: '/metrics',
-    // }),
     WinstonModule.forRoot(winstonConfig),
     ServeStaticModule.forRoot({
-      rootPath: APP_ENV === 'prod' ? undefined : join(__dirname, '..', 'public'),
+      rootPath: join(__dirname, '..', 'public'),
       exclude: ['/metrics'],
     }),
     ConfigModule.forRoot({
       isGlobal: true,
     }),
   ],
-  controllers: [ProxyController],
+  controllers: [ProxyController, AdminController, AdminUIController],
   providers: [AppService, ProxyService],
   exports: [AppService],
 })

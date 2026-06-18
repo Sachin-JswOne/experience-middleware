@@ -1,4 +1,4 @@
-﻿import './instrumentation';
+import './instrumentation';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { TraceContextInterceptor } from './common/trace-context.interceptor';
@@ -7,9 +7,16 @@ import { WinstonModule } from 'nest-winston';
 import { winstonConfig } from './logger/winston.config';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule, {
-    logger: WinstonModule.createLogger(winstonConfig),
-  });
+  let app;
+  try {
+    app = await NestFactory.create(AppModule, {
+      logger: WinstonModule.createLogger(winstonConfig),
+    });
+  } catch (err) {
+    console.error('Failed to create NestJS application:', err);
+    process.exit(1);
+  }
+
   app.useGlobalInterceptors(new TraceContextInterceptor());
   app.useGlobalFilters(new AllExceptionsFilter());
   app.setGlobalPrefix('xp-mi');
@@ -21,7 +28,7 @@ async function bootstrap() {
         : [
             /^https?:\/\/.*\.onejswhomes\.in$/,
             /^https?:\/\/.*jswonehomes\.com$/,
-            /^https?:\/\/34\.49\.59\.50$/,
+            /^https?:\/\/.*\.49\.59\.50$/,
             /^https?:\/\/localhost(?::\d+)?$/,
             /^https?:\/\/jswonehomes\.com$/,
             /^https?:\/\/34\.93\.108\.241$/,
@@ -29,7 +36,7 @@ async function bootstrap() {
             /^https?:\/\/.*\.jswonemsme\.com$/,
           ];
 
-      if (!origin) return callback(null, true); // Allow server-to-server or curl requests
+      if (!origin) return callback(null, true);
 
       const isAllowed = allowedOrigins.some((regex) => regex.test(origin));
       if (isAllowed) {
@@ -45,7 +52,10 @@ async function bootstrap() {
     optionsSuccessStatus: 204,
   });
 
-  await app.listen(process.env.PORT ?? 3000);
+  const port = process.env.PORT ?? 3000;
+  await app.listen(port);
+  const { startConfigWatcher } = await import('./service/config-watcher.service');
+  startConfigWatcher();
 }
 
 void bootstrap();

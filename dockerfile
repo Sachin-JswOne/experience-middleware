@@ -18,6 +18,9 @@ COPY . .
 # Build the NestJS app
 RUN npm run build
 
+# Build the admin UI
+RUN npm run build:admin
+
 # --------------------
 # Production stage
 # --------------------
@@ -37,6 +40,9 @@ RUN npm ci --omit=dev && npm cache clean --force
 
 # Copy built output from builder
 COPY --from=builder /app/dist ./dist
+
+# Copy admin UI build output
+COPY --from=builder /app/dist-admin ./public/admin
 
 # Create logs directory and set ownership
 RUN mkdir -p logs && chown -R node:node /app

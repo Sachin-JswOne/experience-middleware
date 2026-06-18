@@ -24,6 +24,7 @@ export interface TargetConfig {
 }
 
 export interface BaseRouteConfig {
+  id?: string;
   path: string;
   method: string;
   routeHandler: RouteHandler;

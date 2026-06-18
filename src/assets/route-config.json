@@ -18,23 +18,6 @@
   {
     "path": "/xp-mi/public/v1/app-home-page",
     "method": "POST",
-    "routeHandler": "TRANSFORM",
-    "isCacheRequired": false,
-    "target": {
-      "name": "appHomePage",
-      "url": "${CMS_MSME_URL}/app-home-page",
-      "method": "GET",
-      "timeout": {
-        "request": "${TIMEOUTS.REQUEST}",
-        "socket": "${TIMEOUTS.SOCKET}"
-      },
-      "reqTransform": "general.transformers.moveBodyToQueryParams",
-      "resTransform": "cms.transformers.replaceUriPrefix"
-    }
-  },
-  {
-    "path": "/xp-mi/public/v1/app-home-page",
-    "method": "POST",
     "routeHandler": "AGGREGATE",
     "aggregationType": "PARALLEL",
     "isCacheRequired": false,
@@ -1202,6 +1185,23 @@
     }
   },
   {
+    "path": "/xp-mi/public/v1/web-about-us",
+    "method": "POST",
+    "routeHandler": "TRANSFORM",
+    "isCacheRequired": false,
+    "target": {
+      "name": "webAboutUs",
+      "url": "${CMS_MSME_URL}/web-about-us-page",
+      "method": "GET",
+      "timeout": {
+        "request": "${TIMEOUTS.REQUEST}",
+        "socket": "${TIMEOUTS.SOCKET}"
+      },
+      "reqTransform": "general.transformers.moveBodyToQueryParams",
+      "resTransform": "cms.transformers.replaceUriPrefix"
+    }
+  },
+  {
     "path": "/xp-mi/public/v1/web-header-links",
     "method": "POST",
     "routeHandler": "TRANSFORM",
@@ -2229,6 +2229,58 @@
       }
     ],
     "resTransform": "cart.transformers.mergeMmebCartPageResponses"
+  },
+  {
+    "path": "/xp-mi/public/v1/web-cart-page",
+    "method": "POST",
+    "routeHandler": "AGGREGATE",
+    "aggregationType": "PARALLEL",
+    "targets": [
+      {
+        "name": "web-cart-page-cms",
+        "url": "${CMS_MSME_URL}/web-cart-page",
+        "method": "GET",
+        "timeout": {
+          "request": "${TIMEOUTS.REQUEST}",
+          "socket": "${TIMEOUTS.SOCKET}"
+        },
+        "reqTransform": "general.transformers.moveBodyToQueryParams",
+        "resTransform": "cms.transformers.replaceUriPrefix"
+      },
+      {
+        "name": "web-cart-get",
+        "url": "${MSME_BASE_URL}/v2/cart/get",
+        "method": "GET",
+        "timeout": {
+          "request": 10000,
+          "socket": 1000
+        },
+        "reqTransform": "general.transformers.convertToGetRequest",
+        "headersToPass": [
+          {
+            "source": "access_token",
+            "destination": "access_token"
+          }
+        ]
+      },
+      {
+        "name": "web-credit-instrument",
+        "url": "${MSME_BASE_URL}/customer/credit-instrument",
+        "method": "GET",
+        "timeout": {
+          "request": "${TIMEOUTS.REQUEST}",
+          "socket": "${TIMEOUTS.SOCKET}"
+        },
+        "reqTransform": "general.transformers.convertToGetRequest",
+        "headersToPass": [
+          {
+            "source": "access_token",
+            "destination": "access_token"
+          }
+        ]
+      }
+    ],
+    "resTransform": "cart.transformers.mergeWebCartPageResponses"
   },
   {
     "path": "/xp-mi/public/v1/central-catalogue/header/main-menu",
