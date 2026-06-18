@@ -6,6 +6,7 @@ import { RouteConfig } from 'src/models/route-config.model';
 import { APP_ENV } from './app.config';
 import * as dotenv from 'dotenv';
 import { TIMEOUTS } from './app.config';
+import { validateNoDuplicateRoutes } from './route-config.schema';
 
 dotenv.config();
 
@@ -23,7 +24,7 @@ try {
 }
 
 const configFilePath = path.resolve(__dirname, `../assets/route-config.json`);
-let ROUTE_CONFIG: RouteConfig[] = [];
+export let ROUTE_CONFIG: RouteConfig[] = [];
 const enumFieldsMap: Record<string, any> = {
   routeHandler: RouteHandler,
   aggregationType: AggregatorType,
@@ -103,16 +104,25 @@ export function normalizeEnums<T extends Record<string, any>>(
   return result as T;
 }
 
-try {
+export const reloadRouteConfig = (): void => {
   const raw = fs.readFileSync(configFilePath, 'utf-8');
-  const rawConfigs: any[] = JSON.parse(raw);
+  const rawConfigs = JSON.parse(raw) as unknown[];
+  validateNoDuplicateRoutes(rawConfigs);
+  const envReplacedConfigs = replaceEnvPlaceholders(rawConfigs) as unknown[];
+  ROUTE_CONFIG = envReplacedConfigs.map((raw) => {
+    if (!raw || typeof raw !== 'object') return raw as RouteConfig;
+    // Cast to any to satisfy normalizeEnums constraint, which only uses string-key access internally
+    const normalized = normalizeEnums(raw as any, enumFieldsMap) as RouteConfig;
+    return {
+      ...normalized,
+      id: normalized.id ?? crypto.randomUUID(),
+    };
+  });
+};
 
-  const envReplacedConfigs = replaceEnvPlaceholders(rawConfigs);
-  ROUTE_CONFIG = envReplacedConfigs.map((raw: any) =>
-    normalizeEnums<RouteConfig>(raw, enumFieldsMap),
-  );
+// Initialize on module load
+try {
+  reloadRouteConfig();
 } catch (e) {
   throw new Error(`Failed to load route config from ${configFilePath}: ${(e as Error).message}`);
 }
-
-export { ROUTE_CONFIG };

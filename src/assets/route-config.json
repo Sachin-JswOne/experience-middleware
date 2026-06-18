@@ -18,23 +18,6 @@
   {
     "path": "/xp-mi/public/v1/app-home-page",
     "method": "POST",
-    "routeHandler": "TRANSFORM",
-    "isCacheRequired": false,
-    "target": {
-      "name": "appHomePage",
-      "url": "${CMS_MSME_URL}/app-home-page",
-      "method": "GET",
-      "timeout": {
-        "request": "${TIMEOUTS.REQUEST}",
-        "socket": "${TIMEOUTS.SOCKET}"
-      },
-      "reqTransform": "general.transformers.moveBodyToQueryParams",
-      "resTransform": "cms.transformers.replaceUriPrefix"
-    }
-  },
-  {
-    "path": "/xp-mi/public/v1/app-home-page",
-    "method": "POST",
     "routeHandler": "AGGREGATE",
     "aggregationType": "PARALLEL",
     "isCacheRequired": false,
