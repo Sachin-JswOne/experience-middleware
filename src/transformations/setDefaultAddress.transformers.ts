@@ -93,7 +93,7 @@ export function setDefaultAddress(
   );
 
   try {
-    if (response && response.id) {
+    if (response?.id) {
       return {
         success: true,
         ...response,

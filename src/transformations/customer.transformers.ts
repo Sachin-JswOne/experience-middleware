@@ -39,7 +39,7 @@ export function transformCustomerProfileResponses(aggregatedResponses: Aggregate
       // Include error information if request failed
       result[key] = {
         success: false,
-        error: response.error || 'Unknown error',
+        error: response.error ?? 'Unknown error',
         httpStatus: response.httpStatus,
       };
 

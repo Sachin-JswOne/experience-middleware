@@ -1,4 +1,4 @@
-export interface priceRequest {
+export interface PriceRequest {
   pincode: string;
   key: string;
   quantity: number;
@@ -8,7 +8,7 @@ export interface priceRequest {
   productAttributes: { key: string; value: string }[];
 }
 
-export interface priceResponse {
+export interface PriceResponse {
   success: boolean;
   data: object;
   price: PriceObject;

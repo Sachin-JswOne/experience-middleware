@@ -1,5 +1,4 @@
 import { Logger } from '@nestjs/common';
-import { safeDebug } from 'src/utils/common-functions.util';
 import {
   CONNECTOR_ORDER_TYPE_MAPPING,
   DEFAULT_CURRENCY_CODE,
@@ -10,7 +9,7 @@ import {
   PAYMENT_STATUS_MAPPING,
 } from 'src/config/app.config';
 import { BaseRequest } from 'src/models/base-request.model';
-import { convertToDouble, formatDate } from 'src/utils/common-functions.util';
+import { convertToDouble, formatDate, safeDebug } from 'src/utils/common-functions.util';
 import { transformSingleProduct } from './shipments.transformers';
 import { CustomError } from 'src/utils/CustomError';
 import {

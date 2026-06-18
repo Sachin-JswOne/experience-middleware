@@ -40,8 +40,8 @@ export function getFormattedTracingContext(): string {
 
 export function getFormattedUserIdentifiersFromContext(): string {
   const { sfId, ctId } = getUserIdentifiersFromContext();
-  const sfIdStr = `sfId: ${sfId ? sfId : '-'}`;
-  const ctIdStr = `ctId: ${ctId ? ctId : '-'}`;
+  const sfIdStr = `sfId: ${sfId || '-'}`;
+  const ctIdStr = `ctId: ${ctId || '-'}`;
   const userContext = [sfIdStr, ctIdStr].filter(Boolean).join(' ');
   return userContext;
 }

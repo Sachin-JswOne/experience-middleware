@@ -224,7 +224,7 @@ export function extractProductListingSlug(
 
   const cmsResponse = prevResponses.find((r) => r.target === 'app-home-page');
 
-  if (!cmsResponse || !cmsResponse.success) {
+  if (!cmsResponse?.success) {
     Logger.warn(
       `[extractProductListingSlug] CMS response not found or failed. Available targets: ${prevResponses.map((r) => r.target).join(', ')}`,
     );

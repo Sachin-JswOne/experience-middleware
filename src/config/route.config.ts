@@ -3,9 +3,8 @@ import * as path from 'path';
 import { AggregatorType } from 'src/enum/aggregation-type.enum';
 import { RouteHandler } from 'src/enum/route-handler.enum';
 import { RouteConfig } from 'src/models/route-config.model';
-import { APP_ENV } from './app.config';
+import { APP_ENV, TIMEOUTS } from './app.config';
 import * as dotenv from 'dotenv';
-import { TIMEOUTS } from './app.config';
 
 dotenv.config();
 
@@ -59,7 +58,8 @@ export function replaceEnvPlaceholders(obj: any): any {
   }
 
   if (typeof obj === 'string') {
-    const exactMatch = obj.match(/^\$\{([^}]+)\}$/);
+    const regex = /^\$\{([^}]+)\}$/;
+    const exactMatch = regex.exec(obj);
     if (exactMatch) {
       const resolved = resolveKey(exactMatch[1]);
       return resolved;

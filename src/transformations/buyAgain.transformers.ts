@@ -18,7 +18,7 @@ export function transformBuyAgainResponse(response: any) {
         buyAgainResponse,
       )}`,
   );
-  if (!buyAgainResponse || !buyAgainResponse.variantList) {
+  if (!buyAgainResponse?.variantList) {
     Logger.error(
       `Error for method: transformBuyAgainResponse, CCP Buy Again Api response is failing'`,
     );
@@ -72,95 +72,123 @@ export function fetchQuantity(ccpBuyAgainApiProduct) {
   return quantity;
 }
 
+function has(keys: string[], key: string): boolean {
+  return keys.includes(key);
+}
+
+function hasAll(keys: string[], requiredKeys: string[]): boolean {
+  return requiredKeys.every((key) => keys.includes(key));
+}
+
 export function getProductType(ccpBuyAgainApiProduct): string {
   const ctAttributes = ccpBuyAgainApiProduct?.ctAttributes || {};
   const keys = Object.keys(ctAttributes);
+  const productName = ccpBuyAgainApiProduct?.name?.toLowerCase() || '';
 
-  if (!keys || keys.length === 0) {
+  if (keys.length === 0) {
     return PRODUCT_TYPES.cement_bitumen;
   }
-  if (
-    keys.includes(CT_ATTRIBUTES_MAPPING.form) ||
-    ccpBuyAgainApiProduct.name.toLowerCase().includes('tmt')
-  )
-    return PRODUCT_TYPES.tmt_pb_tmt;
 
-  if (
-    keys.includes(CT_ATTRIBUTES_MAPPING.thickness) &&
-    keys.includes(CT_ATTRIBUTES_MAPPING.width) &&
-    !keys.includes(CT_ATTRIBUTES_MAPPING.length) &&
-    keys.includes(CT_ATTRIBUTES_MAPPING.coating_grade_gsm_gi) &&
-    keys.includes(CT_ATTRIBUTES_MAPPING.spangle_type)
-  )
-    return PRODUCT_TYPES.gi_coils;
+  const rules = [
+    {
+      matches: () =>
+        has(keys, CT_ATTRIBUTES_MAPPING.form) || productName.includes('tmt'),
+      type: PRODUCT_TYPES.tmt_pb_tmt,
+    },
+    {
+      matches: () =>
+        hasAll(keys, [
+          CT_ATTRIBUTES_MAPPING.thickness,
+          CT_ATTRIBUTES_MAPPING.width,
+          CT_ATTRIBUTES_MAPPING.coating_grade_gsm_gi,
+          CT_ATTRIBUTES_MAPPING.spangle_type,
+        ]) && !has(keys, CT_ATTRIBUTES_MAPPING.length),
+      type: PRODUCT_TYPES.gi_coils,
+    },
+    {
+      matches: () =>
+        hasAll(keys, [
+          CT_ATTRIBUTES_MAPPING.thickness,
+          CT_ATTRIBUTES_MAPPING.width,
+          CT_ATTRIBUTES_MAPPING.length,
+          CT_ATTRIBUTES_MAPPING.coating_grade_gsm_gi,
+          CT_ATTRIBUTES_MAPPING.spangle_type,
+        ]),
+      type: PRODUCT_TYPES.gi_sheets,
+    },
+    {
+      matches: () =>
+        hasAll(keys, [
+          CT_ATTRIBUTES_MAPPING.thickness,
+          CT_ATTRIBUTES_MAPPING.width,
+          CT_ATTRIBUTES_MAPPING.coating_grade_gsm_gl_ppgl,
+          CT_ATTRIBUTES_MAPPING.colour,
+        ]) && !has(keys, CT_ATTRIBUTES_MAPPING.length),
+      type: PRODUCT_TYPES.ppgl_coils,
+    },
+    {
+      matches: () =>
+        hasAll(keys, [
+          CT_ATTRIBUTES_MAPPING.thickness,
+          CT_ATTRIBUTES_MAPPING.width,
+          CT_ATTRIBUTES_MAPPING.length,
+          CT_ATTRIBUTES_MAPPING.coating_grade_gsm_gl_ppgl,
+          CT_ATTRIBUTES_MAPPING.colour,
+        ]),
+      type: PRODUCT_TYPES.ppgl_sheets,
+    },
+    {
+      matches: () =>
+        hasAll(keys, [
+          CT_ATTRIBUTES_MAPPING.thickness,
+          CT_ATTRIBUTES_MAPPING.width,
+          CT_ATTRIBUTES_MAPPING.coating_grade_gsm_gl_ppgl,
+        ]) && !has(keys, CT_ATTRIBUTES_MAPPING.length),
+      type: PRODUCT_TYPES.gl_coils,
+    },
+    {
+      matches: () =>
+        hasAll(keys, [
+          CT_ATTRIBUTES_MAPPING.thickness,
+          CT_ATTRIBUTES_MAPPING.width,
+          CT_ATTRIBUTES_MAPPING.length,
+          CT_ATTRIBUTES_MAPPING.coating_grade_gsm_gl_ppgl,
+        ]),
+      type: PRODUCT_TYPES.gl_sheets,
+    },
+    {
+      matches: () =>
+        hasAll(keys, [
+          CT_ATTRIBUTES_MAPPING.thickness,
+          CT_ATTRIBUTES_MAPPING.width,
+        ]) && !has(keys, CT_ATTRIBUTES_MAPPING.length),
+      type: PRODUCT_TYPES.ms_ss_hr_cr_coils,
+    },
+    {
+      matches: () =>
+        hasAll(keys, [
+          CT_ATTRIBUTES_MAPPING.thickness,
+          CT_ATTRIBUTES_MAPPING.width,
+          CT_ATTRIBUTES_MAPPING.length,
+        ]),
+      type: PRODUCT_TYPES.ms_ss_hr_cr_sheets,
+    },
+    {
+      matches: () =>
+        has(keys, CT_ATTRIBUTES_MAPPING.diameter) && productName.includes('wire'),
+      type: PRODUCT_TYPES.wire_rod_coils,
+    },
+    {
+      matches: () => has(keys, CT_ATTRIBUTES_MAPPING.leg),
+      type: PRODUCT_TYPES.angles,
+    },
+    {
+      matches: () => has(keys, CT_ATTRIBUTES_MAPPING.flange_width),
+      type: PRODUCT_TYPES.channels_beams_and_columns,
+    },
+  ];
 
-  if (
-    keys.includes(CT_ATTRIBUTES_MAPPING.thickness) &&
-    keys.includes(CT_ATTRIBUTES_MAPPING.width) &&
-    keys.includes(CT_ATTRIBUTES_MAPPING.length) &&
-    keys.includes(CT_ATTRIBUTES_MAPPING.coating_grade_gsm_gi) &&
-    keys.includes(CT_ATTRIBUTES_MAPPING.spangle_type)
-  )
-    return PRODUCT_TYPES.gi_sheets;
-
-  if (
-    keys.includes(CT_ATTRIBUTES_MAPPING.thickness) &&
-    keys.includes(CT_ATTRIBUTES_MAPPING.width) &&
-    !keys.includes(CT_ATTRIBUTES_MAPPING.length) &&
-    keys.includes(CT_ATTRIBUTES_MAPPING.coating_grade_gsm_gl_ppgl) &&
-    keys.includes(CT_ATTRIBUTES_MAPPING.colour)
-  )
-    return PRODUCT_TYPES.ppgl_coils;
-
-  if (
-    keys.includes(CT_ATTRIBUTES_MAPPING.thickness) &&
-    keys.includes(CT_ATTRIBUTES_MAPPING.width) &&
-    keys.includes(CT_ATTRIBUTES_MAPPING.length) &&
-    keys.includes(CT_ATTRIBUTES_MAPPING.coating_grade_gsm_gl_ppgl) &&
-    keys.includes(CT_ATTRIBUTES_MAPPING.colour)
-  )
-    return PRODUCT_TYPES.ppgl_sheets;
-
-  if (
-    keys.includes(CT_ATTRIBUTES_MAPPING.thickness) &&
-    keys.includes(CT_ATTRIBUTES_MAPPING.width) &&
-    !keys.includes(CT_ATTRIBUTES_MAPPING.length) &&
-    keys.includes(CT_ATTRIBUTES_MAPPING.coating_grade_gsm_gl_ppgl)
-  )
-    return PRODUCT_TYPES.gl_coils;
-
-  if (
-    keys.includes(CT_ATTRIBUTES_MAPPING.thickness) &&
-    keys.includes(CT_ATTRIBUTES_MAPPING.width) &&
-    keys.includes(CT_ATTRIBUTES_MAPPING.length) &&
-    keys.includes(CT_ATTRIBUTES_MAPPING.coating_grade_gsm_gl_ppgl)
-  )
-    return PRODUCT_TYPES.gl_sheets;
-
-  if (
-    keys.includes(CT_ATTRIBUTES_MAPPING.thickness) &&
-    keys.includes(CT_ATTRIBUTES_MAPPING.width) &&
-    !keys.includes(CT_ATTRIBUTES_MAPPING.length)
-  )
-    return PRODUCT_TYPES.ms_ss_hr_cr_coils;
-
-  if (
-    keys.includes(CT_ATTRIBUTES_MAPPING.thickness) &&
-    keys.includes(CT_ATTRIBUTES_MAPPING.width) &&
-    keys.includes(CT_ATTRIBUTES_MAPPING.length)
-  )
-    return PRODUCT_TYPES.ms_ss_hr_cr_sheets;
-  if (
-    keys.includes(CT_ATTRIBUTES_MAPPING.diameter) &&
-    ccpBuyAgainApiProduct.name.toLowerCase().includes('wire')
-  )
-    return PRODUCT_TYPES.wire_rod_coils;
-
-  if (keys.includes(CT_ATTRIBUTES_MAPPING.leg)) return PRODUCT_TYPES.angles;
-
-  if (keys.includes(CT_ATTRIBUTES_MAPPING.flange_width))
-    return PRODUCT_TYPES.channels_beams_and_columns;
-  return PRODUCT_TYPES.default;
+  return rules.find((rule) => rule.matches())?.type ?? PRODUCT_TYPES.default;
 }
 
 export function getAttributesAndItsList(ccpBuyAgainApiProduct, quantity: number): [any[], any[]] {

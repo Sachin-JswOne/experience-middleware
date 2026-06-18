@@ -51,7 +51,7 @@ function getValidatedGeocodeData(
 ): GoogleGeocodeResponse {
   const geocodeResponse = aggregatedResponses.find((r) => r.target === TARGET_NAMES.GOOGLE_GEOCODE);
 
-  if (!geocodeResponse || !geocodeResponse.success) {
+  if (!geocodeResponse?.success) {
     Logger.error(
       `Error for ${requestUrl} method: Google Maps Geocoding API call failed or response not found.`,
     );
@@ -120,13 +120,13 @@ export function transformCustomerLocationResponse(
 ): unknown {
   const geocodeResponse = aggregatedResponses.find((r) => r.target === TARGET_NAMES.GOOGLE_GEOCODE);
 
-  if (!geocodeResponse || !geocodeResponse.success) {
+  if (!geocodeResponse?.success) {
     Logger.error(
       `Error in transformCustomerLocationResponse: Google Maps API failed, preventing locality data API call. Error: ${geocodeResponse?.error || 'Unknown error'}`,
     );
     throw new CustomError(
-      geocodeResponse?.error || 'Google Maps API failed, unable to get locality data',
-      geocodeResponse?.httpStatus || HttpStatus.BAD_REQUEST,
+      geocodeResponse?.error ?? 'Google Maps API failed, unable to get locality data',
+      geocodeResponse?.httpStatus ?? HttpStatus.BAD_REQUEST,
     );
   }
 
@@ -147,8 +147,8 @@ export function transformCustomerLocationResponse(
       `Error in transformCustomerLocationResponse: ${localityResponse.error || 'Unknown error'}`,
     );
     throw new CustomError(
-      localityResponse.error || 'Failed to get locality data',
-      localityResponse.httpStatus || HttpStatus.INTERNAL_SERVER_ERROR,
+      localityResponse.error ?? 'Failed to get locality data',
+      localityResponse.httpStatus ?? HttpStatus.INTERNAL_SERVER_ERROR,
     );
   }
 

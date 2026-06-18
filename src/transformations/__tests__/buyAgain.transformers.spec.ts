@@ -296,7 +296,7 @@ describe('transformBuyAgainResponse', () => {
         primaryUom: { label: 'MT', value: 8 },
       };
 
-      const [attributes, list] = getAttributesAndItsList(product, 8);
+      const [attributes] = getAttributesAndItsList(product, 8);
 
       expect(attributes).toHaveLength(3);
     });

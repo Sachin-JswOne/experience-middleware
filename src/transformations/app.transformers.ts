@@ -4,14 +4,157 @@ import { BaseRequest } from 'src/models/base-request.model';
 import { safeDebug } from 'src/utils/common-functions.util';
 import { inspect } from 'util';
 
-export function mergeHomePageResponses(aggregatedResponses: AggregatedResponse[]): any {
-  const responses = aggregatedResponses.reduce(
+function mapResponsesByTarget(
+  aggregatedResponses: AggregatedResponse[],
+): Record<string, AggregatedResponse> {
+  return aggregatedResponses.reduce(
     (acc, response) => {
       acc[response.target] = response;
       return acc;
     },
     {} as Record<string, AggregatedResponse>,
   );
+}
+
+function isValidStrapiResponse(strapiResponse?: AggregatedResponse): boolean {
+  return !!(
+    strapiResponse &&
+    typeof strapiResponse.data === 'object' &&
+    strapiResponse.data !== null
+  );
+}
+
+function getBlocks(strapiResponse: AggregatedResponse): any[] {
+  const blocks = (strapiResponse.data?.data as { blocks?: unknown[] })?.blocks;
+  return Array.isArray(blocks) ? [...blocks] : [];
+}
+
+function injectBuyAgainBlock(blocks: any[], buyAgainResponse?: AggregatedResponse): void {
+  const buyAgainProducts = (buyAgainResponse?.data as { listOfBuyAgainProducts?: unknown })
+    ?.listOfBuyAgainProducts;
+
+  if (!Array.isArray(buyAgainProducts)) {
+    return;
+  }
+
+  const buyAgainBlock = blocks.find(
+    (block) => block.__component === 'app-components.app-buy-again',
+  );
+
+  if (buyAgainBlock) {
+    buyAgainBlock.listOfBuyAgainProducts = buyAgainProducts;
+  }
+}
+
+function injectTopItemsBlock(blocks: any[], topItemsResponse?: AggregatedResponse): void {
+  const topProducts = (topItemsResponse?.data as { topProducts?: unknown })?.topProducts;
+
+  if (!Array.isArray(topProducts)) {
+    return;
+  }
+
+  const topItemsBlock = blocks.find(
+    (block) => block.__component === 'app-components.app-top-items',
+  );
+
+  if (topItemsBlock) {
+    topItemsBlock.topProducts = topProducts;
+  }
+}
+
+function injectCategoriesBlock(blocks: any[], categoriesResponse?: AggregatedResponse): void {
+  const categories = (categoriesResponse?.data as { categories?: any[] })?.categories;
+  const categoriesBlock = blocks.find(
+    (block) => block.__component === 'app-components.app-category-component',
+  );
+
+  if (!categoriesBlock?.product_categories) {
+    return;
+  }
+
+  categoriesBlock.product_categories = Array.isArray(categories)
+    ? categoriesBlock.product_categories.filter((category) =>
+        categories.some((c: any) => c.categoryId === category.categoryId),
+      )
+    : [];
+}
+
+function injectTopBrandsBlock(blocks: any[], categoriesResponse?: AggregatedResponse): void {
+  const topBrands = (categoriesResponse?.data as { brands?: any[] })?.brands;
+
+  if (!Array.isArray(topBrands)) {
+    return;
+  }
+
+  const topBrandsBlockIndex = blocks.findIndex(
+    (block) => block.__component === 'app-components.app-top-brands',
+  );
+
+  if (topBrandsBlockIndex === -1) {
+    return;
+  }
+
+  const topBrandsBlock = blocks[topBrandsBlockIndex];
+
+  const brands = Array.isArray(topBrandsBlock.product_brands)
+    ? topBrandsBlock.product_brands.map((brand: any) => ({
+        image: brand.image?.url || '',
+        name: brand.name || '',
+      }))
+    : [];
+
+  const productBrands = brands.filter((brand) => topBrands.includes(brand.name));
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { product_brands, ...restOfBlock } = topBrandsBlock;
+
+  blocks[topBrandsBlockIndex] = {
+    ...restOfBlock,
+    productBrands,
+  };
+}
+
+function injectBlogsBlock(blocks: any[], blogResponse?: AggregatedResponse): void {
+  const blogs = (blogResponse?.data as { data?: unknown })?.data;
+
+  if (!Array.isArray(blogs)) {
+    return;
+  }
+
+  const blogBlock = blocks.find(
+    (block) => block.__component === 'app-components.app-blog-list-component',
+  );
+
+  if (blogBlock) {
+    blogBlock.blogs = blogs;
+  }
+}
+
+function hasInTransitData(inTransitResponse?: AggregatedResponse): boolean {
+  const inTransitData = inTransitResponse?.data?.data?.response?.data;
+
+  return !!(
+    inTransitResponse?.success &&
+    inTransitResponse.data?.success &&
+    inTransitResponse.data?.data?.success &&
+    Array.isArray(inTransitData) &&
+    inTransitData.length > 0
+  );
+}
+
+function injectInTransitBlock(blocks: any[], inTransitResponse?: AggregatedResponse): void {
+  const inTransitBlock = blocks.find(
+    (block) => block.__component === 'app-components.app-link-banner',
+  );
+
+  if (inTransitBlock) {
+    inTransitBlock.inTransit = hasInTransitData(inTransitResponse);
+  }
+}
+
+export function mergeHomePageResponses(aggregatedResponses: AggregatedResponse[]): any {
+  const responses = mapResponsesByTarget(aggregatedResponses);
+
   const strapiResponse = responses['app-home-page'];
   const topItemsResponse = responses['app-top-items'];
   const buyAgainResponse = responses['app-buy-again'];
@@ -19,161 +162,41 @@ export function mergeHomePageResponses(aggregatedResponses: AggregatedResponse[]
   const blogResponse = responses['app-blogs'];
   const inTransitResponse = responses['app-in-transit'];
 
-  safeDebug(
-    Logger,
-    () =>
-      `Strapi Home Page Api response from method: mergeHomePageResponses : ${inspect(
-        strapiResponse,
-      )}`,
+  safeDebug(Logger, () =>
+    `Strapi Home Page Api response from method: mergeHomePageResponses : ${inspect(strapiResponse)}`,
   );
-  safeDebug(
-    Logger,
-    () =>
-      `Top Items Api response from method: mergeHomePageResponses : ${inspect(topItemsResponse)}`,
+  safeDebug(Logger, () =>
+    `Top Items Api response from method: mergeHomePageResponses : ${inspect(topItemsResponse)}`,
   );
-  safeDebug(
-    Logger,
-    () =>
-      `Buy Again Api response from method: mergeHomePageResponses : ${inspect(buyAgainResponse)}`,
+  safeDebug(Logger, () =>
+    `Buy Again Api response from method: mergeHomePageResponses : ${inspect(buyAgainResponse)}`,
   );
-  safeDebug(
-    Logger,
-    () =>
-      `Categories Api response from method: mergeHomePageResponses : ${inspect(
-        categoriesResponse,
-      )}`,
+  safeDebug(Logger, () =>
+    `Categories Api response from method: mergeHomePageResponses : ${inspect(categoriesResponse)}`,
   );
-  safeDebug(
-    Logger,
-    () => `Blog Api response from method: mergeHomePageResponses : ${inspect(blogResponse)}`,
+  safeDebug(Logger, () =>
+    `Blog Api response from method: mergeHomePageResponses : ${inspect(blogResponse)}`,
   );
-  safeDebug(
-    Logger,
-    () =>
-      `In Transit Api response from method: mergeHomePageResponses : ${inspect(inTransitResponse)}`,
+  safeDebug(Logger, () =>
+    `In Transit Api response from method: mergeHomePageResponses : ${inspect(inTransitResponse)}`,
   );
-  if (!strapiResponse || typeof strapiResponse.data !== 'object' || strapiResponse.data === null) {
+
+  if (!isValidStrapiResponse(strapiResponse)) {
     Logger.error(
       `Error for Home Page API method: mergeHomePageResponses Strapi response is missing or invalid`,
     );
     return { data: {}, meta: {} };
   }
 
-  // Clone the strapi response data to avoid mutating the original
   const mergedData: Record<string, unknown> = { ...strapiResponse.data.data };
+  const blocks = getBlocks(strapiResponse);
 
-  // Find the blocks array in the strapi response
-  let originalBlocks: unknown[] = [];
-  if (
-    typeof strapiResponse.data === 'object' &&
-    strapiResponse.data.data !== null &&
-    Array.isArray((strapiResponse.data.data as { blocks?: unknown[] }).blocks)
-  ) {
-    originalBlocks = [
-      ...((strapiResponse.data.data as { blocks?: unknown[] }).blocks as unknown[]),
-    ];
-  }
-  const blocks: any[] = originalBlocks;
-
-  const buyAgainProducts = (buyAgainResponse?.data as { listOfBuyAgainProducts?: unknown })
-    ?.listOfBuyAgainProducts;
-  if (Array.isArray(buyAgainProducts)) {
-    const buyAgainBlock = blocks.find(
-      (block) => block.__component === 'app-components.app-buy-again',
-    );
-    if (buyAgainBlock) {
-      buyAgainBlock.listOfBuyAgainProducts = buyAgainProducts;
-    }
-  }
-
-  // Prepare top items block if available
-  const topProducts = (topItemsResponse?.data as { topProducts?: unknown })?.topProducts;
-  if (Array.isArray(topProducts)) {
-    const topItemsBlock = blocks.find(
-      (block) => block.__component === 'app-components.app-top-items',
-    );
-    if (topItemsBlock) {
-      topItemsBlock.topProducts = topProducts;
-    }
-  }
-
-  const categories: any[] | undefined = (categoriesResponse?.data as { categories?: any[] })
-    ?.categories;
-  const categoriesBlock = blocks.find(
-    (block) => block.__component === 'app-components.app-category-component',
-  );
-  if (categoriesBlock && categoriesBlock.product_categories) {
-    let filteredCategories: any[] = [];
-    if (categories) {
-      filteredCategories = categoriesBlock.product_categories.filter((category) =>
-        categories.some((c: any) => c.categoryId === category.categoryId),
-      );
-    }
-    categoriesBlock.product_categories = filteredCategories;
-  }
-
-  const topBrands: any[] | undefined = (categoriesResponse?.data as { brands?: any[] })?.brands;
-
-  if (Array.isArray(topBrands)) {
-    const topBrandsBlockIndex = blocks.findIndex(
-      (block) => block.__component === 'app-components.app-top-brands',
-    );
-
-    if (topBrandsBlockIndex !== -1) {
-      const topBrandsBlock = blocks[topBrandsBlockIndex];
-
-      const brands: any[] = [];
-      if (topBrandsBlock.product_brands) {
-        topBrandsBlock.product_brands.forEach((brand: any) => {
-          const brandData = {
-            image: brand.image?.url || '',
-            name: brand.name || '',
-          };
-          brands.push(brandData);
-        });
-      }
-
-      const productBrands = brands.filter((brand) => topBrands.includes(brand.name));
-
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { product_brands, ...restOfBlock } = topBrandsBlock;
-
-      blocks[topBrandsBlockIndex] = {
-        ...restOfBlock,
-        productBrands,
-      };
-    }
-  }
-
-  const blogs = (blogResponse?.data as { data?: unknown })?.data;
-  if (Array.isArray(blogs)) {
-    const blogBlock = blocks.find(
-      (block) => block.__component === 'app-components.app-blog-list-component',
-    );
-    if (blogBlock) {
-      blogBlock.blogs = blogs;
-    }
-  }
-
-  const inTransitApiResponse = inTransitResponse;
-  let inTransit = false;
-  if (
-    inTransitApiResponse.success &&
-    inTransitApiResponse.data.success &&
-    inTransitApiResponse.data.data.success
-  ) {
-    const inTransitData = inTransitApiResponse.data.data.response.data;
-    if (inTransitData && inTransitData.length > 0) {
-      inTransit = true;
-    }
-  }
-
-  const inTransitBlock = blocks.find(
-    (block) => block.__component === 'app-components.app-link-banner',
-  );
-  if (inTransitBlock) {
-    inTransitBlock.inTransit = inTransit;
-  }
+  injectBuyAgainBlock(blocks, buyAgainResponse);
+  injectTopItemsBlock(blocks, topItemsResponse);
+  injectCategoriesBlock(blocks, categoriesResponse);
+  injectTopBrandsBlock(blocks, categoriesResponse);
+  injectBlogsBlock(blocks, blogResponse);
+  injectInTransitBlock(blocks, inTransitResponse);
 
   mergedData.blocks = blocks;
 
@@ -182,14 +205,52 @@ export function mergeHomePageResponses(aggregatedResponses: AggregatedResponse[]
   };
 }
 
-export function mergeBuyAgainResponses(aggregatedResponses: AggregatedResponse[]): any {
-  const responses = aggregatedResponses.reduce(
+function getResponsesByTarget(
+  aggregatedResponses: AggregatedResponse[],
+): Record<string, AggregatedResponse> {
+  return aggregatedResponses.reduce(
     (acc, response) => {
       acc[response.target] = response;
       return acc;
     },
     {} as Record<string, AggregatedResponse>,
   );
+}
+
+function addEmptyPriceToProducts(products?: any[]): void {
+  if (!Array.isArray(products)) {
+    return;
+  }
+
+  products.forEach((product: any) => {
+    product.price = '';
+  });
+}
+
+function applyPricesToBuyAgainProducts(products: any[], priceData: any[]): void {
+  products.forEach((product: any) => {
+    const priceProduct = priceData.find((p: any) => p.variantKey === product.variantKey);
+    product.price = priceProduct?.displayVariantLineItemPrice || '';
+  });
+}
+
+function mergePriceDataIntoRetailData(retailData: any, priceData: any): any {
+  const products = retailData?.listOfBuyAgainProducts;
+
+  if (Array.isArray(priceData) && priceData.length === 0) {
+    addEmptyPriceToProducts(products);
+    return retailData;
+  }
+
+  if (Array.isArray(priceData) && Array.isArray(products)) {
+    applyPricesToBuyAgainProducts(products, priceData);
+  }
+
+  return retailData;
+}
+
+export function mergeBuyAgainResponses(aggregatedResponses: AggregatedResponse[]): any {
+  const responses = getResponsesByTarget(aggregatedResponses);
 
   const buyAgainPriceApiResponse = responses['ccp-buy-again-with-prices'];
   const buyAgainRetailApiResponse = responses['app-buy-again'];
@@ -209,44 +270,62 @@ export function mergeBuyAgainResponses(aggregatedResponses: AggregatedResponse[]
         buyAgainRetailApiResponse,
       )}`,
   );
-  if (buyAgainRetailApiResponse.success) {
-    if (buyAgainPriceApiResponse.data && buyAgainRetailApiResponse.data) {
-      if (buyAgainPriceApiResponse.data.length === 0) {
-        if (buyAgainRetailApiResponse.data.listOfBuyAgainProducts) {
-          buyAgainRetailApiResponse.data.listOfBuyAgainProducts.forEach((product: any) => {
-            product.price = '';
-          });
-        }
-        return buyAgainRetailApiResponse.data;
-      }
-      if (
-        Array.isArray(buyAgainPriceApiResponse.data) &&
-        Array.isArray(buyAgainRetailApiResponse.data.listOfBuyAgainProducts)
-      ) {
-        buyAgainRetailApiResponse.data.listOfBuyAgainProducts.forEach((product: any) => {
-          const priceProduct = buyAgainPriceApiResponse.data.find(
-            (p: any) => p.variantKey === product.variantKey,
-          );
-          if (priceProduct) {
-            product.price = priceProduct.displayVariantLineItemPrice || '';
-          } else {
-            product.price = '';
-          }
-        });
-      }
-      return buyAgainRetailApiResponse.data;
-    }
-  } else {
+
+  if (!buyAgainRetailApiResponse.success) {
     Logger.error(
       `Error for Buy Again API method: mergeBuyAgainResponses Buy again retail API response failed`,
     );
+
     return {
       listOfBuyAgainProducts: [],
     };
   }
+
+  if (!buyAgainPriceApiResponse.data || !buyAgainRetailApiResponse.data) {
+    return undefined;
+  }
+
+  return mergePriceDataIntoRetailData(
+    buyAgainRetailApiResponse.data,
+    buyAgainPriceApiResponse.data,
+  );
 }
 
-export function mergeTopBrandsResponses(aggregatedResponses) {
+const TOP_BRANDS_DEFAULT_RESPONSE = {
+  productBrands: [],
+};
+
+function mapBrands(productBrands?: any[]): any[] {
+  if (!Array.isArray(productBrands)) {
+    return [];
+  }
+
+  return productBrands.map((brand: any) => ({
+    image: brand.image?.url || '',
+    name: brand.name || '',
+  }));
+}
+
+function buildTopBrandsResponse(topBrandsStrapiResponse: any, productBrands: any[]) {
+  return {
+    __component: topBrandsStrapiResponse.__component,
+    id: topBrandsStrapiResponse.id,
+    title: topBrandsStrapiResponse.title,
+    productBrands,
+  };
+}
+
+function getFirstBrandingSection(strapiTopBrandsData?: AggregatedResponse): any {
+  const brandingSections = strapiTopBrandsData?.data?.data?.branding_sections;
+
+  if (!Array.isArray(brandingSections) || brandingSections.length === 0) {
+    return null;
+  }
+
+  return brandingSections[0] ?? null;
+}
+
+export function mergeTopBrandsResponses(aggregatedResponses: AggregatedResponse[]) {
   const responses = aggregatedResponses.reduce(
     (acc, response) => {
       acc[response.target] = response;
@@ -274,69 +353,32 @@ export function mergeTopBrandsResponses(aggregatedResponses) {
       )}`,
   );
 
-  const defaultResponse = {
-    productBrands: [],
-  };
-
-  if (strapiTopBrandsData.success && topBrandsApiData.success) {
-    const strapiBrandsResponse = strapiTopBrandsData.data.data;
-
-    if (
-      strapiBrandsResponse.branding_sections &&
-      Array.isArray(strapiBrandsResponse.branding_sections) &&
-      strapiBrandsResponse.branding_sections.length > 0
-    ) {
-      const topBrandsStrapiResponse = strapiBrandsResponse.branding_sections[0];
-
-      if (!topBrandsStrapiResponse) {
-        Logger.error(
-          `Error for Top Brands API method: mergeTopBrandsResponses Top brands Strapi response is missing`,
-        );
-        return defaultResponse;
-      }
-      const brands: any[] = [];
-      if (topBrandsStrapiResponse.product_brands) {
-        topBrandsStrapiResponse.product_brands.forEach((brand: any) => {
-          const brandData = {
-            image: brand.image?.url || '',
-            name: brand.name || '',
-          };
-          brands.push(brandData);
-        });
-      }
-
-      const topBrandsApiResponse = topBrandsApiData.data?.brands;
-
-      if (topBrandsApiResponse && topBrandsApiResponse.length > 0) {
-        const topBrands: string[] = topBrandsApiResponse;
-
-        const productBrands = brands.filter((brand) => topBrands.includes(brand.name));
-        const response = {
-          __component: topBrandsStrapiResponse.__component,
-          id: topBrandsStrapiResponse.id,
-          title: topBrandsStrapiResponse.title,
-          productBrands: productBrands,
-        };
-        return response;
-      } else {
-        return {
-          __component: topBrandsStrapiResponse.__component,
-          id: topBrandsStrapiResponse.id,
-          title: topBrandsStrapiResponse.title,
-          productBrands: [],
-        };
-      }
-    }
-    Logger.error(
-      `Error for Top Brands API method: mergeTopBrandsResponses Strapi branding sections not found or invalid`,
-    );
-    return defaultResponse;
-  } else {
+  if (!strapiTopBrandsData.success || !topBrandsApiData.success) {
     Logger.error(
       `Error for Top Brands API method: mergeTopBrandsResponses Strapi or API data response failed`,
     );
-    return defaultResponse;
+    return TOP_BRANDS_DEFAULT_RESPONSE;
   }
+
+  const topBrandsStrapiResponse = getFirstBrandingSection(strapiTopBrandsData);
+
+  if (!topBrandsStrapiResponse) {
+    Logger.error(
+      `Error for Top Brands API method: mergeTopBrandsResponses Strapi branding sections not found or invalid`,
+    );
+    return TOP_BRANDS_DEFAULT_RESPONSE;
+  }
+
+  const brands = mapBrands(topBrandsStrapiResponse.product_brands);
+  const topBrandsApiResponse = topBrandsApiData.data?.brands;
+
+  if (!Array.isArray(topBrandsApiResponse) || topBrandsApiResponse.length === 0) {
+    return buildTopBrandsResponse(topBrandsStrapiResponse, []);
+  }
+
+  const productBrands = brands.filter((brand) => topBrandsApiResponse.includes(brand.name));
+
+  return buildTopBrandsResponse(topBrandsStrapiResponse, productBrands);
 }
 
 export function transformInTransitRequest(request) {

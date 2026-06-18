@@ -16,13 +16,12 @@ import {
   PB_ORDER_TAGS,
   UOM,
 } from 'src/config/app.config';
-import { formatDate } from 'src/utils/common-functions.util';
+import { formatDate, safeDebug } from 'src/utils/common-functions.util';
 import { transformSingleProduct } from './shipments.transformers';
 import { HttpStatusCode } from 'axios';
 import { CustomError } from 'src/utils/CustomError';
 import { AggregatedResponse } from 'src/models/aggregated-response.model';
 import { Logger } from '@nestjs/common';
-import { safeDebug } from 'src/utils/common-functions.util';
 
 export function transformOrderListingRequest(request) {
   if (request.url.searchParams) {
@@ -323,8 +322,7 @@ export function transformOpportunityAttributes({ keys, values }) {
 }
 
 export function extractUOM(key: string): string {
-  const match = key.match(/\((.*?)\)/);
-  return match ? match[1] : '';
+  return /\((.*?)\)/.exec(key)?.[1] ?? '';
 }
 
 export function buildAttribute(description: string, value: string, uom = '') {
@@ -348,7 +346,7 @@ export function getPPGLColorInfo(input: string) {
 }
 
 export function getAppStatusFromOpportunities(order) {
-  if (!order || !order.orderType || !order.orderStatus) {
+  if (!order?.orderType || !order.orderStatus) {
     return '';
   }
 

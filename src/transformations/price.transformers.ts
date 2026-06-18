@@ -1,11 +1,11 @@
 import { CCP_PRICE_API_ATTRIBUTES_MAPPING, PRODUCT_TYPE_KEYS } from 'src/config/app.config';
 import { BaseRequest } from 'src/models/base-request.model';
-import { priceRequest, priceResponse } from 'src/models/price.model';
+import { PriceRequest, PriceResponse } from 'src/models/price.model';
 import { Logger } from '@nestjs/common';
 import { safeDebug } from 'src/utils/common-functions.util';
 
 export function transformLineItemPriceRequest(request: BaseRequest): BaseRequest {
-  const requestBody: priceRequest = request?.body;
+  const requestBody: PriceRequest = request?.body;
   const variantMMID = getVariantMMID(requestBody?.category, requestBody?.productMMID);
 
   const productVariantKey = getProductVariantKey(requestBody?.key, requestBody?.productAttributes);
@@ -82,7 +82,7 @@ export function getVariantMMID(category: string, productMMID: string): string {
   return variantMMID;
 }
 
-export function transformLineItemPriceResponse(response: priceResponse) {
+export function transformLineItemPriceResponse(response: PriceResponse) {
   safeDebug(
     Logger,
     () =>

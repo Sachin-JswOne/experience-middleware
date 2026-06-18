@@ -1,10 +1,9 @@
 /* eslint-disable no-prototype-builtins */
 
-import { HttpStatus } from '@nestjs/common';
+import { HttpStatus, Logger } from '@nestjs/common';
 import { MSME, MSME_ERRORS_MAPPING, USER_TYPE } from 'src/config/app.config';
 import { BaseRequest } from 'src/models/base-request.model';
 import { CustomError } from 'src/utils/CustomError';
-import { Logger } from '@nestjs/common';
 import { safeDebug } from 'src/utils/common-functions.util';
 
 export function transformResetPasswordRequest(request: BaseRequest): BaseRequest {
@@ -125,9 +124,9 @@ export function transformVerifyMobileNumberWithOtpRequest(request: BaseRequest):
 
   if (!validationResult.isValid) {
     Logger.error(
-      `Error for ${request.url} method: transformVerifyMobileNumberWithOtpRequest ${validationResult.errorMessage || 'Validation failed'}`,
+      `Error for ${request.url} method: transformVerifyMobileNumberWithOtpRequest ${validationResult.errorMessage ?? 'Validation failed'}`,
     );
-    throw new CustomError(validationResult.errorMessage || '', HttpStatus.BAD_REQUEST);
+    throw new CustomError(validationResult.errorMessage ?? '', HttpStatus.BAD_REQUEST);
   }
   const transformedRequest: BaseRequest = {
     ...request,
@@ -214,7 +213,7 @@ export function selectLoginTarget(request: BaseRequest) {
     Logger.error(
       `Error for ${request.url} method: selectLoginTarget ${validationResult.errorMessage || 'Validation failed'}`,
     );
-    throw new CustomError(validationResult.errorMessage || '', HttpStatus.BAD_REQUEST);
+    throw new CustomError(validationResult.errorMessage ?? '', HttpStatus.BAD_REQUEST);
   }
 
   if (phoneNumber && phoneNumber !== '') {
@@ -301,10 +300,10 @@ export function transformEmailLoginResponse(response) {
   }
   const isEmailExists = responseData?.data;
 
-  return (response = {
+  return {
     requestId: '',
     userExists: isEmailExists,
-  });
+  };
 }
 
 export function transformPhoneNumberPasscodeRequest(request) {

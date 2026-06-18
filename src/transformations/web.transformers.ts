@@ -24,7 +24,6 @@ import { Request } from 'express';
 
 const WEB_HOME_PAGE_V3_ORIGINAL_BODY_KEY = '__webHomePageV3OriginalBody';
 const WEB_HOME_PAGE_V3_CMS_KEY = '__webHomePageV3CmsResponse';
-const WEB_HOME_PAGE_V3_CENTRAL_CATALOGUE_GLOBAL_KEY = '__webHomePageV3CentralCatalogueGlobal';
 
 export function homeBlogsFromParallelPayload(request: BaseRequest): BaseRequest {
   return cmsTransformers.homeBlogs({
@@ -67,14 +66,187 @@ function getHomepageV3PageFromHelperBody(request: BaseRequest): any {
   return getParallelHelperCmsResponse(request);
 }
 
-export function mergeWebHomePageResponses(aggregatedResponses: AggregatedResponse[]): any {
-  const responses = aggregatedResponses.reduce(
+function mapResponsesByTarget(
+  aggregatedResponses: AggregatedResponse[],
+): Record<string, AggregatedResponse> {
+  return aggregatedResponses.reduce(
     (acc, response) => {
       acc[response.target] = response;
       return acc;
     },
     {} as Record<string, AggregatedResponse>,
   );
+}
+
+function isValidCmsResponse(cmsResponse?: AggregatedResponse): boolean {
+  return !!(
+    cmsResponse?.success &&
+    typeof cmsResponse.data === 'object' &&
+    cmsResponse.data !== null
+  );
+}
+
+function getBlocks(cmsData: { blocks?: any[] }): any[] {
+  return Array.isArray(cmsData?.blocks) ? [...cmsData.blocks] : [];
+}
+
+function injectBuyAgainData(blocks: any[], buyAgainResponse: any): void {
+  if (!buyAgainResponse?.success) {
+    if (buyAgainResponse) {
+      Logger.warn(
+        `Warning for Web Home Page API method: mergeWebHomePageResponses CCP buy again response failed.`,
+        buyAgainResponse.error ?? 'Unknown error',
+      );
+    }
+    return;
+  }
+
+  const rawData = buyAgainResponse.data ?? {};
+  const { listOfBuyAgainProducts, variantList, skuSize } = rawData;
+  const products = listOfBuyAgainProducts ?? variantList ?? (Array.isArray(rawData) ? rawData : []);
+
+  if (products.length === 0) {
+    return;
+  }
+
+  const block = blocks.find(
+    (b: any) => b.type === 'buy-again' || b.__component === 'app-components.app-buy-again',
+  );
+
+  if (!block) {
+    return;
+  }
+
+  block.listOfBuyAgainProducts = products;
+  if (variantList) block.variantList = variantList;
+  if (skuSize != null) block.skuSize = skuSize;
+}
+
+function injectBlogs(blocks: any[], blogsResponse?: AggregatedResponse): void {
+  const blogs = blogsResponse?.data?.data || [];
+  const blogsBlock = blocks.find(
+    (block: any) =>
+      block.type === 'blogs' || block.__component === 'app-components.app-blog-list-component',
+  );
+
+  if (blogsBlock) {
+    blogsBlock.blogs = blogs;
+  }
+}
+
+function getNavigation(response?: AggregatedResponse): any[] | null {
+  return response?.success && Array.isArray(response.data?.data?.navigation)
+    ? response.data.data.navigation
+    : null;
+}
+
+function filterNavigationByCategoryIds(navigation: any[], categoryIds: string[]): any[] {
+  return navigation
+    .map((nav: any) => ({
+      ...nav,
+      subMenu: nav.subMenu?.filter((sub: any) => categoryIds.includes(sub.id)),
+    }))
+    .filter((nav: any) => nav.subMenu && nav.subMenu.length > 0);
+}
+
+function injectCentralCategoryData(
+  blocks: any[],
+  navigation: any[] | null,
+  componentName: string,
+): void {
+  if (!navigation) {
+    return;
+  }
+
+  const categoryBlocks = blocks.filter(
+    (block: any) =>
+      block.__component === componentName &&
+      Array.isArray(block.web_central_catalogue_categories),
+  );
+
+  categoryBlocks.forEach((block: any) => {
+    const blockCategoryIds = block.web_central_catalogue_categories
+      .map((category: any) => category.categoryId)
+      .filter(Boolean);
+
+    block.centralCategoryIdData = filterNavigationByCategoryIds(navigation, blockCategoryIds);
+  });
+}
+
+function injectPendingDispatchQuantity(
+  mergedData: Record<string, unknown>,
+  pendingDispatchResponse?: AggregatedResponse,
+): void {
+  if (pendingDispatchResponse?.success) {
+    mergedData.pendingDispatchQuantity = pendingDispatchResponse.data;
+    return;
+  }
+
+  if (pendingDispatchResponse) {
+    Logger.warn(
+      `Warning for Web Home Page API method: mergeWebHomePageResponses pending-dispatch-quantity response failed.`,
+      pendingDispatchResponse.error ?? 'Unknown error',
+    );
+  }
+}
+
+function getProductCategoryBlock(blocks: any[]): any {
+  return blocks.find((block: any) => block.__component === 'app-components.app-product-category');
+}
+
+function injectWebProducts(blocks: any[], webProductsResponse?: AggregatedResponse): void {
+  if (!webProductsResponse?.success) {
+    return;
+  }
+
+  const productsData = webProductsResponse.data.data ?? {};
+  const block = getProductCategoryBlock(blocks);
+
+  block?.app_product_categories
+    ?.filter((categoryProducts: any) => categoryProducts.webCategoryId && categoryProducts.itemsToShow)
+    .forEach((categoryProducts: any) => {
+      categoryProducts.productsList = productsData[categoryProducts.webCategoryId];
+    });
+}
+
+function injectProductsListing(blocks: any[], productsListingResponse?: AggregatedResponse): void {
+  if (
+    !productsListingResponse?.success ||
+    !Array.isArray(productsListingResponse.data?.data?.products)
+  ) {
+    return;
+  }
+
+  const block = getProductCategoryBlock(blocks);
+  const filteredCategories = block?.app_product_categories?.filter(
+    (categoryProducts: any) => categoryProducts.webCategoryId && categoryProducts.itemsToShow,
+  );
+
+  if (!filteredCategories?.length) {
+    return;
+  }
+
+  filteredCategories[0].centralCategoryIdData = [
+    {
+      products: productsListingResponse.data.data.products,
+    },
+  ];
+}
+
+function buildWebHomePageResponse(mergedData: Record<string, unknown>, blocks: any[]): any {
+  mergedData.blocks = blocks;
+
+  return {
+    data: mergedData,
+    meta: {
+      timestamp: new Date().toISOString(),
+      version: '1.0',
+    },
+  };
+}
+
+export function mergeWebHomePageResponses(aggregatedResponses: AggregatedResponse[]): any {
+  const responses = mapResponsesByTarget(aggregatedResponses);
 
   const cmsResponse = responses['app-home-page'];
   const blogsResponse = responses['app-blogs'];
@@ -85,200 +257,58 @@ export function mergeWebHomePageResponses(aggregatedResponses: AggregatedRespons
   const webTopBrandCategoriesResponse = responses['web-central-top-brand-categories'];
   const productsListingResponse = responses['products-listing'];
 
-  safeDebug(
-    Logger,
-    () =>
-      ` CMS Home Page Api response from method: mergeWebHomePageResponses : ${JSON.stringify(
-        cmsResponse,
-      )}`,
+  safeDebug(Logger, () =>
+    ` CMS Home Page Api response from method: mergeWebHomePageResponses : ${JSON.stringify(
+      cmsResponse,
+    )}`,
   );
-  safeDebug(
-    Logger,
-    () =>
-      ` Blogs Api response from method: mergeWebHomePageResponses : ${JSON.stringify(
-        blogsResponse,
-      )}`,
+  safeDebug(Logger, () =>
+    ` Blogs Api response from method: mergeWebHomePageResponses : ${JSON.stringify(
+      blogsResponse,
+    )}`,
   );
-  safeDebug(
-    Logger,
-    () =>
-      ` CCP Buy Again With Price Api response from method: mergeWebHomePageResponses : ${JSON.stringify(
-        buyAgainResponse,
-      )}`,
+  safeDebug(Logger, () =>
+    ` CCP Buy Again With Price Api response from method: mergeWebHomePageResponses : ${JSON.stringify(
+      buyAgainResponse,
+    )}`,
   );
-  safeDebug(
-    Logger,
-    () =>
-      ` Pending Dispatch Quantity Api response from method: mergeWebHomePageResponses : ${JSON.stringify(
-        pendingDispatchResponse,
-      )}`,
+  safeDebug(Logger, () =>
+    ` Pending Dispatch Quantity Api response from method: mergeWebHomePageResponses : ${JSON.stringify(
+      pendingDispatchResponse,
+    )}`,
   );
-  if (
-    !cmsResponse ||
-    !cmsResponse.success ||
-    typeof cmsResponse.data !== 'object' ||
-    cmsResponse.data === null
-  ) {
+
+  if (!isValidCmsResponse(cmsResponse)) {
     Logger.error(
       `Error for Web Home Page API method: mergeWebHomePageResponses CMS response is missing or invalid.`,
     );
     return { data: {}, meta: {} };
   }
 
-  // Clone CMS data as base structure
-  const mergedData: Record<string, unknown> = {
-    ...cmsResponse.data.data,
-  };
+  const cmsData = cmsResponse.data.data as { blocks?: any[] };
+  const mergedData: Record<string, unknown> = { ...cmsData };
+  const blocks = getBlocks(cmsData);
 
-  // Extract blocks from CMS
-  const cmsData = cmsResponse.data.data as {
-    blocks?: any[];
-  };
+  injectBuyAgainData(blocks, buyAgainResponse);
+  injectBlogs(blocks, blogsResponse);
 
-  const blocks: any[] = Array.isArray(cmsData?.blocks) ? [...cmsData.blocks] : [];
-
-  // Inject buy again data
-  if (buyAgainResponse?.success) {
-    const rawData = buyAgainResponse.data ?? {};
-    const { listOfBuyAgainProducts, variantList, skuSize } = rawData;
-
-    const products =
-      listOfBuyAgainProducts ?? variantList ?? (Array.isArray(rawData) ? rawData : []);
-
-    if (products.length > 0) {
-      const block = blocks.find(
-        (b: any) => b.type === 'buy-again' || b.__component === 'app-components.app-buy-again',
-      );
-
-      if (block) {
-        block.listOfBuyAgainProducts = products;
-        if (variantList) block.variantList = variantList;
-        if (skuSize != null) block.skuSize = skuSize;
-      }
-    }
-  } else if (buyAgainResponse && !buyAgainResponse.success) {
-    Logger.warn(
-      `Warning for Web Home Page API method: mergeWebHomePageResponses CCP buy again response failed.`,
-      buyAgainResponse.error ?? 'Unknown error',
-    );
-  }
-
-  // Inject blogs
-  const blogs = blogsResponse?.data?.data || [];
-  const blogsBlock = blocks.find(
-    (block: any) =>
-      block.type === 'blogs' || block.__component === 'app-components.app-blog-list-component',
+  injectCentralCategoryData(
+    blocks,
+    getNavigation(webCentralCatalogueResponse),
+    'app-components.app-category-component',
   );
-  if (blogsBlock) {
-    blogsBlock.blogs = blogs;
-  }
 
-  // // inject central catalogue categories
-  if (
-    webCentralCatalogueResponse?.success &&
-    Array.isArray(webCentralCatalogueResponse.data?.data?.navigation)
-  ) {
-    const navigation = webCentralCatalogueResponse.data.data.navigation;
+  injectCentralCategoryData(
+    blocks,
+    getNavigation(webTopBrandCategoriesResponse),
+    'app-components.app-top-brands',
+  );
 
-    // inject central catalogue categories into all blocks that contain them
-    const categoryBlocks = blocks.filter(
-      (b: any) =>
-        b.__component === 'app-components.app-category-component' &&
-        Array.isArray(b.web_central_catalogue_categories),
-    );
+  injectPendingDispatchQuantity(mergedData, pendingDispatchResponse);
+  injectWebProducts(blocks, webProductsResponse);
+  injectProductsListing(blocks, productsListingResponse);
 
-    for (const block of categoryBlocks) {
-      const blockCategoryIds = block.web_central_catalogue_categories
-        .map((c: any) => c.categoryId)
-        .filter(Boolean);
-
-      block.centralCategoryIdData = navigation
-        .map((nav: any) => ({
-          ...nav,
-          subMenu: nav.subMenu?.filter((sub: any) => blockCategoryIds.includes(sub.id)),
-        }))
-        .filter((nav: any) => nav.subMenu && nav.subMenu.length > 0);
-    }
-  }
-
-  // inject top brand categories data into app-top-brands blocks
-  if (
-    webTopBrandCategoriesResponse?.success &&
-    Array.isArray(webTopBrandCategoriesResponse.data?.data?.navigation)
-  ) {
-    const topBrandNavigation = webTopBrandCategoriesResponse.data.data.navigation;
-
-    const topBrandsBlocks = blocks.filter(
-      (b: any) =>
-        b.__component === 'app-components.app-top-brands' &&
-        Array.isArray(b.web_central_catalogue_categories),
-    );
-
-    for (const block of topBrandsBlocks) {
-      const blockCategoryIds = block.web_central_catalogue_categories
-        .map((c: any) => c.categoryId)
-        .filter(Boolean);
-
-      block.centralCategoryIdData = topBrandNavigation
-        .map((nav: any) => ({
-          ...nav,
-          subMenu: nav.subMenu?.filter((sub: any) => blockCategoryIds.includes(sub.id)),
-        }))
-        .filter((nav: any) => nav.subMenu && nav.subMenu.length > 0);
-    }
-  }
-
-  // Inject pending dispatch quantity data
-  if (pendingDispatchResponse?.success) {
-    mergedData.pendingDispatchQuantity = pendingDispatchResponse.data;
-  } else if (pendingDispatchResponse && !pendingDispatchResponse.success) {
-    Logger.warn(
-      `Warning for Web Home Page API method: mergeWebHomePageResponses pending-dispatch-quantity response failed.`,
-      pendingDispatchResponse.error ?? 'Unknown error',
-    );
-  }
-
-  if (webProductsResponse?.success) {
-    const productsData = webProductsResponse.data.data ?? {};
-    const block = blocks.find((b: any) => b.__component === 'app-components.app-product-category');
-    block?.app_product_categories
-      ?.filter((categoryProducts) => categoryProducts.webCategoryId && categoryProducts.itemsToShow)
-      .map(
-        (categoryProducts) =>
-          (categoryProducts.productsList = productsData[categoryProducts.webCategoryId]),
-      );
-
-    // // Inject central catalogue category data for app-product-category blocks
-    if (
-      productsListingResponse?.success &&
-      Array.isArray(productsListingResponse.data?.data?.products)
-    ) {
-      const productsArray = productsListingResponse.data.data.products;
-
-      const filteredCategories = block?.app_product_categories?.filter(
-        (categoryProducts: any) => categoryProducts.webCategoryId && categoryProducts.itemsToShow,
-      );
-
-      if (filteredCategories && filteredCategories.length > 0) {
-        filteredCategories[0].centralCategoryIdData = [
-          {
-            products: productsArray,
-          },
-        ];
-      }
-    }
-  }
-
-  // Update merged data with blocks
-  mergedData.blocks = blocks;
-
-  return {
-    data: mergedData,
-    meta: {
-      timestamp: new Date().toISOString(),
-      version: '1.0',
-    },
-  };
+  return buildWebHomePageResponse(mergedData, blocks);
 }
 
 export function transformCategoryToFilterRequest(categoryData: {
@@ -318,7 +348,7 @@ export function catlougeByCategories(
 
   const categoriesResponse = responses['app-categories'];
 
-  if (!categoriesResponse || !categoriesResponse.success) {
+  if (!categoriesResponse?.success) {
     Logger.error(`Error from Strapi for categories response`, categoriesResponse.error);
     throw new CustomError(
       categoriesResponse.downstreamResponse,
@@ -356,7 +386,7 @@ export function handleProductResponse(aggregatedResponses: AggregatedResponse[])
   );
   const productsResponse = responses['catlouge-by-categories'];
 
-  if (!productsResponse || !productsResponse.success) {
+  if (!productsResponse?.success) {
     Logger.error(`Error from Strapi for categories response`, productsResponse.error);
     throw new CustomError(productsResponse.downstreamResponse, productsResponse.httpStatus ?? 500);
   }
@@ -394,17 +424,6 @@ export function prepareWebHomePageV3ParallelPayload(
   prevResponses: AggregatedResponse[],
 ): BaseRequest {
   const cmsAgg = prevResponses.find((r) => r.target === 'layout-mweb-homepages');
-
-  const isCentralCatalogueEnabled =
-    request.headers?.['central_catalogue_global'] === 'true' ||
-    request.headers?.['central-catalogue-global'] === 'true' ||
-    request.body?.central_catalogue_global === true ||
-    String(request.body?.central_catalogue_global).toLowerCase() === 'true';
-
-  if (cmsAgg?.data?.data?.[0]) {
-    cmsAgg.data.data[0].central_catalogue_global = isCentralCatalogueEnabled;
-  }
-
   const compactCms = buildCompactWebHomePageV3Payload(cmsAgg?.data);
 
   return {
@@ -449,15 +468,8 @@ export function mergeWebHomePageResponsesV3FromNestedParallel(
 
   const helperResponses = helperAgg.data;
 
-  const flagResponse: AggregatedResponse = {
-    target: 'central_catalogue_global',
-    success: true,
-    data: helperResponses?.[WEB_HOME_PAGE_V3_CENTRAL_CATALOGUE_GLOBAL_KEY] ?? false,
-  } as AggregatedResponse;
-
   return mergeWebHomePageResponsesV3([
     ...(cmsAgg ? [cmsAgg] : []),
-    flagResponse,
     ...helperResponses,
   ]);
 }
@@ -562,17 +574,310 @@ export function transformWebHomePageTopItemsMMIDRequestV3(
   };
 }
 
-export function mergeWebHomePageResponsesV3(aggregatedResponses: AggregatedResponse[]): any {
-  const responses = aggregatedResponses.reduce(
+function getV3Responses(
+  aggregatedResponses: AggregatedResponse[],
+): Record<string, AggregatedResponse> {
+  return aggregatedResponses.reduce(
     (acc, response) => {
       acc[response.target] = response;
       return acc;
     },
     {} as Record<string, AggregatedResponse>,
   );
+}
 
-  const cmsResponse = responses['layout-mweb-homepages'] ?? responses['app-home-page']; // fallback (optional)
-  // const topItemsCcpResponse = responses['ccp-top-items-product-details'];
+function isValidV3CmsResponse(cmsResponse?: AggregatedResponse): boolean {
+  return !!(
+    cmsResponse?.success &&
+    typeof cmsResponse.data === 'object' &&
+    cmsResponse.data !== null &&
+    Array.isArray((cmsResponse.data as any)?.data)
+  );
+}
+
+function injectV3Blogs(page: any, blogsResponse?: AggregatedResponse): void {
+  if (page.blog_list_component_material_matter) {
+    page.blog_list_component_material_matter.blogs = blogsResponse?.data?.data || [];
+  }
+}
+
+function injectV3BuyAgain(page: any, buyAgainAgg?: AggregatedResponse): void {
+  if (!buyAgainAgg?.success) {
+    if (buyAgainAgg) {
+      Logger.warn(
+        `Warning for Web Home Page API method: mergeWebHomePageResponsesV3 CCP buy again response failed.`,
+        buyAgainAgg.error ?? 'Unknown error',
+      );
+    }
+    return;
+  }
+
+  const rawData = buyAgainAgg.data?.data ?? buyAgainAgg.data ?? {};
+  const { listOfBuyAgainProducts, variantList, skuSize } = rawData;
+  const products = listOfBuyAgainProducts ?? variantList ?? (Array.isArray(rawData) ? rawData : []);
+
+  if (!page.buy_again_component || !Array.isArray(products) || products.length === 0) {
+    return;
+  }
+
+  page.buy_again_component.listOfBuyAgainProducts = products;
+  if (variantList) page.buy_again_component.variantList = variantList;
+  if (skuSize != null) page.buy_again_component.skuSize = skuSize;
+}
+
+function deleteTopItemProductDetails(mwebTopItem: any): void {
+  if ('top_items_product_details' in mwebTopItem) {
+    delete mwebTopItem.top_items_product_details;
+  }
+}
+
+function injectV3TopItems(page: any, responses: Record<string, AggregatedResponse>): void {
+  if (!page?.mweb_top_item || !Array.isArray(page.mweb_top_item.app_search_top_items)) {
+    return;
+  }
+
+  const buyAgainList = page?.buy_again_component?.listOfBuyAgainProducts;
+  const hasBuyAgainData = Array.isArray(buyAgainList) && buyAgainList.length > 0;
+
+  if (hasBuyAgainData) {
+    page.mweb_top_item.isTopItem = false;
+    deleteTopItemProductDetails(page.mweb_top_item);
+    return;
+  }
+
+  page.mweb_top_item.isTopItem = true;
+
+  const topItemsCcpResponse = responses['ccp-top-items-product-details'];
+  const ccpProducts = topItemsCcpResponse?.success
+    ? topItemsCcpResponse.data?.data?.products ?? topItemsCcpResponse.data?.products ?? []
+    : null;
+
+  if (!Array.isArray(ccpProducts) || ccpProducts.length === 0) {
+    safeDebug(Logger, () => `Top Items: CCP empty/fail; keeping CMS top items as-is.`);
+    return;
+  }
+
+  const productMap = new Map<string, any>(
+    ccpProducts
+      .filter((p: any) => typeof p?.product_mmid === 'string' && p.product_mmid.length > 0)
+      .map((p: any) => [p.product_mmid, p]),
+  );
+
+  page.mweb_top_item.app_search_top_items = page.mweb_top_item.app_search_top_items.map(
+    (cmsItem: any) => mapV3TopItem(cmsItem, productMap),
+  );
+
+  deleteTopItemProductDetails(page.mweb_top_item);
+}
+
+function mapV3TopItem(cmsItem: any, productMap: Map<string, any>): any {
+  const mmid = cmsItem?.MMID;
+
+  if (typeof mmid !== 'string' || !mmid) {
+    return cmsItem;
+  }
+
+  const product = productMap.get(mmid);
+
+  if (!product) {
+    safeDebug(Logger, () => `Top Items: MMID not found in CCP → ${safeToLog(mmid)}`);
+    return cmsItem;
+  }
+
+  const newTitle = product.attributes?.product_title;
+  const newWebUrl = product.attributes?.slug;
+  const newMmid = product.product_mmid;
+  const newImageUrl = product.meta_data?.product_media?.[0]?.public_url;
+
+  return {
+    ...cmsItem,
+    title: typeof newTitle === 'string' ? newTitle : cmsItem.title,
+    webUrl: typeof newWebUrl === 'string' ? newWebUrl : cmsItem.webUrl,
+    MMID: typeof newMmid === 'string' ? newMmid : cmsItem.MMID,
+    image: {
+      ...(cmsItem.image ?? {}),
+      url: typeof newImageUrl === 'string' ? newImageUrl : cmsItem?.image?.url,
+    },
+  };
+}
+
+function injectV3PendingDispatch(
+  mergedWrapper: any,
+  pendingDispatchResponse?: AggregatedResponse,
+): void {
+  if (pendingDispatchResponse?.success) {
+    mergedWrapper.pendingDispatchQuantity = pendingDispatchResponse.data;
+    return;
+  }
+
+  if (pendingDispatchResponse) {
+    Logger.warn(
+      `Warning for Web Home Page API method: mergeWebHomePageResponsesV3 pending-dispatch-quantity response failed.`,
+      pendingDispatchResponse.error ?? 'Unknown error',
+    );
+  }
+}
+
+function convertV3ProductCategories(components: any): void {
+  if (!Array.isArray(components)) {
+    return;
+  }
+
+  for (const comp of components) {
+    if (comp?.product_categories && !comp.app_product_categories) {
+      comp.app_product_categories = comp.product_categories;
+      delete comp.product_categories;
+    }
+  }
+}
+
+function injectV3ProductsList(blocks: any[], productsData: any): void {
+  console.log('injectV3ProductsList', { productsData });
+  for (const block of blocks) {
+    block?.app_product_categories
+      ?.filter((c: any) => c.webCategoryId && c.itemsToShow)
+      ?.forEach((c: any) => {
+        c.productsList = productsData[c.webCategoryId];
+      });
+  }
+}
+
+function injectV3ProductsListing(blocks: any[], listingResponse?: AggregatedResponse): void {
+  if (!listingResponse?.success || !Array.isArray(listingResponse.data?.data?.products)) {
+    return;
+  }
+
+  for (const block of blocks) {
+    const filteredCategories = block?.app_product_categories?.filter(
+      (c: any) => c.webCategoryId && c.itemsToShow,
+    );
+
+    if (filteredCategories?.length > 0) {
+      filteredCategories[0].centralCategoryIdData = [{ products: listingResponse.data.data.products }];
+    }
+  }
+}
+
+function injectV3WebProducts(
+  page: any,
+  webProductsResponse?: AggregatedResponse,
+  productsListingResponse?: AggregatedResponse,
+  industryProductsListingResponse?: AggregatedResponse,
+): void {
+  if (!webProductsResponse?.success) {
+    return;
+  }
+
+  const productsData = webProductsResponse.data?.data ?? {};
+  const productCategoryBlocks = Array.isArray(page.product_category_component)
+    ? page.product_category_component
+    : [];
+  const industrySpecificBlocks = Array.isArray(page.industry_specific_components)
+    ? page.industry_specific_components
+    : [];
+
+  injectV3ProductsList(productCategoryBlocks, productsData);
+  injectV3ProductsListing(productCategoryBlocks, productsListingResponse);
+
+  injectV3ProductsList(industrySpecificBlocks, productsData);
+  injectV3ProductsListing(industrySpecificBlocks, industryProductsListingResponse);
+}
+
+function getV3Navigation(response?: AggregatedResponse): any[] | null {
+  return response?.success && Array.isArray(response.data?.data?.navigation)
+    ? response.data.data.navigation
+    : null;
+}
+
+function buildV3CentralCategoryIdData(navigation: any[], categories: any[]): any[] {
+  const blockCategoryIds = categories.map((c: any) => c.categoryId).filter(Boolean);
+
+  return navigation
+    .map((nav: any) => ({
+      ...nav,
+      subMenu: nav.subMenu?.filter((sub: any) => blockCategoryIds.includes(sub.id)),
+    }))
+    .filter((nav: any) => nav.subMenu && nav.subMenu.length > 0);
+}
+
+function injectV3CentralCategoryComponent(page: any, response?: AggregatedResponse): void {
+  const navigation = getV3Navigation(response);
+
+  if (!navigation || !Array.isArray(page.category_component?.web_central_catalogue_categories)) {
+    return;
+  }
+
+  page.category_component.centralCategoryIdData = buildV3CentralCategoryIdData(
+    navigation,
+    page.category_component.web_central_catalogue_categories,
+  );
+}
+
+function injectV3TopBrandComponent(page: any, response?: AggregatedResponse): void {
+  const navigation = getV3Navigation(response);
+
+  if (!navigation || !Array.isArray(page.top_brand_component?.web_central_catalogue_categories)) {
+    return;
+  }
+
+  page.top_brand_component.centralCategoryIdData = buildV3CentralCategoryIdData(
+    navigation,
+    page.top_brand_component.web_central_catalogue_categories,
+  );
+}
+
+function getV3RemovedMmids(recentViewedRemoveAgg?: AggregatedResponse): string[] {
+  if (recentViewedRemoveAgg?.success && recentViewedRemoveAgg.data?.data?.removeProduct) {
+    return recentViewedRemoveAgg.data.data.removeProduct;
+  }
+
+  if (recentViewedRemoveAgg) {
+    Logger.warn(
+      `Warning for Web Home Page API method: mergeWebHomePageResponsesV3 recent-viewed-remove response failed.`,
+      recentViewedRemoveAgg.error ?? 'Unknown error',
+    );
+  }
+
+  return [];
+}
+
+function getV3RecentlyViewedProducts(recentlyViewedDetailsAgg?: AggregatedResponse): RecentlyViewedProduct[] {
+  if (recentlyViewedDetailsAgg?.success) {
+    return normalizeRecentlyViewedProducts(recentlyViewedDetailsAgg.data as any);
+  }
+
+  if (recentlyViewedDetailsAgg) {
+    Logger.warn(
+      `Warning for Web Home Page API method: mergeWebHomePageResponsesV3 recently-viewed-product-details response failed.`,
+      recentlyViewedDetailsAgg.error ?? 'Unknown error',
+    );
+  }
+
+  return [];
+}
+
+function injectV3RecentlyViewed(
+  page: any,
+  recentlyViewedDetailsAgg?: AggregatedResponse,
+  recentViewedRemoveAgg?: AggregatedResponse,
+): void {
+  if (!page.recently_viewed_component) {
+    return;
+  }
+
+  const removedMmids = getV3RemovedMmids(recentViewedRemoveAgg);
+  const recentlyViewedProducts = getV3RecentlyViewedProducts(recentlyViewedDetailsAgg);
+
+  page.recently_viewed_component.recentlyViewedProducts = recentlyViewedProducts.filter(
+    (product) => !removedMmids.includes(product.mmid),
+  );
+  page.recently_viewed_component.removedMmids = removedMmids;
+}
+
+export function mergeWebHomePageResponsesV3(aggregatedResponses: AggregatedResponse[]): any {
+  const responses = getV3Responses(aggregatedResponses);
+
+  const cmsResponse = responses['layout-mweb-homepages'] ?? responses['app-home-page'];
   const blogsResponse = responses['app-blogs'];
   const buyAgainAgg = responses['ccp-buy-again-with-prices'];
   const pendingDispatchResponse = responses['pending-dispatch-quantity'];
@@ -581,43 +886,23 @@ export function mergeWebHomePageResponsesV3(aggregatedResponses: AggregatedRespo
   const webTopBrandCategoriesResponse = responses['web-central-top-brand-categories'];
   const productsListingResponse = responses['products-listing'];
   const industryProductsListingResponse = responses['industry-products-listing'];
-  const featureFlags = responses['cmsFeatureFlag']?.data?.data ?? [];
-  const isCentralCatalogueEnabled =
-    Array.isArray(featureFlags) &&
-    featureFlags.some((f: any) => f?.name === 'central_catalogue_global' && f?.isActive === true);
 
-  safeDebug(Logger, () => `isCentralCatalogueEnabled → ${String(isCentralCatalogueEnabled)}`);
-
-  safeDebug(
-    Logger,
-    () => `CMS Api response from method: mergeWebHomePageResponsesV3 : ${safeToLog(cmsResponse)}`,
+  safeDebug(Logger, () =>
+    `CMS Api response from method: mergeWebHomePageResponsesV3 : ${safeToLog(cmsResponse)}`,
   );
-  safeDebug(
-    Logger,
-    () =>
-      `Blogs Api response from method: mergeWebHomePageResponsesV3 : ${safeToLog(blogsResponse)}`,
+  safeDebug(Logger, () =>
+    `Blogs Api response from method: mergeWebHomePageResponsesV3 : ${safeToLog(blogsResponse)}`,
   );
-  safeDebug(
-    Logger,
-    () =>
-      `Buy Again Api response from method: mergeWebHomePageResponsesV3 : ${safeToLog(buyAgainAgg)}`,
+  safeDebug(Logger, () =>
+    `Buy Again Api response from method: mergeWebHomePageResponsesV3 : ${safeToLog(buyAgainAgg)}`,
   );
-  safeDebug(
-    Logger,
-    () =>
-      `Pending Dispatch Api response from method: mergeWebHomePageResponsesV3 : ${safeToLog(
-        pendingDispatchResponse,
-      )}`,
+  safeDebug(Logger, () =>
+    `Pending Dispatch Api response from method: mergeWebHomePageResponsesV3 : ${safeToLog(
+      pendingDispatchResponse,
+    )}`,
   );
 
-  // Validate CMS
-  if (
-    !cmsResponse ||
-    !cmsResponse.success ||
-    typeof cmsResponse.data !== 'object' ||
-    cmsResponse.data === null ||
-    !Array.isArray((cmsResponse.data as any)?.data)
-  ) {
+  if (!isValidV3CmsResponse(cmsResponse)) {
     Logger.error(
       `Error for Web Home Page API method: mergeWebHomePageResponsesV3 CMS response is missing or invalid.`,
     );
@@ -636,283 +921,29 @@ export function mergeWebHomePageResponsesV3(aggregatedResponses: AggregatedRespo
 
   const page = mergedWrapper.data[0];
 
-  /**
-   * Inject Blogs into blog_list_component_material_matter.blogs
-   */
-  const blogs = blogsResponse?.data?.data || [];
-  if (page.blog_list_component_material_matter) {
-    page.blog_list_component_material_matter.blogs = blogs;
-  }
+  injectV3Blogs(page, blogsResponse);
+  injectV3BuyAgain(page, buyAgainAgg);
+  injectV3TopItems(page, responses);
+  injectV3PendingDispatch(mergedWrapper, pendingDispatchResponse);
 
-  /**
-   * 2) Inject Buy Again into buy_again_component
-   */
-  if (buyAgainAgg?.success) {
-    const rawData = buyAgainAgg.data?.data ?? buyAgainAgg.data ?? {};
-    const { listOfBuyAgainProducts, variantList, skuSize } = rawData;
+  convertV3ProductCategories(page.product_category_component);
+  convertV3ProductCategories(page.industry_specific_components);
 
-    const products =
-      listOfBuyAgainProducts ?? variantList ?? (Array.isArray(rawData) ? rawData : []);
+  injectV3WebProducts(
+    page,
+    webProductsResponse,
+    productsListingResponse,
+    industryProductsListingResponse,
+  );
 
-    if (page.buy_again_component && Array.isArray(products) && products.length > 0) {
-      page.buy_again_component.listOfBuyAgainProducts = products;
-      if (variantList) page.buy_again_component.variantList = variantList;
-      if (skuSize != null) page.buy_again_component.skuSize = skuSize;
-    }
-  } else if (buyAgainAgg && !buyAgainAgg.success) {
-    Logger.warn(
-      `Warning for Web Home Page API method: mergeWebHomePageResponsesV3 CCP buy again response failed.`,
-      buyAgainAgg.error ?? 'Unknown error',
-    );
-  }
+  injectV3CentralCategoryComponent(page, webCentralCatalogueResponse);
+  injectV3TopBrandComponent(page, webTopBrandCategoriesResponse);
 
-  /**
-   * Top Items: if central_catalogue_global enabled, enrich CMS top items
-   * by overwriting only: title, webUrl, MMID, image.url
-   * Otherwise return CMS as-is.
-   */
-
-  const buyAgainList = page?.buy_again_component?.listOfBuyAgainProducts;
-  const hasBuyAgainData = Array.isArray(buyAgainList) && buyAgainList.length > 0;
-
-  if (page?.mweb_top_item && Array.isArray(page.mweb_top_item.app_search_top_items)) {
-    if (hasBuyAgainData) {
-      page.mweb_top_item.isTopItem = false;
-      if ('top_items_product_details' in page.mweb_top_item) {
-        delete page.mweb_top_item.top_items_product_details;
-      }
-    } else if (isCentralCatalogueEnabled) {
-      page.mweb_top_item.isTopItem = true;
-      const topItemsCcpResponse = responses['ccp-top-items-product-details'];
-      const ccpProducts = topItemsCcpResponse?.success
-        ? (topItemsCcpResponse.data?.data?.products ?? topItemsCcpResponse.data?.products ?? [])
-        : null;
-
-      if (!Array.isArray(ccpProducts) || ccpProducts.length === 0) {
-        safeDebug(Logger, () => `Top Items: CCP empty/fail; keeping CMS top items as-is.`);
-      } else {
-        // Map CCP products by MMID
-        const productMap = new Map<string, any>(
-          ccpProducts
-            .filter((p: any) => typeof p?.product_mmid === 'string' && p.product_mmid.length > 0)
-            .map((p: any) => [p.product_mmid, p]),
-        );
-
-        const cmsItems = page.mweb_top_item.app_search_top_items;
-
-        page.mweb_top_item.app_search_top_items = cmsItems.map((cmsItem: any) => {
-          const mmid = cmsItem?.MMID;
-
-          if (typeof mmid !== 'string' || !mmid) return cmsItem;
-
-          const product = productMap.get(mmid);
-
-          if (!product) {
-            safeDebug(Logger, () => `Top Items: MMID not found in CCP → ${safeToLog(mmid)}`);
-            return cmsItem; // keep CMS item if CCP doesn't have it
-          }
-
-          const newTitle = product.attributes?.product_title;
-          const newWebUrl = product.attributes?.slug;
-          const newMmid = product.product_mmid;
-          const newImageUrl = product.meta_data?.product_media?.[0]?.public_url;
-          // Overwrite ONLY the 4 fields
-          return {
-            ...cmsItem,
-            title: typeof newTitle === 'string' ? newTitle : cmsItem.title,
-            webUrl: typeof newWebUrl === 'string' ? newWebUrl : cmsItem.webUrl,
-            MMID: typeof newMmid === 'string' ? newMmid : cmsItem.MMID,
-            image: {
-              ...(cmsItem.image ?? {}),
-              url: typeof newImageUrl === 'string' ? newImageUrl : cmsItem?.image?.url,
-            },
-          };
-        });
-
-        if ('top_items_product_details' in page.mweb_top_item) {
-          delete page.mweb_top_item.top_items_product_details;
-        }
-      }
-    } else {
-      page.mweb_top_item.isTopItem = true;
-      Logger.log('Central Catalogue Global flag is disabled. Returning CMS top items as-is.');
-    }
-  }
-
-  /**
-   * 3) Inject pending dispatch quantity
-   */
-  if (pendingDispatchResponse?.success) {
-    mergedWrapper.pendingDispatchQuantity = pendingDispatchResponse.data;
-  } else if (pendingDispatchResponse && !pendingDispatchResponse.success) {
-    Logger.warn(
-      `Warning for Web Home Page API method: mergeWebHomePageResponsesV3 pending-dispatch-quantity response failed.`,
-      pendingDispatchResponse.error ?? 'Unknown error',
-    );
-  }
-  /**
-   * 4) Convert product_category_component[].product_categories -> app_product_categories
-   */
-  if (Array.isArray(page.product_category_component)) {
-    for (const comp of page.product_category_component) {
-      if (comp?.product_categories && !comp.app_product_categories) {
-        comp.app_product_categories = comp.product_categories;
-        delete comp.product_categories;
-      }
-    }
-  }
-  if (Array.isArray(page.industry_specific_components)) {
-    for (const comp of page.industry_specific_components) {
-      if (comp?.product_categories && !comp.app_product_categories) {
-        comp.app_product_categories = comp.product_categories;
-        delete comp.product_categories;
-      }
-    }
-  }
-
-  /**
-   * 5) Inject productsList into product_category_component app_product_categories
-   */
-  if (webProductsResponse?.success) {
-    const productsData = webProductsResponse.data?.data ?? webProductsResponse.data?.data ?? {};
-
-    const productCategoryBlocks = Array.isArray(page.product_category_component)
-      ? page.product_category_component
-      : [];
-
-    const IndustrySpecificBlock = Array.isArray(page.industry_specific_components)
-      ? page.industry_specific_components
-      : [];
-
-    for (const block of productCategoryBlocks) {
-      block?.app_product_categories
-        ?.filter((c: any) => c.webCategoryId && c.itemsToShow)
-        ?.forEach((c: any) => {
-          c.productsList = productsData[c.webCategoryId];
-        });
-
-      // Inject centralCategoryIdData for product listing
-      if (
-        productsListingResponse?.success &&
-        Array.isArray(productsListingResponse.data?.data?.products)
-      ) {
-        const productsArray = productsListingResponse.data.data.products;
-
-        const filteredCategories = block?.app_product_categories?.filter(
-          (c: any) => c.webCategoryId && c.itemsToShow,
-        );
-
-        if (filteredCategories && filteredCategories.length > 0) {
-          filteredCategories[0].centralCategoryIdData = [{ products: productsArray }];
-        }
-      }
-    }
-    for (const block of IndustrySpecificBlock) {
-      block?.app_product_categories
-        ?.filter((c: any) => c.webCategoryId && c.itemsToShow)
-        ?.forEach((c: any) => {
-          c.productsList = productsData[c.webCategoryId];
-        });
-
-      // Inject centralCategoryIdData for product listing
-      if (
-        industryProductsListingResponse?.success &&
-        Array.isArray(industryProductsListingResponse.data?.data?.products)
-      ) {
-        const productsArray = industryProductsListingResponse.data.data.products;
-
-        const filteredCategories = block?.app_product_categories?.filter(
-          (c: any) => c.webCategoryId && c.itemsToShow,
-        );
-
-        if (filteredCategories && filteredCategories.length > 0) {
-          filteredCategories[0].centralCategoryIdData = [{ products: productsArray }];
-        }
-      }
-    }
-  }
-
-  /**
-   * 6) Inject central catalogue nav into category_component.centralCategoryIdData
-   */
-  if (
-    webCentralCatalogueResponse?.success &&
-    Array.isArray(webCentralCatalogueResponse.data?.data?.navigation) &&
-    page.category_component &&
-    Array.isArray(page.category_component.web_central_catalogue_categories)
-  ) {
-    const navigation = webCentralCatalogueResponse.data.data.navigation;
-    const blockCategoryIds = page.category_component.web_central_catalogue_categories
-      .map((c: any) => c.categoryId)
-      .filter(Boolean);
-
-    page.category_component.centralCategoryIdData = navigation
-      .map((nav: any) => ({
-        ...nav,
-        subMenu: nav.subMenu?.filter((sub: any) => blockCategoryIds.includes(sub.id)),
-      }))
-      .filter((nav: any) => nav.subMenu && nav.subMenu.length > 0);
-  }
-
-  /**
-   * 7) Inject top brand nav into top_brand_component.centralCategoryIdData
-   * CMS has top_brand_component with web_central_
-   * catalogue_categories
-   */
-  if (
-    webTopBrandCategoriesResponse?.success &&
-    Array.isArray(webTopBrandCategoriesResponse.data?.data?.navigation) &&
-    page.top_brand_component &&
-    Array.isArray(page.top_brand_component.web_central_catalogue_categories)
-  ) {
-    const topBrandNavigation = webTopBrandCategoriesResponse.data.data.navigation;
-    const blockCategoryIds = page.top_brand_component.web_central_catalogue_categories
-      .map((c: any) => c.categoryId)
-      .filter(Boolean);
-
-    page.top_brand_component.centralCategoryIdData = topBrandNavigation
-      .map((nav: any) => ({
-        ...nav,
-        subMenu: nav.subMenu?.filter((sub: any) => blockCategoryIds.includes(sub.id)),
-      }))
-      .filter((nav: any) => nav.subMenu && nav.subMenu.length > 0);
-  }
-
-  /**
-   * 8) Inject Recently Viewed Products
-   */
-  const recentlyViewedDetailsAgg = responses['recently-viewed-product-details'];
-  const recentViewedRemoveAgg = responses['recent-viewed-remove'];
-
-  if (page.recently_viewed_component) {
-    let removedMmids: string[] = [];
-    if (recentViewedRemoveAgg?.success && recentViewedRemoveAgg.data?.data?.removeProduct) {
-      removedMmids = recentViewedRemoveAgg.data.data.removeProduct;
-    } else if (recentViewedRemoveAgg && !recentViewedRemoveAgg.success) {
-      Logger.warn(
-        `Warning for Web Home Page API method: mergeWebHomePageResponsesV3 recent-viewed-remove response failed.`,
-        recentViewedRemoveAgg.error ?? 'Unknown error',
-      );
-    }
-
-    let recentlyViewedProducts: RecentlyViewedProduct[] = [];
-    if (recentlyViewedDetailsAgg?.success) {
-      recentlyViewedProducts = normalizeRecentlyViewedProducts(
-        recentlyViewedDetailsAgg.data as any,
-      );
-    } else if (recentlyViewedDetailsAgg && !recentlyViewedDetailsAgg.success) {
-      Logger.warn(
-        `Warning for Web Home Page API method: mergeWebHomePageResponsesV3 recently-viewed-product-details response failed.`,
-        recentlyViewedDetailsAgg.error ?? 'Unknown error',
-      );
-    }
-
-    // Filter out naturally removed products and expose removedMmids for frontend
-    page.recently_viewed_component.recentlyViewedProducts = recentlyViewedProducts.filter(
-      (product) => !removedMmids.includes(product.mmid),
-    );
-    page.recently_viewed_component.removedMmids = removedMmids;
-  }
+  injectV3RecentlyViewed(
+    page,
+    responses['recently-viewed-product-details'],
+    responses['recent-viewed-remove'],
+  );
 
   return mergedWrapper;
 }

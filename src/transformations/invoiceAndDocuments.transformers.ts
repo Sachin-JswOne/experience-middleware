@@ -1,6 +1,5 @@
-import { formatDate, toTitleCase } from 'src/utils/common-functions.util';
+import { formatDate, toTitleCase, safeDebug } from 'src/utils/common-functions.util';
 import { Logger } from '@nestjs/common';
-import { safeDebug } from 'src/utils/common-functions.util';
 
 export function transformInvoiceAndDocuments(response: any): {
   listOfDocuments;
@@ -19,7 +18,6 @@ export function transformInvoiceAndDocuments(response: any): {
     const invoiceDocumentsResponse = response?.data?.data;
 
     if (
-      invoiceDocumentsResponse &&
       invoiceDocumentsResponse?.orderShipmentSummaryList &&
       Array.isArray(invoiceDocumentsResponse?.orderShipmentSummaryList) &&
       invoiceDocumentsResponse?.orderShipmentSummaryList.length > 0

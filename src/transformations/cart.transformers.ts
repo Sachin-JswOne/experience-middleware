@@ -141,7 +141,7 @@ export function mergeMmebCartPageResponses(aggregatedResponses: AggregatedRespon
     return { data: {}, meta: {}, success: false };
   }
 
-  if (!buyAgainApiResponse || !buyAgainApiResponse?.success) {
+  if (!buyAgainApiResponse?.success) {
     Logger.error(
       `Error for Cart Page API method: mergeCartPageResponses Strapi cart page response is missing or invalid`,
     );

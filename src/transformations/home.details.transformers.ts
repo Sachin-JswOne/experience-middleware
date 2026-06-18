@@ -289,8 +289,6 @@ export function mergeProjectDetailsAndTrackerResponses(
     const designStageTypeOne = strapiData?.data?.projectTracker?.designStage?.designStageTypeOne;
     designStageTypeOne.heading = designStageTypeOne.heading ?? '';
     designStageTypeOne.subHeading = designStageTypeOne.subHeading ?? '';
-    activeDesignType = 'designStageTypeOne';
-    strapiData.data.projectTracker.designStage.designStageTypeOne = designStageTypeOne;
 
     strapiData.data.projectTracker.designStage.designStageTypeOne = {
       ...strapiData?.data?.projectTracker?.designStage?.designStageTypeOne,

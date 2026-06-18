@@ -35,7 +35,7 @@ interface TransformedPaymentDueResponse {
 
 export function getPaymentDueDetails(
   response: AxiosResponse<{ data: PaymentDueApiResponse; success: boolean }>,
-): TransformedPaymentDueResponse | any {
+): TransformedPaymentDueResponse | unknown{
   safeDebug(
     Logger,
     () =>

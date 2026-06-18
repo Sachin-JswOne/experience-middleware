@@ -1,11 +1,9 @@
 import { AggregatedResponse } from 'src/models/aggregated-response.model';
 import { getListOfDocuments } from './invoiceAndDocuments.transformers';
 import { DEFAULT_CURRENCY_CODE, ORDER_TAG, SHIPMENT_STATUS } from 'src/config/app.config';
-import { formatDate } from 'src/utils/common-functions.util';
+import { formatDate,safeDebug } from 'src/utils/common-functions.util';
 import { CustomError } from 'src/utils/CustomError';
-import { HttpStatus } from '@nestjs/common';
-import { Logger } from '@nestjs/common';
-import { safeDebug } from 'src/utils/common-functions.util';
+import { HttpStatus, Logger } from '@nestjs/common';
 
 export function mergeInvoiceAndShipmentsResponse(aggregatedResponses: AggregatedResponse[]) {
   try {

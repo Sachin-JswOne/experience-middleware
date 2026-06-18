@@ -185,7 +185,7 @@ export function getAddressResponse(response) {
 
     const addressResponse = response.find((item) => item.target === 'get-address' && item.success);
 
-    if (addressResponse && addressResponse.data && addressResponse.data.addressData) {
+    if (addressResponse?.data?.addressData) {
       const addressList = JSON.parse(addressResponse.data.addressData);
 
       const transformedAddress = transformAddress(addressList.AddressList);

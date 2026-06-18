@@ -121,7 +121,7 @@ export function mergeCategoryResponses(
       `mergeCategoryResponses: Strapi fetch failed`,
     );
     return (
-      strapiResult?.error || {
+      strapiResult?.error ?? {
         error: 'Strapi categories fetch failed',
       }
     );
@@ -132,7 +132,7 @@ export function mergeCategoryResponses(
       `mergeCategoryResponses: CCA fetch failed`,
     );
     return (
-      ccaResult?.error || {
+      ccaResult?.error ?? {
         error: 'CCA categories fetch failed',
       }
     );

@@ -1,4 +1,3 @@
-// import { Logger } from '@nestjs/common';
 import { AggregatedResponse } from 'src/models/aggregated-response.model';
 import { mergeGlobalAndSlcCartResponses } from '../global.transformers';
 

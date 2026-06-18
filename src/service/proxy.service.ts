@@ -52,7 +52,7 @@ export class ProxyService {
           // sort array values for stability
           return value
             .slice()
-            .sort()
+            .sort((a, b) => String(a).localeCompare(String(b)))
             .map((v) => `${key}=${v}`)
             .join('&');
         }
@@ -65,100 +65,86 @@ export class ProxyService {
     return `:m:${methodPart}|p:${pathPart}|${queryPart}`;
   }
 
-  async handleRequest(req: Request) {
-    this.logger.debug(`Incoming ${req.method} request: ${req.url}`);
-    const route = this.findRoute(req);
-
-    if (!route) {
-      const activeSpan = trace.getSpan(context.active());
-      activeSpan?.setStatus({
-        code: SpanStatusCode.ERROR,
-        message: `Route config not found for ${req.method} ${req.path}`,
-      });
-
-      const spanContext = activeSpan?.spanContext();
-      const traceId = (req as any).traceId || spanContext?.traceId || '';
-      const spanId = (req as any).spanId || spanContext?.spanId || '';
-
-      this.logger.error(
-        `Route config not found for ${req.method} ${req.path} trace_id: ${inspect(traceId)} span_id: ${inspect(spanId)}`,
-      );
-
-      throw new Error('Route config not found');
-    }
-
-    // TODO: disabling cache will enable with valkey integration
-    // const isCacheRequired = (route as any).isCacheRequired === true;
-    // let cacheKey: string | null = null;
-
-    // if (isCacheRequired) {
-    //   cacheKey = this.getCacheKey(req);
-    //   try {
-    //     const cached = await this.redis.get(cacheKey);
-    //     if (cached) {
-    //       this.logger.debug(`Cache HIT for ${cacheKey}`);
-    //       return JSON.parse(cached);
-    //     }
-    //     this.logger.debug(`Cache MISS for ${cacheKey}`);
-    //   } catch (err) {
-    //     // Don't break the request if Redis is unhappy; just log and continue
-    //     this.logger.error('Redis GET error, bypassing cache', err);
-    //   }
-    // } else {
-    //   this.logger.debug(
-    //     `Caching disabled for route ${req.method} ${route.path} (isCacheRequired=false)`,
-    //   );
-    // }
-
+  private handleRouteNotFound(req: Request): never {
     const activeSpan = trace.getSpan(context.active());
-    const spanContext = activeSpan?.spanContext();
-    const traceId = (req as any).traceId || spanContext?.traceId || '';
-    const spanId = (req as any).spanId || spanContext?.spanId || '';
 
-    if (activeSpan) {
-      activeSpan.setAttribute('proxy.route', route.path);
-      activeSpan.setAttribute('proxy.method', route.method);
-      activeSpan.setAttribute('proxy.handler', RouteHandler[route.routeHandler]);
+    activeSpan?.setStatus({
+      code: SpanStatusCode.ERROR,
+      message: `Route config not found for ${req.method} ${req.path}`,
+    });
+
+    const { traceId, spanId } = this.getTraceDetails(req, activeSpan);
+
+    this.logger.error(
+      `Route config not found for ${req.method} ${req.path} trace_id: ${inspect(traceId)} span_id: ${inspect(spanId)}`,
+    );
+
+    throw new Error('Route config not found');
+  }
+
+  private getTraceDetails(req: Request, activeSpan = trace.getSpan(context.active())) {
+    const spanContext = activeSpan?.spanContext();
+
+    return {
+      traceId: (req as any).traceId || spanContext?.traceId || '',
+      spanId: (req as any).spanId || spanContext?.spanId || '',
+    };
+  }
+
+  private attachRouteToSpan(route: any, req: Request): void {
+    const activeSpan = trace.getSpan(context.active());
+
+    if (!activeSpan) {
+      return;
     }
+
+    activeSpan.setAttribute('proxy.route', route.path);
+    activeSpan.setAttribute('proxy.method', route.method);
+    activeSpan.setAttribute('proxy.handler', RouteHandler[route.routeHandler]);
+  }
+
+  private logRouteHandling(route: any, req: Request): void {
+    const { traceId, spanId } = this.getTraceDetails(req);
 
     this.logger.log(
       `Handling request for route: ${req.method} ${req.path} trace_id: ${inspect(traceId)} span_id: ${inspect(spanId)}`,
     );
+  }
 
-    let data: any;
-
+  private async executeRouteHandler(route: any, req: Request): Promise<any> {
     switch (route.routeHandler) {
       case RouteHandler.TRANSFORM:
-        data = await this.handleTransformRequest(route.target, req);
-        break;
+        return this.handleTransformRequest(route.target, req);
+
       case RouteHandler.AGGREGATE:
-        data = await this.handleAggregateRequest(route, req);
-        break;
+        return this.handleAggregateRequest(route, req);
+
       case RouteHandler.CONDITIONAL:
-        data = await this.handleConditionalRequest(route, req);
-        break;
+        return this.handleConditionalRequest(route, req);
+
       case RouteHandler.PASS_THROUGH:
-        data = await this.handlePassThroughRequest(route, req);
-        break;
+        return this.handlePassThroughRequest(route, req);
+
       default:
         throw new Error('Unsupported route handler');
     }
-
-    // if (isCacheRequired && cacheKey) {
-    //   try {
-    //     const ttlSeconds = process.env.CACHE_TTL_SECONDS
-    //       ? parseInt(process.env.CACHE_TTL_SECONDS, 10)
-    //       : 30 * 60;
-
-    //     await this.redis.set(cacheKey, JSON.stringify(data), 'EX', ttlSeconds);
-    //     this.logger.debug(`Cached response for ${cacheKey}`);
-    //   } catch (err) {
-    //     this.logger.error('Redis SET error, continuing without cache', err);
-    //   }
-    // }
-
-    return data;
   }
+
+  async handleRequest(req: Request) {
+    this.logger.debug(`Incoming ${req.method} request: ${req.url}`);
+
+    const route = this.findRoute(req);
+
+    if (!route) {
+      this.handleRouteNotFound(req);
+    }
+
+    this.attachRouteToSpan(route, req);
+    this.logRouteHandling(route, req);
+
+    return this.executeRouteHandler(route, req);
+  }
+  
   handlePassThroughRequest(route: PassThroughRouteConfig, req: Request): any {
     return route.response;
   }
@@ -250,13 +236,13 @@ export class ProxyService {
                 );
 
                 return {
-                  target: target.name || target.url,
+                  target: target.name ?? target.url,
                   success: true,
                   data: responseData,
                 };
               } catch (err: any) {
                 return {
-                  target: target.name || target.url,
+                  target: target.name ?? target.url,
                   success: false,
                   error: err?.message || String(err),
                   httpStatus: err?.httpStatusCode || err?.status || 500,
@@ -277,13 +263,6 @@ export class ProxyService {
                 },
           );
           results.push(...normalizedResults);
-          results.push({
-            target: '__request-context',
-            success: true,
-            data: {
-              headers: req.headers,
-            },
-          });
 
           return route.resTransform ? await applyTransform(route.resTransform, results) : results;
         } catch (err) {
@@ -307,17 +286,17 @@ export class ProxyService {
             try {
               const responseData = await this.handleTransformRequest(target, req);
               return {
-                target: target.name || target.url,
+                target: target.name ?? target.url,
                 success: true,
                 data: responseData,
               };
             } catch (err: any) {
               return {
-                target: target.name || target.url,
+                target: target.name ?? target.url,
                 success: false,
-                error: err?.message || String(err),
-                httpStatus: err?.httpStatusCode || err?.status || 500,
-                downstreamResponse: err?.response?.data || null,
+                error: err?.message ?? String(err),
+                httpStatus: err?.httpStatusCode ?? err?.status ?? 500,
+                downstreamResponse: err?.response?.data ?? null,
                 customError: err instanceof CustomError ? err : null,
               };
             }
@@ -384,21 +363,21 @@ export class ProxyService {
             const responseData = await this.handleTransformRequest(target, req, results);
 
             results.push({
-              target: target.name || target.url,
+              target: target.name ?? target.url,
               success: true,
               data: responseData,
             });
           } catch (err: any) {
             results.push({
-              target: target.name || target.url,
+              target: target.name ?? target.url,
               success: false,
-              error: err?.message || String(err),
-              httpStatus: err?.httpStatusCode || err?.status || 500,
-              downstreamResponse: err?.response?.data || null,
+              error: err?.message ?? String(err),
+              httpStatus: err?.httpStatusCode ?? err?.status ?? 500,
+              downstreamResponse: err?.response?.data ?? null,
             });
             span.addEvent('sequential.target.failed', {
-              'proxy.target': target.name || target.url,
-              'proxy.error': err?.message || String(err),
+              'proxy.target': target.name ?? target.url,
+              'proxy.error': err?.message ?? String(err),
             });
             // Stop executing further targets on failure, introducing stopOnError flag in target config to decide this behavior
             if (target.stopOnError) {
@@ -430,10 +409,10 @@ export class ProxyService {
     prevResponses?: AggregatedResponse[],
   ) {
     return await this.tracer.startActiveSpan(
-      `proxy.transform ${target.name || target.url}`,
+      `proxy.transform ${target.name ?? target.url}`,
       async (span) => {
         span.setAttribute('proxy.route', req.path);
-        span.setAttribute('proxy.target', target.name || target.url);
+        span.setAttribute('proxy.target', target.name ?? target.url);
         span.setAttribute('http.method', target.method);
         span.setAttribute('cache.hit', false);
 
@@ -473,8 +452,8 @@ export class ProxyService {
 
           const clientCreateStart = this.nowMs();
           const client = await createHttpClient(
-            target.timeout?.request || 5000,
-            target.timeout?.socket || 1000,
+            target.timeout?.request ?? 5000,
+            target.timeout?.socket ?? 1000,
             target.interceptors,
           );
           const clientCreateMs = this.nowMs() - clientCreateStart;
@@ -541,7 +520,7 @@ export class ProxyService {
 
           if (response.status === 401 || response.status === 403) {
             const error = new CustomError(
-              `Downstream service (${target.name || target.url}) returned ${response.status}`,
+              `Downstream service (${target.name ?? target.url}) returned ${response.status}`,
               500,
             ) as any;
             error.status = response.status;
@@ -553,11 +532,11 @@ export class ProxyService {
           if (response.status >= 400) {
             span.setStatus({
               code: SpanStatusCode.ERROR,
-              message: `HTTP ${response.status}: ${response.statusText || 'Error'}`,
+              message: `HTTP ${response.status}: ${response.statusText ?? 'Error'}`,
             });
             span.setAttribute('http.error', true);
             span.setAttribute('http.error.status', response.status);
-            span.setAttribute('http.error.message', response.statusText || 'Unknown error');
+            span.setAttribute('http.error.message', response.statusText ?? 'Unknown error');
           }
 
           return responseData;
@@ -585,7 +564,7 @@ export class ProxyService {
               span.setAttribute('http.status_code', errorResponse.status);
               span.setAttribute('http.error', true);
               span.setAttribute('http.error.status', errorResponse.status);
-              span.setAttribute('http.error.message', errorResponse.statusText || 'Network Error');
+              span.setAttribute('http.error.message', errorResponse.statusText ?? 'Network Error');
 
               if (errorResponse.data) {
                 let errorDataStr: string;

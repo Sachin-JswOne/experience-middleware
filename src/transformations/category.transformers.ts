@@ -69,7 +69,7 @@ export function transformCcaRequest(
     () => ` Strapi Response from method: transformCcaRequest : ${JSON.stringify(strapiResponse)}`,
   );
 
-  if (!strapiResponse || !strapiResponse.success) {
+  if (!strapiResponse?.success) {
     Logger.error(`Error for Category API method: transformCcaRequest Strapi dependency failed`);
   }
 
@@ -145,8 +145,7 @@ export function mergeCategoryResponses(results: AggregatedResponse[]): any {
       );
       if (
         !isCentralCatalogueEnabled ||
-        !centralCatalogueSubMenus ||
-        !centralCatalogueSubMenus.length
+        !centralCatalogueSubMenus?.length
       ) {
         return mobileFooter;
       }
@@ -171,8 +170,7 @@ export function mergeCategoryResponses(results: AggregatedResponse[]): any {
 
       if (
         !isCentralCatalogueEnabled ||
-        !centralCatalogueSubMenus ||
-        !centralCatalogueSubMenus.length
+        !centralCatalogueSubMenus?.length
       ) {
         return desktopFooter;
       }
@@ -197,7 +195,7 @@ export function transformWebGlobalCcaRequest(
 ): BaseRequest {
   // 1. Get the Strapi response
   const strapiResponse = prevResponses.find((r) => r.target === 'webGlobalPage');
-  if (!strapiResponse || !strapiResponse.success) {
+  if (!strapiResponse?.success) {
     Logger.error('Error: transformWebGlobalCcaRequest - Strapi dependency failed');
     return request;
   }
@@ -209,7 +207,7 @@ export function transformWebGlobalCcaRequest(
     const globalFooter = footerData.find(
       (item: any) => item.__component === 'global.global-footer',
     );
-    if (globalFooter && globalFooter.footerSections) {
+    if (globalFooter?.footerSections) {
       const buyOnlineSection = globalFooter.footerSections.find(
         (section: any) => section.heading === 'Buy online',
       );
@@ -244,11 +242,11 @@ export function mergeWebGlobalResponse(results: AggregatedResponse[]): any {
     (flag: any) => flag?.name === 'central_catalogue_global',
   );
   const isCentralCatalogueEnabled = centralCatalogueFlag?.isActive === true;
-  if (!strapiResult || !strapiResult.success) {
+  if (!strapiResult?.success) {
     return { error: 'Strapi fetch failed' };
   }
   // If CCA failed or has no data, return Strapi data as is (fallback)
-  if (!centralCatalogueResult || !centralCatalogueResult.success) {
+  if (!centralCatalogueResult?.success) {
     Logger.warn('CCA fetch failed, returning original Strapi data');
     return strapiResult.data;
   }
@@ -260,14 +258,13 @@ export function mergeWebGlobalResponse(results: AggregatedResponse[]): any {
     const globalFooter = footerData.find(
       (item: any) => item?.__component === 'global.global-footer',
     );
-    if (globalFooter && globalFooter.footerSections) {
+    if (globalFooter?.footerSections) {
       const buyOnlineSection = globalFooter.footerSections.find(
         (s: any) => s?.heading === 'Buy online',
       );
       if (
         !isCentralCatalogueEnabled ||
-        !centralCatalogueSubMenus ||
-        !centralCatalogueSubMenus.length
+        !centralCatalogueSubMenus?.length
       ) {
         return appGlobalData;
       }
@@ -314,7 +311,7 @@ export function transformMainMenuCcaRequest(
   prevResponses: AggregatedResponse[],
 ): BaseRequest {
   const strapiResponse = prevResponses.find((r) => r.target === 'header-main-menu');
-  if (!strapiResponse || !strapiResponse.success) {
+  if (!strapiResponse?.success) {
     Logger.error(`Error: transformMainMenuCcaRequest Strapi dependency failed`);
     return request;
   }
@@ -347,13 +344,13 @@ export function mergeMainMenuResponses(results: AggregatedResponse[]): any {
   const isCentralCatalogueEnabled = centralCatalogueFlag?.isActive === true;
 
   // if strapi is not able to fetch data then return error
-  if (!strapiResult || !strapiResult.success) {
+  if (!strapiResult?.success) {
     return { error: 'Strapi fetch failed' };
   }
   const strapiMainMenuData = strapiResult?.data?.data || strapiResult?.data || [];
 
   // if feature flag is not enabled or cca is not able to fetch data then return strapi data
-  if (!isCentralCatalogueEnabled || !centralCatalogueResult || !centralCatalogueResult.success) {
+  if (!isCentralCatalogueEnabled || !centralCatalogueResult?.success) {
     return strapiMainMenuData[0].navigation;
   }
   const mainMenuNavigationStrapi = strapiMainMenuData[0].navigation;
