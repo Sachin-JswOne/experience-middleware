@@ -5308,5 +5308,26 @@
       "reqTransform": "vijai.transformers.transformVijaiUserListRequest",
       "requiredParams": ["*"]
     }
+  },
+  {
+    "path": "/xp-mi/public/v1/vijai/user/event-update/:eventId",
+    "method": "PATCH",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "vijai-user-event-update",
+      "url": "${SF_BASE_URI}/services/data/v65.0/sobjects/Event/{eventId}",
+      "method": "PATCH",
+      "timeout": {
+        "request": "${TIMEOUTS.REQUEST}",
+        "socket": 5000
+      },
+      "headersToPass": [
+        {
+          "source": "Authorization",
+          "destination": "Authorization"
+        }
+      ],
+      "requiredParams": ["*"]
+    }
   }
 ]
