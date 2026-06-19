@@ -62,12 +62,14 @@ WHERE OwnerId = '${ownerId}'`
   }
 
   if (isEventList === 'true') {
-    soql =
-      `Select AccountNumber,GST__c, PAN__c, Id, Name, Nodal_Bank_Account__c,isJodl__c, Pay_to__c, JSW_NodalBankVAN__c, JSW_NonNodalBankVAN__c,Non_Nodal_Bank_Account__c, Segment__c, Sub_Segment__c, RecordType.Name, Customer_Type_Account__c, Business_Division__c
-FROM Account
-WHERE OwnerId = '${ownerId}'`
-        .replace(/\s+/g, ' ')
-        .trim();
+    soql = `SELECT Id, Subject, ActivityDate, StartDateTime, EndDateTime, Location,
+       AccountId, Account.Name, WhoId, Description
+FROM Event
+WHERE OwnerId = '${ownerId}'
+  AND StartDateTime >= TODAY
+ORDER BY StartDateTime ASC`
+      .replace(/\s+/g, ' ')
+      .trim();
   }
 
   finalTransformedRequest.url.search = `?q=${soql}`;
