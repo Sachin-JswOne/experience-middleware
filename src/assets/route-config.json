@@ -1249,6 +1249,23 @@
     }
   },
   {
+    "path": "/xp-mi/public/v1/accounts-page",
+    "method": "POST",
+    "routeHandler": "TRANSFORM",
+    "isCacheRequired": false,
+    "target": {
+      "name": "accountsPage",
+      "url": "${CMS_MSME_URL}/accounts-page",
+      "method": "GET",
+      "timeout": {
+        "request": "${TIMEOUTS.REQUEST}",
+        "socket": "${TIMEOUTS.SOCKET}"
+      },
+      "reqTransform": "general.transformers.moveBodyToQueryParams",
+      "resTransform": "cms.transformers.replaceUriPrefix"
+    }
+  },
+  {
     "path": "/xp-mi/public/v1/central_commerce/catalogue/search",
     "method": "POST",
     "routeHandler": "TRANSFORM",
