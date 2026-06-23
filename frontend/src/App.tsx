@@ -6,6 +6,8 @@ import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
 import RouteEditorPage from './pages/RouteEditorPage';
 import CreateRoutePage from './pages/CreateRoutePage';
+import PromptManagementPage from './pages/PromptManagementPage';
+import PromptHistoryPage from './pages/PromptHistoryPage';
 
 function ProtectedLayout({ children }: { children: React.ReactNode }) {
   const { token } = useAuth();
@@ -48,6 +50,22 @@ export default function App() {
             element={
               <ProtectedLayout>
                 <RouteEditorPage />
+              </ProtectedLayout>
+            }
+          />
+          <Route
+            path="/segmentation/prompts"
+            element={
+              <ProtectedLayout>
+                <PromptManagementPage />
+              </ProtectedLayout>
+            }
+          />
+          <Route
+            path="/segmentation/prompts/history/:type"
+            element={
+              <ProtectedLayout>
+                <PromptHistoryPage />
               </ProtectedLayout>
             }
           />

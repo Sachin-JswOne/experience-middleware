@@ -58,6 +58,34 @@ export default function DashboardPage() {
   const [routes, setRoutes] = useState<RouteConfig[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('');
+  const [syncing, setSyncing] = useState(false);
+  const [syncMsg, setSyncMsg] = useState<{ type: 'ok' | 'error'; text: string; url?: string } | null>(null);
+
+  async function handleSync() {
+    if (!token) return;
+    setSyncing(true);
+    setSyncMsg(null);
+    try {
+      const res = await axios.post<{ prUrl: string; branch: string; baseBranch: string }>(
+        '/xp-mi/admin/sync',
+        {},
+        { headers: { Authorization: `Bearer ${token}` } },
+      );
+      setSyncMsg({
+        type: 'ok',
+        text: `PR opened against ${res.data.baseBranch} from ${res.data.branch}.`,
+        url: res.data.prUrl,
+      });
+    } catch (e) {
+      const msg =
+        axios.isAxiosError(e) && e.response?.data?.message
+          ? e.response.data.message
+          : 'Sync failed — check server logs.';
+      setSyncMsg({ type: 'error', text: msg });
+    } finally {
+      setSyncing(false);
+    }
+  }
 
   async function fetchConfig() {
     try {
@@ -105,49 +133,82 @@ export default function DashboardPage() {
 
   return (
     <div className="page-content">
-        {/* Stat cards */}
-        <div className="stat-grid">
-          {stats.map((s) => (
-            <div className="stat-card" key={s.label}>
-              <div>
-                <div className="stat-card__label">{s.label}</div>
-                <div className="stat-card__value">{loading ? '—' : s.value}</div>
-              </div>
-              <div className={`stat-card__icon stat-card__icon--${s.variant}`}>{s.icon}</div>
+      {/* Stat cards */}
+      <div className="stat-grid">
+        {stats.map((s) => (
+          <div className="stat-card" key={s.label}>
+            <div>
+              <div className="stat-card__label">{s.label}</div>
+              <div className="stat-card__value">{loading ? '—' : s.value}</div>
             </div>
-          ))}
-        </div>
-
-        {/* Reload banner */}
-        {updated && (
-          <div className="reload-banner" role="status">
-            <span>Configuration updated on disk.</span>
-            <button className="btn btn--secondary" onClick={handleRefresh}>
-              Refresh
-            </button>
+            <div className={`stat-card__icon stat-card__icon--${s.variant}`}>{s.icon}</div>
           </div>
-        )}
+        ))}
+      </div>
 
-        {/* Search + create */}
-        <div style={{ display: 'flex', gap: 'var(--space-base)', marginBottom: 'var(--space-lg)' }}>
-          <input
-            className="search-pill"
-            type="search"
-            placeholder="Filter routes…"
-            value={filter}
-            onChange={(e) => setFilter(e.target.value)}
-          />
-          <button
-            className="btn btn--primary"
-            style={{ flexShrink: 0 }}
-            onClick={() => navigate('/routes/new')}
-          >
-            + New route
+      {/* Reload banner */}
+      {updated && (
+        <div className="reload-banner" role="status">
+          <span>Configuration updated on disk.</span>
+          <button className="btn btn--secondary" onClick={handleRefresh}>
+            Refresh
           </button>
         </div>
+      )}
 
-        {/* Table */}
-        {loading ? (
+      {/* Sync result banner */}
+      {
+        syncMsg && (
+          <div
+            className="reload-banner"
+            role="status"
+            style={syncMsg.type === 'error' ? { borderColor: 'var(--color-error, #EB5757)' } : undefined}
+          >
+            <span className={syncMsg.type === 'error' ? 'text-error' : undefined}>
+              {syncMsg.text}
+              {syncMsg.url && (
+                <>
+                  {' '}
+                  <a href={syncMsg.url} target="_blank" rel="noreferrer">View PR ↗</a>
+                </>
+              )}
+            </span>
+            <button className="btn btn--secondary" onClick={() => setSyncMsg(null)}>
+              Dismiss
+            </button>
+          </div>
+        )
+      }
+
+      {/* Search + actions */}
+      <div style={{ display: 'flex', gap: 'var(--space-base)', marginBottom: 'var(--space-lg)' }}>
+        <input
+          className="search-pill"
+          type="search"
+          placeholder="Filter routes…"
+          value={filter}
+          onChange={(e) => setFilter(e.target.value)}
+        />
+        <button
+          className="btn btn--secondary"
+          style={{ flexShrink: 0 }}
+          onClick={handleSync}
+          disabled={syncing}
+        >
+          {syncing ? 'Syncing…' : 'Sync to PR'}
+        </button>
+        <button
+          className="btn btn--primary"
+          style={{ flexShrink: 0 }}
+          onClick={() => navigate('/routes/new')}
+        >
+          + New route
+        </button>
+      </div>
+
+      {/* Table */}
+      {
+        loading ? (
           <p className="text-muted">Loading configuration…</p>
         ) : filtered.length === 0 ? (
           <p className="text-muted">No routes match your filter.</p>
@@ -185,13 +246,16 @@ export default function DashboardPage() {
               </tbody>
             </table>
           </div>
-        )}
+        )
+      }
 
-        {filter && (
+      {
+        filter && (
           <p className="text-muted" style={{ marginTop: 'var(--space-base)' }}>
             Showing {filtered.length} of {routes.length} routes
           </p>
-        )}
-    </div>
+        )
+      }
+    </div >
   );
 }

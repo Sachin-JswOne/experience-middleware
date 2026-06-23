@@ -254,6 +254,21 @@ export const KEY_AND_DISPLAY_NAME_MAPPING = {
   sectional_weight: { displayName: 'Sectional weight', key: 'sectional_weight' },
 };
 
+// GitHub sync — pushes runtime route-config edits to a PR on the deployed branch.
+// GIT_BRANCH / GIT_COMMIT are baked into the image at build time (see Dockerfile + CI).
+export const GITHUB_SYNC = {
+  token: process.env.GITHUB_TOKEN,
+  apiBase: process.env.GITHUB_API_BASE ?? 'https://api.github.com',
+  owner: process.env.GITHUB_REPO_OWNER ?? 'JSWOne',
+  repo: process.env.GITHUB_REPO_NAME ?? 'experience-middleware',
+  // Branch this image was built from; strip any `origin/` prefix CI may add.
+  baseBranch: (process.env.GIT_BRANCH ?? 'master-gke').replace(/^origin\//, ''),
+  // Path to the config file in the repo (source, not the compiled dist copy).
+  configPath: process.env.GITHUB_CONFIG_PATH ?? 'src/assets/route-config.json',
+};
+
+export const GIT_COMMIT = process.env.GIT_COMMIT ?? 'unknown';
+
 export const country = 'IN';
 
 export const USER_TYPE = 'R';

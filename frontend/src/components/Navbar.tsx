@@ -9,7 +9,11 @@ export default function Navbar() {
       ? 'Create Route'
       : pathname.startsWith('/routes')
         ? 'Edit Route'
-        : 'Route Config';
+        : pathname.startsWith('/segmentation/prompts/history')
+          ? 'Prompt History'
+          : pathname.startsWith('/segmentation/prompts')
+            ? 'Prompt Management'
+            : 'Route Config';
 
   return (
     <header className="navbar">

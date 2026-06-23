@@ -3,6 +3,7 @@ import { RequestContextMiddleware } from './utils/request-context.middleware';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { ConfigModule } from '@nestjs/config';
 import { ProxyService } from './service/proxy.service';
+import { GithubSyncService } from './service/github-sync.service';
 import { ProxyController } from './controller/proxy.controller';
 import { AdminController } from './controller/admin.controller';
 import { AdminUIController } from './controller/admin-ui.controller';
@@ -23,7 +24,7 @@ import { winstonConfig } from './logger/winston.config';
     }),
   ],
   controllers: [ProxyController, AdminController, AdminUIController],
-  providers: [AppService, ProxyService],
+  providers: [AppService, ProxyService, GithubSyncService],
   exports: [AppService],
 })
 export class AppModule implements NestModule {

@@ -122,6 +122,47 @@ body {
 }
 
 .sidebar__nav { display: flex; flex-direction: column; gap: var(--space-xxs); }
+.sidebar__group-label {
+  margin: var(--space-base) 0 var(--space-xxs);
+  padding: 0 var(--space-sm);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+}
+.sidebar__sub-label {
+  margin: var(--space-xs) 0 var(--space-xxs) var(--space-md);
+  padding: 0 var(--space-sm);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--color-muted-soft);
+}
+.nav-item--sub {
+  margin-left: var(--space-md);
+  font-size: 13px;
+}
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: var(--space-xl) var(--space-base);
+  z-index: 1000;
+  overflow-y: auto;
+}
+.modal {
+  background: var(--color-surface, #fff);
+  border-radius: var(--radius-md, 12px);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+  padding: var(--space-lg);
+  width: 100%;
+  max-width: 760px;
+}
 
 .nav-item {
   display: flex;

@@ -47,6 +47,14 @@ COPY --from=builder /app/dist-admin ./public/admin
 # Create logs directory and set ownership
 RUN mkdir -p logs && chown -R node:node /app
 
+# Bake deploy provenance into the image (passed via --build-arg from CI)
+ARG GIT_BRANCH=unknown
+ARG GIT_COMMIT=unknown
+ARG IMAGE_TAG=unknown
+ENV GIT_BRANCH=$GIT_BRANCH
+ENV GIT_COMMIT=$GIT_COMMIT
+ENV IMAGE_TAG=$IMAGE_TAG
+
 # Use non-root user for security
 USER node
 

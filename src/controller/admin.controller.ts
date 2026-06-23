@@ -3,6 +3,7 @@ import {
   Body,
   Controller,
   Get,
+  Headers,
   HttpCode,
   HttpStatus,
   NotFoundException,
@@ -19,9 +20,11 @@ import { JWT_SECRET, ADMIN_USERNAME, ADMIN_PASSWORD } from '../config/app.config
 import { ROUTE_CONFIG, reloadRouteConfig } from '../config/route.config';
 import { validateNoDuplicateRoutes, validateNewRoute } from '../config/route-config.schema';
 import { RouteConfig } from '../models/route-config.model';
+import { GithubSyncService } from '../service/github-sync.service';
 
 @Controller('admin')
 export class AdminController {
+  constructor(private readonly githubSync: GithubSyncService) {}
   @Post('login')
   @HttpCode(HttpStatus.OK)
   login(@Body() body: { username: string; password: string }) {
@@ -78,6 +81,20 @@ export class AdminController {
 
     const saved = ROUTE_CONFIG.find((r) => r.id === newRoute.id);
     return { saved: true, route: saved ?? newRoute };
+  }
+
+  @Post('sync')
+  @UseGuards(AdminAuthGuard)
+  async sync(@Headers('authorization') auth: string) {
+    let actor = 'admin';
+    try {
+      const decoded = jwt.decode(auth.slice(7)) as { sub?: string } | null;
+      if (decoded?.sub) actor = decoded.sub;
+    } catch {
+      // fall back to 'admin'
+    }
+    const buildTag = process.env.IMAGE_TAG ?? 'unknown';
+    return this.githubSync.syncRouteConfig(actor, buildTag);
   }
 
   @Patch('routes/:id')

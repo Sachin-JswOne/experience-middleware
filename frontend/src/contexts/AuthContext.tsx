@@ -39,6 +39,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem(TOKEN_KEY);
   }, []);
 
+  useEffect(() => {
+    const id = axios.interceptors.response.use(
+      (response) => response,
+      (error) => {
+        if (axios.isAxiosError(error) && error.response?.status === 401) {
+          logout();
+        }
+        return Promise.reject(error);
+      },
+    );
+    return () => axios.interceptors.response.eject(id);
+  }, [logout]);
+
   return (
     <AuthContext.Provider value={{ token, login, logout }}>
       {children}

@@ -1,4 +1,5 @@
 {
+  "CENTRAL_COMMERCE_URL": "https://qa.msme.jswone.in/central_commerce",
   "CMS_MSME_URL": "https://qa-cms-ext.msme.jswone.in/api",
   "CUSTOMER_SERVICE_X_API_KEY": "7sf7",
   "ERP_BASE_URI": "https://next.qa.jswone.in/external-connector-inbound/api/internal/v1/retail",
