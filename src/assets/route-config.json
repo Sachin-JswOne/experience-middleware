@@ -1249,13 +1249,13 @@
     }
   },
   {
-    "path": "/xp-mi/public/v1/accounts-page",
+    "path": "/xp-mi/public/v1/web-accounts-page",
     "method": "POST",
     "routeHandler": "TRANSFORM",
     "isCacheRequired": false,
     "target": {
       "name": "accountsPage",
-      "url": "${CMS_MSME_URL}/accounts-page",
+      "url": "${CMS_MSME_URL}/web-accounts-page",
       "method": "GET",
       "timeout": {
         "request": "${TIMEOUTS.REQUEST}",
