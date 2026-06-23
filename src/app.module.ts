@@ -11,7 +11,7 @@ import { join } from 'path';
 import { AppService } from './app.service';
 import { WinstonModule } from 'nest-winston';
 import { winstonConfig } from './logger/winston.config';
-
+import { CacheService } from './cache/cache.service';
 @Module({
   imports: [
     WinstonModule.forRoot(winstonConfig),
@@ -24,7 +24,7 @@ import { winstonConfig } from './logger/winston.config';
     }),
   ],
   controllers: [ProxyController, AdminController, AdminUIController],
-  providers: [AppService, ProxyService, GithubSyncService],
+  providers: [AppService, ProxyService, GithubSyncService, CacheService],
   exports: [AppService],
 })
 export class AppModule implements NestModule {
