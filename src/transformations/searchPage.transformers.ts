@@ -107,7 +107,7 @@ export function getSearchPageDetails(aggregatedResponses: AggregatedResponse[]):
       blocks.push(...filteredBlocks);
     }
   }
-  if (isCentralCatalogueEnabled) {
+
     const ccpProducts = topItemsResponse?.data?.products;
     if (!Array.isArray(ccpProducts)) {
       Logger.warn(
@@ -200,7 +200,7 @@ export function getSearchPageDetails(aggregatedResponses: AggregatedResponse[]):
           webUrl: ccItem.seoUrl,
         }));
     }
-  }
+  
   //  NO BUY AGAIN → Return CMS blocks as-is with search-top-items
   return {
     data: {
