@@ -990,3 +990,54 @@ export function selectWebHomePageV3TargetByUserType(req: Request): string {
     return 'web-home-page-v3-registered';
   } else throw new CustomError(`Invalid or missing user-type header: ${userType}`, 400);
 }
+
+export function mergeWebIndustriesWithSegments(
+  aggregatedResponses: AggregatedResponse[],
+): any {
+  const responses = aggregatedResponses.reduce(
+    (acc, response) => {
+      acc[response.target] = response;
+      return acc;
+    },
+    {} as Record<string, AggregatedResponse>,
+  );
+
+  const industriesResponse = responses['webIndustries'];
+  const segmentsResponse = responses['industrySegments'];
+
+  if (!industriesResponse?.success) {
+    throw new CustomError(
+      industriesResponse?.error || 'webIndustries API failed',
+      industriesResponse?.httpStatus ?? 400,
+    );
+  }
+
+  const industries = industriesResponse.data?.data ?? [];
+  const segments = segmentsResponse?.success
+    ? segmentsResponse.data?.data ?? []
+    : [];
+
+  const normalize = (value: unknown): string =>
+    String(value ?? '')
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, ' ');
+
+  const segmentMap = new Map<string, number>();
+
+  for (const segment of segments) {
+    if (segment?.displayName && segment?.id !== undefined) {
+      segmentMap.set(normalize(segment.displayName), segment.id);
+    }
+  }
+
+  return {
+    ...industriesResponse.data,
+    data: Array.isArray(industries)
+      ? industries.map((industry: any) => ({
+          ...industry,
+          segmentId: segmentMap.get(normalize(industry.name)) ?? null,
+        }))
+      : industries,
+  };
+}
