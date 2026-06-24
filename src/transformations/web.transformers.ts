@@ -24,7 +24,6 @@ import { Request } from 'express';
 
 const WEB_HOME_PAGE_V3_ORIGINAL_BODY_KEY = '__webHomePageV3OriginalBody';
 const WEB_HOME_PAGE_V3_CMS_KEY = '__webHomePageV3CmsResponse';
-const WEB_HOME_PAGE_V3_CENTRAL_CATALOGUE_GLOBAL_KEY = '__webHomePageV3CentralCatalogueGlobal';
 
 export function homeBlogsFromParallelPayload(request: BaseRequest): BaseRequest {
   return cmsTransformers.homeBlogs({
@@ -385,7 +384,7 @@ function buildCompactWebHomePageV3Payload(cmsResponse: any) {
     top_brand_component: page?.top_brand_component ?? null,
     blog_list_component_material_matter: page?.blog_list_component_material_matter ?? null,
     buy_again_component: page?.buy_again_component ?? null,
-    recently_viewed_component: page?.recently_viewed_component ?? null,
+    recently_viewed_component: page?.recently_viewed_component ?? null
   };
 }
 
@@ -394,17 +393,6 @@ export function prepareWebHomePageV3ParallelPayload(
   prevResponses: AggregatedResponse[],
 ): BaseRequest {
   const cmsAgg = prevResponses.find((r) => r.target === 'layout-mweb-homepages');
-
-  const isCentralCatalogueEnabled =
-    request.headers?.['central_catalogue_global'] === 'true' ||
-    request.headers?.['central-catalogue-global'] === 'true' ||
-    request.body?.central_catalogue_global === true ||
-    String(request.body?.central_catalogue_global).toLowerCase() === 'true';
-
-  if (cmsAgg?.data?.data?.[0]) {
-    cmsAgg.data.data[0].central_catalogue_global = isCentralCatalogueEnabled;
-  }
-
   const compactCms = buildCompactWebHomePageV3Payload(cmsAgg?.data);
 
   return {
@@ -421,7 +409,9 @@ export function mergeWebHomePageResponsesV3FromNestedParallel(
 ): any {
   const cmsAgg = aggregatedResponses.find((r) => r.target === 'layout-mweb-homepages');
 
-  const helperAgg = aggregatedResponses.find((r) => r.target?.includes('parallel-helper'));
+const helperAgg = aggregatedResponses.find(
+  (r) => r.target?.includes('parallel-helper')
+);
 
   if (!helperAgg) {
     throw new CustomError('web-home-page-v3 parallel helper response missing', 500);
@@ -447,19 +437,7 @@ export function mergeWebHomePageResponsesV3FromNestedParallel(
     throw new CustomError('web-home-page-v3 parallel helper returned non-array data', 500);
   }
 
-  const helperResponses = helperAgg.data;
-
-  const flagResponse: AggregatedResponse = {
-    target: 'central_catalogue_global',
-    success: true,
-    data: helperResponses?.[WEB_HOME_PAGE_V3_CENTRAL_CATALOGUE_GLOBAL_KEY] ?? false,
-  } as AggregatedResponse;
-
-  return mergeWebHomePageResponsesV3([
-    ...(cmsAgg ? [cmsAgg] : []),
-    flagResponse,
-    ...helperResponses,
-  ]);
+  return mergeWebHomePageResponsesV3([...(cmsAgg ? [cmsAgg] : []), ...helperAgg.data]);
 }
 
 export function addFeatureFlagQueryParamsFromParallelPayload(request: BaseRequest): BaseRequest {
@@ -684,6 +662,7 @@ export function mergeWebHomePageResponsesV3(aggregatedResponses: AggregatedRespo
     } else if (isCentralCatalogueEnabled) {
       page.mweb_top_item.isTopItem = true;
       const topItemsCcpResponse = responses['ccp-top-items-product-details'];
+
       const ccpProducts = topItemsCcpResponse?.success
         ? (topItemsCcpResponse.data?.data?.products ?? topItemsCcpResponse.data?.products ?? [])
         : null;
@@ -970,7 +949,7 @@ export function transformRecentlyViewedMMIDsRequest(request: BaseRequest): BaseR
 
   if (mmids.length === 0) {
     // Throwing an error here prevents the downstream API call.
-    // The parallel aggregator will capture this as a soft failure
+    // The parallel aggregator will capture this as a soft failure 
     // ({ success: false, error: ... }) and the merge function will handle it gracefully.
     throw new CustomError('No MMIDs provided, skipping recently-viewed API call', 400);
   }
