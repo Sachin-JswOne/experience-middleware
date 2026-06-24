@@ -1,15 +1,13 @@
 import { AggregatedResponse } from 'src/models/aggregated-response.model';
 import { Logger } from '@nestjs/common';
-import { safeDebug, safeToLog } from 'src/utils/common-functions.util';
+import { safeDebug } from 'src/utils/common-functions.util';
 import { BaseRequest } from 'src/models/base-request.model';
 import {
   extractMMIDs,
-  getAllCentralCatalogueCategoryIds,
   normalizeRecentlyViewedProducts,
   RecentlyViewedProduct,
 } from './web.transformers';
 import { inspect } from 'util';
-import { CustomError } from 'src/utils/CustomError';
 
 export function mergeAppHomePageResponses(aggregatedResponses: AggregatedResponse[]): any {
   const responses = aggregatedResponses.reduce(
@@ -74,7 +72,6 @@ export function mergeAppHomePageResponses(aggregatedResponses: AggregatedRespons
 
   // Clone the strapi response data to avoid mutating the original
   const mergedData: Record<string, unknown> = { ...strapiResponse?.data?.data };
-
   // Find the blocks array in the strapi response
   let originalBlocks: unknown[] = [];
   if (
@@ -87,7 +84,6 @@ export function mergeAppHomePageResponses(aggregatedResponses: AggregatedRespons
     ];
   }
   const blocks: any[] = originalBlocks;
-
   const buyAgainProducts = (buyAgainResponse?.data as { listOfBuyAgainProducts?: unknown })
     ?.listOfBuyAgainProducts;
   if (Array.isArray(buyAgainProducts)) {
@@ -244,75 +240,26 @@ export function mergeAppHomePageResponses(aggregatedResponses: AggregatedRespons
 }
 
 // This transformer is used to extract MMIDs from request
-export function transformTopItemsRequest(request: BaseRequest) {
-  const topItemsResponse = request.body.blocks.find(
+export function transformTopItemsRequest(
+  request: BaseRequest,
+  aggregatedResponses: AggregatedResponse[],
+) {
+  const responses = aggregatedResponses.reduce(
+    (acc, response) => {
+      acc[response.target] = response;
+      return acc;
+    },
+    {} as Record<string, AggregatedResponse>,
+  );
+  const aggregateResponse = responses['app-home-page'].data.data;
+
+  const topItemsResponse = aggregateResponse.blocks.find(
     (block) => block.__component === 'app-components.app-search-top-items',
   ).app_search_top_items;
   const mmids = extractMMIDs(topItemsResponse);
   return {
     ...request,
     body: mmids,
-  };
-}
-
-export function extractBrandCategoryIds(request: BaseRequest): BaseRequest {
-  const blocks = request.body.blocks ?? [];
-
-  // Extract category IDs from web_central_catalogue_categories array in app-top-brands blocks
-  const brandCategoryIds = blocks
-    .filter(
-      (b: any) =>
-        b.__component === 'app-components.app-top-brands' &&
-        Array.isArray(b.web_central_catalogue_categories) &&
-        b.web_central_catalogue_categories.length > 0,
-    )
-    .flatMap((b: any) =>
-      b.web_central_catalogue_categories.map((c: any) => c.categoryId).filter(Boolean),
-    );
-
-  if (brandCategoryIds.length === 0) {
-    const topBrandBlocks = blocks.filter(
-      (b: any) => b.__component === 'app-components.app-top-brands',
-    );
-    const blocksWithCategories = topBrandBlocks.filter(
-      (b: any) =>
-        Array.isArray(b.web_central_catalogue_categories) &&
-        b.web_central_catalogue_categories.length > 0,
-    );
-    Logger.warn(
-      `[extractBrandCategoryIds] No categoryId found in top-brand component. Total app-top-brands blocks: ${topBrandBlocks.length}, Blocks with web_central_catalogue_categories: ${blocksWithCategories.length}`,
-    );
-    // Return with empty array to make API call with valid structure
-    return {
-      ...request,
-      body: {
-        brandCategoryIds: [],
-      },
-    };
-  }
-
-  return {
-    ...request,
-    body: {
-      brandCategoryIds,
-    },
-  };
-}
-
-export function extractCentralCatalogueCategoryIds(request: BaseRequest): BaseRequest {
-  const blocks = request.body.blocks ?? [];
-  const categoryIds = getAllCentralCatalogueCategoryIds(blocks);
-
-  if (categoryIds.length === 0) {
-    Logger.warn(`No central catalogue category IDs found in any blocks`);
-    return request;
-  }
-
-  return {
-    ...request,
-    body: {
-      categoryIds,
-    },
   };
 }
 
@@ -331,16 +278,11 @@ export function mergeAppHomePageResponseV4(aggregatedResponses: AggregatedRespon
   const webProductsResponse = responses['web-homepage-products']; //done
   const catalogueResponse = responses['app-categories']; //done
   const topBrandCategoriesResponse = responses['app-top-brands']; //done
-  const productsListingResponse = responses['products-listing']; //done
   const industryProductsListingResponse = responses['industry-products-listing']; //done
   const featureFlags = responses['cmsFeatureFlag']?.data?.data ?? [];
   const topItemsResponse = responses['app-search-top-items']; //done
   const inTransitResponse = responses['app-in-transit']; //done
-  const isCentralCatalogueEnabled =
-    Array.isArray(featureFlags) &&
-    featureFlags.some((f: any) => f?.name === 'central_catalogue_global' && f?.isActive === true);
 
-  safeDebug(Logger, () => `isCentralCatalogueEnabled → ${String(isCentralCatalogueEnabled)}`);
   safeDebug(
     Logger,
     () =>
@@ -385,13 +327,6 @@ export function mergeAppHomePageResponseV4(aggregatedResponses: AggregatedRespon
     () =>
       `Web Central Top Brand Categories API response from method: mergeAppHomePageResponseV4 : ${inspect(
         topBrandCategoriesResponse,
-      )}`,
-  );
-  safeDebug(
-    Logger,
-    () =>
-      `Products Listing API response from method: mergeAppHomePageResponseV4 : ${inspect(
-        productsListingResponse,
       )}`,
   );
   safeDebug(
@@ -475,7 +410,7 @@ export function mergeAppHomePageResponseV4(aggregatedResponses: AggregatedRespon
       if ('top_items_product_details' in page.mweb_top_item) {
         delete page.mweb_top_item.top_items_product_details;
       }
-    } else if (isCentralCatalogueEnabled) {
+    } else {
       page.mweb_top_item.isTopItem = true;
 
       if (topItemsResponse?.success && Array.isArray(topItemsResponse.data?.data?.products)) {
@@ -515,12 +450,6 @@ export function mergeAppHomePageResponseV4(aggregatedResponses: AggregatedRespon
           });
         }
       }
-    } else {
-      page.mweb_top_item.isTopItem = true;
-      safeDebug(
-        Logger,
-        () => 'Central Catalogue Global flag is disabled. Returning CMS top items as-is.',
-      );
     }
   } else {
     page.mweb_top_item = {};
@@ -585,52 +514,25 @@ export function mergeAppHomePageResponseV4(aggregatedResponses: AggregatedRespon
   const inTransitApiResponse = inTransitResponse;
   let inTransit = false;
   if (
-    inTransitApiResponse.success &&
-    inTransitApiResponse.data.success &&
-    inTransitApiResponse.data.data.success
+    inTransitApiResponse?.success &&
+    inTransitApiResponse?.data.success &&
+    inTransitApiResponse?.data.data.success
   ) {
     const inTransitData = inTransitApiResponse.data.data.response.data;
     if (inTransitData && inTransitData.length > 0) {
       inTransit = true;
     }
-    page.link_banner_component.inTransit = inTransit;
   }
+  page.link_banner_component.inTransit = inTransit;
 
   //product listing
   if (webProductsResponse?.success) {
     const productsData = webProductsResponse.data?.data ?? webProductsResponse.data?.data ?? {};
 
-    const productCategoryBlocks = Array.isArray(page.product_category_component)
-      ? page.product_category_component
-      : [];
-
     const IndustrySpecificBlock = Array.isArray(page.industry_specific_components)
       ? page.industry_specific_components
       : [];
 
-    for (const block of productCategoryBlocks) {
-      block?.app_product_categories
-        ?.filter((c: any) => c.webCategoryId && c.itemsToShow)
-        ?.forEach((c: any) => {
-          c.productsList = productsData[c.webCategoryId];
-        });
-
-      // Inject centralCategoryIdData for product listing
-      if (
-        productsListingResponse?.success &&
-        Array.isArray(productsListingResponse.data?.data?.products)
-      ) {
-        const productsArray = productsListingResponse.data.data.products;
-
-        const filteredCategories = block?.app_product_categories?.filter(
-          (c: any) => c.webCategoryId && c.itemsToShow,
-        );
-
-        if (filteredCategories && filteredCategories.length > 0) {
-          filteredCategories[0].centralCategoryIdData = [{ products: productsArray }];
-        }
-      }
-    }
     for (const block of IndustrySpecificBlock) {
       block?.app_product_categories
         ?.filter((c: any) => c.webCategoryId && c.itemsToShow)
@@ -737,61 +639,10 @@ function sortResponseByOrder(response: any) {
   return sortedResponse;
 }
 
-export function selectAppHomePageV3TargetByUserType(req: Request): string {
+export function selectAppHomePageTargetByUserType(req: Request): string {
   const userType = String(req.headers?.['x-user-state'] ?? '').toUpperCase();
 
   if (userType === 'G') {
-    return 'app-home-page-v3-guest';
-  } else return 'app-home-page-v3-registered';
-}
-
-export function mergeAppHomePageResponsesV3FromNestedParallel(
-  aggregatedResponses: AggregatedResponse[],
-): any {
-  const cmsAgg = aggregatedResponses.find((r) => r.target === 'app-home-page');
-
-  const helperAgg = aggregatedResponses.find((r) => r.target?.includes('parallel-helper'));
-
-  if (!helperAgg) {
-    throw new CustomError('app-home-page-v3 parallel helper response missing', 500);
-  }
-
-  if (!helperAgg.success) {
-    Logger.error(
-      `app-home-page-v3 parallel helper failed: ${safeToLog(helperAgg.error)} | downstream=${safeToLog(
-        helperAgg.downstreamResponse,
-      )}`,
-    );
-
-    throw new CustomError(
-      `app-home-page-v3 parallel helper failed: ${helperAgg.error ?? 'unknown error'}`,
-      helperAgg.httpStatus ?? 500,
-    );
-  }
-
-  if (!Array.isArray(helperAgg.data)) {
-    Logger.error(
-      `app-home-page-v3 parallel helper returned non-array data: ${safeToLog(helperAgg.data)}`,
-    );
-    throw new CustomError('app-home-page-v3 parallel helper returned non-array data', 500);
-  }
-  return mergeAppHomePageResponses([...(cmsAgg ? [cmsAgg] : []), ...helperAgg.data]);
-}
-
-export function prepareWebHomePageV3ParallelPayload(
-  request: BaseRequest,
-  prevResponses: AggregatedResponse[],
-): BaseRequest {
-  const responses = prevResponses.reduce(
-    (acc, response) => {
-      acc[response.target] = response;
-      return acc;
-    },
-    {} as Record<string, AggregatedResponse>,
-  );
-  const aggregateResponse = responses['app-home-page'].data.data;
-  return {
-    ...request,
-    body: aggregateResponse,
-  };
+    return 'app-home-page-guest';
+  } else return 'app-home-page-registered';
 }
