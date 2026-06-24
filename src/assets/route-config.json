@@ -1572,7 +1572,7 @@
     "path": "/xp-mi/public/v1/web-search-page",
     "method": "POST",
     "routeHandler": "AGGREGATE",
-    "aggregationType": "SEQUENTIAL",
+    "aggregationType": "SEQUENTIAL_THEN_PARALLEL",
     "targets": [
       {
         "name": "app-search-page",
@@ -1683,17 +1683,6 @@
             "destination": "jsw_session_id"
           }
         ]
-      },
-      {
-        "name": "cmsFeatureFlag",
-        "url": "${CMS_MSME_URL}/ccp-feature-flags",
-        "method": "GET",
-        "timeout": {
-          "request": "${TIMEOUTS.REQUEST}",
-          "socket": "${TIMEOUTS.SOCKET}"
-        },
-        "reqTransform": "category.transformers.addFeatureFlagQueryParams",
-        "resTransform": "cms.transformers.replaceUriPrefix"
       },
       {
         "name": "recent-viewed-remove",
@@ -2400,6 +2389,10 @@
           {
             "source": "user-type",
             "destination": "user-type"
+          },
+          {
+            "source": "central-catalogue-global",
+            "destination": "central-catalogue-global"
           }
         ]
       },
@@ -2435,6 +2428,10 @@
           {
             "source": "user-type",
             "destination": "user-type"
+          },
+          {
+            "source": "central-catalogue-global",
+            "destination": "central-catalogue-global"
           }
         ]
       }
@@ -2486,6 +2483,10 @@
           {
             "source": "x-user-state",
             "destination": "x-user-state"
+          },
+          {
+            "source": "central-catalogue-global",
+            "destination": "central-catalogue-global"
           }
         ]
       }
@@ -2498,17 +2499,6 @@
     "routeHandler": "AGGREGATE",
     "aggregationType": "PARALLEL",
     "targets": [
-      {
-        "name": "cmsFeatureFlag",
-        "url": "${CMS_MSME_URL}/ccp-feature-flags",
-        "method": "GET",
-        "timeout": {
-          "request": "${TIMEOUTS.REQUEST}",
-          "socket": "${TIMEOUTS.SOCKET}"
-        },
-        "reqTransform": "web.transformers.addFeatureFlagQueryParamsFromParallelPayload",
-        "resTransform": "cms.transformers.replaceUriPrefix"
-      },
       {
         "name": "app-blogs",
         "url": "${CMS_MSME_URL}/jsw-blogs-articless",
@@ -2684,17 +2674,6 @@
     "routeHandler": "AGGREGATE",
     "aggregationType": "PARALLEL",
     "targets": [
-      {
-        "name": "cmsFeatureFlag",
-        "url": "${CMS_MSME_URL}/ccp-feature-flags",
-        "method": "GET",
-        "timeout": {
-          "request": 10000,
-          "socket": 1000
-        },
-        "reqTransform": "web.transformers.addFeatureFlagQueryParamsFromParallelPayload",
-        "resTransform": "cms.transformers.replaceUriPrefix"
-      },
       {
         "name": "ccp-buy-again-with-prices",
         "url": "${MSME_BASE_URL}/central_commerce/buy-again-list",
