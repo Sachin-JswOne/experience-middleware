@@ -833,10 +833,10 @@
       },
       {
         "name": "app-order-listing",
-        "url": "${TMS_BASE_URI}/opportunity/retail/fetch-order-list",
+        "url": "${OMS_URL}/opportunity/retail/fetch-order-list",
         "method": "GET",
         "staticHeaders": {
-          "Authorization": "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJKU1dPTkUiLCJpYXQiOjE3NTE1MzY4NTMsImV4cCI6MTc4MzA3Mjg1MywiYXVkIjoiIiwic3ViIjoib3JkZXJ1bmlmaWNhdGlvbkBqc3dvbmUuY29tIiwiRW1haWwiOiJvcmRlcnVuaWZpY2F0aW9uQGpzd29uZS5jb20iLCJSb2xlIjoiQWRtaW4ifQ.pf4XPzgeoZXIuTcQ4JAqpfln7UfBLkvYQcnqEyrbSqA"
+          "Authorization": "Bearer ${TMS_AUTH_TOKEN_ORDER_LISTING}"
         },
         "timeout": {
           "request": 5000,
@@ -872,7 +872,7 @@
       },
       {
         "name": "opportunity-detail",
-        "url": "${TMS_BASE_URI}/jswone/retail/fetch-opportunity-details",
+        "url": "${OMS_URL}/jswone/retail/fetch-opportunity-details",
         "method": "GET",
         "staticHeaders": {
           "Authorization": "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJPbmxpbmUgSldUIEJ1aWxkZXIiLCJpYXQiOjE3NDQ4ODcyMzgsImV4cCI6MTc3NjQyMzIzOCwiYXVkIjoiZnJpZWdodCB0aWdlciIsInN1YiI6IiJ9.6Ib-8yeVhRuolg5ko0SMxjcjQK8za1mkpVVaLFtPMyE",
@@ -2568,7 +2568,7 @@
             "destination": "access_token"
           }
         ]
-      },      
+      },
       {
         "name": "recent-viewed-remove",
         "url": "${MSME_BASE_URL}/central_commerce/recent-viewed/remove",
@@ -3595,7 +3595,7 @@
       },
       {
         "name": "one-helix-task",
-        "url": "${TMS_BASE_URI}/jswone/subject/task",
+        "url": "${OMS_URL}/jswone/subject/task",
         "method": "POST",
         "timeout": {
           "request": 10000,
@@ -3617,7 +3617,7 @@
     "isCacheRequired": false,
     "target": {
       "name": "one-helix-task",
-      "url": "${TMS_BASE_URI}/jswone/subject/task",
+      "url": "${OMS_URL}/jswone/subject/task",
       "method": "POST",
       "timeout": {
         "request": 10000,
