@@ -5,11 +5,16 @@ import { TraceContextInterceptor } from './common/trace-context.interceptor';
 import { AllExceptionsFilter } from './filters/http-exception.filter';
 import { WinstonModule } from 'nest-winston';
 import { winstonConfig } from './logger/winston.config';
+import * as express from 'express';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
     logger: WinstonModule.createLogger(winstonConfig),
+    bodyParser: false,
   });
+
+  app.use(express.json({ limit: '50mb' }));
+  app.use(express.urlencoded({ limit: '50mb', extended: true }));
   app.useGlobalInterceptors(new TraceContextInterceptor());
   app.useGlobalFilters(new AllExceptionsFilter());
   app.setGlobalPrefix('xp-mi');
