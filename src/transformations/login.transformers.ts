@@ -420,7 +420,7 @@ export function transformEmailPasscodeRequest(request) {
 }
 
 export function validateSellerData(data) {
-  const requiredFields = ['sfId', 'ctId', 'billingAddress'];
+  const requiredFields = ['ctId', 'billingAddress'];
 
   for (const field of requiredFields) {
     if (
