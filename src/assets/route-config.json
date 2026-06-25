@@ -2476,16 +2476,8 @@
             "destination": "access_token"
           },
           {
-            "source": "x-user-state",
-            "destination": "x-user-state"
-          },
-          {
             "source": "user-type",
             "destination": "user-type"
-          },
-          {
-            "source": "central-catalogue-global",
-            "destination": "central-catalogue-global"
           }
         ]
       },
@@ -2515,16 +2507,8 @@
             "destination": "access_token"
           },
           {
-            "source": "x-user-state",
-            "destination": "x-user-state"
-          },
-          {
             "source": "user-type",
             "destination": "user-type"
-          },
-          {
-            "source": "central-catalogue-global",
-            "destination": "central-catalogue-global"
           }
         ]
       }
@@ -2572,14 +2556,6 @@
           {
             "source": "access_token",
             "destination": "access_token"
-          },
-          {
-            "source": "x-user-state",
-            "destination": "x-user-state"
-          },
-          {
-            "source": "central-catalogue-global",
-            "destination": "central-catalogue-global"
           }
         ]
       }
@@ -2747,10 +2723,6 @@
           {
             "source": "access_token",
             "destination": "access_token"
-          },
-          {
-            "source": "x-user-state",
-            "destination": "x-user-state"
           },
           {
             "source": "user-type",
