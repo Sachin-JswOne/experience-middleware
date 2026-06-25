@@ -24,7 +24,6 @@ import { Request } from 'express';
 
 const WEB_HOME_PAGE_V3_ORIGINAL_BODY_KEY = '__webHomePageV3OriginalBody';
 const WEB_HOME_PAGE_V3_CMS_KEY = '__webHomePageV3CmsResponse';
-const WEB_HOME_PAGE_V3_CENTRAL_CATALOGUE_GLOBAL_KEY = '__webHomePageV3CentralCatalogueGlobal';
 
 export function homeBlogsFromParallelPayload(request: BaseRequest): BaseRequest {
   return cmsTransformers.homeBlogs({
@@ -437,14 +436,9 @@ export function mergeWebHomePageResponsesV3FromNestedParallel(
     throw new CustomError('web-home-page-v3 parallel helper returned non-array data', 500);
   }
 
-  return mergeWebHomePageResponsesV3([...(cmsAgg ? [cmsAgg] : []), ...helperAgg.data]);
-}
+  const helperResponses = helperAgg.data;
 
-export function addFeatureFlagQueryParamsFromParallelPayload(request: BaseRequest): BaseRequest {
-  return categoryTransformers.addFeatureFlagQueryParams({
-    ...request,
-    body: getParallelHelperOriginalBody(request),
-  });
+  return mergeWebHomePageResponsesV3([...(cmsAgg ? [cmsAgg] : []), ...helperResponses]);
 }
 
 export function transformWebHomePageTopItemsMMIDRequestV3FromCmsBody(
@@ -559,12 +553,6 @@ export function mergeWebHomePageResponsesV3(aggregatedResponses: AggregatedRespo
   const webTopBrandCategoriesResponse = responses['web-central-top-brand-categories'];
   const productsListingResponse = responses['products-listing'];
   const industryProductsListingResponse = responses['industry-products-listing'];
-  const featureFlags = responses['cmsFeatureFlag']?.data?.data ?? [];
-  const isCentralCatalogueEnabled =
-    Array.isArray(featureFlags) &&
-    featureFlags.some((f: any) => f?.name === 'central_catalogue_global' && f?.isActive === true);
-
-  safeDebug(Logger, () => `isCentralCatalogueEnabled → ${String(isCentralCatalogueEnabled)}`);
 
   safeDebug(
     Logger,
@@ -645,9 +633,7 @@ export function mergeWebHomePageResponsesV3(aggregatedResponses: AggregatedRespo
   }
 
   /**
-   * Top Items: if central_catalogue_global enabled, enrich CMS top items
-   * by overwriting only: title, webUrl, MMID, image.url
-   * Otherwise return CMS as-is.
+   * Top Items: always enrich CMS top items with CCP product details when buy-again data is not present.
    */
 
   const buyAgainList = page?.buy_again_component?.listOfBuyAgainProducts;
@@ -659,7 +645,7 @@ export function mergeWebHomePageResponsesV3(aggregatedResponses: AggregatedRespo
       if ('top_items_product_details' in page.mweb_top_item) {
         delete page.mweb_top_item.top_items_product_details;
       }
-    } else if (isCentralCatalogueEnabled) {
+    } else {
       page.mweb_top_item.isTopItem = true;
       const topItemsCcpResponse = responses['ccp-top-items-product-details'];
       const ccpProducts = topItemsCcpResponse?.success
@@ -694,6 +680,11 @@ export function mergeWebHomePageResponsesV3(aggregatedResponses: AggregatedRespo
           const newWebUrl = product.attributes?.slug;
           const newMmid = product.product_mmid;
           const newImageUrl = product.meta_data?.product_media?.[0]?.public_url;
+          safeDebug(
+            Logger,
+            () =>
+              `Top Items image source check MMID=${mmid} | cmsUrl=${cmsItem?.image?.url} | ccpUrl=${newImageUrl}`,
+          );
           // Overwrite ONLY the 4 fields
           return {
             ...cmsItem,
@@ -711,9 +702,6 @@ export function mergeWebHomePageResponsesV3(aggregatedResponses: AggregatedRespo
           delete page.mweb_top_item.top_items_product_details;
         }
       }
-    } else {
-      page.mweb_top_item.isTopItem = true;
-      Logger.log('Central Catalogue Global flag is disabled. Returning CMS top items as-is.');
     }
   }
 
