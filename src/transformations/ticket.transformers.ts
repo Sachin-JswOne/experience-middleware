@@ -12,12 +12,12 @@ export function validateAndTransformTicketRequest(
     shipmentSKUIds,
   } = body;
 
-  if (!orderNumber && !invoiceNumber) {
-    throw new CustomError(
-      'Either orderNumber or invoiceNumber is required',
-      400,
-    );
-  }
+  // if (!orderNumber && !invoiceNumber) {
+  //   throw new CustomError(
+  //     'Either orderNumber or invoiceNumber is required',
+  //     400,
+  //   );
+  // }
 
   if (invoiceNumber) {
     // const hasOpportunitySkus =
