@@ -4654,7 +4654,7 @@
       "url": "${MSME_BASE_URL}/central_commerce/api/v1/tickets",
       "method": "POST",
       "timeout": {
-        "request": 10000,
+        "request": 20000,
         "socket": 1000
       },
       "reqTransform": "ticket.transformers.validateAndTransformTicketRequest",
