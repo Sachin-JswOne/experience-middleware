@@ -219,6 +219,55 @@ export function transformFetchUserRequest(request: BaseRequest): BaseRequest {
   });
 }
 
+export function injectGstinFromTmsProfile(
+  request: BaseRequest,
+  prevResponses: AggregatedResponse[],
+): BaseRequest {
+  const tmsResp = prevResponses?.find((r) => r.target === 'tms-profile');
+  const gstin = tmsResp?.data?.data?.gst;
+
+  if (!gstin) {
+    throw new CustomError('Bad Request: gstin not found in TMS profile response', 400);
+  }
+
+  request.url.search = '';
+  request.url.searchParams.set('gstin', gstin);
+  return request;
+}
+
+export function mergeWhatsappCustomerDetails(aggregatedResponses: AggregatedResponse[]): any {
+  const responses = aggregatedResponses.reduce(
+    (acc, response) => {
+      acc[response.target] = response;
+      return acc;
+    },
+    {} as Record<string, AggregatedResponse>,
+  );
+
+  const tmsResp = responses['tms-profile'];
+  const sfResp = responses['sf-customer'];
+
+  if (!tmsResp?.success) {
+    throw new CustomError('Failed to fetch TMS customer profile', tmsResp?.httpStatus ?? 500);
+  }
+
+  const tmsData = tmsResp.data?.data;
+  const sfCustomerDetails = sfResp?.data?.data?.customerDetails?.[0];
+
+  return {
+    registered: true,
+    gstin: tmsData?.gst ?? null,
+    pan: tmsData?.pan ?? null,
+    userType: 'Primary',
+    sfId: tmsData?.sfId ?? sfCustomerDetails?.salesforceId ?? null,
+    isCreditCustomer: true, // Assuming all customers are credit customers for now
+    isTransacting: tmsData?.isTransacting ?? true,
+    customerName: sfCustomerDetails?.customerName ?? null,
+    customerType: tmsData?.customerType ?? null,
+    state: sfCustomerDetails?.stateName ?? null,
+  };
+}
+
 export function addCustomerApiKeyIfNoAuth(request: BaseRequest): BaseRequest {
   const hasAccessToken =
     Boolean(request.headers?.access_token) ||
