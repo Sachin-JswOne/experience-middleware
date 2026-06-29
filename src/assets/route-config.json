@@ -1363,15 +1363,18 @@
       },
       {
         "name": "gstin-customer-profile",
-        "url": "${TMS_BASE_URI}/account-master/profile/v1",
+        "url": "${MSME_BASE_URL}/central_commerce/customer/v1",
         "method": "GET",
         "timeout": {
           "request": "${TIMEOUTS.REQUEST}",
           "socket": "${TIMEOUTS.SOCKET}"
         },
-        "staticHeaders": {
-          "x-api-key": "${X_API_KEY_CONNECTOR}"
-        },
+        "headersToPass": [
+          {
+            "source": "access_token",
+            "destination": "access_token"
+          }
+        ],
         "reqTransform": "customer.transformers.injectGstinFromProfile"
       }
     ],
@@ -3041,7 +3044,7 @@
       "url": "${MSME_BASE_URL}/central_commerce/customer/v1/customer-industry",
       "method": "POST",
       "timeout": {
-        "request": 5000,
+        "request": 10000,
         "socket": 1000
       },
       "headersToPass": [
@@ -5110,7 +5113,7 @@
       "url": "${MSME_BASE_URL}/central_commerce/customer/v1/customer-industry",
       "method": "POST",
       "timeout": {
-        "request": "${TIMEOUTS.REQUEST}",
+        "request": 10000,
         "socket": 5000
       },
       "headersToPass": [
