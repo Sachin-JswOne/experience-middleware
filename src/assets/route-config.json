@@ -1187,19 +1187,43 @@
   {
     "path": "/xp-mi/public/v1/web-industries",
     "method": "POST",
-    "routeHandler": "TRANSFORM",
+    "routeHandler": "AGGREGATE",
+    "aggregationType": "PARALLEL",
     "isCacheRequired": false,
-    "target": {
-      "name": "webIndustries",
-      "url": "${CMS_MSME_URL}/industries",
-      "method": "GET",
-      "timeout": {
-        "request": "${TIMEOUTS.REQUEST}",
-        "socket": "${TIMEOUTS.SOCKET}"
+    "targets": [
+      {
+        "name": "webIndustries",
+        "url": "${CMS_MSME_URL}/industries",
+        "method": "GET",
+        "timeout": {
+          "request": "${TIMEOUTS.REQUEST}",
+          "socket": "${TIMEOUTS.SOCKET}"
+        },
+        "reqTransform": "general.transformers.moveBodyToQueryParams",
+        "resTransform": "cms.transformers.replaceUriPrefix"
       },
-      "reqTransform": "general.transformers.moveBodyToQueryParams",
-      "resTransform": "cms.transformers.replaceUriPrefix"
-    }
+      {
+        "name": "industrySegments",
+        "url": "${MSME_BASE_URL}/central_commerce/industry/v1/segments",
+        "method": "GET",
+        "timeout": {
+          "request": "${TIMEOUTS.REQUEST}",
+          "socket": "${TIMEOUTS.SOCKET}"
+        },
+        "reqTransform": "general.transformers.convertToGetRequest",
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "access_token"
+          },
+          {
+            "source": "access_token",
+            "destination": "access_token"
+          }
+        ]
+      }
+    ],
+    "resTransform": "web.transformers.mergeWebIndustriesWithSegments"
   },
   {
     "path": "/xp-mi/public/v1/web-header-links",
@@ -1322,15 +1346,18 @@
       },
       {
         "name": "gstin-customer-profile",
-        "url": "${TMS_BASE_URI}/account-master/profile/v1",
+        "url": "${MSME_BASE_URL}/central_commerce/customer/v1",
         "method": "GET",
         "timeout": {
           "request": "${TIMEOUTS.REQUEST}",
           "socket": "${TIMEOUTS.SOCKET}"
         },
-        "staticHeaders": {
-          "x-api-key": "${X_API_KEY_CONNECTOR}"
-        },
+        "headersToPass": [
+          {
+            "source": "access_token",
+            "destination": "access_token"
+          }
+        ],
         "reqTransform": "customer.transformers.injectGstinFromProfile"
       }
     ],
@@ -2994,16 +3021,22 @@
     "isCacheRequired": false,
     "target": {
       "name": "customer-industry",
-      "url": "${TMS_BASE_URI}/account-master/profile/v1/customer-industry",
+      "url": "${MSME_BASE_URL}/central_commerce/customer/v1/customer-industry",
       "method": "POST",
       "timeout": {
-        "request": 5000,
+        "request": 10000,
         "socket": 1000
       },
-      "staticHeaders": {
-        "x-api-key": "${X_API_KEY_CONNECTOR}",
-        "Content-Type": "application/json"
-      },
+      "headersToPass": [
+        {
+          "source": "authorization",
+          "destination": "access_token"
+        },
+        {
+          "source": "access_token",
+          "destination": "access_token"
+        }
+      ],
       "requiredParams": ["*"]
     }
   },
@@ -4954,7 +4987,7 @@
       "url": "${MSME_BASE_URL}/central_commerce/customer/v1/customer-industry",
       "method": "POST",
       "timeout": {
-        "request": "${TIMEOUTS.REQUEST}",
+        "request": 10000,
         "socket": 5000
       },
       "headersToPass": [
