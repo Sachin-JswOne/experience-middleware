@@ -1152,17 +1152,6 @@
           "request": 5000,
           "socket": 1000
         }
-      },
-      {
-        "name": "cmsFeatureFlag",
-        "url": "${CMS_MSME_URL}/ccp-feature-flags",
-        "method": "GET",
-        "timeout": {
-          "request": "${TIMEOUTS.REQUEST}",
-          "socket": "${TIMEOUTS.SOCKET}"
-        },
-        "reqTransform": "category.transformers.addFeatureFlagQueryParams",
-        "resTransform": "cms.transformers.replaceUriPrefix"
       }
     ],
     "resTransform": "category.transformers.mergeWebGlobalResponse"
@@ -2122,17 +2111,6 @@
           "request": 5000,
           "socket": 1000
         }
-      },
-      {
-        "name": "cmsFeatureFlag",
-        "url": "${CMS_MSME_URL}/ccp-feature-flags",
-        "method": "GET",
-        "timeout": {
-          "request": "${TIMEOUTS.REQUEST}",
-          "socket": "${TIMEOUTS.SOCKET}"
-        },
-        "reqTransform": "category.transformers.addFeatureFlagQueryParams",
-        "resTransform": "cms.transformers.replaceUriPrefix"
       }
     ],
     "resTransform": "category.transformers.mergeCategoryResponses"
@@ -2182,37 +2160,8 @@
   {
     "path": "/xp-mi/public/v1/central_commerce/product/slug/*slugId",
     "method": "POST",
-    "routeHandler": "AGGREGATE",
-    "aggregationType": "PARALLEL",
-    "targets": [
-      {
-        "name": "cmsFeatureFlag",
-        "url": "${CMS_MSME_URL}/ccp-feature-flags",
-        "method": "GET",
-        "timeout": {
-          "request": 10000,
-          "socket": 1000
-        },
-        "reqTransform": "category.transformers.addFeatureFlagQueryParams",
-        "resTransform": "cms.transformers.replaceUriPrefix"
-      },
-      {
-        "name": "product-by-slug-old",
-        "url": "${MSME_BASE_URL}/product/v2/slug/*slugId",
-        "method": "GET",
-        "reqTransform": "product.transformers.buildProductSlugV2Request",
-        "timeout": {
-          "request": 10000,
-          "socket": 1000
-        },
-        "headersToPass": [
-          {
-            "source": "access_token",
-            "destination": "access_token"
-          }
-        ],
-        "requiredPathParams": ["slugId"]
-      },
+    "routeHandler": "TRANSFORM",
+    "target":
       {
         "name": "product-by-slug-v2",
         "url": "${MSME_BASE_URL}/central_commerce/product/slug/*slugId",
@@ -2231,8 +2180,6 @@
         "requiredParams": ["*"],
         "requiredPathParams": ["slugId"]
       }
-    ],
-    "resTransform": "product.transformers.selectSlugProductResponse"
   },
   {
     "path": "/xp-mi/public/v1/mweb-cart-page",
@@ -2353,17 +2300,6 @@
             "destination": "access_token"
           }
         ]
-      },
-      {
-        "name": "cmsFeatureFlag",
-        "url": "${CMS_MSME_URL}/ccp-feature-flags",
-        "method": "GET",
-        "timeout": {
-          "request": "${TIMEOUTS.REQUEST}",
-          "socket": "${TIMEOUTS.SOCKET}"
-        },
-        "reqTransform": "category.transformers.addFeatureFlagQueryParams",
-        "resTransform": "cms.transformers.replaceUriPrefix"
       }
     ],
     "resTransform": "category.transformers.mergeMainMenuResponses"
@@ -3533,62 +3469,27 @@
   {
     "path": "/xp-mi/public/v1/uom-convert",
     "method": "POST",
-    "routeHandler": "AGGREGATE",
-    "aggregationType": "PARALLEL",
-    "targets": [
-      {
-        "name": "cmsFeatureFlag",
-        "url": "${CMS_MSME_URL}/ccp-feature-flags",
-        "method": "GET",
-        "timeout": {
-          "request": "${TIMEOUTS.REQUEST}",
-          "socket": "${TIMEOUTS.SOCKET}"
-        },
-        "reqTransform": "category.transformers.addFeatureFlagQueryParams",
-        "resTransform": "cms.transformers.replaceUriPrefix"
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "uom-convert-v2",
+      "url": "${MSME_BASE_URL}/central_commerce/uom-convert",
+      "method": "POST",
+      "timeout": {
+        "request": "${TIMEOUTS.REQUEST}",
+        "socket": "${TIMEOUTS.SOCKET}"
       },
-      {
-        "name": "uom-convert-legacy",
-        "url": "${MSME_BASE_URL}/measurement-service/unit-of-measure/convert",
-        "method": "POST",
-        "timeout": {
-          "request": "${TIMEOUTS.REQUEST}",
-          "socket": "${TIMEOUTS.SOCKET}"
+      "reqTransform": "category.transformers.transformLegacyUomConvertRequest",
+      "headersToPass": [
+        {
+          "source": "authorization",
+          "destination": "access_token"
         },
-        "reqTransform": "category.transformers.transformV2UomConvertRequest",
-        "headersToPass": [
-          {
-            "source": "authorization",
-            "destination": "access_token"
-          },
-          {
-            "source": "access_token",
-            "destination": "access_token"
-          }
-        ]
-      },
-      {
-        "name": "uom-convert-v2",
-        "url": "${MSME_BASE_URL}/central_commerce/uom-convert",
-        "method": "POST",
-        "timeout": {
-          "request": "${TIMEOUTS.REQUEST}",
-          "socket": "${TIMEOUTS.SOCKET}"
-        },
-        "reqTransform": "category.transformers.transformLegacyUomConvertRequest",
-        "headersToPass": [
-          {
-            "source": "authorization",
-            "destination": "access_token"
-          },
-          {
-            "source": "access_token",
-            "destination": "access_token"
-          }
-        ]
-      }
-    ],
-    "resTransform": "category.transformers.selectUomConvertResponse"
+        {
+          "source": "access_token",
+          "destination": "access_token"
+        }
+      ]
+    }
   },
   {
     "path": "/xp-mi/public/v1/one-helix-enquiry",
