@@ -2161,25 +2161,24 @@
     "path": "/xp-mi/public/v1/central_commerce/product/slug/*slugId",
     "method": "POST",
     "routeHandler": "TRANSFORM",
-    "target":
-      {
-        "name": "product-by-slug-v2",
-        "url": "${MSME_BASE_URL}/central_commerce/product/slug/*slugId",
-        "method": "GET",
-        "reqTransform": "general.transformers.convertToGetRequest",
-        "timeout": {
-          "request": 10000,
-          "socket": 1000
-        },
-        "headersToPass": [
-          {
-            "source": "access_token",
-            "destination": "access_token"
-          }
-        ],
-        "requiredParams": ["*"],
-        "requiredPathParams": ["slugId"]
-      }
+    "target": {
+      "name": "product-by-slug-v2",
+      "url": "${MSME_BASE_URL}/central_commerce/product/slug/*slugId",
+      "method": "GET",
+      "reqTransform": "general.transformers.convertToGetRequest",
+      "timeout": {
+        "request": 10000,
+        "socket": 1000
+      },
+      "headersToPass": [
+        {
+          "source": "access_token",
+          "destination": "access_token"
+        }
+      ],
+      "requiredParams": ["*"],
+      "requiredPathParams": ["slugId"]
+    }
   },
   {
     "path": "/xp-mi/public/v1/mweb-cart-page",
@@ -5303,5 +5302,54 @@
       ],
       "requiredParams": ["*"]
     }
+  },
+  {
+    "path": "/xp-mi/public/v1/app/orders-pending-payments",
+    "method": "GET",
+    "routeHandler": "AGGREGATE",
+    "aggregationType": "PARALLEL",
+    "targets": [
+      {
+        "name": "orders-pending-payments",
+        "url": "${ERP_BASE_URL}/ledger/fetch-ledger-payment-summary",
+        "method": "GET",
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
+        "headersToPass": [
+          {
+            "source": "Authorization",
+            "destination": "access_token"
+          }
+        ],
+        "staticHeaders": {
+          "client_id": "${ERP_CLIENT_ID}",
+          "Authorization": "${X_API_KEY_FOR_ORDER_LISTING}"
+        },
+        "reqTransform": "paymentdue.transformers.transformOrdersPendingPaymentsRequest"
+      },
+      {
+        "name": "account-details",
+        "url": "${OMS_URL}/external-connector-inbound/api/external/v1/retail/fetch-sf-customer-details",
+        "method": "GET",
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
+        "headersToPass": [
+          {
+            "source": "Authorization",
+            "destination": "access_token"
+          }
+        ],
+        "staticHeaders": {
+          "client_id": "${ERP_CLIENT_ID}",
+          "Authorization": "${X_API_KEY_FOR_ORDER_LISTING}"
+        },
+        "reqTransform": "paymentdue.transformers.transformAccountDetailsRequest"
+      }
+    ],
+    "resTransform": "paymentdue.transformers.mergePaymentDueAndAccountDetails"
   }
 ]
