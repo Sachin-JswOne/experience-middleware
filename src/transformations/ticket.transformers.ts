@@ -19,22 +19,22 @@ export function validateAndTransformTicketRequest(
   //   );
   // }
 
-  if (invoiceNumber) {
-    // const hasOpportunitySkus =
-    //   Array.isArray(opportunitySKUIds) &&
-    //   opportunitySKUIds.length > 0;
+  // if (invoiceNumber) {
+  //   // const hasOpportunitySkus =
+  //   //   Array.isArray(opportunitySKUIds) &&
+  //   //   opportunitySKUIds.length > 0;
 
-    const hasShipmentSkus =
-      Array.isArray(shipmentSKUIds) &&
-      shipmentSKUIds.length > 0;
+  //   const hasShipmentSkus =
+  //     Array.isArray(shipmentSKUIds) &&
+  //     shipmentSKUIds.length > 0;
 
-    if (!hasShipmentSkus) {
-      throw new CustomError(
-        'When invoiceNumber is provided, shipmentSKUIds is required',
-        400,
-      );
-    }
-  }
+  //   if (!hasShipmentSkus) {
+  //     throw new CustomError(
+  //       'When invoiceNumber is provided, shipmentSKUIds is required',
+  //       400,
+  //     );
+  //   }
+  // }
 
   return request;
 }
