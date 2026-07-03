@@ -54,7 +54,7 @@ WHERE OwnerId = '${ownerId}' OR Sales_SPOC__c = '${ownerId}'`
 
   if (isAccountList === 'true') {
     soql =
-      `Select AccountNumber,GST__c, PAN__c, Id, Name, Nodal_Bank_Account__c,isJodl__c, Pay_to__c, JSW_NodalBankVAN__c, JSW_NonNodalBankVAN__c,Non_Nodal_Bank_Account__c, Segment__c, Sub_Segment__c, RecordType.Name, Customer_Type_Account__c, Business_Division__c
+      `Select AccountNumber,GST__c, PAN__c, Id, Name, Nodal_Bank_Account__c,isJodl__c, Pay_to__c, JSW_NodalBankVAN__c, JSW_NonNodalBankVAN__c,Non_Nodal_Bank_Account__c, Segment__c, Sub_Segment__c, RecordType.Name, Customer_Type_Account__c, Business_Division__c, Account_Status__c
 FROM Account
 WHERE OwnerId = '${ownerId}'`
         .replace(/\s+/g, ' ')
