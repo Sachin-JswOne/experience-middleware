@@ -62,14 +62,15 @@ WHERE OwnerId = '${ownerId}'`
   }
 
   if (isEventList === 'true') {
-    soql = `SELECT Id, Subject, ActivityDate, StartDateTime, EndDateTime, Location,
+    soql =
+      `SELECT Id, Subject, ActivityDate, StartDateTime, EndDateTime, Site__r.Google_Maps_Coordinates__c, Site__r.Name, Site__r.Project_Address__c, AccountId, Account.Name, WhoId, Description
        AccountId, Account.Name, WhoId, Description
 FROM Event
 WHERE OwnerId = '${ownerId}'
   AND StartDateTime >= TODAY
 ORDER BY StartDateTime ASC`
-      .replace(/\s+/g, ' ')
-      .trim();
+        .replace(/\s+/g, ' ')
+        .trim();
   }
 
   finalTransformedRequest.url.search = `?q=${soql}`;
