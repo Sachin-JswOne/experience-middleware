@@ -47,7 +47,7 @@ ORDER BY CheckIn_CMV__Check_in_Date_Time__c DESC`
        Delivery_address__r.Address_City_State_Pincode_Formula__c,
        Account.Billing_Address__r.Address_City_State_Pincode_Formula__c
 FROM Opportunity
-WHERE OwnerId = '${ownerId}'`
+WHERE OwnerId = '${ownerId}' OR Sales_SPOC__c = '${ownerId}'`
       .replace(/\s+/g, ' ')
       .trim();
   }
