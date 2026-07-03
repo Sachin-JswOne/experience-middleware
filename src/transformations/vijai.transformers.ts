@@ -47,14 +47,14 @@ ORDER BY CheckIn_CMV__Check_in_Date_Time__c DESC`
        Delivery_address__r.Address_City_State_Pincode_Formula__c,
        Account.Billing_Address__r.Address_City_State_Pincode_Formula__c
 FROM Opportunity
-WHERE OwnerId = '${ownerId}'`
+WHERE OwnerId = '${ownerId}' OR Sales_SPOC__c = '${ownerId}'`
       .replace(/\s+/g, ' ')
       .trim();
   }
 
   if (isAccountList === 'true') {
     soql =
-      `Select AccountNumber,GST__c, PAN__c, Id, Name, Nodal_Bank_Account__c,isJodl__c, Pay_to__c, JSW_NodalBankVAN__c, JSW_NonNodalBankVAN__c,Non_Nodal_Bank_Account__c, Segment__c, Sub_Segment__c, RecordType.Name, Customer_Type_Account__c, Business_Division__c
+      `Select AccountNumber,GST__c, PAN__c, Id, Name, Nodal_Bank_Account__c,isJodl__c, Pay_to__c, JSW_NodalBankVAN__c, JSW_NonNodalBankVAN__c,Non_Nodal_Bank_Account__c, Segment__c, Sub_Segment__c, RecordType.Name, Customer_Type_Account__c, Business_Division__c, Account_Status__c
 FROM Account
 WHERE OwnerId = '${ownerId}'`
         .replace(/\s+/g, ' ')
@@ -62,14 +62,14 @@ WHERE OwnerId = '${ownerId}'`
   }
 
   if (isEventList === 'true') {
-    soql = `SELECT Id, Subject, ActivityDate, StartDateTime, EndDateTime, Location,
-       AccountId, Account.Name, WhoId, Description
+    soql =
+      `SELECT Id, Subject, ActivityDate, StartDateTime, EndDateTime, Site__r.Google_Maps_Coordinates__c, Site__r.Name, Site__r.Project_Address__c, AccountId, Account.Name, WhoId, Description
 FROM Event
 WHERE OwnerId = '${ownerId}'
   AND StartDateTime >= TODAY
 ORDER BY StartDateTime ASC`
-      .replace(/\s+/g, ' ')
-      .trim();
+        .replace(/\s+/g, ' ')
+        .trim();
   }
 
   finalTransformedRequest.url.search = `?q=${soql}`;
