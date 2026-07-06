@@ -1226,6 +1226,23 @@
     "resTransform": "web.transformers.mergeWebIndustriesWithSegments"
   },
   {
+    "path": "/xp-mi/public/v1/web-about-us",
+    "method": "POST",
+    "routeHandler": "TRANSFORM",
+    "isCacheRequired": false,
+    "target": {
+      "name": "webAboutUs",
+      "url": "${CMS_MSME_URL}/web-about-us-page",
+      "method": "GET",
+      "timeout": {
+        "request": "${TIMEOUTS.REQUEST}",
+        "socket": "${TIMEOUTS.SOCKET}"
+      },
+      "reqTransform": "general.transformers.moveBodyToQueryParams",
+      "resTransform": "cms.transformers.replaceUriPrefix"
+    }
+  },
+  {
     "path": "/xp-mi/public/v1/web-header-links",
     "method": "POST",
     "routeHandler": "TRANSFORM",
@@ -2308,7 +2325,7 @@
       }
     ],
     "resTransform": "cart.transformers.mergeWebCartPageResponses"
-  },  
+  },
   {
     "path": "/xp-mi/public/v1/central-catalogue/header/main-menu",
     "method": "POST",
