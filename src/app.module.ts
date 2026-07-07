@@ -10,6 +10,7 @@ import { winstonConfig } from './logger/winston.config';
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { RequestContextMiddleware } from './utils/request-context.middleware';
 import { APP_ENV } from './config/app.config';
+import { CacheService } from './cache/cache.service';
 
 @Module({
   imports: [
@@ -29,7 +30,7 @@ import { APP_ENV } from './config/app.config';
     }),
   ],
   controllers: [ProxyController],
-  providers: [AppService, ProxyService],
+  providers: [AppService, ProxyService, CacheService],
   exports: [AppService],
 })
 export class AppModule implements NestModule {

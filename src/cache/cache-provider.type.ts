@@ -1,0 +1,1 @@
+export type CacheProvider = 'AUTO' | 'VALKEY' | 'LOCAL' | 'NONE';
