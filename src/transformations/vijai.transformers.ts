@@ -75,3 +75,13 @@ ORDER BY StartDateTime ASC`
   finalTransformedRequest.url.search = `?q=${soql}`;
   return finalTransformedRequest;
 }
+
+export function transformVijaiFetchCreditInfoRequest(request: any) {
+  const finalTransformedRequest: BaseRequest = {
+    ...request,
+    body: null,
+  };
+  const pan = request.url.searchParams.get('pan');
+  request.url.searchParams.set('pan', pan);
+  return finalTransformedRequest;
+}

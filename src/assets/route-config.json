@@ -5349,5 +5349,25 @@
       }
     ],
     "resTransform": "paymentdue.transformers.mergePaymentDueAndAccountDetails"
+  },
+  {
+    "path": "/xp-mi/public/v1/vijai/fetch-credit-info",
+    "method": "GET",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "vijai-fetch-credit-info",
+      "url": "${OMS_URL}/external-connector-inbound/api/internal/v1/customer/fetch-credit-info-by-pan",
+      "method": "GET",
+      "timeout": {
+        "request": "${TIMEOUTS.REQUEST}",
+        "socket": 5000
+      },
+      "staticHeaders": {
+        "client_id": "${OMS_CLIENT_ID_VIJAI}",
+        "Authorization": "${OMS_AUTH_FETCH_CREDIT_INFO_VIJAI}"
+      },
+      "requiredParams": ["pan"],
+      "reqTransform": "vijai.transformers.transformVijaiFetchCreditInfoRequest"
+    }
   }
 ]
