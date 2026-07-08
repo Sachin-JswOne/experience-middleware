@@ -16,12 +16,8 @@ export function getSearchPageDetails(aggregatedResponses: AggregatedResponse[]):
   const buyAgainResponse = responses['ccp-buy-again-with-prices']?.data;
   const recentSearchResponse = responses['ccp-recent-search']?.data;
   const trendingSearchResponse = responses['ccp-trending-search']?.data;
-  const featureFlags = responses['cmsFeatureFlag']?.data?.data ?? [];
   const webCentralCatalogueResponse = responses['web-central-catalogue-categories'];
   const topItemsResponse = responses['search-top-items']?.data;
-  const isCentralCatalogueEnabled = featureFlags.some(
-    (f) => f.name === 'central_catalogue_global' && f.isActive === true,
-  );
   const recentlyViewedAgg = responses['recently-viewed-product-details'];
   const recentViewedRemoveAgg = responses['recent-viewed-remove'];
   safeDebug(Logger, () => `Search Page CMS → ${JSON.stringify(cmsResponse?.data)}`);
@@ -105,7 +101,7 @@ export function getSearchPageDetails(aggregatedResponses: AggregatedResponse[]):
       blocks.push(...filteredBlocks);
     }
   }
-  if (isCentralCatalogueEnabled) {
+
     const ccpProducts = topItemsResponse?.data?.products;
     if (!Array.isArray(ccpProducts)) {
       Logger.warn(
@@ -198,7 +194,7 @@ export function getSearchPageDetails(aggregatedResponses: AggregatedResponse[]):
           webUrl: ccItem.seoUrl,
         }));
     }
-  }
+  
   //  NO BUY AGAIN → Return CMS blocks as-is with search-top-items
   return {
     data: {
