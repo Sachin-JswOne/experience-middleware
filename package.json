@@ -7,6 +7,8 @@
   "license": "UNLICENSED",
   "scripts": {
     "build": "nest build",
+    "build:frontend": "cd frontend && npm run build",
+    "build:all": "npm run build:frontend && npm run build",
     "start": "nest start",
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",

@@ -5135,5 +5135,40 @@
       }
     ],
     "resTransform": "customer.transformers.mergeWhatsappCustomerDetails"
+  },
+  {
+    "path": "/xp-mi/public/v1/auth/retrieve-access-token",
+    "method": "GET",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "auth-retrieve-token",
+      "url": "${AUTH2_SERVICE_BASE_URL}/auth/outlook/retrieve-access-token",
+      "method": "GET",
+      "timeout": {
+        "request": 5000,
+        "socket": 1000
+      },
+      "requiredParams": ["auth-id"]
+    }
+  },
+  {
+    "path": "/xp-mi/public/v1/auth/user/me",
+    "method": "GET",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "uam-user-info",
+      "url": "${CATALOGUE_ADMIN_API_BASE_URL}/api/v2/user/me",
+      "method": "GET",
+      "timeout": {
+        "request": 5000,
+        "socket": 1000
+      },
+      "headersToPass": [
+        {
+          "source": "Authorization",
+          "destination": "Authorization"
+        }
+      ]
+    }
   }
 ]

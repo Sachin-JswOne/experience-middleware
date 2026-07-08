@@ -8,10 +8,6 @@
       {
         "include": "assets/**/*.json",
         "outDir": "dist"
-      },
-      {
-        "include": "public/**",
-        "outDir": "dist"
       }
     ]
   }
