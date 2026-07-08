@@ -20,19 +20,9 @@ const Login = () => {
     <Button
       variant="outlined"
       fullWidth
-      size="large"
       startIcon={<OutlookIcon />}
       onClick={handleOutlookLogin}
-      sx={{
-        textTransform: 'none',
-        py: 1.5,
-        borderColor: 'grey.400',
-        color: 'text.primary',
-        '&:hover': {
-          borderColor: 'primary.main',
-          bgcolor: 'action.hover',
-        },
-      }}
+      sx={{ py: 1 }}
     >
       Sign in with Outlook
     </Button>

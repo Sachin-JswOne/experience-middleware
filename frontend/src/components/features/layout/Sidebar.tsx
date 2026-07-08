@@ -1,11 +1,13 @@
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
   Box,
+  Drawer,
   List,
   ListItem,
   ListItemButton,
   ListItemIcon,
-  Tooltip,
+  ListItemText,
+  Typography,
 } from '@mui/material';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import SettingsIcon from '@mui/icons-material/Settings';
@@ -15,6 +17,7 @@ import CategoryIcon from '@mui/icons-material/Category';
 import type { ElementType } from 'react';
 import type { INavigationMenu } from '@/configs/AppConfig';
 import AppConfig from '@/configs/AppConfig';
+import { tokens } from '@/styles/theme';
 
 const iconMap: Record<string, ElementType> = {
   Dashboard: DashboardIcon,
@@ -24,64 +27,142 @@ const iconMap: Record<string, ElementType> = {
   Category: CategoryIcon,
 };
 
-const Sidebar = () => {
+export const SIDEBAR_WIDTH = 240;
+
+interface SidebarProps {
+  mobileOpen: boolean;
+  onClose: () => void;
+  isDesktop: boolean;
+}
+
+const Sidebar = ({ mobileOpen, onClose, isDesktop }: SidebarProps) => {
   const location = useLocation();
   const navigate = useNavigate();
 
   const menuItems: INavigationMenu[] = AppConfig.NAVIGATION_MENUS ?? [];
 
-  return (
+  const handleNavigate = (route: string) => {
+    navigate(route);
+    if (!isDesktop) {
+      onClose();
+    }
+  };
+
+  const content = (
     <Box
       sx={{
-        width: 80,
-        height: '100vh',
-        position: 'fixed',
-        left: 0,
-        top: 0,
-        bgcolor: 'grey.900',
-        color: 'common.white',
-        zIndex: (theme) => theme.zIndex.drawer,
+        width: SIDEBAR_WIDTH,
+        height: '100%',
         display: 'flex',
         flexDirection: 'column',
-        pt: 1,
+        bgcolor: tokens.surface,
       }}
     >
-      <List sx={{ py: 0 }}>
+      {/* Company lockup */}
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 1.5,
+          px: 2,
+          height: 56,
+          flexShrink: 0,
+        }}
+      >
+        <Box
+          aria-hidden
+          sx={{
+            width: 32,
+            height: 32,
+            borderRadius: `${tokens.radiusMedium}px`,
+            bgcolor: tokens.brand,
+            color: tokens.textInverse,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontWeight: tokens.weightBold,
+            fontSize: '0.875rem',
+          }}
+        >
+          J1
+        </Box>
+        <Box>
+          <Typography
+            sx={{
+              fontSize: '0.875rem',
+              fontWeight: tokens.weightBold,
+              lineHeight: '1.25rem',
+            }}
+          >
+            JSW One
+          </Typography>
+          <Typography
+            sx={{
+              fontSize: '0.75rem',
+              lineHeight: '1rem',
+              color: tokens.textSubtlest,
+            }}
+          >
+            Catalogue console
+          </Typography>
+        </Box>
+      </Box>
+
+      <List component="nav" sx={{ px: 1, py: 1 }}>
         {menuItems.map((item) => {
           const IconComponent = iconMap[item.icon] ?? DashboardIcon;
           const isActive = location.pathname === item.route;
 
           return (
-            <ListItem key={item.id} disablePadding sx={{ display: 'block' }}>
-              <Tooltip title={item.label} placement="right">
-                <ListItemButton
-                  onClick={() => navigate(item.route)}
+            <ListItem key={item.id} disablePadding sx={{ mb: 0.5 }}>
+              <ListItemButton
+                selected={isActive}
+                onClick={() => handleNavigate(item.route)}
+                sx={{ py: 0.75, px: 1.5 }}
+              >
+                <ListItemIcon
                   sx={{
-                    minHeight: 48,
-                    justifyContent: 'center',
-                    px: 2.5,
-                    bgcolor: isActive ? 'primary.dark' : 'transparent',
-                    '&:hover': {
-                      bgcolor: isActive ? 'primary.dark' : 'action.hover',
-                    },
+                    minWidth: 32,
+                    color: isActive ? tokens.brand : tokens.textSubtle,
                   }}
                 >
-                  <ListItemIcon
-                    sx={{
-                      minWidth: 0,
-                      justifyContent: 'center',
-                      color: isActive ? 'primary.light' : 'grey.400',
-                    }}
-                  >
-                    <IconComponent />
-                  </ListItemIcon>
-                </ListItemButton>
-              </Tooltip>
+                  <IconComponent sx={{ fontSize: 20 }} />
+                </ListItemIcon>
+                <ListItemText
+                  primary={item.label}
+                  primaryTypographyProps={{
+                    fontSize: '0.875rem',
+                    fontWeight: 500,
+                    color: isActive ? tokens.brand : tokens.textSubtle,
+                  }}
+                />
+              </ListItemButton>
             </ListItem>
           );
         })}
       </List>
     </Box>
+  );
+
+  return (
+    <Drawer
+      variant={isDesktop ? 'permanent' : 'temporary'}
+      open={isDesktop || mobileOpen}
+      onClose={onClose}
+      ModalProps={{ keepMounted: true }}
+      sx={{
+        width: isDesktop ? SIDEBAR_WIDTH : 0,
+        flexShrink: 0,
+        '& .MuiDrawer-paper': {
+          width: SIDEBAR_WIDTH,
+          borderInlineEnd: `1px solid ${tokens.border}`,
+          borderRadius: 0,
+          boxShadow: isDesktop ? 'none' : tokens.shadowOverlay,
+        },
+      }}
+    >
+      {content}
+    </Drawer>
   );
 };
 

@@ -5,15 +5,13 @@ const LoginLoading = () => (
     open
     sx={{
       zIndex: (theme) => theme.zIndex.drawer + 1,
-      color: '#fff',
-      display: 'flex',
-      flexDirection: 'column',
+      color: '#FFFFFF',
     }}
   >
     <Box sx={{ textAlign: 'center' }}>
-      <CircularProgress color="inherit" size={48} />
-      <Typography variant="h6" sx={{ mt: 3 }}>
-        Logging you in, stay tuned...
+      <CircularProgress color="inherit" size={48} thickness={2} />
+      <Typography variant="h5" component="p" sx={{ mt: 3 }}>
+        Signing you in…
       </Typography>
     </Box>
   </Backdrop>
