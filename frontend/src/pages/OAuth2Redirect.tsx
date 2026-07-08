@@ -27,52 +27,48 @@ const OAuth2Redirect = () => {
       }
 
       try {
-        // Step 1: Exchange auth-id for access token
+        // Step 1: Exchange auth-id for access token (fatal if fails)
         const tokenResponse = await UserService.getAuth2AccessToken(authId);
-
-        const accessToken: string | undefined =
-          tokenResponse?.data?.token;
-
-
+        const accessToken: string | undefined = tokenResponse?.data?.token;
 
         if (!accessToken) {
           navigate('/login', { replace: true });
           return;
         }
 
-        // Step 2: Fetch user info with UAM authorities
-        // UserService.getUAMUserInfo returns { data: { ...userFields, token } }
-        const userResponse = await UserService.getUAMUserInfo(accessToken);
-        const uamUserInfo: ILooseObject | undefined = userResponse?.data;
-        console.log("uamUserInfo : ", uamUserInfo)
-
-        if (!uamUserInfo || !uamUserInfo.name) {
-          navigate('/login', { replace: true });
-          return;
-        }
-
-        // Step 3: Process UAM authorities to extract permissions
-        // Iterate organizations → applications → filter by UAMApplications → collect permission names
-        const permissions = processUamAuthorities(
-          uamUserInfo,
-          AppConfig.UAMApplications
-        );
-
-        // Step 4: Build and persist user info
+        // Step 2: Build base userInfo with just the token
         const userInfo: ILooseObject = {
           token: accessToken,
-          username: uamUserInfo.username,
-          email: uamUserInfo.email,
-          name: uamUserInfo.name,
           compatibleVersion: AppConfig.COMPATIBLE_VERSION,
-          permissions,
-          organizations:
-            uamUserInfo.uamAuthorities?.organizations ?? [],
+          permissions: [],
+          name: '',
+          email: '',
+          username: '',
+          organizations: [],
         };
 
-        LocalStorage.setItem('userInfo', userInfo);
+        // Step 3: Fetch UAM user info (non-fatal — best-effort)
+        try {
+          const userResponse = await UserService.getUAMUserInfo(accessToken);
+          const uamUserInfo: ILooseObject | undefined = userResponse?.data;
+          console.log("uamUserInfo : ", uamUserInfo)
+          if (uamUserInfo?.name) {
+            const permissions = processUamAuthorities(
+              uamUserInfo,
+              AppConfig.UAMApplications
+            );
+            userInfo.username = uamUserInfo.name ?? '';
+            userInfo.email = uamUserInfo.email_id ?? '';
+            userInfo.name = uamUserInfo.name;
+            userInfo.permissions = uamUserInfo.roles;
+            userInfo.organizations = uamUserInfo.uamAuthorities?.organizations ?? [];
+          }
+        } catch (uamError) {
+          console.warn('UAM fetch failed, proceeding with token only:', uamError);
+        }
 
-        // Step 5: Redirect to intended destination
+        // Step 4: Persist and redirect
+        LocalStorage.setItem('userInfo', userInfo);
         navigate(redirectTo, { replace: true });
       } catch (error) {
         console.error('OAuth2 authentication failed:', error);

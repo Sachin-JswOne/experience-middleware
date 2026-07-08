@@ -44,10 +44,10 @@ const LoginPage = () => {
         >
           <Box>
             <Typography variant="h5" fontWeight="bold" color="primary">
-              MSME
+              JSW One
             </Typography>
             <Typography variant="caption" color="text.secondary">
-              JSW ONE Central Catalogue Management
+              Experience Middleware
             </Typography>
           </Box>
           <Typography variant="body1" color="text.secondary">
