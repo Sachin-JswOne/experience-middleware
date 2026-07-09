@@ -205,9 +205,79 @@ export class ProxyService {
         return await this.handleParallelAggregation(route, req);
       case AggregatorType.SEQUENTIAL:
         return await this.handleSequentialAggregation(route, req);
+      case AggregatorType.SEQUENTIAL_THEN_PARALLEL:
+        return await this.handleSequentialThenParallelAggregation(route, req);
       default:
         throw new Error('Unsupported aggregation type');
     }
+  }
+
+  private async handleSequentialThenParallelAggregation(route: AggregateRouteConfig, req: Request) {
+    return await this.tracer.startActiveSpan(
+      `aggregate.sequential-then-parallel ${route.path}`,
+      async (span) => {
+        span.setAttribute('proxy.route', route.path);
+        span.setAttribute('proxy.aggregation_type', 'SEQUENTIAL_THEN_PARALLEL');
+        span.setAttribute('http.method', req.method);
+        span.setAttribute('cache.hit', false);
+        const results: AggregatedResponse[] = [];
+        this.logger.log(`Processing SEQUENTIAL_THEN_PARALLEL request for ${req.url}`);
+
+        // First target executes alone
+        const firstTarget = route.targets[0];
+
+        const firstResponse = await this.handleTransformRequest(firstTarget, req, []);
+
+        results.push({
+          target: firstTarget.name || firstTarget.url,
+          success: true,
+          data: firstResponse,
+        });
+
+        // All remaining targets get CMS response
+        const previousResponses = [...results];
+
+        const parallelResults = await Promise.allSettled(
+          route.targets.slice(1).map(async (target) => {
+            try {
+              const responseData = await this.handleTransformRequest(
+                target,
+                req,
+                previousResponses,
+              );
+
+              return {
+                target: target.name || target.url,
+                success: true,
+                data: responseData,
+              };
+            } catch (err: any) {
+              return {
+                target: target.name || target.url,
+                success: false,
+                error: err?.message || String(err),
+                httpStatus: err?.httpStatusCode || err?.status || 500,
+                downstreamResponse: err?.response?.data || null,
+              };
+            }
+          }),
+        );
+
+        const normalizedResults: AggregatedResponse[] = parallelResults.map((r, index) =>
+          r.status === 'fulfilled'
+            ? r.value
+            : {
+                target: route.targets[index + 1].name || route.targets[index + 1].url,
+                success: false,
+                error: 'Unexpected failure',
+                httpStatus: 500,
+              },
+        );
+        results.push(...normalizedResults);
+
+        return route.resTransform ? await applyTransform(route.resTransform, results) : results;
+      },
+    );
   }
 
   private async handleParallelAggregation(route: AggregateRouteConfig, req: Request) {
