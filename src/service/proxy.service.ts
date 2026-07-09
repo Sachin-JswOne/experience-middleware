@@ -87,11 +87,16 @@ export class ProxyService {
 
     const isCacheRequired = (route as any).isCacheRequired === true;
 
-    const cacheProvider =
-      (((route as any).cacheProvider || process.env.CACHE_PROVIDER || 'AUTO') as CacheProvider);
+    const cacheProvider = (
+      (route as any).cacheProvider ||
+      process.env.CACHE_PROVIDER ||
+      'AUTO'
+    ) as CacheProvider;
 
     const ttlSeconds = Number(
-      (route as any).cacheTTLSeconds || process.env.CACHE_TTL_SECONDS || 300,
+      (route as any).cacheTTLSeconds ||
+      process.env.CACHE_TTL_SECONDS ||
+      300,
     );
 
     let cacheKey: string | null = null;
@@ -109,9 +114,8 @@ export class ProxyService {
           this.logger.warn(`Corrupt cache value evicted key=${cacheKey}`);
         }
       }
-
-      this.logger.log(`Cache MISS key=${cacheKey} provider=${cacheProvider}`);
-    }
+        this.logger.log(`Cache MISS key=${cacheKey} provider=${cacheProvider}`);
+      }
 
     let data: any;
 

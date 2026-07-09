@@ -23,6 +23,7 @@
     "cleanup": "npm run lint:fix && npm run format"
   },
   "dependencies": {
+    "@google-cloud/secret-manager": "^6.2.0",
     "@nestjs/axios": "^4.0.0",
     "@nestjs/cache-manager": "^3.0.1",
     "@nestjs/common": "^11.0.1",
