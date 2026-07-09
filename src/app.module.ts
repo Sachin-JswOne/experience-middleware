@@ -11,6 +11,7 @@ import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { RequestContextMiddleware } from './utils/request-context.middleware';
 import { APP_ENV } from './config/app.config';
 import { CacheService } from './cache/cache.service';
+import { CacheModule } from './cache/cache.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { CacheService } from './cache/cache.service';
     //   path: '/metrics',
     // }),
     WinstonModule.forRoot(winstonConfig),
+    CacheModule,
     ServeStaticModule.forRoot({
       rootPath: APP_ENV === 'prod' ? undefined : join(__dirname, '..', 'public'),
       exclude: ['/metrics'],
@@ -30,7 +32,7 @@ import { CacheService } from './cache/cache.service';
     }),
   ],
   controllers: [ProxyController],
-  providers: [AppService, ProxyService, CacheService],
+  providers: [AppService, ProxyService],
   exports: [AppService],
 })
 export class AppModule implements NestModule {
