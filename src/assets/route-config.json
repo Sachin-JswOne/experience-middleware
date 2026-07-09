@@ -1216,9 +1216,11 @@
   },
   {
     "path": "/xp-mi/public/v1/web-about-us",
+    "isCacheRequired": true,
+    "cacheProvider": "AUTO",
+    "cacheTTLSeconds": 300,
     "method": "POST",
     "routeHandler": "TRANSFORM",
-    "isCacheRequired": false,
     "target": {
       "name": "webAboutUs",
       "url": "${CMS_MSME_URL}/web-about-us-page",
@@ -1621,6 +1623,9 @@
   {
     "path": "/xp-mi/public/v1/web-search-page",
     "method": "POST",
+    "isCacheRequired": true,
+    "cacheProvider": "AUTO",
+    "cacheTTLSeconds": 300,
     "routeHandler": "AGGREGATE",
     "aggregationType": "SEQUENTIAL_THEN_PARALLEL",
     "targets": [
@@ -2019,6 +2024,9 @@
   {
     "path": "/xp-mi/public/v1/central_commerce/trending-search",
     "method": "GET",
+    "isCacheRequired": true,
+    "cacheProvider": "AUTO",
+    "cacheTTLSeconds": 300,
     "routeHandler": "TRANSFORM",
     "target": {
       "name": "get-trending-search",

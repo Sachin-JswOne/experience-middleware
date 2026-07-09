@@ -10,6 +10,8 @@ import { winstonConfig } from './logger/winston.config';
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { RequestContextMiddleware } from './utils/request-context.middleware';
 import { APP_ENV } from './config/app.config';
+import { CacheService } from './cache/cache.service';
+import { CacheModule } from './cache/cache.module';
 
 @Module({
   imports: [
@@ -20,6 +22,7 @@ import { APP_ENV } from './config/app.config';
     //   path: '/metrics',
     // }),
     WinstonModule.forRoot(winstonConfig),
+    CacheModule,
     ServeStaticModule.forRoot({
       rootPath: APP_ENV === 'prod' ? undefined : join(__dirname, '..', 'public'),
       exclude: ['/metrics'],
