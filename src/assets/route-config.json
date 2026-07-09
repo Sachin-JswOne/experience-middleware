@@ -1623,6 +1623,9 @@
   {
     "path": "/xp-mi/public/v1/web-search-page",
     "method": "POST",
+    "isCacheRequired": true,
+    "cacheProvider": "AUTO",
+    "cacheTTLSeconds": 300,
     "routeHandler": "AGGREGATE",
     "aggregationType": "SEQUENTIAL_THEN_PARALLEL",
     "targets": [
