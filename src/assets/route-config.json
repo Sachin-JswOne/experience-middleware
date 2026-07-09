@@ -1268,6 +1268,40 @@
     }
   },
   {
+    "path": "${PATH_URL}/v1/web-legal-page",
+    "method": "POST",
+    "routeHandler": "TRANSFORM",
+    "isCacheRequired": false,
+    "target": {
+      "name": "webLegalPage",
+      "url": "${CMS_MSME_URL}/jsw-legal-pages",
+      "method": "GET",
+      "timeout": {
+        "request": "${TIMEOUTS.REQUEST}",
+        "socket": "${TIMEOUTS.SOCKET}"
+      },
+      "reqTransform": "general.transformers.moveBodyToQueryParams",
+      "resTransform": "legal.transformers.transformLegalPage"
+    }
+  },
+  {
+    "path": "${PATH_URL}/v1/web-help-support-faqs",
+    "method": "POST",
+    "routeHandler": "TRANSFORM",
+    "isCacheRequired": false,
+    "target": {
+      "name": "webHelpSupportFaqs",
+      "url": "${CMS_MSME_URL}/faqss",
+      "method": "GET",
+      "timeout": {
+        "request": "${TIMEOUTS.REQUEST}",
+        "socket": "${TIMEOUTS.SOCKET}"
+      },
+      "reqTransform": "general.transformers.moveBodyToQueryParams",
+      "resTransform": "legal.transformers.transformFaqsList"
+    }
+  },
+  {
     "path": "/xp-mi/public/v1/central_commerce/catalogue/search",
     "method": "POST",
     "routeHandler": "TRANSFORM",
