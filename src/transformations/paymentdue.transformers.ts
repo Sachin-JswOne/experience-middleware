@@ -116,15 +116,17 @@ export function mergePaymentDueAndAccountDetails(aggregatedResponses: Aggregated
   const data = paymentDueResult?.data;
   if (data) {
     return {
-      totalAmountDue: 0.0,
-      netPaymentDue: roundUp(data.netPaymentDue, 2) || 0,
-      accountDetails: getCustomerDetails(accountDetailsResult),
-      totalPaymentDue: roundUp(data.totalPaymentDue, 2) || 0,
-      overDueAmount: roundUp(data.paymentOverDueDetails.overDueAmount, 2) || 0,
-      dueStatus: data.paymentOverDueDetails.dueStatusDays,
-      dueToday: roundUp(data.dueToday, 2) || 0,
-      dueLaterAmount: roundUp(data.dueLaterAmount, 2) || 0,
-      listOfOrderDues: [],
+      paymentDueDetails: {
+        totalAmountDue: 0.0,
+        netPaymentDue: roundUp(data?.netPaymentDue, 2) || 0,
+        accountDetails: getCustomerDetails(accountDetailsResult),
+        totalPaymentDue: roundUp(data?.totalPaymentDue, 2) || 0,
+        overDueAmount: roundUp(data?.paymentOverDueDetails.overDueAmount, 2) || 0,
+        dueStatus: data?.paymentOverDueDetails.dueStatusDays,
+        dueToday: roundUp(data?.dueToday, 2) || 0,
+        dueLaterAmount: roundUp(data.dueLaterAmount, 2) || 0,
+        listOfOrderDues: [],
+      },
     };
   } else throw new CustomError('No details found', 404);
 }
