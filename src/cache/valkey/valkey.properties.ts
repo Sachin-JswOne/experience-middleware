@@ -20,7 +20,15 @@ export class ValkeyProperties {
   readonly failStartup = process.env.VALKEY_FAIL_STARTUP === 'true';
 
   readonly caCertPath = process.env.VALKEY_CA_CERT_PATH || '';
-  readonly caCertSecret = process.env.VALKEY_CA_CERT_SECRET || '';
+  readonly caCertSecret =
+    process.env.VALKEY_CA_CERT_SECRET ||
+    (this.profile === 'qa'
+      ? 'VALKEY_CA_CERTIFICATE_QA'
+      : this.profile === 'preprod'
+        ? 'VALKEY_CA_CERTIFICATE_PREPROD'
+        : this.profile === 'prod'
+          ? 'VALKEY_CA_CERTIFICATE_PROD'
+          : '');
   readonly gcpProjectId = process.env.GCP_PROJECT_ID || '';
   readonly gcpCredentialsEncodedKey = process.env.GCP_CREDENTIALS_ENCODED_KEY || '';
 }

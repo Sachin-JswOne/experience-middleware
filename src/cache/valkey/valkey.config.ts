@@ -14,25 +14,66 @@ export class ValkeyConfig implements OnModuleInit, OnModuleDestroy {
     private readonly trustStore: ValkeyTrustStore,
   ) {}
 
-  async onModuleInit() {
-    if (!this.props.cacheEnabled) return;
-    if (this.props.cacheProvider !== 'AUTO' && this.props.cacheProvider !== 'VALKEY') return;
+  async onModuleInit(): Promise<void> {
+    if (!this.props.cacheEnabled) {
+        this.logger.log('Caching disabled');
+        return;
+    }
 
-    this.client = this.props.clusterEnabled
-      ? await this.createClusterClient()
-      : await this.createStandaloneClient();
+    if (
+        this.props.cacheProvider !== 'AUTO' &&
+        this.props.cacheProvider !== 'VALKEY'
+    ) {
+        this.logger.log(
+        `Valkey initialization skipped because CACHE_PROVIDER=${this.props.cacheProvider}`,
+        );
+        return;
+    }
 
-    this.client.on('ready', () => {
-      this.available = true;
-      this.logger.log('Valkey ready');
-    });
+    try {
+        this.client = this.props.clusterEnabled
+        ? await this.createClusterClient()
+        : await this.createStandaloneClient();
 
-    this.client.on('error', (err) => {
-      this.available = false;
-      this.logger.warn(`Valkey error: ${err.message}`);
-    });
+        this.client.on('ready', () => {
+        this.available = true;
+        this.logger.log('Valkey ready');
+        });
 
-    await this.runConnectivityCheck();
+        this.client.on('error', (error: Error) => {
+        this.available = false;
+        this.logger.warn(`Valkey error: ${error.message}`);
+        });
+
+        this.client.on('close', () => {
+        this.available = false;
+        this.logger.warn('Valkey connection closed');
+        });
+
+        this.client.on('reconnecting', () => {
+        this.available = false;
+        this.logger.warn('Valkey reconnecting');
+        });
+
+        await this.runConnectivityCheck();
+    } catch (error: unknown) {
+        this.available = false;
+        this.client = undefined;
+
+        const message =
+        error instanceof Error ? error.message : String(error);
+
+        if (this.props.failStartup) {
+        this.logger.error(
+            `Valkey initialization failed and VALKEY_FAIL_STARTUP=true: ${message}`,
+        );
+        throw error;
+        }
+
+        this.logger.warn(
+        `Valkey initialization failed. Continuing with in-memory fallback: ${message}`,
+        );
+    }
   }
 
   getClient(): Redis | Cluster | undefined {
