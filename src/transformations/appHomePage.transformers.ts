@@ -523,7 +523,9 @@ export function mergeAppHomePageResponseV4(aggregatedResponses: AggregatedRespon
       inTransit = true;
     }
   }
-  page.link_banner_component.inTransit = inTransit;
+  if (page?.link_banner_component?.inTransit) {
+    page.link_banner_component.inTransit = inTransit;
+  }
 
   //product listing
   if (webProductsResponse?.success) {
