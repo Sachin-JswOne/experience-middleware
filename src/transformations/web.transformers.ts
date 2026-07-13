@@ -395,16 +395,6 @@ export function prepareWebHomePageV3ParallelPayload(
 ): BaseRequest {
   const cmsAgg = prevResponses.find((r) => r.target === 'layout-mweb-homepages');
 
-  const isCentralCatalogueEnabled =
-    request.headers?.['central_catalogue_global'] === 'true' ||
-    request.headers?.['central-catalogue-global'] === 'true' ||
-    request.body?.central_catalogue_global === true ||
-    String(request.body?.central_catalogue_global).toLowerCase() === 'true';
-
-  if (cmsAgg?.data?.data?.[0]) {
-    cmsAgg.data.data[0].central_catalogue_global = isCentralCatalogueEnabled;
-  }
-
   const compactCms = buildCompactWebHomePageV3Payload(cmsAgg?.data);
 
   return {
@@ -447,19 +437,7 @@ export function mergeWebHomePageResponsesV3FromNestedParallel(
     throw new CustomError('web-home-page-v3 parallel helper returned non-array data', 500);
   }
 
-  const helperResponses = helperAgg.data;
-
-  const flagResponse: AggregatedResponse = {
-    target: 'central_catalogue_global',
-    success: true,
-    data: helperResponses?.[WEB_HOME_PAGE_V3_CENTRAL_CATALOGUE_GLOBAL_KEY] ?? false,
-  } as AggregatedResponse;
-
-  return mergeWebHomePageResponsesV3([
-    ...(cmsAgg ? [cmsAgg] : []),
-    flagResponse,
-    ...helperResponses,
-  ]);
+  return mergeWebHomePageResponsesV3([...(cmsAgg ? [cmsAgg] : []), ...helperAgg.data]);
 }
 
 export function addFeatureFlagQueryParamsFromParallelPayload(request: BaseRequest): BaseRequest {
