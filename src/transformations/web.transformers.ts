@@ -24,6 +24,7 @@ import { Request } from 'express';
 
 const WEB_HOME_PAGE_V3_ORIGINAL_BODY_KEY = '__webHomePageV3OriginalBody';
 const WEB_HOME_PAGE_V3_CMS_KEY = '__webHomePageV3CmsResponse';
+const WEB_HOME_PAGE_V3_CENTRAL_CATALOGUE_GLOBAL_KEY = '__webHomePageV3CentralCatalogueGlobal';
 
 export function homeBlogsFromParallelPayload(request: BaseRequest): BaseRequest {
   return cmsTransformers.homeBlogs({
@@ -384,7 +385,7 @@ function buildCompactWebHomePageV3Payload(cmsResponse: any) {
     top_brand_component: page?.top_brand_component ?? null,
     blog_list_component_material_matter: page?.blog_list_component_material_matter ?? null,
     buy_again_component: page?.buy_again_component ?? null,
-    recently_viewed_component: page?.recently_viewed_component ?? null
+    recently_viewed_component: page?.recently_viewed_component ?? null,
   };
 }
 
@@ -393,6 +394,7 @@ export function prepareWebHomePageV3ParallelPayload(
   prevResponses: AggregatedResponse[],
 ): BaseRequest {
   const cmsAgg = prevResponses.find((r) => r.target === 'layout-mweb-homepages');
+
   const compactCms = buildCompactWebHomePageV3Payload(cmsAgg?.data);
 
   return {
@@ -409,9 +411,7 @@ export function mergeWebHomePageResponsesV3FromNestedParallel(
 ): any {
   const cmsAgg = aggregatedResponses.find((r) => r.target === 'layout-mweb-homepages');
 
-const helperAgg = aggregatedResponses.find(
-  (r) => r.target?.includes('parallel-helper')
-);
+  const helperAgg = aggregatedResponses.find((r) => r.target?.includes('parallel-helper'));
 
   if (!helperAgg) {
     throw new CustomError('web-home-page-v3 parallel helper response missing', 500);
@@ -662,7 +662,6 @@ export function mergeWebHomePageResponsesV3(aggregatedResponses: AggregatedRespo
     } else if (isCentralCatalogueEnabled) {
       page.mweb_top_item.isTopItem = true;
       const topItemsCcpResponse = responses['ccp-top-items-product-details'];
-
       const ccpProducts = topItemsCcpResponse?.success
         ? (topItemsCcpResponse.data?.data?.products ?? topItemsCcpResponse.data?.products ?? [])
         : null;
@@ -949,7 +948,7 @@ export function transformRecentlyViewedMMIDsRequest(request: BaseRequest): BaseR
 
   if (mmids.length === 0) {
     // Throwing an error here prevents the downstream API call.
-    // The parallel aggregator will capture this as a soft failure 
+    // The parallel aggregator will capture this as a soft failure
     // ({ success: false, error: ... }) and the merge function will handle it gracefully.
     throw new CustomError('No MMIDs provided, skipping recently-viewed API call', 400);
   }
@@ -970,9 +969,7 @@ export function selectWebHomePageV3TargetByUserType(req: Request): string {
   } else throw new CustomError(`Invalid or missing user-type header: ${userType}`, 400);
 }
 
-export function mergeWebIndustriesWithSegments(
-  aggregatedResponses: AggregatedResponse[],
-): any {
+export function mergeWebIndustriesWithSegments(aggregatedResponses: AggregatedResponse[]): any {
   const responses = aggregatedResponses.reduce(
     (acc, response) => {
       acc[response.target] = response;
@@ -992,9 +989,7 @@ export function mergeWebIndustriesWithSegments(
   }
 
   const industries = industriesResponse.data?.data ?? [];
-  const segments = segmentsResponse?.success
-    ? segmentsResponse.data?.data ?? []
-    : [];
+  const segments = segmentsResponse?.success ? (segmentsResponse.data?.data ?? []) : [];
 
   const normalize = (value: unknown): string =>
     String(value ?? '')

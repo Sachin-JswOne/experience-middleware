@@ -1,4 +1,5 @@
-﻿﻿/* eslint-disable @typescript-eslint/no-unsafe-argument */
+﻿﻿/* eslint-disable no-useless-catch */
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
 import { Injectable, Logger } from '@nestjs/common';
 import { trace, context, SpanStatusCode } from '@opentelemetry/api';
 import { createHttpClient } from '../utils/http-client.factory';
