@@ -1241,7 +1241,7 @@
       "reqTransform": "general.transformers.moveBodyToQueryParams",
       "resTransform": "cms.transformers.replaceUriPrefix"
     }
-  },
+  },  
   {
     "path": "/xp-mi/public/v1/web-header-links",
     "method": "POST",
@@ -5229,7 +5229,11 @@
           "socket": "${TIMEOUTS.SOCKET}"
         },
         "reqTransform": "customer.transformers.injectGstinFromTmsProfile",
-        "stopOnError": true
+        "stopOnError": true,
+        "staticHeaders": {
+          "Authorization": "${X_API_KEY_FOR_ORDER_LISTING}",
+          "client_id": "${ERP_CLIENT_ID}"
+        }
       }
     ],
     "resTransform": "customer.transformers.mergeWhatsappCustomerDetails"

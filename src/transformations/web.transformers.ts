@@ -991,9 +991,7 @@ export function selectWebHomePageV3TargetByUserType(req: Request): string {
   } else throw new CustomError(`Invalid or missing user-type header: ${userType}`, 400);
 }
 
-export function mergeWebIndustriesWithSegments(
-  aggregatedResponses: AggregatedResponse[],
-): any {
+export function mergeWebIndustriesWithSegments(aggregatedResponses: AggregatedResponse[]): any {
   const responses = aggregatedResponses.reduce(
     (acc, response) => {
       acc[response.target] = response;
@@ -1013,9 +1011,7 @@ export function mergeWebIndustriesWithSegments(
   }
 
   const industries = industriesResponse.data?.data ?? [];
-  const segments = segmentsResponse?.success
-    ? segmentsResponse.data?.data ?? []
-    : [];
+  const segments = segmentsResponse?.success ? (segmentsResponse.data?.data ?? []) : [];
 
   const normalize = (value: unknown): string =>
     String(value ?? '')
