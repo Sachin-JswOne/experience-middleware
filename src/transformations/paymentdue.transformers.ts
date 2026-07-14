@@ -1,9 +1,6 @@
 import { Logger } from '@nestjs/common';
 import { safeDebug } from 'src/utils/common-functions.util';
 import { AxiosResponse } from 'axios';
-import * as jwt from 'jsonwebtoken';
-import { CustomError } from 'src/utils/CustomError';
-import { AggregatedResponse } from 'src/models/aggregated-response.model';
 
 interface AmountDetails {
   centAmount: number;

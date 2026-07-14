@@ -1621,6 +1621,9 @@
   {
     "path": "/xp-mi/public/v1/web-search-page",
     "method": "POST",
+    "isCacheRequired": true,
+    "cacheProvider": "AUTO",
+    "cacheTTLSeconds": 300,
     "routeHandler": "AGGREGATE",
     "aggregationType": "SEQUENTIAL_THEN_PARALLEL",
     "targets": [
@@ -2019,6 +2022,9 @@
   {
     "path": "/xp-mi/public/v1/central_commerce/trending-search",
     "method": "GET",
+    "isCacheRequired": true,
+    "cacheProvider": "AUTO",
+    "cacheTTLSeconds": 300,
     "routeHandler": "TRANSFORM",
     "target": {
       "name": "get-trending-search",
@@ -5300,6 +5306,289 @@
       }
     ],
     "resTransform": "customer.transformers.mergeWhatsappCustomerDetails"
+  },
+  {
+    "path": "/xp-mi/public/v1/register-user-validation",
+    "routeHandler": "TRANSFORM",
+    "method": "POST",
+    "isCacheRequired": false,
+    "target": {
+      "name": "register-user-validation",
+      "url": "${MSME_BASE_URL}/customer/validate/registration-details",
+      "method": "POST",
+      "timeout": {
+        "request": 20000,
+        "socket": 1000
+      },
+      "staticHeaders": {
+        "Content-Type": "application/json"
+      },
+      "reqTransform": "appRegistration.transformers.transformRegisterUserValidationRequest"
+    }
+  },
+  {
+    "path": "/xp-mi/public/v1/token",
+    "method": "POST",
+    "routeHandler": "CONDITIONAL",
+    "conditionTransform": "salesapp.transformers.selectAccessTokenTarget",
+    "targets": [
+      {
+        "name": "access-token",
+        "url": "${EXPERIENCE_MIDDLEWARE_URL}/xp-mi/public/v1/token/access-token",
+        "method": "POST",
+        "timeout": {
+          "request": 50000,
+          "socket": 1000
+        },
+        "staticHeaders": {
+          "Content-Type": "application/x-www-form-urlencoded"
+        },
+        "requiredParams": ["*"]
+      },
+      {
+        "name": "refresh-token",
+        "url": "${EXPERIENCE_MIDDLEWARE_URL}/xp-mi/public/v1/token/refresh-token",
+        "method": "POST",
+        "timeout": {
+          "request": 50000,
+          "socket": 1000
+        },
+        "staticHeaders": {
+          "Content-Type": "application/x-www-form-urlencoded"
+        },
+        "requiredParams": ["*"]
+      }
+    ]
+  },
+  {
+    "path": "/xp-mi/public/v1/token/access-token",
+    "method": "POST",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "access-token",
+      "url": "${SF_BASE_URI}/services/oauth2/token",
+      "method": "POST",
+      "timeout": {
+        "request": 50000,
+        "socket": 1000
+      },
+      "staticHeaders": {
+        "Content-Type": "application/x-www-form-urlencoded"
+      },
+      "requiredParams": ["*"],
+      "reqTransform": "salesapp.transformers.transformAccessTokenRequest"
+    }
+  },
+  {
+    "path": "/xp-mi/public/v1/token/refresh-token",
+    "method": "POST",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "refresh-token",
+      "url": "${SF_BASE_URI}/services/oauth2/token",
+      "method": "POST",
+      "timeout": {
+        "request": 50000,
+        "socket": 1000
+      },
+      "staticHeaders": {
+        "Content-Type": "application/x-www-form-urlencoded"
+      },
+      "requiredParams": ["*"],
+      "reqTransform": "salesapp.transformers.transformRefreshTokenRequest"
+    }
+  },
+  {
+    "path": "/xp-mi/public/v1/register-user-validation",
+    "routeHandler": "TRANSFORM",
+    "method": "POST",
+    "isCacheRequired": false,
+    "target": {
+      "name": "register-user-validation",
+      "url": "${MSME_BASE_URL}/customer/validate/registration-details",
+      "method": "POST",
+      "timeout": {
+        "request": 20000,
+        "socket": 1000
+      },
+      "staticHeaders": {
+        "Content-Type": "application/json"
+      },
+      "reqTransform": "appRegistration.transformers.transformRegisterUserValidationRequest"
+    }
+  },
+  {
+    "path": "/xp-mi/public/v1/vijai/user-detail",
+    "method": "GET",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "vijai-user-details",
+      "url": "${SF_BASE_URI}/services/data/v59.0/chatter/users/me",
+      "method": "GET",
+      "timeout": {
+        "request": "${TIMEOUTS.REQUEST}",
+        "socket": 5000
+      },
+      "headersToPass": [
+        {
+          "source": "Authorization",
+          "destination": "Authorization"
+        }
+      ]
+    }
+  },
+  {
+    "path": "/xp-mi/public/v1/vijai/user/notification",
+    "method": "GET",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "vijai-user-notifications",
+      "url": "${SF_BASE_URI}/services/data/v59.0/connect/notifications",
+      "method": "GET",
+      "timeout": {
+        "request": "${TIMEOUTS.REQUEST}",
+        "socket": 5000
+      },
+      "headersToPass": [
+        {
+          "source": "Authorization",
+          "destination": "Authorization"
+        }
+      ]
+    }
+  },
+  {
+    "path": "/xp-mi/public/v1/vijai/user/list",
+    "method": "GET",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "vijai-user-list",
+      "url": "${SF_BASE_URI}/services/data/v59.0/query",
+      "method": "GET",
+      "timeout": {
+        "request": "${TIMEOUTS.REQUEST}",
+        "socket": 5000
+      },
+      "headersToPass": [
+        {
+          "source": "Authorization",
+          "destination": "Authorization"
+        }
+      ],
+      "reqTransform": "vijai.transformers.transformVijaiUserListRequest",
+      "requiredParams": ["*"]
+    }
+  },
+  {
+    "path": "/xp-mi/public/v1/vijai/user/event-update/:eventId",
+    "method": "PATCH",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "vijai-user-event-update",
+      "url": "${SF_BASE_URI}/services/data/v65.0/sobjects/Event/{eventId}",
+      "method": "PATCH",
+      "timeout": {
+        "request": "${TIMEOUTS.REQUEST}",
+        "socket": 5000
+      },
+      "headersToPass": [
+        {
+          "source": "Authorization",
+          "destination": "Authorization"
+        }
+      ],
+      "requiredParams": ["*"]
+    }
+  },
+  {
+    "path": "/xp-mi/public/v1/app/orders-pending-payments",
+    "method": "GET",
+    "routeHandler": "AGGREGATE",
+    "aggregationType": "PARALLEL",
+    "targets": [
+      {
+        "name": "orders-pending-payments",
+        "url": "${ERP_BASE_URL}/ledger/fetch-ledger-payment-summary",
+        "method": "GET",
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
+        "headersToPass": [
+          {
+            "source": "Authorization",
+            "destination": "access_token"
+          }
+        ],
+        "staticHeaders": {
+          "client_id": "${ERP_CLIENT_ID}",
+          "Authorization": "${X_API_KEY_FOR_ORDER_LISTING}"
+        },
+        "reqTransform": "paymentdue.transformers.transformOrdersPendingPaymentsRequest"
+      },
+      {
+        "name": "account-details",
+        "url": "${OMS_URL}/external-connector-inbound/api/external/v1/retail/fetch-sf-customer-details",
+        "method": "GET",
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
+        "headersToPass": [
+          {
+            "source": "Authorization",
+            "destination": "access_token"
+          }
+        ],
+        "staticHeaders": {
+          "client_id": "${ERP_CLIENT_ID}",
+          "Authorization": "${X_API_KEY_FOR_ORDER_LISTING}"
+        },
+        "reqTransform": "paymentdue.transformers.transformAccountDetailsRequest"
+      }
+    ],
+    "resTransform": "paymentdue.transformers.mergePaymentDueAndAccountDetails"
+  },
+  {
+    "path": "/xp-mi/public/v1/vijai/fetch-credit-info",
+    "method": "GET",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "vijai-fetch-credit-info",
+      "url": "${OMS_URL}/external-connector-inbound/api/internal/v1/customer/fetch-credit-info-by-pan",
+      "method": "GET",
+      "timeout": {
+        "request": "${TIMEOUTS.REQUEST}",
+        "socket": 5000
+      },
+      "staticHeaders": {
+        "client_id": "${OMS_CLIENT_ID_VIJAI}",
+        "Authorization": "${OMS_AUTH_FETCH_CREDIT_INFO_VIJAI}"
+      },
+      "requiredParams": ["pan"],
+      "reqTransform": "vijai.transformers.transformVijaiFetchCreditInfoRequest"
+    }
+  },
+  {
+    "path": "/xp-mi/public/v1/order-service/requirement/my-requirements",
+    "method": "GET",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "my-requirements",
+      "url": "${MSME_BASE_URL}/order-service/requirement/my-requirements",
+      "method": "GET",
+      "timeout": {
+        "request": 5000,
+        "socket": 1000
+      },
+      "headersToPass": [
+        {
+          "source": "authorization",
+          "destination": "access_token"
+        }
+      ],
+      "requiredParams": ["*"]
+    }
   },
   {
     "path": "/xp-mi/public/v1/app/orders-pending-payments",

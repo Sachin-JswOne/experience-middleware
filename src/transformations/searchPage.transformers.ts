@@ -2,9 +2,7 @@ import { Logger } from '@nestjs/common';
 import { safeDebug } from 'src/utils/common-functions.util';
 import { AggregatedResponse } from 'src/models/aggregated-response.model';
 import { normalizeRecentlyViewedProducts, RecentlyViewedProduct } from './web.transformers';
-export {
-  extractCentralCatalogueCategoryIds
-} from 'src/utils/central-category.util';
+export { extractCentralCatalogueCategoryIds } from 'src/utils/central-category.util';
 
 export function getSearchPageDetails(aggregatedResponses: AggregatedResponse[]): any {
   const responses = aggregatedResponses.reduce(
@@ -18,19 +16,19 @@ export function getSearchPageDetails(aggregatedResponses: AggregatedResponse[]):
   const trendingSearchResponse = responses['ccp-trending-search']?.data;
   const webCentralCatalogueResponse = responses['web-central-catalogue-categories'];
   const topItemsResponse = responses['search-top-items']?.data;
-  const requestHeaders = responses['__request-context']?.data?.headers ?? {};
-
-  const centralCatalogueHeader =
-    requestHeaders['central-catalogue-global']
-
-  const isCentralCatalogueEnabled = String(centralCatalogueHeader).toLowerCase() !== 'false';
   const recentlyViewedAgg = responses['recently-viewed-product-details'];
   const recentViewedRemoveAgg = responses['recent-viewed-remove'];
   safeDebug(Logger, () => `Search Page CMS → ${JSON.stringify(cmsResponse?.data)}`);
   safeDebug(Logger, () => `Buy Again → ${JSON.stringify(buyAgainResponse?.data)}`);
   safeDebug(Logger, () => `Top Items → ${JSON.stringify(topItemsResponse?.data)}`);
-  safeDebug(Logger, () => `Search Page recentlyviewed → ${JSON.stringify(recentlyViewedAgg?.data)}`);
-  safeDebug(Logger, () => `Search Page recentremovedmmids → ${JSON.stringify(recentViewedRemoveAgg?.data)}`);
+  safeDebug(
+    Logger,
+    () => `Search Page recentlyviewed → ${JSON.stringify(recentlyViewedAgg?.data)}`,
+  );
+  safeDebug(
+    Logger,
+    () => `Search Page recentremovedmmids → ${JSON.stringify(recentViewedRemoveAgg?.data)}`,
+  );
   if (
     !cmsResponse?.success ||
     typeof cmsResponse.data !== 'object' ||
@@ -114,77 +112,75 @@ export function getSearchPageDetails(aggregatedResponses: AggregatedResponse[]):
         'central_catalogue_global enabled but CCP top-items failed. Removing top-items block.',
       );
 
-      const filteredBlocks = blocks.filter(
-        (b) => b.__component !== 'app-components.app-search-top-items',
-      );
-
-      return {
-        data: {
-          ...cmsData,
-          blocks: filteredBlocks,
-          recentSearches,
-          trendingSearches,
-          recentlyViewedProducts,
-          removedMmids,
-        },
-        meta: {
-          timestamp: new Date().toISOString(),
-          version: '1.0',
-        },
-      };
-    }
-    // Find CMS Top Items block
-    const topItemsBlock = blocks.find(
-      (b) => b.__component === 'app-components.app-search-top-items',
+    const filteredBlocks = blocks.filter(
+      (b) => b.__component !== 'app-components.app-search-top-items',
     );
 
-    if (topItemsBlock && Array.isArray(topItemsBlock.app_search_top_items)) {
-      const cmsItems = topItemsBlock.app_search_top_items;
+    return {
+      data: {
+        ...cmsData,
+        blocks: filteredBlocks,
+        recentSearches,
+        trendingSearches,
+        recentlyViewedProducts,
+        removedMmids,
+      },
+      meta: {
+        timestamp: new Date().toISOString(),
+        version: '1.0',
+      },
+    };
+  }
+  // Find CMS Top Items block
+  const topItemsBlock = blocks.find((b) => b.__component === 'app-components.app-search-top-items');
 
-      // Map CCP products by MMID
-      const productMap = new Map(ccpProducts.map((p) => [p.product_mmid, p]));
+  if (topItemsBlock && Array.isArray(topItemsBlock.app_search_top_items)) {
+    const cmsItems = topItemsBlock.app_search_top_items;
 
-      // Inject CCP data into CMS items
-      topItemsBlock.app_search_top_items = cmsItems
-        .map((cmsItem) => {
-          const product = productMap.get(cmsItem.MMID);
-          if (!product) {
-            safeDebug(Logger, () => `TOP ITEMS MMID NOT FOUND | MMID: ${cmsItem.MMID}`);
-            return null;
-          }
-          safeDebug(Logger, () => `TOP ITEMS MMID MATCHED | MMID: ${cmsItem.MMID}`);
-          return {
-            ...cmsItem,
-            title: product.attributes?.product_title,
-            webUrl: product.attributes?.slug,
-            MMID: product.product_mmid,
-            image: {
-              ...cmsItem.image,
-              url: product.meta_data?.product_media?.[0]?.public_url,
-            },
-          };
-        },
-      ).filter(Boolean);
+    // Map CCP products by MMID
+    const productMap = new Map(ccpProducts.map((p) => [p.product_mmid, p]));
+
+    // Inject CCP data into CMS items
+    topItemsBlock.app_search_top_items = cmsItems
+      .map((cmsItem) => {
+        const product = productMap.get(cmsItem.MMID);
+        if (!product) {
+          safeDebug(Logger, () => `TOP ITEMS MMID NOT FOUND | MMID: ${cmsItem.MMID}`);
+          return null;
+        }
+        safeDebug(Logger, () => `TOP ITEMS MMID MATCHED | MMID: ${cmsItem.MMID}`);
+        return {
+          ...cmsItem,
+          title: product.attributes?.product_title,
+          webUrl: product.attributes?.slug,
+          MMID: product.product_mmid,
+          image: {
+            ...cmsItem.image,
+            url: product.meta_data?.product_media?.[0]?.public_url,
+          },
+        };
+      })
+      .filter(Boolean);
+  }
+  const navigation =
+    webCentralCatalogueResponse?.success &&
+    Array.isArray(webCentralCatalogueResponse.data?.data?.navigation)
+      ? webCentralCatalogueResponse.data.data.navigation
+      : null;
+
+  for (const block of blocks) {
+    if (block.__component !== 'app-components.app-category-component') {
+      continue;
     }
-    const navigation =
-      webCentralCatalogueResponse?.success &&
-      Array.isArray(webCentralCatalogueResponse.data?.data?.navigation)
-        ? webCentralCatalogueResponse.data.data.navigation
-        : null;
 
-    for (const block of blocks) {
-      if (block.__component !== 'app-components.app-category-component') {
-        continue;
-      }
+    if (!navigation || !Array.isArray(block.web_central_catalogue_categories)) {
+      block.product_categories = [];
+      continue;
+    }
 
-      if (!navigation || !Array.isArray(block.web_central_catalogue_categories)) {
-        block.product_categories = [];
-        continue;
-      }
-
-      const blockCategoryIds = block.web_central_catalogue_categories
-        .map((c: any) => c.categoryId)
-        .filter(Boolean);
+    const blockCategoryIds = block.web_central_catalogue_categories
+      .map((c: any) => c.categoryId)
+      .filter(Boolean);
 
       block.product_categories = navigation
         .flatMap((nav: any) =>
