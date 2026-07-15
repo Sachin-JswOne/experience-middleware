@@ -1983,6 +1983,10 @@
         {
           "source": "access_token",
           "destination": "access_token"
+        },
+        {
+          "source": "jsw_session_id",
+          "destination": "jsw_session_id"
         }
       ],
       "requiredParams": ["*"]
@@ -2400,6 +2404,34 @@
       }
     ],
     "resTransform": "customer.transformers.mergeCustomerProfile"
+  },
+  {
+    "path": "/xp-mi/public/v3/customer-profile",
+    "method": "GET",
+    "routeHandler": "TRANSFORM",
+    "isCacheRequired": false,
+    "target": {
+      "name": "central-commerce-customer-profile",
+      "url": "${MSME_BASE_URL}/central_commerce/customer/v1/profile",
+      "method": "GET",
+      "timeout": {
+        "request": 10000,
+        "socket": 1000
+      },
+      "headersToPass": [
+        {
+          "source": "access_token",
+          "destination": "access_token"
+        },
+        {
+          "source": "authorization",
+          "destination": "access_token"
+        }
+      ],
+      "staticHeaders": {
+        "Accept": "application/json"
+      }
+    }
   },
   {
     "path": "/xp-mi/public/v1/central_commerce/graphql",
