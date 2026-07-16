@@ -11,6 +11,8 @@ import {
 } from '@mui/material';
 
 import PromptService, { IPromptCreatePayload } from '@/services/PromptService';
+import LocalStorage from '@/utils/LocalStorage';
+import type { ILooseObject } from '@/_types/common.interface';
 
 interface AddPromptDialogProps {
   open: boolean;
@@ -26,7 +28,7 @@ const AddPromptDialog = ({ open, promptType, onClose, onCreated }: AddPromptDial
   const [submitting, setSubmitting] = useState(false);
 
   const canSubmit = prompt.trim().length > 0 && description.trim().length > 0;
-
+  const userInfo: ILooseObject | undefined = LocalStorage.getItem('userInfo');
   const handleClose = (_event: object, reason: 'backdropClick' | 'escapeKeyDown') => {
     if (submitting && reason === 'backdropClick') return;
     onClose();
@@ -36,8 +38,11 @@ const AddPromptDialog = ({ open, promptType, onClose, onCreated }: AddPromptDial
     if (!canSubmit) return;
     setSubmitting(true);
     const payload: IPromptCreatePayload = {
+      promptType: promptType,
       prompt: prompt.trim(),
       description: description.trim(),
+      createdBy: userInfo?.email,
+      activate: true
     };
     const result = await PromptService.createPrompt(promptType, payload);
     if (result.error.message || result.error.code) {

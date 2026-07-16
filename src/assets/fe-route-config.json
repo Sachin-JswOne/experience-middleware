@@ -11,9 +11,7 @@
         "request": 5000,
         "socket": 1000
       },
-      "requiredParams": [
-        "auth-id"
-      ]
+      "requiredParams": ["auth-id"]
     }
   },
   {
@@ -59,13 +57,13 @@
     }
   },
   {
-    "path": "/xp-mi/public/v1/central_commerce/ai/prompts/:promptType",
+    "path": "/xp-mi/public/v1/central_commerce/ai/prompts",
     "method": "POST",
     "routeHandler": "TRANSFORM",
     "isCacheRequired": false,
     "target": {
       "name": "ai-prompts-create",
-      "url": "${MSME_BASE_URL}/central_commerce/ai/prompts/{promptType}",
+      "url": "${MSME_BASE_URL}/central_commerce/ai/prompts",
       "method": "POST",
       "timeout": {
         "request": 30000,

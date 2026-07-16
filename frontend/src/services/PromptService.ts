@@ -25,6 +25,9 @@ export interface IPromptVersion {
 export interface IPromptCreatePayload {
   prompt: string;
   description: string;
+  promptType: string;
+  createdBy: string;
+  activate: boolean;
 }
 
 export interface IPromptVersionsResult {

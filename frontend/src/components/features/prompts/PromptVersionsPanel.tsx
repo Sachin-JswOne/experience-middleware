@@ -197,12 +197,7 @@ const PromptVersionsPanel = ({ promptType }: PromptVersionsPanelProps) => {
         sx={{ display: 'flex', justifyContent: 'space-between', mb: 2, px: 0 }}
       >
         <Box>
-          <Typography variant="h5" component="h2">
-            Versions
-          </Typography>
-          <Typography variant="body2" sx={{ color: tokens.textSubtle }}>
-            Prompt type: {promptType}
-          </Typography>
+
         </Box>
         <Box sx={{ display: 'flex', gap: 1 }}>
           <Tooltip title="Refresh">
