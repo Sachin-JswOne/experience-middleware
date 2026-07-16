@@ -14,6 +14,7 @@ import SettingsIcon from '@mui/icons-material/Settings';
 import PeopleIcon from '@mui/icons-material/People';
 import InventoryIcon from '@mui/icons-material/Inventory';
 import CategoryIcon from '@mui/icons-material/Category';
+import SmartToyIcon from '@mui/icons-material/SmartToy';
 import type { ElementType } from 'react';
 import type { INavigationMenu } from '@/configs/AppConfig';
 import AppConfig from '@/configs/AppConfig';
@@ -25,6 +26,7 @@ const iconMap: Record<string, ElementType> = {
   People: PeopleIcon,
   Inventory: InventoryIcon,
   Category: CategoryIcon,
+  SmartToy: SmartToyIcon,
 };
 
 export const SIDEBAR_WIDTH = 240;

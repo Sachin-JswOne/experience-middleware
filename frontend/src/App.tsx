@@ -3,6 +3,7 @@ import ProtectedLayout from '@/components/features/layout/ProtectedLayout';
 import LoginPage from '@/pages/LoginPage';
 import OAuth2Redirect from '@/pages/OAuth2Redirect';
 import DashboardPage from '@/pages/DashboardPage';
+import PromptsPage from '@/pages/PromptsPage';
 import NotFoundPage from '@/pages/NotFoundPage';
 
 const App = () => (
@@ -11,6 +12,7 @@ const App = () => (
     <Route path="/oauth2" element={<OAuth2Redirect />} />
     <Route element={<ProtectedLayout />}>
       <Route path="/" element={<DashboardPage />} />
+      <Route path="/prompts" element={<PromptsPage />} />
     </Route>
     <Route path="*" element={<NotFoundPage />} />
   </Routes>

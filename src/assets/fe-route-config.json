@@ -1,0 +1,111 @@
+[
+  {
+    "path": "/xp-mi/public/v1/auth/retrieve-access-token",
+    "method": "GET",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "auth-retrieve-token",
+      "url": "${AUTH2_SERVICE_BASE_URL}/auth/outlook/retrieve-access-token",
+      "method": "GET",
+      "timeout": {
+        "request": 5000,
+        "socket": 1000
+      },
+      "requiredParams": [
+        "auth-id"
+      ]
+    }
+  },
+  {
+    "path": "/xp-mi/public/v1/auth/user/me",
+    "method": "GET",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "uam-user-info",
+      "url": "${CATALOGUE_ADMIN_API_BASE_URL}/api/v2/user/me",
+      "method": "GET",
+      "timeout": {
+        "request": 5000,
+        "socket": 1000
+      },
+      "headersToPass": [
+        {
+          "source": "Authorization",
+          "destination": "Authorization"
+        }
+      ]
+    }
+  },
+  {
+    "path": "/xp-mi/public/v1/central_commerce/ai/prompts/:promptType/versions",
+    "method": "GET",
+    "routeHandler": "TRANSFORM",
+    "isCacheRequired": false,
+    "target": {
+      "name": "ai-prompts-versions",
+      "url": "${MSME_BASE_URL}/central_commerce/ai/prompts/{promptType}/versions",
+      "method": "GET",
+      "timeout": {
+        "request": 30000,
+        "socket": 2000
+      },
+      "headersToPass": [
+        {
+          "source": "authorization",
+          "destination": "access_token"
+        }
+      ],
+      "requiredParams": [
+        "*"
+      ]
+    }
+  },
+  {
+    "path": "/xp-mi/public/v1/central_commerce/ai/prompts/:promptType",
+    "method": "POST",
+    "routeHandler": "TRANSFORM",
+    "isCacheRequired": false,
+    "target": {
+      "name": "ai-prompts-create",
+      "url": "${MSME_BASE_URL}/central_commerce/ai/prompts/{promptType}",
+      "method": "POST",
+      "timeout": {
+        "request": 30000,
+        "socket": 2000
+      },
+      "headersToPass": [
+        {
+          "source": "authorization",
+          "destination": "access_token"
+        }
+      ],
+      "requiredParams": [
+        "*"
+      ]
+    }
+  },
+  {
+    "path": "/xp-mi/public/v1/central_commerce/ai/prompts/:promptType/versions/:version/activate",
+    "method": "PUT",
+    "routeHandler": "TRANSFORM",
+    "isCacheRequired": false,
+    "target": {
+      "name": "ai-prompts-activate",
+      "url": "${MSME_BASE_URL}/central_commerce/ai/prompts/{promptType}/versions/{version}/activate",
+      "method": "PUT",
+      "timeout": {
+        "request": 30000,
+        "socket": 2000
+      },
+      "headersToPass": [
+        {
+          "source": "authorization",
+          "destination": "access_token"
+        }
+      ],
+      "requiredParams": [
+        "*"
+      ]
+    }
+  }
+]

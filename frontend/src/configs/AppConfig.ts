@@ -67,6 +67,14 @@ const AppConfig: AppConfigType = {
       icon: 'Settings',
       applicableRoutes: ['/settings'],
     },
+    {
+      id: 6,
+      label: 'Prompts',
+      route: '/prompts',
+      requiredAction: '',
+      icon: 'SmartToy',
+      applicableRoutes: ['/prompts'],
+    },
   ],
   CACHE_TTL: 10 * 60 * 1000, // 10 minutes
   SNACKBAR_AUTO_HIDE_DURATIONS: {

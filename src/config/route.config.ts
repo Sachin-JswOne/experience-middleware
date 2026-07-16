@@ -16,6 +16,11 @@ const CONSTANTS_MAP: Record<string, any> = {
 // Per-environment defaults — overridden by actual env vars at runtime
 let ENV_CONFIG: Record<string, any> = {};
 const envConfigFilePath = path.resolve(__dirname, `../assets/${APP_ENV}/env-config.json`);
+function loadConfigFile(filePath: string): any[] {
+  const raw = fs.readFileSync(filePath, 'utf-8');
+  return JSON.parse(raw);
+}
+
 try {
   ENV_CONFIG = JSON.parse(fs.readFileSync(envConfigFilePath, 'utf-8'));
 } catch {
@@ -23,6 +28,7 @@ try {
 }
 
 const configFilePath = path.resolve(__dirname, `../assets/route-config.json`);
+const feConfigFilePath = path.resolve(__dirname, `../assets/fe-route-config.json`);
 let ROUTE_CONFIG: RouteConfig[] = [];
 const enumFieldsMap: Record<string, any> = {
   routeHandler: RouteHandler,
@@ -104,8 +110,10 @@ export function normalizeEnums<T extends Record<string, any>>(
 }
 
 try {
-  const raw = fs.readFileSync(configFilePath, 'utf-8');
-  const rawConfigs: any[] = JSON.parse(raw);
+  const rawConfigs: any[] = [
+    ...loadConfigFile(configFilePath),
+    ...loadConfigFile(feConfigFilePath),
+  ];
 
   const envReplacedConfigs = replaceEnvPlaceholders(rawConfigs);
   ROUTE_CONFIG = envReplacedConfigs.map((raw: any) =>
