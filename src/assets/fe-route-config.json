@@ -51,13 +51,11 @@
       },
       "headersToPass": [
         {
-          "source": "authorization",
+          "source": "access_token",
           "destination": "access_token"
         }
       ],
-      "requiredParams": [
-        "*"
-      ]
+      "requiredParams": ["*"]
     }
   },
   {
@@ -75,13 +73,11 @@
       },
       "headersToPass": [
         {
-          "source": "authorization",
+          "source": "access_token",
           "destination": "access_token"
         }
       ],
-      "requiredParams": [
-        "*"
-      ]
+      "requiredParams": ["*"]
     }
   },
   {
@@ -99,13 +95,11 @@
       },
       "headersToPass": [
         {
-          "source": "authorization",
+          "source": "access_token",
           "destination": "access_token"
         }
       ],
-      "requiredParams": [
-        "*"
-      ]
+      "requiredParams": ["*"]
     }
   }
 ]

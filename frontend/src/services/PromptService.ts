@@ -1,13 +1,20 @@
 import ApiClient, { IApiClientResponse } from '@/services/ApiClient';
 import { API_ROUTES } from '@/configs/ApiRoutes';
 import { ILooseObject } from '@/_types/common.interface';
+import LocalStorage from '@/utils/LocalStorage';
+
+const getAccessTokenHeader = (): ILooseObject => {
+  const userInfo: ILooseObject | undefined = LocalStorage.getItem('userInfo');
+  const token = userInfo?.token;
+  return token ? { access_token: token } : {};
+};
 
 export interface IPromptVersion {
   id: number | string;
   promptType: string;
   version: number | string;
-  prompt: string;      // possibly BASE64-encoded
-  encoding: string;    // "BASE64"
+  prompt: string; // possibly BASE64-encoded
+  encoding: string; // "BASE64"
   active: boolean;
   createdBy: string;
   description: string;
@@ -34,12 +41,13 @@ abstract class PromptService {
   static async getVersions(promptType: string): Promise<IPromptVersionsResult> {
     const result: IPromptVersionsResult = {
       data: [],
-      error: { code: 0, message: '' }
+      error: { code: 0, message: '' },
     };
 
     const response: IApiClientResponse = await ApiClient.makeRequest({
       url: API_ROUTES.PROMPTS.VERSIONS(promptType),
-      method: 'GET'
+      method: 'GET',
+      // headers: getAccessTokenHeader()
     });
 
     if (response.data) {
@@ -53,18 +61,18 @@ abstract class PromptService {
 
   static async createPrompt(
     promptType: string,
-    payload: IPromptCreatePayload
+    payload: IPromptCreatePayload,
   ): Promise<IPromptMutationResult> {
     const result: IPromptMutationResult = {
       data: {},
-      error: { code: 0, message: '' }
+      error: { code: 0, message: '' },
     };
 
     // TODO confirm base64 encoding with backend curl before switching from plain text
     const response: IApiClientResponse = await ApiClient.makeRequest({
       url: API_ROUTES.PROMPTS.CREATE(promptType),
       method: 'POST',
-      body: payload as ILooseObject
+      body: payload as ILooseObject,
     });
 
     if (response.data) {
@@ -77,16 +85,16 @@ abstract class PromptService {
 
   static async activateVersion(
     promptType: string,
-    version: number | string
+    version: number | string,
   ): Promise<IPromptMutationResult> {
     const result: IPromptMutationResult = {
       data: {},
-      error: { code: 0, message: '' }
+      error: { code: 0, message: '' },
     };
 
     const response: IApiClientResponse = await ApiClient.makeRequest({
       url: API_ROUTES.PROMPTS.ACTIVATE(promptType, version),
-      method: 'PUT'
+      method: 'PUT',
     });
 
     if (response.data) {

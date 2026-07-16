@@ -1,9 +1,5 @@
 import { context, SpanStatusCode, trace } from '@opentelemetry/api';
-import axios, {
-  AxiosError,
-  AxiosRequestConfig,
-  GenericAbortSignal
-} from 'axios';
+import axios, { AxiosError, AxiosRequestConfig, GenericAbortSignal } from 'axios';
 import { enqueueSnackbar } from 'notistack';
 
 import AppConfig from '@/configs/AppConfig';
@@ -20,7 +16,7 @@ enum axiosMethodEnum {
   PATCH = 'PATCH',
   HEAD = 'HEAD',
   OPTIONS = 'OPTIONS',
-  TRACE = 'TRACE'
+  TRACE = 'TRACE',
 }
 
 interface IApiClientInput {
@@ -29,13 +25,7 @@ interface IApiClientInput {
   headers?: ILooseObject;
   body?: ILooseObject;
   signal?: GenericAbortSignal;
-  responseType?:
-    | 'arraybuffer'
-    | 'blob'
-    | 'document'
-    | 'json'
-    | 'text'
-    | 'stream';
+  responseType?: 'arraybuffer' | 'blob' | 'document' | 'json' | 'text' | 'stream';
   isCacheable?: boolean;
 }
 
@@ -54,11 +44,11 @@ const processError = (error: any, result: IApiClientResponse) => {
     // Only set error code to check if api call failed
     result.error = {
       code: error.response.status,
-      message: ''
+      message: '',
     };
     enqueueSnackbar(AppMessages.ERRORS.unauthorized, {
       variant: 'error',
-      autoHideDuration: AppConfig.SNACKBAR_AUTO_HIDE_DURATIONS.error
+      autoHideDuration: AppConfig.SNACKBAR_AUTO_HIDE_DURATIONS.error,
     });
     // Clearing the localStorage and redirecting to login
     LocalStorage.clearItems();
@@ -66,16 +56,16 @@ const processError = (error: any, result: IApiClientResponse) => {
     // Only set error code to check if api call failed
     result.error = {
       code: error.response.status,
-      message: ''
+      message: '',
     };
     enqueueSnackbar(AppMessages.ERRORS.access_denied, {
       variant: 'error',
-      autoHideDuration: AppConfig.SNACKBAR_AUTO_HIDE_DURATIONS.error
+      autoHideDuration: AppConfig.SNACKBAR_AUTO_HIDE_DURATIONS.error,
     });
   } else {
     result.error = {
       code: error?.response?.data?.error?.code ?? error?.response?.status,
-      message: error?.response?.data?.error?.message ?? error?.message
+      message: error?.response?.data?.error?.message ?? error?.message,
     };
     result.errors = error.response.data?.errors;
   }
@@ -91,7 +81,7 @@ abstract class ApiClient {
     headers,
     body,
     signal,
-    isCacheable
+    isCacheable,
   }: IApiClientInput): Promise<IApiClientResponse> {
     const tracer = getTracer('experience-middleware-ui');
 
@@ -103,94 +93,90 @@ abstract class ApiClient {
         'http.method': method || 'UNKNOWN',
         'http.target': url,
         'http.scheme': url.startsWith('https') ? 'https' : 'http',
-        'service.name': 'experience-middleware-ui'
-      }
+        'service.name': 'experience-middleware-ui',
+      },
     });
 
-    return await context.with(
-      trace.setSpan(context.active(), span),
-      async () => {
-        let result: IApiClientResponse = {} as IApiClientResponse;
-        try {
-          if (!url) {
-            throw new Error(AppMessages.ERRORS.missing_url);
-          }
-          if (!method) {
-            throw new Error(AppMessages.ERRORS.missing_method);
-          }
+    return await context.with(trace.setSpan(context.active(), span), async () => {
+      let result: IApiClientResponse = {} as IApiClientResponse;
+      try {
+        if (!url) {
+          throw new Error(AppMessages.ERRORS.missing_url);
+        }
+        if (!method) {
+          throw new Error(AppMessages.ERRORS.missing_method);
+        }
 
-          const userInfo: ILooseObject = LocalStorage.getItem('userInfo');
+        // const userInfo: ILooseObject = LocalStorage.getItem('userInfo');
 
-          const options: AxiosRequestConfig = {
-            url,
-            method,
-            headers: {
-              'Content-Type': 'application/json',
-              ...headers
-            },
-            signal
-          };
+        const options: AxiosRequestConfig = {
+          url,
+          method,
+          headers: {
+            'Content-Type': 'application/json',
+            ...headers,
+          },
+          signal,
+        };
 
-          if (userInfo?.token) {
-            options.headers!.Authorization = `Bearer ${userInfo.token}`;
-          }
+        // if (userInfo?.token) {
+        //   options.headers!.Authorization = `${userInfo.token}`;
+        // }
 
-          if (body && body instanceof FormData) {
-            options.data = body;
-          } else if (body) {
-            options.data = JSON.stringify(body);
-          }
+        if (body && body instanceof FormData) {
+          options.data = body;
+        } else if (body) {
+          options.data = JSON.stringify(body);
+        }
 
-          let response = null;
-          const cacheKey = `${method}-${url}`;
-          if (isCacheable) {
-            const cache = cacheData[cacheKey];
-            const isExpired =
-              Date.now() - cache?.timestamp > AppConfig.CACHE_TTL;
-            if (cache && !isExpired) {
-              response = cache?.response;
-            } else {
-              response = await axios(options);
-              cacheData[cacheKey] = {
-                response,
-                timestamp: Date.now()
-              };
-            }
-            if (response === null) {
-              response = await axios(options);
-              cacheData[cacheKey] = {
-                response,
-                timestamp: Date.now()
-              };
-            }
+        let response = null;
+        const cacheKey = `${method}-${url}`;
+        if (isCacheable) {
+          const cache = cacheData[cacheKey];
+          const isExpired = Date.now() - cache?.timestamp > AppConfig.CACHE_TTL;
+          if (cache && !isExpired) {
+            response = cache?.response;
           } else {
             response = await axios(options);
-          }
-          result.data = response.data;
-          result.headers = response.headers;
-          span.setStatus({ code: SpanStatusCode.OK });
-        } catch (error: any) {
-          span.recordException(error);
-          span.setStatus({
-            code: SpanStatusCode.ERROR,
-            message: error.message
-          });
-          if (error.response) {
-            result.headers = error.response?.headers;
-            // handle 401 & 403
-            result = processError(error, result);
-          } else if (error.code !== AxiosError.ERR_CANCELED) {
-            result.error = {
-              code: 500,
-              message: error.message
+            cacheData[cacheKey] = {
+              response,
+              timestamp: Date.now(),
             };
           }
-        } finally {
-          span.end();
+          if (response === null) {
+            response = await axios(options);
+            cacheData[cacheKey] = {
+              response,
+              timestamp: Date.now(),
+            };
+          }
+        } else {
+          response = await axios(options);
         }
-        return result;
+        result.data = response.data;
+        result.headers = response.headers;
+        span.setStatus({ code: SpanStatusCode.OK });
+      } catch (error: any) {
+        span.recordException(error);
+        span.setStatus({
+          code: SpanStatusCode.ERROR,
+          message: error.message,
+        });
+        if (error.response) {
+          result.headers = error.response?.headers;
+          // handle 401 & 403
+          result = processError(error, result);
+        } else if (error.code !== AxiosError.ERR_CANCELED) {
+          result.error = {
+            code: 500,
+            message: error.message,
+          };
+        }
+      } finally {
+        span.end();
       }
-    );
+      return result;
+    });
   }
 }
 

@@ -53,10 +53,7 @@ const OAuth2Redirect = () => {
           const uamUserInfo: ILooseObject | undefined = userResponse?.data;
           console.log("uamUserInfo : ", uamUserInfo)
           if (uamUserInfo?.name) {
-            const permissions = processUamAuthorities(
-              uamUserInfo,
-              AppConfig.UAMApplications
-            );
+            processUamAuthorities(uamUserInfo, AppConfig.UAMApplications);
             userInfo.username = uamUserInfo.name ?? '';
             userInfo.email = uamUserInfo.email_id ?? '';
             userInfo.name = uamUserInfo.name;
