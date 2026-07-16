@@ -5483,5 +5483,47 @@
       ],
       "requiredParams": ["*"]
     }
+  },
+  {
+    "path": "/xp-mi/public/v1/vijai/user/resolveRecordType/:targetId",
+    "method": "GET",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "vijai-resolve-record-type",
+      "url": "${SF_BASE_URI}/services/data/v59.0/ui-api/records/{targetId}",
+      "method": "GET",
+      "timeout": {
+        "request": "${TIMEOUTS.REQUEST}",
+        "socket": 5000
+      },
+      "headersToPass": [
+        {
+          "source": "Authorization",
+          "destination": "Authorization"
+        }
+      ],
+      "reqTransform": "vijai.transformers.transformVijaiResolveRecordTypeRequest"
+    }
+  },
+  {
+    "path": "/xp-mi/public/v1/vijai/user/markNotification/:notificationId",
+    "method": "PATCH",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "vijai-mark-notification",
+      "url": "${SF_BASE_URI}/services/data/v59.0/connect/notifications/{notificationId}",
+      "method": "PATCH",
+      "timeout": {
+        "request": "${TIMEOUTS.REQUEST}",
+        "socket": 5000
+      },
+      "headersToPass": [
+        {
+          "source": "Authorization",
+          "destination": "Authorization"
+        }
+      ],
+      "reqTransform": "vijai.transformers.transformVijaiMarkNotificationRequest"
+    }
   }
 ]
