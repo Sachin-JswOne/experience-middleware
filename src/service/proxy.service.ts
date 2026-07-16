@@ -1,4 +1,5 @@
-﻿﻿/* eslint-disable @typescript-eslint/no-unsafe-argument */
+﻿﻿/* eslint-disable no-useless-catch */
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
 import { Injectable, Logger } from '@nestjs/common';
 import { trace, context, SpanStatusCode } from '@opentelemetry/api';
 import { createHttpClient } from '../utils/http-client.factory';
@@ -20,48 +21,29 @@ import { IncomingHttpHeaders } from 'http';
 import { inspect } from 'util';
 import { CustomError } from 'src/utils/CustomError';
 import { match } from 'path-to-regexp';
+import { CacheService } from '../cache/cache.service';
+import { CacheProvider } from 'src/cache/cache-provider.type';
 import axios from 'axios';
 
 @Injectable()
 export class ProxyService {
   private readonly tracer = trace.getTracer('experience-middleware');
   private readonly logger = new Logger(ProxyService.name);
-  constructor() {}
+  constructor(private readonly cacheService: CacheService) {}
+  // constructor() { }
 
   private getCacheKey(req: Request): string {
-    const explicitKey =
-      (req.headers['x-cache-key'] as string | undefined) ??
-      (req.headers['x-cachekey'] as string | undefined);
+    const env =
+      process.env.CACHE_PROFILE ||
+      process.env.VALKEY_PROFILE ||
+      process.env.NODE_ENV ||
+      'local';
 
-    if (explicitKey && explicitKey.trim().length > 0) {
-      return `:${explicitKey.trim()}`;
-    }
+    const apiEndpoint = req.path
+      .replace(/^\/xp-mi\/public\//, '')
+      .replace(/\//g, ':');
 
-    const methodPart = req.method;
-    const pathPart = req.path;
-
-    const query = (req.query ?? {}) as Record<string, unknown>;
-    const queryEntries = Object.entries(query).sort(([a], [b]) =>
-      String(a).localeCompare(String(b)),
-    );
-
-    const queryString = queryEntries
-      .map(([key, value]) => {
-        if (Array.isArray(value)) {
-          // sort array values for stability
-          return value
-            .slice()
-            .sort()
-            .map((v) => `${key}=${v}`)
-            .join('&');
-        }
-        return `${key}=${value}`;
-      })
-      .join('&');
-
-    const queryPart = queryString ? `q:${queryString}` : 'q:';
-
-    return `:m:${methodPart}|p:${pathPart}|${queryPart}`;
+    return `${env}:experience-middleware:${apiEndpoint}`;
   }
 
   async handleRequest(req: Request) {
@@ -86,29 +68,8 @@ export class ProxyService {
       throw new Error('Route config not found');
     }
 
-    // TODO: disabling cache will enable with valkey integration
-    // const isCacheRequired = (route as any).isCacheRequired === true;
-    // let cacheKey: string | null = null;
-
-    // if (isCacheRequired) {
-    //   cacheKey = this.getCacheKey(req);
-    //   try {
-    //     const cached = await this.redis.get(cacheKey);
-    //     if (cached) {
-    //       this.logger.debug(`Cache HIT for ${cacheKey}`);
-    //       return JSON.parse(cached);
-    //     }
-    //     this.logger.debug(`Cache MISS for ${cacheKey}`);
-    //   } catch (err) {
-    //     // Don't break the request if Redis is unhappy; just log and continue
-    //     this.logger.error('Redis GET error, bypassing cache', err);
-    //   }
-    // } else {
-    //   this.logger.debug(
-    //     `Caching disabled for route ${req.method} ${route.path} (isCacheRequired=false)`,
-    //   );
-    // }
-
+    const cacheTtlSeconds = Number((route as any).cache?.ttlSeconds ?? process.env.CACHE_TTL_SECONDS ?? 1800);
+    
     const activeSpan = trace.getSpan(context.active());
     const spanContext = activeSpan?.spanContext();
     const traceId = (req as any).traceId || spanContext?.traceId || '';
@@ -123,6 +84,38 @@ export class ProxyService {
     this.logger.log(
       `Handling request for route: ${req.method} ${req.path} trace_id: ${inspect(traceId)} span_id: ${inspect(spanId)}`,
     );
+
+    const isCacheRequired = (route as any).isCacheRequired === true;
+
+    const cacheProvider = (
+      (route as any).cacheProvider ||
+      process.env.CACHE_PROVIDER ||
+      'AUTO'
+    ) as CacheProvider;
+
+    const ttlSeconds = Number(
+      (route as any).cacheTTLSeconds ||
+      process.env.CACHE_TTL_SECONDS ||
+      300,
+    );
+
+    let cacheKey: string | null = null;
+
+    if (isCacheRequired && cacheProvider !== 'NONE' && process.env.CACHE_ENABLED === 'true') {
+      cacheKey = this.getCacheKey(req);
+
+      const cached = await this.cacheService.get(cacheKey, cacheProvider);
+
+      if (cached) {
+        try {
+          return JSON.parse(cached);
+        } catch {
+          await this.cacheService.del(cacheKey);
+          this.logger.warn(`Corrupt cache value evicted key=${cacheKey}`);
+        }
+      }
+        this.logger.log(`Cache MISS key=${cacheKey} provider=${cacheProvider}`);
+      }
 
     let data: any;
 
@@ -143,18 +136,9 @@ export class ProxyService {
         throw new Error('Unsupported route handler');
     }
 
-    // if (isCacheRequired && cacheKey) {
-    //   try {
-    //     const ttlSeconds = process.env.CACHE_TTL_SECONDS
-    //       ? parseInt(process.env.CACHE_TTL_SECONDS, 10)
-    //       : 30 * 60;
-
-    //     await this.redis.set(cacheKey, JSON.stringify(data), 'EX', ttlSeconds);
-    //     this.logger.debug(`Cached response for ${cacheKey}`);
-    //   } catch (err) {
-    //     this.logger.error('Redis SET error, continuing without cache', err);
-    //   }
-    // }
+    if (isCacheRequired && cacheKey && cacheProvider !== 'NONE' && process.env.CACHE_ENABLED === 'true') {
+      await this.cacheService.set(cacheKey, JSON.stringify(data), ttlSeconds, cacheProvider);
+    }
 
     return data;
   }
@@ -205,9 +189,79 @@ export class ProxyService {
         return await this.handleParallelAggregation(route, req);
       case AggregatorType.SEQUENTIAL:
         return await this.handleSequentialAggregation(route, req);
+      case AggregatorType.SEQUENTIAL_THEN_PARALLEL:
+        return await this.handleSequentialThenParallelAggregation(route, req);
       default:
         throw new Error('Unsupported aggregation type');
     }
+  }
+
+  private async handleSequentialThenParallelAggregation(route: AggregateRouteConfig, req: Request) {
+    return await this.tracer.startActiveSpan(
+      `aggregate.sequential-then-parallel ${route.path}`,
+      async (span) => {
+        span.setAttribute('proxy.route', route.path);
+        span.setAttribute('proxy.aggregation_type', 'SEQUENTIAL_THEN_PARALLEL');
+        span.setAttribute('http.method', req.method);
+        span.setAttribute('cache.hit', false);
+        const results: AggregatedResponse[] = [];
+        this.logger.log(`Processing SEQUENTIAL_THEN_PARALLEL request for ${req.url}`);
+
+        // First target executes alone
+        const firstTarget = route.targets[0];
+
+        const firstResponse = await this.handleTransformRequest(firstTarget, req, []);
+
+        results.push({
+          target: firstTarget.name || firstTarget.url,
+          success: true,
+          data: firstResponse,
+        });
+
+        // All remaining targets get CMS response
+        const previousResponses = [...results];
+
+        const parallelResults = await Promise.allSettled(
+          route.targets.slice(1).map(async (target) => {
+            try {
+              const responseData = await this.handleTransformRequest(
+                target,
+                req,
+                previousResponses,
+              );
+
+              return {
+                target: target.name || target.url,
+                success: true,
+                data: responseData,
+              };
+            } catch (err: any) {
+              return {
+                target: target.name || target.url,
+                success: false,
+                error: err?.message || String(err),
+                httpStatus: err?.httpStatusCode || err?.status || 500,
+                downstreamResponse: err?.response?.data || null,
+              };
+            }
+          }),
+        );
+
+        const normalizedResults: AggregatedResponse[] = parallelResults.map((r, index) =>
+          r.status === 'fulfilled'
+            ? r.value
+            : {
+                target: route.targets[index + 1].name || route.targets[index + 1].url,
+                success: false,
+                error: 'Unexpected failure',
+                httpStatus: 500,
+              },
+        );
+        results.push(...normalizedResults);
+
+        return route.resTransform ? await applyTransform(route.resTransform, results) : results;
+      },
+    );
   }
 
   private async handleParallelAggregation(route: AggregateRouteConfig, req: Request) {

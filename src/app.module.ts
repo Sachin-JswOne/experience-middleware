@@ -11,6 +11,8 @@ import { winstonConfig } from './logger/winston.config';
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { RequestContextMiddleware } from './utils/request-context.middleware';
 import { APP_ENV } from './config/app.config';
+import { CacheService } from './cache/cache.service';
+import { CacheModule } from './cache/cache.module';
 
 const FRONTEND_DIST_PATH = join(__dirname, '..', 'dist-frontend');
 const hasFrontendDist = existsSync(FRONTEND_DIST_PATH);
@@ -32,6 +34,7 @@ const hasFrontendDist = existsSync(FRONTEND_DIST_PATH);
           }),
         ]
       : []),
+    CacheModule,
     ServeStaticModule.forRoot({
       rootPath: APP_ENV === 'prod' ? undefined : join(__dirname, '..', 'public'),
       exclude: ['/metrics'],
