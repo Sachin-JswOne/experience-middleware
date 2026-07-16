@@ -11,6 +11,7 @@ export function transformVijaiUserListRequest(request: any) {
   const isOpportunityList = request.url.searchParams.get('isOpportunityList');
   const isAccountList = request.url.searchParams.get('isAccountList');
   const isEventList = request.url.searchParams.get('isEventList');
+  const isOrderList = request.url.searchParams.get('isOrderList');
 
   let soql = '';
   if (!ownerId) {
@@ -72,6 +73,16 @@ ORDER BY StartDateTime ASC`
         .trim();
   }
 
+  if (isOrderList === 'true') {
+    soql =
+      `SELECT Id, Order_External_Id__c, Delivery_Status__c, Payment_Status__c, Payment_Amount__c, Paid_Amount__c, Order_Cancellation_Reason__c, Order_Amount__c, CreatedDate, LastModifiedDate
+FROM Order
+WHERE OpportunityId = '${ownerId}'
+ORDER BY CreatedDate DESC`
+        .replace(/\s+/g, ' ')
+        .trim();
+  }
+
   finalTransformedRequest.url.search = `?q=${soql}`;
   return finalTransformedRequest;
 }
@@ -83,5 +94,25 @@ export function transformVijaiFetchCreditInfoRequest(request: any) {
   };
   const pan = request.url.searchParams.get('pan');
   request.url.searchParams.set('pan', pan);
+  return finalTransformedRequest;
+}
+
+export function transformVijaiMarkNotificationRequest(request: any) {
+  const finalTransformedRequest: BaseRequest = {
+    ...request,
+  };
+
+  finalTransformedRequest.body = {
+    seen: true,
+  };
+  return finalTransformedRequest;
+}
+
+export function transformVijaiResolveRecordTypeRequest(request: any) {
+  const finalTransformedRequest: BaseRequest = {
+    ...request,
+    body: null,
+  };
+  finalTransformedRequest.url.searchParams.set('layoutTypes', 'Compact');
   return finalTransformedRequest;
 }
