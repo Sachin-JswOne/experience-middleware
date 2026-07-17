@@ -32,6 +32,43 @@ export class ProxyService {
   constructor(private readonly cacheService: CacheService) {}
   // constructor() { }
 
+    private getCacheUserIdentifier(req: Request): string {
+      const authorization = this.getHeaderValue(req.headers.authorization);
+      const accessToken = this.getHeaderValue(req.headers.access_token);
+
+      const rawToken = accessToken || authorization;
+
+      // Registered user: token always takes priority
+      if (rawToken) {
+        const token = rawToken.replace(/^Bearer\s+/i, '').trim();
+
+        if (token) {
+          return `${this.lastCharacters(token, 12)}`;
+        }
+      }
+
+      // Guest session may arrive as a direct header
+      const directSessionId = this.getHeaderValue(
+        req.headers['jsw_session_id'],
+      );
+
+      if (directSessionId) {
+        return `${this.lastCharacters(directSessionId, 12)}`;
+      }
+
+      // Also support normal Cookie header
+      const cookieSessionId = this.extractCookie(
+        req.headers.cookie,
+        'jsw_session_id',
+      );
+
+      if (cookieSessionId) {
+        return `${this.lastCharacters(cookieSessionId, 12)}`;
+      }
+
+      return 'anonymous';
+    }
+
   private getCacheKey(req: Request): string {
     const env =
       process.env.CACHE_PROFILE ||
@@ -43,7 +80,55 @@ export class ProxyService {
       .replace(/^\/xp-mi\/public\//, '')
       .replace(/\//g, ':');
 
-    return `${env}:experience-middleware:${apiEndpoint}`;
+    const userIdentifier = this.getCacheUserIdentifier(req);
+
+    return `${env}:experience-middleware:${apiEndpoint}:${userIdentifier}`;
+  }
+
+  private getHeaderValue(
+    value: string | string[] | undefined,
+  ): string | null {
+    if (Array.isArray(value)) {
+      return value[0]?.trim() || null;
+    }
+
+    return typeof value === 'string' && value.trim()
+      ? value.trim()
+      : null;
+  }
+
+  private lastCharacters(value: string, length: number): string {
+    return value.length <= length ? value : value.slice(-length);
+  }
+
+  private extractCookie(
+    cookieHeader: string | string[] | undefined,
+    cookieName: string,
+  ): string | null {
+    const rawCookie = this.getHeaderValue(cookieHeader);
+
+    if (!rawCookie) {
+      return null;
+    }
+
+    const cookies = rawCookie.split(';');
+
+    for (const cookie of cookies) {
+      const separatorIndex = cookie.indexOf('=');
+
+      if (separatorIndex === -1) {
+        continue;
+      }
+
+      const name = cookie.slice(0, separatorIndex).trim();
+      const value = cookie.slice(separatorIndex + 1).trim();
+
+      if (name === cookieName) {
+        return value || null;
+      }
+    }
+
+    return null;
   }
 
   async handleRequest(req: Request) {
