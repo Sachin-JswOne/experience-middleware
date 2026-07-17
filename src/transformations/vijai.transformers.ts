@@ -12,6 +12,7 @@ export function transformVijaiUserListRequest(request: any) {
   const isAccountList = request.url.searchParams.get('isAccountList');
   const isEventList = request.url.searchParams.get('isEventList');
   const isOrderList = request.url.searchParams.get('isOrderList');
+  const last30Days = last30DaysDate();
 
   let soql = '';
   if (!ownerId) {
@@ -75,7 +76,7 @@ WHERE OwnerId = '${ownerId}'`
        AccountId, Account.Name, WhoId, Description
 FROM Event
 WHERE OwnerId = '${ownerId}'
-  AND StartDateTime >= TODAY
+  AND StartDateTime >= ${last30Days}
 ORDER BY StartDateTime ASC`
       .replace(/\s+/g, ' ')
       .trim();
@@ -123,4 +124,11 @@ export function transformVijaiResolveRecordTypeRequest(request: any) {
   };
   finalTransformedRequest.url.searchParams.set('layoutTypes', 'Compact');
   return finalTransformedRequest;
+}
+
+export function last30DaysDate() {
+  const today = new Date();
+  const last30Days = new Date(today);
+  last30Days.setDate(today.getDate() - 30);
+  return last30Days.toISOString().replace(/\.\d{3}Z$/, 'Z');
 }
