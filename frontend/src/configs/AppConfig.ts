@@ -24,7 +24,7 @@ type AppConfigType = {
 };
 
 const AppConfig: AppConfigType = {
-  APP_DISPLAY_NAME: 'Central Catalogue Management',
+  APP_DISPLAY_NAME: 'BEFE ADMIN',
   NAVIGATION_MENUS: [
     {
       id: 1,
@@ -82,10 +82,10 @@ const AppConfig: AppConfigType = {
     info: 5000,
     warning: 7000,
     success: 5000,
-    error: 10000
+    error: 10000,
   },
   COMPATIBLE_VERSION: '0.1.0',
-  UAMApplications: ['central_catalogue_admin']
+  UAMApplications: ['central_catalogue_admin'],
 };
 
 export default AppConfig;

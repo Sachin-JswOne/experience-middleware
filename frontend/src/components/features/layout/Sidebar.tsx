@@ -19,6 +19,7 @@ import type { ElementType } from 'react';
 import type { INavigationMenu } from '@/configs/AppConfig';
 import AppConfig from '@/configs/AppConfig';
 import { tokens } from '@/styles/theme';
+import JswLogo from '@/icons/JswLogo';
 
 const iconMap: Record<string, ElementType> = {
   Dashboard: DashboardIcon,
@@ -71,23 +72,7 @@ const Sidebar = ({ mobileOpen, onClose, isDesktop }: SidebarProps) => {
           flexShrink: 0,
         }}
       >
-        <Box
-          aria-hidden
-          sx={{
-            width: 32,
-            height: 32,
-            borderRadius: `${tokens.radiusMedium}px`,
-            bgcolor: tokens.brand,
-            color: tokens.textInverse,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontWeight: tokens.weightBold,
-            fontSize: '0.875rem',
-          }}
-        >
-          J1
-        </Box>
+        <JswLogo width={52} height={52} />
         <Box>
           <Typography
             sx={{
@@ -96,7 +81,7 @@ const Sidebar = ({ mobileOpen, onClose, isDesktop }: SidebarProps) => {
               lineHeight: '1.25rem',
             }}
           >
-            JSW One
+            JSW One MSME
           </Typography>
           <Typography
             sx={{
@@ -105,7 +90,7 @@ const Sidebar = ({ mobileOpen, onClose, isDesktop }: SidebarProps) => {
               color: tokens.textSubtlest,
             }}
           >
-            Catalogue console
+            BEFE console
           </Typography>
         </Box>
       </Box>
