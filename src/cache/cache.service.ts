@@ -15,48 +15,84 @@ export class CacheService {
   ) {}
 
   async get(key: string, provider: CacheProvider): Promise<string | null> {
-    if (!this.props.cacheEnabled || provider === 'NONE') return null;
 
-    if (provider === 'AUTO' || provider === 'VALKEY') {
-      const value = await this.valkeyClient.execute<string | null>((client) => client.get(key));
-
-      if (value) {
-        this.logger.log(`Cache HIT source=VALKEY key=${key}`);
-        return value;
+      if (!this.props.cacheEnabled || provider === 'NONE') {
+          return null;
       }
-    }
 
-    if (provider === 'AUTO' || provider === 'LOCAL') {
-      return this.localCache.get(key);
-    }
+      switch (provider) {
 
-    return null;
+          case 'VALKEY': {
+
+              const value = await this.valkeyClient.execute<string | null>(client =>
+                  client.get(key),
+              );
+
+              // If Valkey misses OR is unavailable,
+              // do NOT use local cache.
+              return value;
+          }
+
+          case 'LOCAL':
+              return this.localCache.get(key);
+
+          case 'AUTO': {
+
+              const value = await this.valkeyClient.execute<string | null>(client =>
+                  client.get(key),
+              );
+
+              if (value) {
+                  return value;
+              }
+
+              return this.localCache.get(key);
+          }
+
+          default:
+              return null;
+      }
   }
 
-  async set(
-    key: string,
-    value: string,
-    ttlSeconds: number,
-    provider: CacheProvider,
-  ): Promise<void> {
-    if (!this.props.cacheEnabled || provider === 'NONE') return;
+  async set(key: string,
+      value: string,
+      ttl: number,
+      provider: CacheProvider,
+  ) {
 
-    const ttlWithJitter = ttlSeconds + this.randomJitter();
-
-    if (provider === 'AUTO' || provider === 'VALKEY') {
-      const stored = await this.valkeyClient.executeWrite((client) =>
-        client.set(key, value, 'EX', ttlWithJitter),
-      );
-
-      if (stored) {
-        this.logger.log(`Cache STORED source=VALKEY key=${key} ttl=${ttlWithJitter}`);
-        return;
+      if (!this.props.cacheEnabled || provider === 'NONE') {
+          return;
       }
-    }
 
-    if (provider === 'AUTO' || provider === 'LOCAL') {
-      this.localCache.set(key, value, ttlWithJitter);
-    }
+      ttl += this.randomJitter();
+
+      switch (provider) {
+
+          case 'VALKEY':
+
+              await this.valkeyClient.executeWrite(client =>
+                  client.set(key, value, 'EX', ttl),
+              );
+              return;
+
+          case 'LOCAL':
+
+              this.localCache.set(key, value, ttl);
+              return;
+
+          case 'AUTO': {
+
+              const stored = await this.valkeyClient.executeWrite(client =>
+                  client.set(key, value, 'EX', ttl),
+              );
+
+              if (!stored) {
+                  this.localCache.set(key, value, ttl);
+              }
+
+              return;
+          }
+      }
   }
 
   async del(key: string): Promise<void> {

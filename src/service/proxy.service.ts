@@ -24,6 +24,7 @@ import { match } from 'path-to-regexp';
 import { CacheService } from '../cache/cache.service';
 import { CacheProvider } from 'src/cache/cache-provider.type';
 import axios from 'axios';
+import { createHash } from 'crypto';
 
 @Injectable()
 export class ProxyService {
@@ -31,6 +32,34 @@ export class ProxyService {
   private readonly logger = new Logger(ProxyService.name);
   constructor(private readonly cacheService: CacheService) {}
   // constructor() { }
+
+    private getCacheUserIdentifier(req: Request): string {
+      const authorization = this.getHeaderValue(req.headers.authorization);
+      const accessToken = this.getHeaderValue(req.headers.access_token);
+      const rawToken = accessToken || authorization;
+
+      if (rawToken) {
+        const token = rawToken.replace(/^Bearer\s+/i, '').trim();
+        if (token) {
+          // Use a short, collision-resistant hash instead of a suffix
+          return createHash('sha256').update(token).digest('hex').slice(0, 16);
+        }
+      }
+
+      const directSessionId = this.getHeaderValue(req.headers['jsw_session_id']);
+      if (directSessionId) {
+        return createHash('sha256').update(directSessionId).digest('hex').slice(0, 16);
+      }
+
+      const cookieSessionId = this.extractCookie(req.headers.cookie, 'jsw_session_id');
+      if (cookieSessionId) {
+        return createHash('sha256').update(cookieSessionId).digest('hex').slice(0, 16);
+      }
+      // NOTE: 'anonymous' cache partition is shared across ALL unauthenticated
+      // requests. Only use VALKEY/AUTO caching for endpoints that return
+      // identical responses for all unauthenticated users.
+      return 'anonymous';
+}
 
   private getCacheKey(req: Request): string {
     const env =
@@ -43,7 +72,55 @@ export class ProxyService {
       .replace(/^\/xp-mi\/public\//, '')
       .replace(/\//g, ':');
 
-    return `${env}:experience-middleware:${apiEndpoint}`;
+    const userIdentifier = this.getCacheUserIdentifier(req);
+
+    return `${env}:experience-middleware:${apiEndpoint}:${userIdentifier}`;
+  }
+
+  private getHeaderValue(
+    value: string | string[] | undefined,
+  ): string | null {
+    if (Array.isArray(value)) {
+      return value[0]?.trim() || null;
+    }
+
+    return typeof value === 'string' && value.trim()
+      ? value.trim()
+      : null;
+  }
+
+  private lastCharacters(value: string, length: number): string {
+    return value.length <= length ? value : value.slice(-length);
+  }
+
+  private extractCookie(
+    cookieHeader: string | string[] | undefined,
+    cookieName: string,
+  ): string | null {
+    const rawCookie = this.getHeaderValue(cookieHeader);
+
+    if (!rawCookie) {
+      return null;
+    }
+
+    const cookies = rawCookie.split(';');
+
+    for (const cookie of cookies) {
+      const separatorIndex = cookie.indexOf('=');
+
+      if (separatorIndex === -1) {
+        continue;
+      }
+
+      const name = cookie.slice(0, separatorIndex).trim();
+      const value = cookie.slice(separatorIndex + 1).trim();
+
+      if (name === cookieName) {
+        return value || null;
+      }
+    }
+
+    return null;
   }
 
   async handleRequest(req: Request) {
