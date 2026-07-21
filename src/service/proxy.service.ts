@@ -233,7 +233,12 @@ export class ProxyService {
       }
 
       const normalized = this.normalizePathTemplate(route.path);
-      const routeMatcher = match(normalized, { decode: decodeURIComponent });
+      let routeMatcher: ReturnType<typeof match>;
+      try {
+        routeMatcher = match(normalized, { decode: decodeURIComponent });
+      } catch {
+        continue;
+      }
       const result = routeMatcher(req.path);
 
       if (result) {
