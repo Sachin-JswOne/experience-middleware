@@ -6,9 +6,9 @@
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
-    "build": "nest build",
+    "build:be": "nest build",
     "build:frontend": "cd frontend && npm run build",
-    "build:all": "npm run build:frontend && npm run build",
+    "build": "npm run build:frontend && npm run build:be",
     "start": "nest start",
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
