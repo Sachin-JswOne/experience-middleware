@@ -1228,7 +1228,7 @@
   {
     "path": "/xp-mi/public/v1/web-about-us",
     "isCacheRequired": true,
-    "cacheProvider": "AUTO",
+    "cacheProvider": "VALKEY",
     "cacheTTLSeconds": 300,
     "method": "POST",
     "routeHandler": "TRANSFORM",
@@ -1315,6 +1315,9 @@
   {
     "path": "/xp-mi/public/v1/customer-profile",
     "method": "GET",
+    "isCacheRequired": true,
+    "cacheProvider": "VALKEY",
+    "cacheTTLSeconds": 300,
     "routeHandler": "AGGREGATE",
     "aggregationType": "SEQUENTIAL",
     "targets": [
@@ -1617,7 +1620,7 @@
   {
     "path": "/xp-mi/public/v1/web-search-page",
     "method": "POST",
-    "isCacheRequired": true,
+    "isCacheRequired": false,
     "cacheProvider": "AUTO",
     "cacheTTLSeconds": 300,
     "routeHandler": "AGGREGATE",
@@ -2018,7 +2021,7 @@
   {
     "path": "/xp-mi/public/v1/central_commerce/trending-search",
     "method": "GET",
-    "isCacheRequired": true,
+    "isCacheRequired": false,
     "cacheProvider": "AUTO",
     "cacheTTLSeconds": 300,
     "routeHandler": "TRANSFORM",
@@ -2379,6 +2382,9 @@
   {
     "path": "/xp-mi/public/v2/customer-profile",
     "method": "GET",
+    "isCacheRequired": true,
+    "cacheProvider": "VALKEY",
+    "cacheTTLSeconds": 300,
     "routeHandler": "AGGREGATE",
     "aggregationType": "PARALLEL",
     "targets": [
