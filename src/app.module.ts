@@ -31,7 +31,7 @@ const hasFrontendDist = existsSync(FRONTEND_DIST_PATH);
       ? [
           ServeStaticModule.forRoot({
             rootPath: FRONTEND_DIST_PATH,
-            exclude: ['/metrics', '/xp-mi*'],
+            exclude: ['/metrics', '/xp-mi', '/xp-mi/{*path}'],
           }),
         ]
       : []),
