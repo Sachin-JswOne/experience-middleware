@@ -1,4 +1,5 @@
 import { VariantType } from 'notistack';
+import { PROMPT_TYPES } from './PromptConfig';
 
 export interface INavigationMenu {
   id: number;
@@ -8,6 +9,7 @@ export interface INavigationMenu {
   icon: string;
   applicableRoutes: string[];
   preserveQueryParams?: boolean;
+  children?: INavigationMenu[];
 }
 
 type ISnackbar_Auto_Hide_Durations = {
@@ -23,6 +25,41 @@ type AppConfigType = {
   CACHE_TTL: number;
 };
 
+type PromptFeatureMenu = INavigationMenu & { children: INavigationMenu[] };
+
+const buildPromptMenuChildren = (): INavigationMenu[] => {
+  const featureMap = new Map<string, PromptFeatureMenu>();
+
+  PROMPT_TYPES.forEach((type) => {
+    if (!featureMap.has(type.feature)) {
+      const featureId = 70 + featureMap.size;
+      featureMap.set(type.feature, {
+        id: featureId,
+        label: type.feature,
+        route: `/prompts/${type.promptType}`,
+        requiredAction: '',
+        icon: 'SmartToy',
+        applicableRoutes: [],
+        children: [],
+      });
+    }
+
+    const feature = featureMap.get(type.feature)!;
+    const childRoute = `/prompts/${type.promptType}`;
+    feature.children.push({
+      id: feature.id * 10 + feature.children.length + 1,
+      label: type.label,
+      route: childRoute,
+      requiredAction: '',
+      icon: 'SmartToy',
+      applicableRoutes: [childRoute],
+    });
+    feature.applicableRoutes.push(childRoute);
+  });
+
+  return Array.from(featureMap.values());
+};
+
 const AppConfig: AppConfigType = {
   APP_DISPLAY_NAME: 'BEFE ADMIN',
   NAVIGATION_MENUS: [
@@ -35,45 +72,13 @@ const AppConfig: AppConfigType = {
       applicableRoutes: ['/'],
     },
     {
-      id: 2,
-      label: 'Products',
-      route: '/products',
-      requiredAction: 'VIEW_PRODUCT',
-      icon: 'Inventory',
-      applicableRoutes: ['/products'],
-      preserveQueryParams: true,
-    },
-    {
-      id: 3,
-      label: 'Categories',
-      route: '/categories',
-      requiredAction: 'VIEW_CATEGORY',
-      icon: 'Category',
-      applicableRoutes: ['/categories'],
-    },
-    {
-      id: 4,
-      label: 'Users',
-      route: '/users',
-      requiredAction: 'VIEW_USER',
-      icon: 'People',
-      applicableRoutes: ['/users'],
-    },
-    {
-      id: 5,
-      label: 'Settings',
-      route: '/settings',
-      requiredAction: '',
-      icon: 'Settings',
-      applicableRoutes: ['/settings'],
-    },
-    {
       id: 6,
       label: 'Prompts',
       route: '/prompts',
       requiredAction: '',
       icon: 'SmartToy',
       applicableRoutes: ['/prompts'],
+      children: buildPromptMenuChildren(),
     },
   ],
   CACHE_TTL: 10 * 60 * 1000, // 10 minutes

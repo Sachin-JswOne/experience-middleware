@@ -27,7 +27,6 @@ import RefreshIcon from '@mui/icons-material/Refresh';
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
 
 import PromptService, { IPromptVersion } from '@/services/PromptService';
-import { tokens } from '@/styles/theme';
 import ViewPromptDialog from './ViewPromptDialog';
 import AddPromptDialog from './AddPromptDialog';
 

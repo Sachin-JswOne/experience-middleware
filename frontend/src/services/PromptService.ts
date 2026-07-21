@@ -1,13 +1,6 @@
 import ApiClient, { IApiClientResponse } from '@/services/ApiClient';
 import { API_ROUTES } from '@/configs/ApiRoutes';
 import { ILooseObject } from '@/_types/common.interface';
-import LocalStorage from '@/utils/LocalStorage';
-
-const getAccessTokenHeader = (): ILooseObject => {
-  const userInfo: ILooseObject | undefined = LocalStorage.getItem('userInfo');
-  const token = userInfo?.token;
-  return token ? { access_token: token } : {};
-};
 
 export interface IPromptVersion {
   id: number | string;

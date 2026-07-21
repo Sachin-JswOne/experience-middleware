@@ -13,6 +13,7 @@ const App = () => (
     <Route element={<ProtectedLayout />}>
       <Route path="/" element={<DashboardPage />} />
       <Route path="/prompts" element={<PromptsPage />} />
+      <Route path="/prompts/:type" element={<PromptsPage />} />
     </Route>
     <Route path="*" element={<NotFoundPage />} />
   </Routes>
