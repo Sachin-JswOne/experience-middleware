@@ -38,7 +38,7 @@ const buildPromptMenuChildren = (): INavigationMenu[] => {
         label: type.feature,
         route: `/prompts/${type.promptType}`,
         requiredAction: '',
-        icon: 'SmartToy',
+        icon: 'Assistant',
         applicableRoutes: [],
         children: [],
       });
@@ -51,7 +51,7 @@ const buildPromptMenuChildren = (): INavigationMenu[] => {
       label: type.label,
       route: childRoute,
       requiredAction: '',
-      icon: 'SmartToy',
+      icon: 'Assistant',
       applicableRoutes: [childRoute],
     });
     feature.applicableRoutes.push(childRoute);
@@ -76,7 +76,7 @@ const AppConfig: AppConfigType = {
       label: 'Prompts',
       route: '/prompts',
       requiredAction: '',
-      icon: 'SmartToy',
+      icon: 'Assistant',
       applicableRoutes: ['/prompts'],
       children: buildPromptMenuChildren(),
     },
