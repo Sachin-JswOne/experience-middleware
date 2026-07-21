@@ -31,6 +31,7 @@ export class ProxyService {
   private readonly logger = new Logger(ProxyService.name);
   constructor(private readonly cacheService: CacheService) {}
   // constructor() { }
+  // constructor() { }
 
     private getCacheUserIdentifier(req: Request): string {
       const authorization = this.getHeaderValue(req.headers.authorization);
@@ -193,7 +194,9 @@ export class ProxyService {
 
       if (cached) {
         try {
-          return JSON.parse(cached);
+          const parsed = JSON.parse(cached);
+          (req as any)._metricsCacheHit = true;
+          return parsed;
         } catch {
           await this.cacheService.del(cacheKey);
           this.logger.warn(`Corrupt cache value evicted key=${cacheKey}`);
@@ -579,6 +582,13 @@ export class ProxyService {
           span.setAttribute('proxy.target.downstream_ms', downstreamMs);
           span.setAttribute('proxy.target.res_transform_ms', resTransformMs);
 
+          if (!(req as any)._metricsDownstream) (req as any)._metricsDownstream = [];
+          (req as any)._metricsDownstream.push({
+            target: target.name || target.url,
+            durationMs: totalMs,
+            success: response.status < 400,
+          });
+
           this.logger.log(
             `[DOWNSTREAM RESPONSE] target=${target.name || target.url} route=${req.path} status=${response.status} duration_ms=${totalMs} build_ms=${buildMs} client_ms=${clientCreateMs} downstream_ms=${downstreamMs} res_transform_ms=${resTransformMs} `,
           );
@@ -621,6 +631,13 @@ export class ProxyService {
           const totalMs = this.nowMs() - totalStart;
 
           span.setAttribute('proxy.target.duration_ms', totalMs);
+
+          if (!(req as any)._metricsDownstream) (req as any)._metricsDownstream = [];
+          (req as any)._metricsDownstream.push({
+            target: target.name || target.url,
+            durationMs: totalMs,
+            success: false,
+          });
 
           const errorResponse = axios.isAxiosError(err) && err.response ? err.response : null;
 

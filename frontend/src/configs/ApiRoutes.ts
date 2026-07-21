@@ -7,4 +7,5 @@ export const API_ROUTES = {
     ACTIVATE: (type: string, v: number | string) =>
       `${PROMPTS_BASE}/${type}/versions/${v}/activate`,
   },
+  METRICS: '/xp-mi/metrics',
 };
