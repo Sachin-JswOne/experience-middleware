@@ -99,52 +99,6 @@ export function mergeCartPageResponses(aggregatedResponses: AggregatedResponse[]
   return { data: {}, meta: {} };
 }
 
-// Merge Response for web cart page (banner CMS + cart data + credit instruments)
-export function mergeWebCartPageResponses(aggregatedResponses: AggregatedResponse[]): any {
-  const responses = aggregatedResponses.reduce(
-    (acc, response) => {
-      acc[response.target] = response;
-      return acc;
-    },
-    {} as Record<string, AggregatedResponse>,
-  );
-
-  const cmsResponse = responses['web-cart-page-cms'];
-  const cartGetResponse = responses['web-cart-get'];
-  const creditInstrumentResponse = responses['web-credit-instrument'];
-
-  safeDebug(Logger, () => `web-cart-page CMS response: ${JSON.stringify(cmsResponse)}`);
-  safeDebug(Logger, () => `web-cart-get response: ${JSON.stringify(cartGetResponse)}`);
-  safeDebug(
-    Logger,
-    () => `web-credit-instrument response: ${JSON.stringify(creditInstrumentResponse)}`,
-  );
-
-  if (!cmsResponse?.success || typeof cmsResponse.data !== 'object' || cmsResponse.data === null) {
-    Logger.error(
-      `Error for Web Cart Page API method: mergeWebCartPageResponses - CMS response missing or invalid`,
-    );
-    return { data: {}, meta: {} };
-  }
-
-  const mergedData: Record<string, unknown> = {
-    ...(cmsResponse.data.data as Record<string, unknown>),
-  };
-
-  if (cartGetResponse?.success && cartGetResponse?.data) {
-    mergedData.cart = cartGetResponse.data;
-  }
-
-  if (creditInstrumentResponse?.success && creditInstrumentResponse?.data) {
-    mergedData.creditInstruments = creditInstrumentResponse.data;
-  }
-
-  return {
-    data: mergedData,
-    meta: (cmsResponse.data as { meta?: unknown }).meta ?? {},
-  };
-}
-
 // Merge Response for mweb cart page
 export function mergeMmebCartPageResponses(aggregatedResponses: AggregatedResponse[]): any {
   const responses = aggregatedResponses.reduce(
@@ -216,5 +170,51 @@ export function mergeMmebCartPageResponses(aggregatedResponses: AggregatedRespon
   return {
     ...strapiCartData,
     blocks,
+  };
+}
+
+// Merge Response for web cart page (banner CMS + cart data + credit instruments)
+export function mergeWebCartPageResponses(aggregatedResponses: AggregatedResponse[]): any {
+  const responses = aggregatedResponses.reduce(
+    (acc, response) => {
+      acc[response.target] = response;
+      return acc;
+    },
+    {} as Record<string, AggregatedResponse>,
+  );
+
+  const cmsResponse = responses['web-cart-page-cms'];
+  const cartGetResponse = responses['web-cart-get'];
+  const creditInstrumentResponse = responses['web-credit-instrument'];
+
+  safeDebug(Logger, () => `web-cart-page CMS response: ${JSON.stringify(cmsResponse)}`);
+  safeDebug(Logger, () => `web-cart-get response: ${JSON.stringify(cartGetResponse)}`);
+  safeDebug(
+    Logger,
+    () => `web-credit-instrument response: ${JSON.stringify(creditInstrumentResponse)}`,
+  );
+
+  if (!cmsResponse?.success || typeof cmsResponse.data !== 'object' || cmsResponse.data === null) {
+    Logger.error(
+      `Error for Web Cart Page API method: mergeWebCartPageResponses - CMS response missing or invalid`,
+    );
+    return { data: {}, meta: {} };
+  }
+
+  const mergedData: Record<string, unknown> = {
+    ...(cmsResponse.data.data as Record<string, unknown>),
+  };
+
+  if (cartGetResponse?.success && cartGetResponse?.data) {
+    mergedData.cart = cartGetResponse.data;
+  }
+
+  if (creditInstrumentResponse?.success && creditInstrumentResponse?.data) {
+    mergedData.creditInstruments = creditInstrumentResponse.data;
+  }
+
+  return {
+    data: mergedData,
+    meta: (cmsResponse.data as { meta?: unknown }).meta ?? {},
   };
 }

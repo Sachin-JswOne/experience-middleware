@@ -24,7 +24,7 @@ import { match } from 'path-to-regexp';
 import { CacheService } from '../cache/cache.service';
 import { CacheProvider } from 'src/cache/cache-provider.type';
 import axios from 'axios';
-import { createHash } from 'crypto'
+import { createHash } from 'crypto';
 
 @Injectable()
 export class ProxyService {
