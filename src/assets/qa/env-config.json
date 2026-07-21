@@ -23,5 +23,7 @@
   "SF_SALES_APP_CLIENT_SECRET": "E0202764C5665178CC8CD6E669E20E353FEE6EE1F3B15537376FD515F15EF583",
   "SF_SALES_APP_REDIRECT_URI": "com.jswsales.app://oauth/callback",
   "OMS_AUTH_FETCH_CREDIT_INFO_VIJAI": "SalesForce.Connector.oSyMktm",
-  "OMS_CLIENT_ID_VIJAI": "CLIEX1"
+  "OMS_CLIENT_ID_VIJAI": "CLIEX1",
+  "AUTH2_SERVICE_BASE_URL": "https://qa-oms.msme.jswone.in/auth2-service",
+  "CATALOGUE_ADMIN_API_BASE_URL": "https://auth.jsw1msme.in/auth_service"
 }

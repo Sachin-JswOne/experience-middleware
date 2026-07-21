@@ -20,5 +20,7 @@
   "X_API_KEY_FOR_ORDER_LISTING": "Zoho.Connector.Yrt664kT",
   "X_API_KEY_FOR_REGISTRATION": "CustomerService-v1-4iy665w9f64u0h87wpoevhi5zflxy8cwa7y09rjvhu24sinjlcmlq8bdfmdz5hh6",
   "OMS_AUTH_FETCH_CREDIT_INFO_VIJAI": "SalesForce.Connector.oSyMktm",
-  "OMS_CLIENT_ID_VIJAI": "CLIEX1"
+  "OMS_CLIENT_ID_VIJAI": "CLIEX1",
+  "AUTH2_SERVICE_BASE_URL": "https://oms.preprod.jswonemsme.com/auth2-service",
+  "CATALOGUE_ADMIN_API_BASE_URL": "https://auth.jsw1msme.in/auth_service"
 }
