@@ -1,9 +1,10 @@
 // src/controller/proxy.controller.ts
-import { Controller, All, Req, Res, HttpStatus, Logger } from '@nestjs/common';
+import { Controller, All, Get, Query, Req, Res, HttpStatus, Logger } from '@nestjs/common';
 import { ProxyService } from '../service/proxy.service';
 import { Request, Response } from 'express';
 import { CustomError } from 'src/utils/CustomError';
 import { AxiosError } from 'axios';
+import { replaceEnvPlaceholders } from 'src/config/route.config';
 
 type TracedRequest = Request & {
   traceId?: string;
@@ -38,6 +39,13 @@ export class ProxyController {
   private readonly logger = new Logger(ProxyController.name);
 
   constructor(private readonly proxyService: ProxyService) {}
+
+  @Get('public/v1/auth/outlook-login')
+  outlookLogin(@Query('referer') referer: string, @Res() res: Response) {
+    const authBaseUrl = replaceEnvPlaceholders('${AUTH2_SERVICE_BASE_URL}');
+    const url = `${authBaseUrl}/auth/outlook-login?referer=${encodeURIComponent(referer ?? '')}`;
+    return res.redirect(HttpStatus.FOUND, url);
+  }
 
   @All('public/*path')
   async handle(@Req() req: TracedRequest, @Res() res: Response) {
