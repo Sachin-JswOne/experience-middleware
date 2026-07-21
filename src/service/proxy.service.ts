@@ -24,6 +24,7 @@ import { match } from 'path-to-regexp';
 import { CacheService } from '../cache/cache.service';
 import { CacheProvider } from 'src/cache/cache-provider.type';
 import axios from 'axios';
+import { createHash } from 'crypto'
 
 @Injectable()
 export class ProxyService {
@@ -36,37 +37,28 @@ export class ProxyService {
     private getCacheUserIdentifier(req: Request): string {
       const authorization = this.getHeaderValue(req.headers.authorization);
       const accessToken = this.getHeaderValue(req.headers.access_token);
-
       const rawToken = accessToken || authorization;
 
-      // Registered user: token always takes priority
       if (rawToken) {
         const token = rawToken.replace(/^Bearer\s+/i, '').trim();
-
         if (token) {
-          return `${this.lastCharacters(token, 12)}`;
+          // Use a short, collision-resistant hash instead of a suffix
+          return createHash('sha256').update(token).digest('hex').slice(0, 16);
         }
       }
 
-      // Guest session may arrive as a direct header
-      const directSessionId = this.getHeaderValue(
-        req.headers['jsw_session_id'],
-      );
-
+      const directSessionId = this.getHeaderValue(req.headers['jsw_session_id']);
       if (directSessionId) {
-        return `${this.lastCharacters(directSessionId, 12)}`;
+        return createHash('sha256').update(directSessionId).digest('hex').slice(0, 16);
       }
 
-      // Also support normal Cookie header
-      const cookieSessionId = this.extractCookie(
-        req.headers.cookie,
-        'jsw_session_id',
-      );
-
+      const cookieSessionId = this.extractCookie(req.headers.cookie, 'jsw_session_id');
       if (cookieSessionId) {
-        return `${this.lastCharacters(cookieSessionId, 12)}`;
+        return createHash('sha256').update(cookieSessionId).digest('hex').slice(0, 16);
       }
-
+      // NOTE: 'anonymous' cache partition is shared across ALL unauthenticated
+      // requests. Only use VALKEY/AUTO caching for endpoints that return
+      // identical responses for all unauthenticated users.
       return 'anonymous';
     }
 

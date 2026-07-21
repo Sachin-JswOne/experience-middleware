@@ -12,13 +12,13 @@ export function transformVijaiUserListRequest(request: any) {
   const isAccountList = request.url.searchParams.get('isAccountList');
   const isEventList = request.url.searchParams.get('isEventList');
   const isOrderList = request.url.searchParams.get('isOrderList');
+  const isAccountById = request.url.searchParams.get('isAccountById');
+  const accountIds = request.url.searchParams.get('accountIds');
+  const last30Days = last30DaysDate();
 
   let soql = '';
-  if (!ownerId) {
-    throw new CustomError('OwnerId is required in params', 400);
-  }
 
-  if (isVisitList === 'true') {
+  if (isVisitList === 'true' && ownerId) {
     soql = `SELECT Id, Name, Visit_Stage__c, Planned_Visit__c,
        CheckIn_CMV__Account__c, CheckIn_CMV__Account__r.Name,
        CheckIn_CMV__Check_in_Date_Time__c,
@@ -38,7 +38,7 @@ ORDER BY CheckIn_CMV__Check_in_Date_Time__c DESC`
       .trim();
   }
 
-  if (isOpportunityList === 'true') {
+  if (isOpportunityList === 'true' && ownerId) {
     soql = `SELECT Id, Name, StageName, RecordType.DeveloperName, CreatedDate, 
        Credit_limit_requested__c, Credit_tenure_request_days__c, 
        Category_Team_Owner__c, Credit_sales_SPOC__c, Risk_SPOC__c,
@@ -61,7 +61,7 @@ WHERE OwnerId = '${ownerId}' OR Sales_SPOC__c = '${ownerId}'`
       .trim();
   }
 
-  if (isAccountList === 'true') {
+  if (isAccountList === 'true' && ownerId) {
     soql =
       `Select Account_tag__c, Registered__c, Account_History_String__c, Opportunity_History_String__c, Last_Opportunity_Create_Date__c, AccountNumber,GST__c, PAN__c, Id, Name, Nodal_Bank_Account__c,isJodl__c, Pay_to__c, JSW_NodalBankVAN__c, JSW_NonNodalBankVAN__c,Non_Nodal_Bank_Account__c, Segment__c, Sub_Segment__c, RecordType.Name, Customer_Type_Account__c, Account_Status__c, Business_Division__c,(SELECT Id, Name, Designation_multiselect__c, MobilePhone, Email from Contacts), (Select id, name, Project_Address__c, pin_code__c, auto_state__c, auto_district__c, City__c,RecordType.Name,Google_maps_coordinates__c from MSME_Construct_Sites__r)
 FROM Account
@@ -70,18 +70,18 @@ WHERE OwnerId = '${ownerId}'`
         .trim();
   }
 
-  if (isEventList === 'true') {
+  if (isEventList === 'true' && ownerId) {
     soql = `SELECT Id, Subject, ActivityDate, StartDateTime, EndDateTime, Location,
        AccountId, Account.Name, WhoId, Description
 FROM Event
 WHERE OwnerId = '${ownerId}'
-  AND StartDateTime >= TODAY
+  AND StartDateTime >= ${last30Days}
 ORDER BY StartDateTime ASC`
       .replace(/\s+/g, ' ')
       .trim();
   }
 
-  if (isOrderList === 'true') {
+  if (isOrderList === 'true' && ownerId) {
     soql =
       `SELECT Id, Order_External_Id__c, Delivery_Status__c, Payment_Status__c, Payment_Amount__c, Paid_Amount__c, Order_Cancellation_Reason__c, Order_Amount__c, CreatedDate, LastModifiedDate
 FROM Order
@@ -89,6 +89,26 @@ WHERE OpportunityId = '${ownerId}'
 ORDER BY CreatedDate DESC`
         .replace(/\s+/g, ' ')
         .trim();
+  }
+
+  if (isAccountById === 'true' && accountIds) {
+    soql = `SELECT Account_tag__c, Registered__c, Account_History_String__c, Opportunity_History_String__c, Last_Opportunity_Create_Date__c,
+    AccountNumber, GST__c, PAN__c, Id, Name, Nodal_Bank_Account__c, isJodl__c, Pay_to__c, JSW_NodalBankVAN__c, JSW_NonNodalBankVAN__c,
+    Non_Nodal_Bank_Account__c, Segment__c, Sub_Segment__c, RecordType.Name, Customer_Type_Account__c, Account_Status__c, Business_Division__c,
+    (
+        SELECT
+            Id, Name, Designation_multiselect__c, MobilePhone, Email
+        FROM Contacts
+    ),
+    (
+        SELECT
+            Id, Name, Project_Address__c, PIN_Code__c, Auto_State__c, Auto_District__c, City__c, RecordType.Name, Google_Maps_Coordinates__c
+        FROM MSME_Construct_Sites__r
+    )
+    FROM Account
+    WHERE Id IN (
+    ${accountIds}
+    )`;
   }
 
   finalTransformedRequest.url.search = `?q=${soql}`;
@@ -123,4 +143,11 @@ export function transformVijaiResolveRecordTypeRequest(request: any) {
   };
   finalTransformedRequest.url.searchParams.set('layoutTypes', 'Compact');
   return finalTransformedRequest;
+}
+
+export function last30DaysDate() {
+  const today = new Date();
+  const last30Days = new Date(today);
+  last30Days.setDate(today.getDate() - 30);
+  return last30Days.toISOString().replace(/\.\d{3}Z$/, 'Z');
 }
