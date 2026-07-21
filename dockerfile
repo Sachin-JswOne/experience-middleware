@@ -8,9 +8,10 @@ WORKDIR /app
 
 # Copy only dependency files first (better caching)
 COPY package*.json ./
+COPY frontend/package*.json ./frontend/
 
 # Install dependencies (including dev deps for build)
-RUN npm ci
+RUN npm ci && npm ci --prefix frontend
 
 # Copy source code
 COPY . .
@@ -37,6 +38,7 @@ RUN npm ci --omit=dev && npm cache clean --force
 
 # Copy built output from builder
 COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/dist-frontend ./dist-frontend
 
 # Create logs directory and set ownership
 RUN mkdir -p logs && chown -R node:node /app
