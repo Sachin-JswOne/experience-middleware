@@ -72,14 +72,6 @@ const AppConfig: AppConfigType = {
       applicableRoutes: ['/'],
     },
     {
-      id: 2,
-      label: 'Metrics',
-      route: '/metrics',
-      requiredAction: '',
-      icon: 'BarChart',
-      applicableRoutes: ['/metrics'],
-    },
-    {
       id: 6,
       label: 'Prompts',
       route: '/prompts',
