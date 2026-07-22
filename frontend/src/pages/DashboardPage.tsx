@@ -1,10 +1,13 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   Alert,
   Box,
   Button,
-  Chip,
   IconButton,
+  MenuItem,
+  Select,
+  Tab,
+  Tabs,
   ToggleButton,
   ToggleButtonGroup,
   Typography,
@@ -20,9 +23,19 @@ import useMetricsQuery, {
 } from '@/components/features/metrics/useMetricsQuery';
 import SummaryCards from '@/components/features/metrics/SummaryCards';
 import RequestTimelineChart from '@/components/features/metrics/RequestTimelineChart';
+import StatusClassTimelineChart from '@/components/features/metrics/StatusClassTimelineChart';
 import RouteBreakdownChart from '@/components/features/metrics/RouteBreakdownChart';
 import DownstreamLatencyChart from '@/components/features/metrics/DownstreamLatencyChart';
+import DownstreamStatusChart from '@/components/features/metrics/DownstreamStatusChart';
+import LatencyStageChart from '@/components/features/metrics/LatencyStageChart';
 import CacheHitPieChart from '@/components/features/metrics/CacheHitPieChart';
+import CacheProviderChart from '@/components/features/metrics/CacheProviderChart';
+import RoutesTable from '@/components/features/metrics/RoutesTable';
+import RecentErrorsPanel from '@/components/features/metrics/RecentErrorsPanel';
+import MetricsFilterBar, {
+  emptyFilter,
+  type MetricsFilter,
+} from '@/components/features/metrics/MetricsFilterBar';
 
 const emptySnapshot: MetricsSnapshot = {
   timestamp: Date.now(),
@@ -33,20 +46,65 @@ const emptySnapshot: MetricsSnapshot = {
   downstream: [],
 };
 
+const WINDOW_OPTIONS: Array<{ value: MetricsWindow; label: string }> = [
+  { value: '5m', label: '5m' },
+  { value: '15m', label: '15m' },
+  { value: '30m', label: '30m' },
+  { value: '1h', label: '1h' },
+];
+
+const REFRESH_OPTIONS = [
+  { value: 0, label: 'Refresh: Off' },
+  { value: 10_000, label: 'Refresh: 10s' },
+  { value: 30_000, label: 'Refresh: 30s' },
+  { value: 60_000, label: 'Refresh: 60s' },
+];
+
+const REFRESH_STORAGE_KEY = 'metricsRefreshMs';
+
 const DashboardPage = () => {
   const userInfo: ILooseObject | undefined = LocalStorage.getItem('userInfo');
   const firstName = String(userInfo?.name || '')
     .trim()
     .split(' ')[0];
 
-  const [autoRefresh, setAutoRefresh] = useState(true);
   const [timeWindow, setTimeWindow] = useState<MetricsWindow>('5m');
+  const [refreshMs, setRefreshMs] = useState<number>(() => {
+    const stored = LocalStorage.getItem(REFRESH_STORAGE_KEY);
+    return typeof stored === 'number' ? stored : 10_000;
+  });
+  const [tab, setTab] = useState(0);
+  const [filter, setFilter] = useState<MetricsFilter>(emptyFilter);
 
   const { data, isPending, isFetching, isError, refetch } = useMetricsQuery(
     timeWindow,
-    autoRefresh,
+    refreshMs > 0 ? refreshMs : false,
   );
   const snapshot = data ?? emptySnapshot;
+
+  const routeOptions = useMemo(
+    () => snapshot.routeBreakdown.map((r) => `${r.method} ${r.route}`),
+    [snapshot.routeBreakdown],
+  );
+  const methodOptions = useMemo(
+    () => Array.from(new Set(snapshot.routeBreakdown.map((r) => r.method))).sort(),
+    [snapshot.routeBreakdown],
+  );
+
+  const filteredRoutes = useMemo(
+    () =>
+      snapshot.routeBreakdown.filter((r) => {
+        if (filter.method && r.method !== filter.method) return false;
+        if (filter.routes.length > 0 && !filter.routes.includes(`${r.method} ${r.route}`)) return false;
+        return true;
+      }),
+    [snapshot.routeBreakdown, filter],
+  );
+
+  const handleRefreshChange = (value: number) => {
+    setRefreshMs(value);
+    LocalStorage.setItem(REFRESH_STORAGE_KEY, value);
+  };
 
   return (
     <Box>
@@ -65,7 +123,7 @@ const DashboardPage = () => {
             justifyContent: 'space-between',
             flexDirection: { xs: 'column', md: 'row' },
             gap: 2,
-            mb: 3,
+            mb: 2,
           }}
         >
           <Box>
@@ -74,7 +132,8 @@ const DashboardPage = () => {
             </Typography>
             <Typography variant="body2" sx={{ color: tokens.textSubtle, mt: 0.5 }}>
               Last updated {dayjs(snapshot.timestamp).format('HH:mm:ss')}
-              {isError ? ' \u2014 data may be stale' : ''}
+              {snapshot.source === 'cluster' ? ' · cluster-wide' : ''}
+              {isError ? ' — data may be stale' : ''}
             </Typography>
           </Box>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
@@ -87,23 +146,25 @@ const DashboardPage = () => {
               }}
               aria-label="Metrics window"
             >
-              <ToggleButton value="5m" aria-label="5 minute window">
-                5m
-              </ToggleButton>
-              <ToggleButton value="15m" aria-label="15 minute window">
-                15m
-              </ToggleButton>
+              {WINDOW_OPTIONS.map((opt) => (
+                <ToggleButton key={opt.value} value={opt.value} aria-label={`${opt.label} window`}>
+                  {opt.label}
+                </ToggleButton>
+              ))}
             </ToggleButtonGroup>
-            <Chip
-              label={autoRefresh ? 'Auto: 10s' : 'Paused'}
-              color={autoRefresh ? 'primary' : 'default'}
+            <Select
+              value={refreshMs}
+              onChange={(e) => handleRefreshChange(Number(e.target.value))}
               size="small"
-              role="switch"
-              aria-pressed={autoRefresh}
-              aria-label={autoRefresh ? 'Pause auto-refresh' : 'Resume auto-refresh'}
-              onClick={() => setAutoRefresh((prev) => !prev)}
-              sx={{ cursor: 'pointer' }}
-            />
+              aria-label="Auto-refresh interval"
+              sx={{ fontSize: 13 }}
+            >
+              {REFRESH_OPTIONS.map((opt) => (
+                <MenuItem key={opt.value} value={opt.value} sx={{ fontSize: 13 }}>
+                  {opt.label}
+                </MenuItem>
+              ))}
+            </Select>
             <IconButton
               onClick={() => refetch()}
               size="small"
@@ -129,21 +190,69 @@ const DashboardPage = () => {
           </Alert>
         )}
 
-        <SummaryCards summary={snapshot.summary} loading={isPending} />
+        <Tabs value={tab} onChange={(_, next) => setTab(next)} sx={{ mb: 2, borderBottom: `1px solid ${tokens.border}` }}>
+          <Tab label="Overview" />
+          <Tab label="Routes" />
+          <Tab label="Downstream" />
+        </Tabs>
 
-        <Box
-          sx={{
-            display: 'grid',
-            gridTemplateColumns: { xs: '1fr', lg: '1fr 1fr' },
-            gap: 2,
-          }}
-        >
-          <Box sx={{ gridColumn: { xs: '1', lg: '1 / -1' } }}>
-            <RequestTimelineChart data={snapshot.timeline} loading={isPending} />
+        {tab === 0 && (
+          <>
+            <SummaryCards summary={snapshot.summary} loading={isPending} />
+            <Box
+              sx={{
+                display: 'grid',
+                gridTemplateColumns: { xs: '1fr', lg: '1fr 1fr' },
+                gap: 2,
+              }}
+            >
+              <Box sx={{ gridColumn: { xs: '1', lg: '1 / -1' } }}>
+                <RequestTimelineChart data={snapshot.timeline} loading={isPending} />
+              </Box>
+              <StatusClassTimelineChart data={snapshot.timeline} loading={isPending} />
+              <RecentErrorsPanel data={snapshot.recentErrors} loading={isPending} />
+            </Box>
+          </>
+        )}
+
+        {tab === 1 && (
+          <>
+            <MetricsFilterBar
+              routeOptions={routeOptions}
+              methodOptions={methodOptions}
+              filter={filter}
+              onChange={setFilter}
+            />
+            <Box
+              sx={{
+                display: 'grid',
+                gridTemplateColumns: { xs: '1fr', lg: '1fr 1fr' },
+                gap: 2,
+              }}
+            >
+              <Box sx={{ gridColumn: { xs: '1', lg: '1 / -1' } }}>
+                <RoutesTable data={filteredRoutes} loading={isPending} />
+              </Box>
+              <RouteBreakdownChart data={filteredRoutes} loading={isPending} />
+              <CacheHitPieChart data={filteredRoutes} loading={isPending} />
+            </Box>
+          </>
+        )}
+
+        {tab === 2 && (
+          <Box
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: { xs: '1fr', lg: '1fr 1fr' },
+              gap: 2,
+            }}
+          >
+            <DownstreamLatencyChart data={snapshot.downstream} loading={isPending} />
+            <DownstreamStatusChart data={snapshot.downstream} loading={isPending} />
+            <LatencyStageChart data={snapshot.downstream} loading={isPending} />
+            <CacheProviderChart data={snapshot.summary.cacheProviders} loading={isPending} />
           </Box>
-          <CacheHitPieChart data={snapshot.routeBreakdown} loading={isPending} />
-          <DownstreamLatencyChart data={snapshot.downstream} loading={isPending} />
-        </Box>
+        )}
       </Box>
     </Box>
   );

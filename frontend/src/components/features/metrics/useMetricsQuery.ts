@@ -2,11 +2,11 @@ import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import MetricsService from '@/services/MetricsService';
 import type { MetricsSnapshot } from '@/_types/metrics.interface';
 
-const POLL_INTERVAL = 10_000;
+export type MetricsWindow = '5m' | '15m' | '30m' | '1h';
 
-export type MetricsWindow = '5m' | '15m';
+export type RefreshInterval = number | false;
 
-const useMetricsQuery = (window: MetricsWindow, autoRefresh: boolean) =>
+const useMetricsQuery = (window: MetricsWindow, refreshInterval: RefreshInterval) =>
   useQuery<MetricsSnapshot>({
     queryKey: ['metrics', window],
     queryFn: async () => {
@@ -16,7 +16,7 @@ const useMetricsQuery = (window: MetricsWindow, autoRefresh: boolean) =>
       }
       return result.data;
     },
-    refetchInterval: autoRefresh ? POLL_INTERVAL : false,
+    refetchInterval: refreshInterval,
     placeholderData: keepPreviousData,
   });
 

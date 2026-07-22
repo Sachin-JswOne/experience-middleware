@@ -1,6 +1,7 @@
-import { Box, Card, Typography } from '@mui/material';
+import { Box, Card, Chip, Skeleton, Typography } from '@mui/material';
 import type { MetricsSummary } from '@/_types/metrics.interface';
 import { tokens } from '@/styles/theme';
+import { formatNumber } from './chartShared';
 
 interface SummaryCardsProps {
   summary: MetricsSummary;
@@ -18,24 +19,30 @@ const MetricCard = ({
   value,
   unit,
   color,
+  loading,
 }: {
   label: string;
   value: string;
   unit?: string;
   color?: string;
+  loading: boolean;
 }) => (
   <Card sx={{ p: 2, height: '100%' }}>
     <Typography variant="body2" sx={{ color: tokens.textSubtle, mb: 0.5 }}>
       {label}
     </Typography>
-    <Typography variant="h4" sx={{ color: color ?? tokens.text, fontWeight: 700 }}>
-      {value}
-      {unit && (
-        <Typography component="span" variant="body2" sx={{ ml: 0.5, color: tokens.textSubtle }}>
-          {unit}
-        </Typography>
-      )}
-    </Typography>
+    {loading ? (
+      <Skeleton variant="text" sx={{ fontSize: '1.25rem' }} width={80} />
+    ) : (
+      <Typography variant="h4" sx={{ color: color ?? tokens.text, fontWeight: 700 }}>
+        {value}
+        {unit && (
+          <Typography component="span" variant="body2" sx={{ ml: 0.5, color: tokens.textSubtle }}>
+            {unit}
+          </Typography>
+        )}
+      </Typography>
+    )}
   </Card>
 );
 
@@ -44,6 +51,7 @@ const SummaryCards = ({ summary, loading }: SummaryCardsProps) => {
   const p50Ms = Math.round(summary.p50LatencyMs);
   const p90Ms = Math.round(summary.p90LatencyMs);
   const p99Ms = Math.round(summary.p99LatencyMs);
+  const estimated = summary.percentileSource === 'histogram';
 
   return (
     <Box
@@ -54,29 +62,37 @@ const SummaryCards = ({ summary, loading }: SummaryCardsProps) => {
         mb: 3,
       }}
     >
-      <MetricCard label="Total Requests" value={loading ? '-' : String(summary.totalRequests)} />
+      <MetricCard label="Total Requests" value={formatNumber(summary.totalRequests)} loading={loading} />
       <MetricCard
         label="Error Rate"
-        value={loading ? '-' : `${summary.errorRate.toFixed(1)}`}
+        value={`${summary.errorRate.toFixed(1)}`}
         unit="%"
         color={loading ? undefined : errorColor(summary.errorRate)}
+        loading={loading}
       />
       <MetricCard
         label="Avg Latency"
-        value={loading ? '-' : String(avgLatMs)}
+        value={String(avgLatMs)}
         unit="ms"
+        loading={loading}
       />
       <MetricCard
         label="Cache Hit Rate"
-        value={loading ? '-' : `${summary.cacheHitRate.toFixed(1)}`}
+        value={`${summary.cacheHitRate.toFixed(1)}`}
         unit="%"
+        loading={loading}
       />
       <Card sx={{ p: 2, height: '100%' }}>
-        <Typography variant="body2" sx={{ color: tokens.textSubtle, mb: 0.5 }}>
-          Latency Percentiles
-        </Typography>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 0.5 }}>
+          <Typography variant="body2" sx={{ color: tokens.textSubtle }}>
+            Latency Percentiles
+          </Typography>
+          {!loading && estimated && (
+            <Chip label="estimated" size="small" variant="outlined" sx={{ height: 18, fontSize: 10 }} />
+          )}
+        </Box>
         {loading ? (
-          <Typography variant="h4" sx={{ fontWeight: 700 }}>-</Typography>
+          <Skeleton variant="text" sx={{ fontSize: '1.25rem' }} width={160} />
         ) : (
           <Box sx={{ display: 'flex', alignItems: 'baseline', flexWrap: 'wrap', gap: 1 }}>
             <Typography variant="body2" sx={{ color: tokens.textSubtle }}>P50</Typography>

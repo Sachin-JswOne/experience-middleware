@@ -1,4 +1,4 @@
-import { Card, Typography, Box } from '@mui/material';
+import { Typography, Box } from '@mui/material';
 import {
   BarChart,
   Bar,
@@ -11,16 +11,15 @@ import {
 } from 'recharts';
 import type { RouteBreakdown } from '@/_types/metrics.interface';
 import { tokens } from '@/styles/theme';
+import ChartCard, { CHART_COLORS, formatMs, formatPercent } from './chartShared';
 
 interface Props {
   data: RouteBreakdown[];
   loading: boolean;
 }
 
-const COLORS = [tokens.brand, '#357DE8', '#55A0F5', '#80C0FF', '#AAD4FF'];
-
 const truncate = (value: string, max = 28) =>
-  value.length > max ? `${value.slice(0, max - 1)}\u2026` : value;
+  value.length > max ? `${value.slice(0, max - 1)}…` : value;
 
 interface RouteTooltipPayload {
   name?: string;
@@ -56,13 +55,13 @@ const RouteTooltip = ({ active, payload }: RouteTooltipProps) => {
       </Typography>
       <Box sx={{ display: 'grid', gridTemplateColumns: 'auto auto', columnGap: 1.5, rowGap: 0.25 }}>
         <Typography variant="body2" sx={{ color: tokens.textSubtle }}>Avg latency</Typography>
-        <Typography variant="body2">{p.avgLatencyMs} ms</Typography>
+        <Typography variant="body2">{formatMs(p.avgLatencyMs)}</Typography>
         <Typography variant="body2" sx={{ color: tokens.textSubtle }}>Requests</Typography>
         <Typography variant="body2">{p.requestCount}</Typography>
         <Typography variant="body2" sx={{ color: tokens.textSubtle }}>Errors</Typography>
         <Typography variant="body2">{p.errorCount}</Typography>
         <Typography variant="body2" sx={{ color: tokens.textSubtle }}>Cache hit</Typography>
-        <Typography variant="body2">{p.cacheHitRate.toFixed(1)}%</Typography>
+        <Typography variant="body2">{formatPercent(p.cacheHitRate)}</Typography>
       </Box>
     </Box>
   );
@@ -79,41 +78,30 @@ const RouteBreakdownChart = ({ data, loading }: Props) => {
   }));
 
   return (
-    <Card sx={{ p: 2, height: '100%' }}>
-      <Typography variant="h5" sx={{ mb: 1.5 }}>
-        Route Performance
-      </Typography>
-      {loading || chartData.length === 0 ? (
-        <Box sx={{ height: 240, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <Typography variant="body2" sx={{ color: tokens.textSubtle }}>
-            {loading ? 'Loading...' : 'No data yet'}
-          </Typography>
-        </Box>
-      ) : (
-        <ResponsiveContainer width="100%" height={Math.max(240, chartData.length * 36 + 40)}>
-          <BarChart data={chartData} layout="vertical" margin={{ top: 4, right: 16, left: 0, bottom: 0 }}>
-            <CartesianGrid stroke={tokens.border} strokeDasharray="3 3" />
-            <XAxis type="number" tick={{ fontSize: 11, fill: tokens.textSubtle }} />
-            <YAxis
-              type="category"
-              dataKey="name"
-              tick={{ fontSize: 11, fill: tokens.textSubtle }}
-              width={140}
-              tickFormatter={(value: string) => truncate(value)}
-            />
-            <Tooltip
-              content={<RouteTooltip />}
-              cursor={{ fill: tokens.backgroundNeutralSubtleHovered }}
-            />
-            <Bar dataKey="avgLatencyMs" name="avgLatencyMs">
-              {chartData.map((_, idx) => (
-                <Cell key={idx} fill={COLORS[idx % COLORS.length]} />
-              ))}
-            </Bar>
-          </BarChart>
-        </ResponsiveContainer>
-      )}
-    </Card>
+    <ChartCard title="Route Performance" loading={loading} empty={chartData.length === 0}>
+      <ResponsiveContainer width="100%" height={Math.max(240, chartData.length * 36 + 40)}>
+        <BarChart data={chartData} layout="vertical" margin={{ top: 4, right: 16, left: 0, bottom: 0 }}>
+          <CartesianGrid stroke={tokens.border} strokeDasharray="3 3" />
+          <XAxis type="number" tick={{ fontSize: 11, fill: tokens.textSubtle }} />
+          <YAxis
+            type="category"
+            dataKey="name"
+            tick={{ fontSize: 11, fill: tokens.textSubtle }}
+            width={140}
+            tickFormatter={(value: string) => truncate(value)}
+          />
+          <Tooltip
+            content={<RouteTooltip />}
+            cursor={{ fill: tokens.backgroundNeutralSubtleHovered }}
+          />
+          <Bar dataKey="avgLatencyMs" name="avgLatencyMs">
+            {chartData.map((_, idx) => (
+              <Cell key={idx} fill={CHART_COLORS[idx % CHART_COLORS.length]} />
+            ))}
+          </Bar>
+        </BarChart>
+      </ResponsiveContainer>
+    </ChartCard>
   );
 };
 
