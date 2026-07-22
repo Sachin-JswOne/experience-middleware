@@ -1,4 +1,4 @@
-import { Box, Card, Typography, Tooltip } from '@mui/material';
+import { Box, Card, Typography } from '@mui/material';
 import type { MetricsSummary } from '@/_types/metrics.interface';
 import { tokens } from '@/styles/theme';
 
@@ -18,39 +18,26 @@ const MetricCard = ({
   value,
   unit,
   color,
-  tooltip,
 }: {
   label: string;
   value: string;
   unit?: string;
   color?: string;
-  tooltip?: string;
-}) => {
-  const content = (
-    <Card sx={{ p: 2, height: '100%' }}>
-      <Typography variant="body2" sx={{ color: tokens.textSubtle, mb: 0.5 }}>
-        {label}
-      </Typography>
-      <Typography variant="h4" sx={{ color: color ?? tokens.text, fontWeight: 700 }}>
-        {value}
-        {unit && (
-          <Typography component="span" variant="body2" sx={{ ml: 0.5, color: tokens.textSubtle }}>
-            {unit}
-          </Typography>
-        )}
-      </Typography>
-    </Card>
-  );
-
-  if (tooltip) {
-    return (
-      <Tooltip title={tooltip} arrow>
-        {content}
-      </Tooltip>
-    );
-  }
-  return content;
-};
+}) => (
+  <Card sx={{ p: 2, height: '100%' }}>
+    <Typography variant="body2" sx={{ color: tokens.textSubtle, mb: 0.5 }}>
+      {label}
+    </Typography>
+    <Typography variant="h4" sx={{ color: color ?? tokens.text, fontWeight: 700 }}>
+      {value}
+      {unit && (
+        <Typography component="span" variant="body2" sx={{ ml: 0.5, color: tokens.textSubtle }}>
+          {unit}
+        </Typography>
+      )}
+    </Typography>
+  </Card>
+);
 
 const SummaryCards = ({ summary, loading }: SummaryCardsProps) => {
   const avgLatMs = Math.round(summary.avgLatencyMs);
@@ -78,15 +65,32 @@ const SummaryCards = ({ summary, loading }: SummaryCardsProps) => {
         label="Avg Latency"
         value={loading ? '-' : String(avgLatMs)}
         unit="ms"
-        tooltip={
-          loading ? undefined : `P50: ${p50Ms}ms · P90: ${p90Ms}ms · P99: ${p99Ms}ms`
-        }
       />
       <MetricCard
         label="Cache Hit Rate"
         value={loading ? '-' : `${summary.cacheHitRate.toFixed(1)}`}
         unit="%"
       />
+      <Card sx={{ p: 2, height: '100%' }}>
+        <Typography variant="body2" sx={{ color: tokens.textSubtle, mb: 0.5 }}>
+          Latency Percentiles
+        </Typography>
+        {loading ? (
+          <Typography variant="h4" sx={{ fontWeight: 700 }}>-</Typography>
+        ) : (
+          <Box sx={{ display: 'flex', alignItems: 'baseline', flexWrap: 'wrap', gap: 1 }}>
+            <Typography variant="body2" sx={{ color: tokens.textSubtle }}>P50</Typography>
+            <Typography variant="h6" sx={{ fontWeight: 700 }}>{p50Ms}</Typography>
+            <Typography variant="body2" sx={{ color: tokens.textSubtle }}>ms</Typography>
+            <Typography variant="body2" sx={{ color: tokens.textSubtle }}>P90</Typography>
+            <Typography variant="h6" sx={{ fontWeight: 700 }}>{p90Ms}</Typography>
+            <Typography variant="body2" sx={{ color: tokens.textSubtle }}>ms</Typography>
+            <Typography variant="body2" sx={{ color: tokens.textSubtle }}>P99</Typography>
+            <Typography variant="h6" sx={{ fontWeight: 700 }}>{p99Ms}</Typography>
+            <Typography variant="body2" sx={{ color: tokens.textSubtle }}>ms</Typography>
+          </Box>
+        )}
+      </Card>
     </Box>
   );
 };

@@ -7,7 +7,7 @@ import {
   DownstreamBreakdown,
 } from './metrics.types';
 
-const DEFAULT_RETENTION_MS = 5 * 60 * 1000;
+const DEFAULT_RETENTION_MS = 15 * 60 * 1000;
 const BUCKET_INTERVAL_MS = 60 * 1000;
 const MAX_TIMELINE_BUCKETS = 15;
 
