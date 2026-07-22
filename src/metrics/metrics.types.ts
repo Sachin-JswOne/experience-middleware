@@ -1,7 +1,26 @@
+export type CacheServedBy = 'valkey' | 'local' | 'none';
+
+export interface StatusClassCounts {
+  c2xx: number;
+  c3xx: number;
+  c4xx: number;
+  c5xx: number;
+}
+
+export interface StageTimings {
+  buildRequestMs: number;
+  createClientMs: number;
+  downstreamMs: number;
+  resTransformMs: number;
+}
+
 export interface DownstreamRecord {
   target: string;
   durationMs: number;
   success: boolean;
+  // Undefined means no HTTP response was received (network error/timeout).
+  statusCode?: number;
+  stages?: StageTimings;
 }
 
 export interface RequestRecord {
@@ -11,7 +30,14 @@ export interface RequestRecord {
   statusCode: number;
   durationMs: number;
   cacheHit: boolean;
+  cacheServedBy?: CacheServedBy;
   downstreamTargets: DownstreamRecord[];
+}
+
+export interface CacheProviderStats {
+  provider: CacheServedBy;
+  hits: number;
+  misses: number;
 }
 
 export interface MetricsSummary {
@@ -22,6 +48,9 @@ export interface MetricsSummary {
   p50LatencyMs: number;
   p90LatencyMs: number;
   p99LatencyMs: number;
+  statusClasses?: StatusClassCounts;
+  cacheProviders?: CacheProviderStats[];
+  percentileSource?: 'exact' | 'histogram';
 }
 
 export interface TimelineBucket {
@@ -29,6 +58,7 @@ export interface TimelineBucket {
   requestCount: number;
   avgLatencyMs: number;
   errorCount: number;
+  statusClasses?: StatusClassCounts;
 }
 
 export interface RouteBreakdown {
@@ -45,6 +75,17 @@ export interface DownstreamBreakdown {
   avgLatencyMs: number;
   requestCount: number;
   errorCount: number;
+  statusClasses?: StatusClassCounts;
+  networkErrorCount?: number;
+  avgStages?: StageTimings;
+}
+
+export interface RecentError {
+  ts: number;
+  route: string;
+  method: string;
+  statusCode: number;
+  durationMs: number;
 }
 
 export interface MetricsSnapshot {
@@ -54,4 +95,7 @@ export interface MetricsSnapshot {
   timeline: TimelineBucket[];
   routeBreakdown: RouteBreakdown[];
   downstream: DownstreamBreakdown[];
+  bucketIntervalMs?: number;
+  source?: 'local' | 'cluster';
+  recentErrors?: RecentError[];
 }

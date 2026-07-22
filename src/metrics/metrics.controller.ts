@@ -1,22 +1,52 @@
 import { Controller, Get, Query } from '@nestjs/common';
 import { MetricsAggregator } from './metrics.aggregator';
+import { MetricsClusterStore } from './metrics.cluster-store';
 import { MetricsSnapshot } from './metrics.types';
+
+const WINDOW_PRESETS: Record<string, number> = {
+  '5m': 5 * 60 * 1000,
+  '15m': 15 * 60 * 1000,
+  '30m': 30 * 60 * 1000,
+  '1h': 60 * 60 * 1000,
+  '60m': 60 * 60 * 1000,
+};
 
 @Controller()
 export class MetricsController {
-  constructor(private readonly aggregator: MetricsAggregator) {}
+  constructor(
+    private readonly aggregator: MetricsAggregator,
+    private readonly clusterStore: MetricsClusterStore,
+  ) {}
 
   @Get('metrics')
-  getMetrics(@Query('window') window?: string): MetricsSnapshot {
+  async getMetrics(@Query('window') window?: string): Promise<MetricsSnapshot> {
     let windowMs: number | undefined;
-    if (window === '15m') windowMs = 15 * 60 * 1000;
-    else if (window === '5m') windowMs = 5 * 60 * 1000;
-    else if (window) {
+    if (window && WINDOW_PRESETS[window]) {
+      windowMs = WINDOW_PRESETS[window];
+    } else if (window) {
       const minutes = parseInt(window, 10);
       if (!isNaN(minutes) && minutes > 0) {
         windowMs = minutes * 60 * 1000;
       }
     }
-    return this.aggregator.getSnapshot(windowMs);
+
+    const effectiveWindowMs = Math.min(
+      windowMs || this.aggregator.getRetentionMs(),
+      this.aggregator.getRetentionMs(),
+    );
+
+    const localSnapshot = this.aggregator.getSnapshot(effectiveWindowMs);
+
+    if (this.clusterStore.isEnabled()) {
+      const clusterSnapshot = await this.clusterStore.getSnapshot(effectiveWindowMs);
+      if (clusterSnapshot) {
+        // Recent errors are only available from the local buffer; counters
+        // written to Valkey cannot carry per-request detail.
+        clusterSnapshot.recentErrors = localSnapshot.recentErrors;
+        return clusterSnapshot;
+      }
+    }
+
+    return localSnapshot;
   }
 }

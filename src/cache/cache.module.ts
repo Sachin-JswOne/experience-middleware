@@ -15,6 +15,6 @@ import { ValkeyTrustStore } from './valkey/valkey.trust-store';
     ValkeyConfig,
     ValkeyClient,
   ],
-  exports: [CacheService],
+  exports: [CacheService, ValkeyClient],
 })
 export class CacheModule {}

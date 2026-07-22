@@ -15,6 +15,14 @@ export class CacheService {
   ) {}
 
   async get(key: string, provider: CacheProvider): Promise<string | null> {
+      const result = await this.getWithSource(key, provider);
+      return result ? result.value : null;
+  }
+
+  async getWithSource(
+      key: string,
+      provider: CacheProvider,
+  ): Promise<{ value: string; source: 'valkey' | 'local' } | null> {
 
       if (!this.props.cacheEnabled || provider === 'NONE') {
           return null;
@@ -30,11 +38,13 @@ export class CacheService {
 
               // If Valkey misses OR is unavailable,
               // do NOT use local cache.
-              return value;
+              return value ? { value, source: 'valkey' } : null;
           }
 
-          case 'LOCAL':
-              return this.localCache.get(key);
+          case 'LOCAL': {
+              const value = this.localCache.get(key);
+              return value ? { value, source: 'local' } : null;
+          }
 
           case 'AUTO': {
 
@@ -43,10 +53,11 @@ export class CacheService {
               );
 
               if (value) {
-                  return value;
+                  return { value, source: 'valkey' };
               }
 
-              return this.localCache.get(key);
+              const localValue = this.localCache.get(key);
+              return localValue ? { value: localValue, source: 'local' } : null;
           }
 
           default:

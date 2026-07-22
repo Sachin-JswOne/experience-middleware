@@ -147,7 +147,12 @@ export class ProxyService {
     }
 
     const cacheTtlSeconds = Number((route as any).cache?.ttlSeconds ?? process.env.CACHE_TTL_SECONDS ?? 1800);
-    
+
+    // Expose the matched config route template so metrics report per-route
+    // instead of the controller's catch-all path (public/*path).
+    (req as any)._metricsRoute = route.path;
+
+
     const activeSpan = trace.getSpan(context.active());
     const spanContext = activeSpan?.spanContext();
     const traceId = (req as any).traceId || spanContext?.traceId || '';
@@ -182,12 +187,13 @@ export class ProxyService {
     if (isCacheRequired && cacheProvider !== 'NONE' && process.env.CACHE_ENABLED === 'true') {
       cacheKey = this.getCacheKey(req);
 
-      const cached = await this.cacheService.get(cacheKey, cacheProvider);
+      const cachedResult = await this.cacheService.getWithSource(cacheKey, cacheProvider);
 
-      if (cached) {
+      if (cachedResult) {
         try {
-          const parsed = JSON.parse(cached);
+          const parsed = JSON.parse(cachedResult.value);
           (req as any)._metricsCacheHit = true;
+          (req as any)._metricsCacheServedBy = cachedResult.source;
           return parsed;
         } catch {
           await this.cacheService.del(cacheKey);
@@ -584,6 +590,13 @@ export class ProxyService {
             target: target.name || target.url,
             durationMs: totalMs,
             success: response.status < 400,
+            statusCode: response.status,
+            stages: {
+              buildRequestMs: buildMs,
+              createClientMs: clientCreateMs,
+              downstreamMs,
+              resTransformMs,
+            },
           });
 
           this.logger.log(
@@ -610,6 +623,9 @@ export class ProxyService {
             error.status = response.status;
             // Only attach data to avoid circular structures from the native Axios response
             error.response = { data: response.data };
+            // This target's downstream record was already pushed above; stop
+            // the catch block from double-counting it.
+            error._metricsRecorded = true;
             throw error;
           }
 
@@ -629,14 +645,17 @@ export class ProxyService {
 
           span.setAttribute('proxy.target.duration_ms', totalMs);
 
-          if (!(req as any)._metricsDownstream) (req as any)._metricsDownstream = [];
-          (req as any)._metricsDownstream.push({
-            target: target.name || target.url,
-            durationMs: totalMs,
-            success: false,
-          });
-
           const errorResponse = axios.isAxiosError(err) && err.response ? err.response : null;
+
+          if (!(err as any)?._metricsRecorded) {
+            if (!(req as any)._metricsDownstream) (req as any)._metricsDownstream = [];
+            (req as any)._metricsDownstream.push({
+              target: target.name || target.url,
+              durationMs: totalMs,
+              success: false,
+              statusCode: errorResponse?.status ?? (err as any)?.status,
+            });
+          }
 
           this.logger.error(
             `[DOWNSTREAM ERROR] target=${target.name || target.url} route=${req.path} method=${target.method} url=${transformedRequestBody?.url?.href ?? 'NA'} duration_ms=${totalMs} error=${err?.message || String(err)} status=${errorResponse?.status ?? 'NA'} body=${JSON.stringify(transformedRequestBody?.body ?? null)} response=${JSON.stringify(errorResponse?.data ?? null)}`,
