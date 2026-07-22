@@ -58,7 +58,10 @@ export class ProxyController {
       if (Array.isArray(downstreamSetCookie) && downstreamSetCookie.length > 0) {
         res.setHeader('Set-Cookie', downstreamSetCookie);
       }
-      
+
+      // Expose the payload for the metrics interceptor's samples — it cannot
+      // see it otherwise since this handler writes via @Res.
+      (req as any)._metricsResponseBody = data;
       res.status(HttpStatus.OK).json(data);
 
       this.logger.log(
@@ -87,11 +90,11 @@ export class ProxyController {
       const downstreamResponse =
         err instanceof CustomError ? (err as any).downstreamResponse : null;
 
-      if (downstreamResponse) {
-        return res.status(statusCode).json(downstreamResponse);
-      }
-
-      return res.status(statusCode).json({ error: errorMessage });
+      const errorPayload = downstreamResponse ?? { error: errorMessage };
+      // Expose the payload for the metrics interceptor's error samples —
+      // it cannot see it otherwise since this handler writes via @Res.
+      (req as any)._metricsResponseBody = errorPayload;
+      return res.status(statusCode).json(errorPayload);
     }
   }
 }

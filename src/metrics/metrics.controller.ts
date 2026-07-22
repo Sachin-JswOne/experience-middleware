@@ -1,7 +1,8 @@
-import { Controller, Get, Query } from '@nestjs/common';
+import { BadRequestException, Controller, Get, Query } from '@nestjs/common';
 import { MetricsAggregator } from './metrics.aggregator';
 import { MetricsClusterStore } from './metrics.cluster-store';
-import { MetricsSnapshot } from './metrics.types';
+import { MetricsSampleStore } from './metrics.sample-store';
+import { MetricsSnapshot, RouteErrorSample } from './metrics.types';
 
 const WINDOW_PRESETS: Record<string, number> = {
   '5m': 5 * 60 * 1000,
@@ -16,7 +17,22 @@ export class MetricsController {
   constructor(
     private readonly aggregator: MetricsAggregator,
     private readonly clusterStore: MetricsClusterStore,
+    private readonly sampleStore: MetricsSampleStore,
   ) {}
+
+  @Get('metrics/samples')
+  getRouteSamples(
+    @Query('route') route?: string,
+    @Query('method') method?: string,
+  ): { enabled: boolean; samples: RouteErrorSample[] } {
+    if (!route || !method) {
+      throw new BadRequestException('route and method query params are required');
+    }
+    return {
+      enabled: this.sampleStore.isEnabled(),
+      samples: this.sampleStore.getSamples(method.toUpperCase(), route),
+    };
+  }
 
   @Get('metrics')
   async getMetrics(@Query('window') window?: string): Promise<MetricsSnapshot> {

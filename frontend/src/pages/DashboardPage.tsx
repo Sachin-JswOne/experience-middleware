@@ -14,8 +14,7 @@ import {
 } from '@mui/material';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import dayjs from 'dayjs';
-import type { ILooseObject } from '@/_types/common.interface';
-import type { MetricsSnapshot } from '@/_types/metrics.interface';
+import type { MetricsSnapshot, RouteBreakdown } from '@/_types/metrics.interface';
 import LocalStorage from '@/utils/LocalStorage';
 import { tokens } from '@/styles/theme';
 import useMetricsQuery, {
@@ -31,6 +30,7 @@ import LatencyStageChart from '@/components/features/metrics/LatencyStageChart';
 import CacheHitPieChart from '@/components/features/metrics/CacheHitPieChart';
 import CacheProviderChart from '@/components/features/metrics/CacheProviderChart';
 import RoutesTable from '@/components/features/metrics/RoutesTable';
+import RouteSamplesDrawer from '@/components/features/metrics/RouteSamplesDrawer';
 import RecentErrorsPanel from '@/components/features/metrics/RecentErrorsPanel';
 import MetricsFilterBar, {
   emptyFilter,
@@ -63,11 +63,6 @@ const REFRESH_OPTIONS = [
 const REFRESH_STORAGE_KEY = 'metricsRefreshMs';
 
 const DashboardPage = () => {
-  const userInfo: ILooseObject | undefined = LocalStorage.getItem('userInfo');
-  const firstName = String(userInfo?.name || '')
-    .trim()
-    .split(' ')[0];
-
   const [timeWindow, setTimeWindow] = useState<MetricsWindow>('5m');
   const [refreshMs, setRefreshMs] = useState<number>(() => {
     const stored = LocalStorage.getItem(REFRESH_STORAGE_KEY);
@@ -75,6 +70,7 @@ const DashboardPage = () => {
   });
   const [tab, setTab] = useState(0);
   const [filter, setFilter] = useState<MetricsFilter>(emptyFilter);
+  const [selectedRoute, setSelectedRoute] = useState<RouteBreakdown | null>(null);
 
   const { data, isPending, isFetching, isError, refetch } = useMetricsQuery(
     timeWindow,
@@ -108,13 +104,6 @@ const DashboardPage = () => {
 
   return (
     <Box>
-      <Typography variant="h3" component="h1">
-        {firstName ? `Welcome back, ${firstName}` : 'Welcome back'}
-      </Typography>
-      <Typography variant="body1" sx={{ color: tokens.textSubtle, mt: 0.5 }}>
-        Service health at a glance.
-      </Typography>
-
       <Box sx={{ mt: 5 }}>
         <Box
           sx={{
@@ -231,7 +220,11 @@ const DashboardPage = () => {
               }}
             >
               <Box sx={{ gridColumn: { xs: '1', lg: '1 / -1' } }}>
-                <RoutesTable data={filteredRoutes} loading={isPending} />
+                <RoutesTable
+                  data={filteredRoutes}
+                  loading={isPending}
+                  onRowClick={setSelectedRoute}
+                />
               </Box>
               <RouteBreakdownChart data={filteredRoutes} loading={isPending} />
               <CacheHitPieChart data={filteredRoutes} loading={isPending} />
@@ -253,6 +246,8 @@ const DashboardPage = () => {
             <CacheProviderChart data={snapshot.summary.cacheProviders} loading={isPending} />
           </Box>
         )}
+
+        <RouteSamplesDrawer route={selectedRoute} onClose={() => setSelectedRoute(null)} />
       </Box>
     </Box>
   );

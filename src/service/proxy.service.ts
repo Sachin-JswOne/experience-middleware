@@ -597,6 +597,10 @@ export class ProxyService {
               downstreamMs,
               resTransformMs,
             },
+            requestUrl: transformedRequestBody.url.href,
+            requestHeaders: maskedHeaders,
+            requestBody: transformedRequestBody.body,
+            responseBody: response.data,
           });
 
           this.logger.log(
@@ -654,6 +658,10 @@ export class ProxyService {
               durationMs: totalMs,
               success: false,
               statusCode: errorResponse?.status ?? (err as any)?.status,
+              requestUrl: transformedRequestBody?.url?.href,
+              requestHeaders: maskedHeaders,
+              requestBody: transformedRequestBody?.body,
+              responseBody: errorResponse?.data ?? { message: err?.message || String(err) },
             });
           }
 

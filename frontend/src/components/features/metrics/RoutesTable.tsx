@@ -22,6 +22,7 @@ import { formatMs, formatPercent } from './chartShared';
 interface Props {
   data: RouteBreakdown[];
   loading: boolean;
+  onRowClick?: (route: RouteBreakdown) => void;
 }
 
 type SortKey = 'requestCount' | 'avgLatencyMs' | 'errorCount' | 'cacheHitRate';
@@ -47,7 +48,7 @@ const exportCsv = (rows: RouteBreakdown[]) => {
   URL.revokeObjectURL(url);
 };
 
-const RoutesTable = ({ data, loading }: Props) => {
+const RoutesTable = ({ data, loading, onRowClick }: Props) => {
   const [sortKey, setSortKey] = useState<SortKey>('avgLatencyMs');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
 
@@ -114,7 +115,12 @@ const RoutesTable = ({ data, loading }: Props) => {
             </TableHead>
             <TableBody>
               {sorted.map((r) => (
-                <TableRow key={`${r.method} ${r.route}`} hover>
+                <TableRow
+                  key={`${r.method} ${r.route}`}
+                  hover
+                  onClick={() => onRowClick?.(r)}
+                  sx={{ cursor: onRowClick ? 'pointer' : 'default' }}
+                >
                   <TableCell sx={{ maxWidth: 320, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     <Typography component="span" variant="body2" sx={{ fontWeight: 600, mr: 0.75 }}>
                       {r.method}

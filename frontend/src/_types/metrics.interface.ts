@@ -76,6 +76,30 @@ export interface RecentError {
   durationMs: number;
 }
 
+export interface SampleDownstream {
+  target: string;
+  durationMs: number;
+  statusCode?: number;
+  success: boolean;
+  requestUrl?: string;
+  requestHeaders?: Record<string, string>;
+  requestBody?: string;
+  responseBody?: string;
+}
+
+export interface RouteErrorSample {
+  ts: number;
+  route: string;
+  method: string;
+  statusCode: number;
+  durationMs: number;
+  url: string;
+  requestHeaders: Record<string, string>;
+  requestBody?: string;
+  responseBody?: string;
+  downstream: SampleDownstream[];
+}
+
 export interface MetricsSnapshot {
   timestamp: number;
   windowMs: number;

@@ -8,6 +8,7 @@ export const API_ROUTES = {
       `${PROMPTS_BASE}/${type}/versions/${v}/activate`,
   },
   METRICS: '/xp-mi/metrics',
+  METRICS_SAMPLES: '/xp-mi/metrics/samples',
   AUTH: {
     OUTLOOK_LOGIN: (referer: string) =>
       `/xp-mi/public/v1/auth/outlook-login?referer=${encodeURIComponent(referer)}`,

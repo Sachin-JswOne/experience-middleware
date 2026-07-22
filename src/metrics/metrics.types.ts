@@ -21,6 +21,12 @@ export interface DownstreamRecord {
   // Undefined means no HTTP response was received (network error/timeout).
   statusCode?: number;
   stages?: StageTimings;
+  // Raw references for error samples only — stripped before the record
+  // enters the aggregator buffer (see MetricsInterceptor).
+  requestUrl?: string;
+  requestHeaders?: Record<string, string>;
+  requestBody?: unknown;
+  responseBody?: unknown;
 }
 
 export interface RequestRecord {
@@ -86,6 +92,30 @@ export interface RecentError {
   method: string;
   statusCode: number;
   durationMs: number;
+}
+
+export interface SampleDownstream {
+  target: string;
+  durationMs: number;
+  statusCode?: number;
+  success: boolean;
+  requestUrl?: string;
+  requestHeaders?: Record<string, string>;
+  requestBody?: string;
+  responseBody?: string;
+}
+
+export interface RouteErrorSample {
+  ts: number;
+  route: string;
+  method: string;
+  statusCode: number;
+  durationMs: number;
+  url: string;
+  requestHeaders: Record<string, string>;
+  requestBody?: string;
+  responseBody?: string;
+  downstream: SampleDownstream[];
 }
 
 export interface MetricsSnapshot {
