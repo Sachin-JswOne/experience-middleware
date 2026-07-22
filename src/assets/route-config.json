@@ -1355,6 +1355,7 @@
   {
     "path": "/xp-mi/public/v1/customer-profile",
     "method": "GET",
+    "isCacheRequired": true,
     "routeHandler": "AGGREGATE",
     "aggregationType": "SEQUENTIAL",
     "targets": [
