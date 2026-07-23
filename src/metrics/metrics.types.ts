@@ -121,6 +121,9 @@ export interface RouteErrorSample {
 export interface MetricsSnapshot {
   timestamp: number;
   windowMs: number;
+  // How much of windowMs the data actually covers (local buffer holds less
+  // than the full retention window).
+  windowCoverageMs?: number;
   summary: MetricsSummary;
   timeline: TimelineBucket[];
   routeBreakdown: RouteBreakdown[];

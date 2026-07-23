@@ -12,9 +12,23 @@ export interface IRouteSamplesResult {
   error: IApiClientResponse['error'];
 }
 
+export interface IMetricsParams {
+  window?: string;
+  from?: number;
+  to?: number;
+}
+
 const MetricsService = {
-  async getMetrics(window?: string): Promise<IMetricsResult> {
-    const url = window ? `${API_ROUTES.METRICS}?window=${window}` : API_ROUTES.METRICS;
+  async getMetrics(params: IMetricsParams = {}): Promise<IMetricsResult> {
+    const query = new URLSearchParams();
+    if (params.from !== undefined && params.to !== undefined) {
+      query.set('from', String(params.from));
+      query.set('to', String(params.to));
+    } else if (params.window) {
+      query.set('window', params.window);
+    }
+    const qs = query.toString();
+    const url = qs ? `${API_ROUTES.METRICS}?${qs}` : API_ROUTES.METRICS;
     const response = await ApiClient.makeRequest({
       url,
       method: 'GET',

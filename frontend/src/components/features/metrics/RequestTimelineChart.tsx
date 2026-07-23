@@ -8,21 +8,21 @@ import {
   ResponsiveContainer,
   Legend,
 } from 'recharts';
-import dayjs from 'dayjs';
 import type { TimelineBucket } from '@/_types/metrics.interface';
 import { tokens } from '@/styles/theme';
-import ChartCard from './chartShared';
+import ChartCard, { formatBucketTs } from './chartShared';
 
 interface Props {
   data: TimelineBucket[];
   loading: boolean;
+  bucketIntervalMs?: number;
 }
 
-const RequestTimelineChart = ({ data, loading }: Props) => {
+const RequestTimelineChart = ({ data, loading, bucketIntervalMs }: Props) => {
   const chartData = data.map((b) => ({
     ...b,
     avgLatencyMs: Math.round(b.avgLatencyMs),
-    time: dayjs(b.bucketTs).format('HH:mm'),
+    time: formatBucketTs(b.bucketTs, bucketIntervalMs),
   }));
 
   return (

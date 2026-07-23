@@ -8,22 +8,26 @@ import {
   ResponsiveContainer,
   Legend,
 } from 'recharts';
-import dayjs from 'dayjs';
 import type { TimelineBucket } from '@/_types/metrics.interface';
 import { tokens } from '@/styles/theme';
-import ChartCard, { STATUS_CLASS_COLORS, STATUS_CLASS_LABELS } from './chartShared';
+import ChartCard, {
+  STATUS_CLASS_COLORS,
+  STATUS_CLASS_LABELS,
+  formatBucketTs,
+} from './chartShared';
 
 interface Props {
   data: TimelineBucket[];
   loading: boolean;
+  bucketIntervalMs?: number;
 }
 
 const CLASS_KEYS = ['c2xx', 'c3xx', 'c4xx', 'c5xx'] as const;
 
-const StatusClassTimelineChart = ({ data, loading }: Props) => {
+const StatusClassTimelineChart = ({ data, loading, bucketIntervalMs }: Props) => {
   const hasStatusData = data.some((b) => b.statusClasses);
   const chartData = data.map((b) => ({
-    time: dayjs(b.bucketTs).format('HH:mm'),
+    time: formatBucketTs(b.bucketTs, bucketIntervalMs),
     c2xx: b.statusClasses?.c2xx ?? 0,
     c3xx: b.statusClasses?.c3xx ?? 0,
     c4xx: b.statusClasses?.c4xx ?? 0,

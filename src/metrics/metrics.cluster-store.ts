@@ -11,11 +11,12 @@ import {
 import {
   BUCKET_INTERVAL_MS,
   HISTOGRAM_BOUNDS,
+  HOUR_INTERVAL_MS,
   isClusterEnabled,
   keyPrefix,
+  readGranularity,
+  timelineBucketMs,
 } from './metrics.cluster.shared';
-
-const SNAPSHOT_CACHE_TTL_MS = 5_000;
 
 type Hash = Record<string, string>;
 
@@ -34,7 +35,7 @@ interface MinuteData {
 @Injectable()
 export class MetricsClusterStore {
   private readonly logger = new Logger(MetricsClusterStore.name);
-  private snapshotCache = new Map<number, { at: number; snapshot: MetricsSnapshot }>();
+  private snapshotCache = new Map<string, { at: number; snapshot: MetricsSnapshot }>();
 
   constructor(private readonly valkeyClient: ValkeyClient) {}
 
@@ -43,35 +44,54 @@ export class MetricsClusterStore {
   }
 
   async getSnapshot(windowMs: number): Promise<MetricsSnapshot | null> {
-    const cached = this.snapshotCache.get(windowMs);
-    if (cached && Date.now() - cached.at < SNAPSHOT_CACHE_TTL_MS) {
+    const now = Date.now();
+    return this.getSnapshotRange(now - windowMs, now);
+  }
+
+  async getSnapshotRange(fromTs: number, toTs: number): Promise<MetricsSnapshot | null> {
+    const windowMs = toTs - fromTs;
+    // Large windows read far more keys — cache their snapshots longer.
+    const cacheTtlMs = windowMs > 6 * HOUR_INTERVAL_MS ? 30_000 : 5_000;
+    // Round the cache key so a sliding relative window reuses entries.
+    const cacheKey = `${Math.floor(fromTs / 5_000)}:${Math.floor(toTs / 5_000)}`;
+    const cached = this.snapshotCache.get(cacheKey);
+    if (cached && Date.now() - cached.at < cacheTtlMs) {
       return cached.snapshot;
     }
 
+    const granularity = readGranularity(windowMs);
+    const keyIntervalMs = granularity === 'minute' ? BUCKET_INTERVAL_MS : HOUR_INTERVAL_MS;
     const now = Date.now();
-    const cutoff = now - windowMs;
-    const oldestBucketTs = Math.floor(cutoff / BUCKET_INTERVAL_MS) * BUCKET_INTERVAL_MS;
+    const endTs = Math.min(toTs, now);
+    const oldestBucketTs = Math.floor(fromTs / keyIntervalMs) * keyIntervalMs;
     const bucketTimestamps: number[] = [];
-    for (let ts = oldestBucketTs; ts <= now; ts += BUCKET_INTERVAL_MS) {
+    for (let ts = oldestBucketTs; ts <= endTs; ts += keyIntervalMs) {
       bucketTimestamps.push(ts);
     }
 
     const prefix = keyPrefix();
-    const minutes = await this.fetchMinutes(prefix, bucketTimestamps);
+    const minutes = await this.fetchBuckets(prefix, granularity, bucketTimestamps);
     if (!minutes) return null;
 
     const snapshot = this.merge(minutes, now, windowMs);
-    this.snapshotCache.set(windowMs, { at: Date.now(), snapshot });
+    if (this.snapshotCache.size > 100) this.snapshotCache.clear();
+    this.snapshotCache.set(cacheKey, { at: Date.now(), snapshot });
     return snapshot;
   }
 
-  private async fetchMinutes(prefix: string, bucketTimestamps: number[]): Promise<MinuteData[] | null> {
+  private async fetchBuckets(
+    prefix: string,
+    granularity: 'minute' | 'hour',
+    bucketTimestamps: number[],
+  ): Promise<MinuteData[] | null> {
+    const [gKey, rKey, dKey] =
+      granularity === 'minute' ? ['g', 'r', 'd'] : ['gh', 'rh', 'dh'];
     return this.valkeyClient.execute(async (client) => {
       const pipeline = client.pipeline();
       for (const ts of bucketTimestamps) {
-        pipeline.hgetall(`${prefix}:g:${ts}`);
-        pipeline.hgetall(`${prefix}:r:${ts}`);
-        pipeline.hgetall(`${prefix}:d:${ts}`);
+        pipeline.hgetall(`${prefix}:${gKey}:${ts}`);
+        pipeline.hgetall(`${prefix}:${rKey}:${ts}`);
+        pipeline.hgetall(`${prefix}:${dKey}:${ts}`);
       }
       const results = await pipeline.exec();
       if (!results) throw new Error('Empty pipeline result');
@@ -103,7 +123,11 @@ export class MetricsClusterStore {
     const statusClasses: StatusClassCounts = { c2xx: 0, c3xx: 0, c4xx: 0, c5xx: 0 };
     const histogram = new Map<string, number>();
 
-    const timeline: TimelineBucket[] = [];
+    const bucketMs = timelineBucketMs(windowMs);
+    const timelineAcc = new Map<
+      number,
+      { count: number; err: number; latSum: number; statusClasses: StatusClassCounts }
+    >();
     const routeAcc = new Map<string, { count: number; err: number; latSum: number; hit: number }>();
     const dsAcc = new Map<
       string,
@@ -142,18 +166,19 @@ export class MetricsClusterStore {
         }
       }
 
-      timeline.push({
-        bucketTs: minute.bucketTs,
-        requestCount: count,
-        avgLatencyMs: count > 0 ? bucketLatSum / count : 0,
-        errorCount: err,
-        statusClasses: {
-          c2xx: num(g, 's2'),
-          c3xx: num(g, 's3'),
-          c4xx: num(g, 's4'),
-          c5xx: num(g, 's5'),
-        },
-      });
+      const coalescedTs = Math.floor(minute.bucketTs / bucketMs) * bucketMs;
+      let tb = timelineAcc.get(coalescedTs);
+      if (!tb) {
+        tb = { count: 0, err: 0, latSum: 0, statusClasses: { c2xx: 0, c3xx: 0, c4xx: 0, c5xx: 0 } };
+        timelineAcc.set(coalescedTs, tb);
+      }
+      tb.count += count;
+      tb.err += err;
+      tb.latSum += bucketLatSum;
+      tb.statusClasses.c2xx += num(g, 's2');
+      tb.statusClasses.c3xx += num(g, 's3');
+      tb.statusClasses.c4xx += num(g, 's4');
+      tb.statusClasses.c5xx += num(g, 's5');
 
       for (const field of Object.keys(minute.r)) {
         const sep = field.lastIndexOf('|');
@@ -230,10 +255,21 @@ export class MetricsClusterStore {
       cacheProviders.push({ provider: 'none', hits: 0, misses: totalRequests - cacheHits });
     }
 
+    const timeline: TimelineBucket[] = Array.from(timelineAcc.entries())
+      .sort(([a], [b]) => a - b)
+      .map(([bucketTs, tb]) => ({
+        bucketTs,
+        requestCount: tb.count,
+        avgLatencyMs: tb.count > 0 ? tb.latSum / tb.count : 0,
+        errorCount: tb.err,
+        statusClasses: tb.statusClasses,
+      }));
+
     return {
       timestamp: now,
       windowMs,
-      bucketIntervalMs: BUCKET_INTERVAL_MS,
+      windowCoverageMs: windowMs,
+      bucketIntervalMs: bucketMs,
       source: 'cluster',
       summary: {
         totalRequests,

@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { Box, Card, Skeleton, Typography } from '@mui/material';
+import dayjs from 'dayjs';
 import { tokens } from '@/styles/theme';
 
 // Single categorical palette for all metrics charts.
@@ -41,6 +42,10 @@ export const formatMs = (value: number): string => {
 };
 
 export const formatPercent = (value: number): string => `${value.toFixed(1)}%`;
+
+// Hour-or-coarser buckets span days — include the date in the axis label.
+export const formatBucketTs = (ts: number, bucketIntervalMs?: number): string =>
+  dayjs(ts).format((bucketIntervalMs ?? 0) >= 3_600_000 ? 'DD MMM HH:mm' : 'HH:mm');
 
 interface ChartCardProps {
   title: string;

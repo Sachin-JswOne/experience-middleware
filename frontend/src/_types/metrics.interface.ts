@@ -103,6 +103,7 @@ export interface RouteErrorSample {
 export interface MetricsSnapshot {
   timestamp: number;
   windowMs: number;
+  windowCoverageMs?: number;
   summary: MetricsSummary;
   timeline: TimelineBucket[];
   routeBreakdown: RouteBreakdown[];

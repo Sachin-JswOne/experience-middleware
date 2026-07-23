@@ -3,9 +3,11 @@ import { ValkeyClient } from '../cache/valkey/valkey.client';
 import { RequestRecord } from './metrics.types';
 import {
   BUCKET_INTERVAL_MS,
+  HOUR_INTERVAL_MS,
   histogramField,
   isClusterEnabled,
   keyPrefix,
+  minuteRetentionSeconds,
   retentionSeconds,
 } from './metrics.cluster.shared';
 
@@ -56,9 +58,52 @@ export class MetricsPublisher implements OnModuleDestroy {
     const records = this.pending;
     this.pending = [];
 
+    // Same deltas at two granularities: minute keys serve short windows with
+    // fine timelines, hourly rollups keep 7d reads bounded (~168 keys).
+    const minuteBuckets = this.foldIntoBuckets(records, BUCKET_INTERVAL_MS);
+    const hourBuckets = this.foldIntoBuckets(records, HOUR_INTERVAL_MS);
+
+    const prefix = keyPrefix();
+    const minuteTtl = minuteRetentionSeconds() + 300;
+    const hourTtl = retentionSeconds() + 3600;
+
+    const ok = await this.valkeyClient.executeWrite(async (client) => {
+      const pipeline = client.pipeline();
+      const writeBuckets = (
+        buckets: Map<number, BucketDeltas>,
+        prefixes: [string, string, string],
+        ttl: number,
+      ) => {
+        for (const [bucketTs, deltas] of buckets.entries()) {
+          const groups: Array<[string, CounterMap]> = [
+            [`${prefix}:${prefixes[0]}:${bucketTs}`, deltas.g],
+            [`${prefix}:${prefixes[1]}:${bucketTs}`, deltas.r],
+            [`${prefix}:${prefixes[2]}:${bucketTs}`, deltas.d],
+          ];
+          for (const [key, counters] of groups) {
+            if (counters.size === 0) continue;
+            for (const [field, delta] of counters.entries()) {
+              if (Number.isInteger(delta)) pipeline.hincrby(key, field, delta);
+              else pipeline.hincrbyfloat(key, field, delta);
+            }
+            pipeline.expire(key, ttl);
+          }
+        }
+      };
+      writeBuckets(minuteBuckets, ['g', 'r', 'd'], minuteTtl);
+      writeBuckets(hourBuckets, ['gh', 'rh', 'dh'], hourTtl);
+      await pipeline.exec();
+    });
+
+    if (!ok) {
+      this.logger.warn(`Dropped ${records.length} metric records (Valkey unavailable)`);
+    }
+  }
+
+  private foldIntoBuckets(records: RequestRecord[], intervalMs: number): Map<number, BucketDeltas> {
     const buckets = new Map<number, BucketDeltas>();
     for (const record of records) {
-      const bucketTs = Math.floor(record.timestamp / BUCKET_INTERVAL_MS) * BUCKET_INTERVAL_MS;
+      const bucketTs = Math.floor(record.timestamp / intervalMs) * intervalMs;
       let deltas = buckets.get(bucketTs);
       if (!deltas) {
         deltas = { g: new Map(), r: new Map(), d: new Map() };
@@ -66,33 +111,7 @@ export class MetricsPublisher implements OnModuleDestroy {
       }
       this.foldRecord(deltas, record);
     }
-
-    const prefix = keyPrefix();
-    const ttl = retentionSeconds() + 300;
-
-    const ok = await this.valkeyClient.executeWrite(async (client) => {
-      const pipeline = client.pipeline();
-      for (const [bucketTs, deltas] of buckets.entries()) {
-        const groups: Array<[string, CounterMap]> = [
-          [`${prefix}:g:${bucketTs}`, deltas.g],
-          [`${prefix}:r:${bucketTs}`, deltas.r],
-          [`${prefix}:d:${bucketTs}`, deltas.d],
-        ];
-        for (const [key, counters] of groups) {
-          if (counters.size === 0) continue;
-          for (const [field, delta] of counters.entries()) {
-            if (Number.isInteger(delta)) pipeline.hincrby(key, field, delta);
-            else pipeline.hincrbyfloat(key, field, delta);
-          }
-          pipeline.expire(key, ttl);
-        }
-      }
-      await pipeline.exec();
-    });
-
-    if (!ok) {
-      this.logger.warn(`Dropped ${records.length} metric records (Valkey unavailable)`);
-    }
+    return buckets;
   }
 
   private foldRecord(deltas: BucketDeltas, record: RequestRecord): void {

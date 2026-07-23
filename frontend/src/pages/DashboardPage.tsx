@@ -8,8 +8,6 @@ import {
   Select,
   Tab,
   Tabs,
-  ToggleButton,
-  ToggleButtonGroup,
   Typography,
 } from '@mui/material';
 import RefreshIcon from '@mui/icons-material/Refresh';
@@ -18,8 +16,9 @@ import type { MetricsSnapshot, RouteBreakdown } from '@/_types/metrics.interface
 import LocalStorage from '@/utils/LocalStorage';
 import { tokens } from '@/styles/theme';
 import useMetricsQuery, {
-  type MetricsWindow,
+  type MetricsRange,
 } from '@/components/features/metrics/useMetricsQuery';
+import TimeRangePicker from '@/components/features/metrics/TimeRangePicker';
 import SummaryCards from '@/components/features/metrics/SummaryCards';
 import RequestTimelineChart from '@/components/features/metrics/RequestTimelineChart';
 import StatusClassTimelineChart from '@/components/features/metrics/StatusClassTimelineChart';
@@ -46,13 +45,6 @@ const emptySnapshot: MetricsSnapshot = {
   downstream: [],
 };
 
-const WINDOW_OPTIONS: Array<{ value: MetricsWindow; label: string }> = [
-  { value: '5m', label: '5m' },
-  { value: '15m', label: '15m' },
-  { value: '30m', label: '30m' },
-  { value: '1h', label: '1h' },
-];
-
 const REFRESH_OPTIONS = [
   { value: 0, label: 'Refresh: Off' },
   { value: 10_000, label: 'Refresh: 10s' },
@@ -63,7 +55,7 @@ const REFRESH_OPTIONS = [
 const REFRESH_STORAGE_KEY = 'metricsRefreshMs';
 
 const DashboardPage = () => {
-  const [timeWindow, setTimeWindow] = useState<MetricsWindow>('5m');
+  const [range, setRange] = useState<MetricsRange>({ type: 'relative', window: '5m' });
   const [refreshMs, setRefreshMs] = useState<number>(() => {
     const stored = LocalStorage.getItem(REFRESH_STORAGE_KEY);
     return typeof stored === 'number' ? stored : 10_000;
@@ -73,7 +65,7 @@ const DashboardPage = () => {
   const [selectedRoute, setSelectedRoute] = useState<RouteBreakdown | null>(null);
 
   const { data, isPending, isFetching, isError, refetch } = useMetricsQuery(
-    timeWindow,
+    range,
     refreshMs > 0 ? refreshMs : false,
   );
   const snapshot = data ?? emptySnapshot;
@@ -122,25 +114,14 @@ const DashboardPage = () => {
             <Typography variant="body2" sx={{ color: tokens.textSubtle, mt: 0.5 }}>
               Last updated {dayjs(snapshot.timestamp).format('HH:mm:ss')}
               {snapshot.source === 'cluster' ? ' · cluster-wide' : ''}
+              {snapshot.windowCoverageMs && snapshot.windowCoverageMs < snapshot.windowMs
+                ? ` · showing last ${Math.round(snapshot.windowCoverageMs / 60_000)} min only (local data)`
+                : ''}
               {isError ? ' — data may be stale' : ''}
             </Typography>
           </Box>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
-            <ToggleButtonGroup
-              value={timeWindow}
-              exclusive
-              size="small"
-              onChange={(_, next: MetricsWindow | null) => {
-                if (next) setTimeWindow(next);
-              }}
-              aria-label="Metrics window"
-            >
-              {WINDOW_OPTIONS.map((opt) => (
-                <ToggleButton key={opt.value} value={opt.value} aria-label={`${opt.label} window`}>
-                  {opt.label}
-                </ToggleButton>
-              ))}
-            </ToggleButtonGroup>
+            <TimeRangePicker range={range} onChange={setRange} />
             <Select
               value={refreshMs}
               onChange={(e) => handleRefreshChange(Number(e.target.value))}
@@ -196,9 +177,17 @@ const DashboardPage = () => {
               }}
             >
               <Box sx={{ gridColumn: { xs: '1', lg: '1 / -1' } }}>
-                <RequestTimelineChart data={snapshot.timeline} loading={isPending} />
+                <RequestTimelineChart
+                  data={snapshot.timeline}
+                  loading={isPending}
+                  bucketIntervalMs={snapshot.bucketIntervalMs}
+                />
               </Box>
-              <StatusClassTimelineChart data={snapshot.timeline} loading={isPending} />
+              <StatusClassTimelineChart
+                data={snapshot.timeline}
+                loading={isPending}
+                bucketIntervalMs={snapshot.bucketIntervalMs}
+              />
               <RecentErrorsPanel data={snapshot.recentErrors} loading={isPending} />
             </Box>
           </>

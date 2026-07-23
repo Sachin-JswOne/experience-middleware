@@ -10,11 +10,9 @@ import {
   CacheServedBy,
   RecentError,
 } from './metrics.types';
+import { localRetentionMs, timelineBucketMs } from './metrics.cluster.shared';
 
-const DEFAULT_RETENTION_MS = 60 * 60 * 1000;
 const DEFAULT_MAX_RECORDS = 250_000;
-const BUCKET_INTERVAL_MS = 60 * 1000;
-const MAX_TIMELINE_BUCKETS = 60;
 const MAX_RECENT_ERRORS = 10;
 
 export const emptyStatusClasses = (): StatusClassCounts => ({
@@ -39,7 +37,9 @@ export class MetricsAggregator implements OnModuleDestroy {
   private pruneTimer: NodeJS.Timeout;
 
   constructor() {
-    this.retentionMs = parseInt(process.env.METRICS_RETENTION_MS || String(DEFAULT_RETENTION_MS), 10);
+    // Local in-memory buffer keeps a short horizon (default 1h); long windows
+    // are served by the Valkey-backed cluster store.
+    this.retentionMs = localRetentionMs();
     this.maxRecords = parseInt(process.env.METRICS_MAX_RECORDS || String(DEFAULT_MAX_RECORDS), 10);
     this.pruneTimer = setInterval(() => this.prune(), 30_000);
     this.pruneTimer.unref?.();
@@ -61,11 +61,21 @@ export class MetricsAggregator implements OnModuleDestroy {
   }
 
   getSnapshot(windowMs?: number): MetricsSnapshot {
-    const effectiveWindow = Math.min(windowMs || this.retentionMs, this.retentionMs);
     const now = Date.now();
-    const cutoff = now - effectiveWindow;
+    const requestedWindow = windowMs || this.retentionMs;
+    return this.getSnapshotRange(now - requestedWindow, now);
+  }
 
-    const windowRecords = this.buffer.filter((r) => r.timestamp >= cutoff);
+  getSnapshotRange(fromTs: number, toTs: number): MetricsSnapshot {
+    const now = Date.now();
+    const requestedWindow = toTs - fromTs;
+    // The buffer only holds localRetention — report the requested window but
+    // be honest about how much of it the data actually covers.
+    const availableFrom = now - this.retentionMs;
+    const coverageMs = Math.max(0, Math.min(toTs, now) - Math.max(fromTs, availableFrom));
+    const cutoff = Math.max(fromTs, availableFrom);
+
+    const windowRecords = this.buffer.filter((r) => r.timestamp >= cutoff && r.timestamp <= toTs);
     const windowDurations = windowRecords.map((r) => r.durationMs).sort((a, b) => a - b);
 
     const totalRequests = windowRecords.length;
@@ -90,8 +100,10 @@ export class MetricsAggregator implements OnModuleDestroy {
       }
     }
 
-    // Timeline: aggregate records into 1-minute buckets
-    const timeline = this.computeTimeline(windowRecords, cutoff, now);
+    // Timeline: bucket size adapts to what we can actually cover, so the
+    // local fallback still renders a fine-grained chart.
+    const bucketMs = timelineBucketMs(coverageMs > 0 ? coverageMs : requestedWindow);
+    const timeline = this.computeTimeline(windowRecords, cutoff, Math.min(toTs, now), bucketMs);
 
     // Route breakdown
     const routeMap = new Map<string, { rb: RouteBreakdown; cacheHits: number }>();
@@ -195,8 +207,9 @@ export class MetricsAggregator implements OnModuleDestroy {
 
     return {
       timestamp: now,
-      windowMs: effectiveWindow,
-      bucketIntervalMs: BUCKET_INTERVAL_MS,
+      windowMs: requestedWindow,
+      windowCoverageMs: coverageMs,
+      bucketIntervalMs: bucketMs,
       source: 'local',
       summary: {
         totalRequests,
@@ -221,21 +234,26 @@ export class MetricsAggregator implements OnModuleDestroy {
     };
   }
 
-  private computeTimeline(records: RequestRecord[], cutoff: number, now: number): TimelineBucket[] {
-    // Find the oldest minute-bucket boundary within window
-    const oldestBucketTs = Math.floor(Math.max(cutoff, now - MAX_TIMELINE_BUCKETS * BUCKET_INTERVAL_MS) / BUCKET_INTERVAL_MS) * BUCKET_INTERVAL_MS;
+  private computeTimeline(
+    records: RequestRecord[],
+    cutoff: number,
+    now: number,
+    bucketIntervalMs: number,
+  ): TimelineBucket[] {
+    // Find the oldest bucket boundary within the covered window
+    const oldestBucketTs = Math.floor(cutoff / bucketIntervalMs) * bucketIntervalMs;
     const bucketMap = new Map<
       number,
       { totalLatency: number; requestCount: number; errorCount: number; statusClasses: StatusClassCounts }
     >();
 
     // Initialize all buckets in range (even empty ones)
-    for (let ts = oldestBucketTs; ts <= now; ts += BUCKET_INTERVAL_MS) {
+    for (let ts = oldestBucketTs; ts <= now; ts += bucketIntervalMs) {
       bucketMap.set(ts, { totalLatency: 0, requestCount: 0, errorCount: 0, statusClasses: emptyStatusClasses() });
     }
 
     for (const record of records) {
-      const bucketTs = Math.floor(record.timestamp / BUCKET_INTERVAL_MS) * BUCKET_INTERVAL_MS;
+      const bucketTs = Math.floor(record.timestamp / bucketIntervalMs) * bucketIntervalMs;
       const bucket = bucketMap.get(bucketTs);
       if (bucket) {
         bucket.totalLatency += record.durationMs;
