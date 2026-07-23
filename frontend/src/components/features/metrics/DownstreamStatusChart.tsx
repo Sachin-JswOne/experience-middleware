@@ -19,16 +19,25 @@ interface Props {
 
 const CLASS_KEYS = ['c2xx', 'c3xx', 'c4xx', 'c5xx'] as const;
 
+const MAX_TARGETS = 10;
+
 const DownstreamStatusChart = ({ data, loading }: Props) => {
   const hasStatusData = data.some((d) => d.statusClasses || (d.networkErrorCount ?? 0) > 0);
-  const chartData = data.map((d) => ({
-    name: d.target,
-    c2xx: d.statusClasses?.c2xx ?? 0,
-    c3xx: d.statusClasses?.c3xx ?? 0,
-    c4xx: d.statusClasses?.c4xx ?? 0,
-    c5xx: d.statusClasses?.c5xx ?? 0,
-    network: d.networkErrorCount ?? 0,
-  }));
+  const chartData = data
+    .map((d) => ({
+      name: d.target,
+      c2xx: d.statusClasses?.c2xx ?? 0,
+      c3xx: d.statusClasses?.c3xx ?? 0,
+      c4xx: d.statusClasses?.c4xx ?? 0,
+      c5xx: d.statusClasses?.c5xx ?? 0,
+      network: d.networkErrorCount ?? 0,
+    }))
+    .sort(
+      (a, b) =>
+        b.c2xx + b.c3xx + b.c4xx + b.c5xx + b.network -
+        (a.c2xx + a.c3xx + a.c4xx + a.c5xx + a.network),
+    )
+    .slice(0, MAX_TARGETS);
 
   return (
     <ChartCard
