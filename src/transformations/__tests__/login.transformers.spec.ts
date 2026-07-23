@@ -393,13 +393,13 @@ describe('login.transformers', () => {
   });
 
   describe('selectLoginTarget', () => {
-    it('should return "generate-otp-login" when only phoneNumber is provided', () => {
+    it('should return "otp-login" when only phoneNumber is provided', () => {
       const request: Partial<BaseRequest> = {
         body: { phoneNumber: '1234567890' },
         url: new URL('http://localhost/login'),
       };
       const result = selectLoginTarget(request as BaseRequest);
-      expect(result).toBe('generate-otp-login');
+      expect(result).toBe('otp-login');
     });
 
     it('should return "email-login" when only email is provided', () => {
@@ -516,7 +516,7 @@ describe('login.transformers', () => {
     it('should throw CustomError if responseData is null or undefined', () => {
       expect(() => transformEmailLoginResponse(null)).toThrow(CustomError);
       expect(Logger.error).toHaveBeenCalledWith(
-        'Error for Email Login API method: transformEmailLoginResponse test-trace-id CCP Email Login API is failing',
+        'Error for Email Login API method: transformEmailLoginResponse CCP Email Login API is failing',
       );
       expect(CustomError).toHaveBeenCalledWith(
         'CCP Email Login API is failing',

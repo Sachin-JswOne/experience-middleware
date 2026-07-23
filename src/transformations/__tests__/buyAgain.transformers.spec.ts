@@ -65,7 +65,7 @@ describe('transformBuyAgainResponse', () => {
     const expectedProduct = {
       mmid: '1016-10924-10007386',
       displayName: 'JSW Ordinary Portland Cement 43',
-      category: '',
+      slug: 'jsw-ordinary-portland-cement-43',
       imageUrl: [
         {
           url: 'https://storage.googleapis.com/public-jsw-msme-cms-storage-qa/Cement_bc78db9892/Cement_bc78db9892.png',
@@ -74,7 +74,7 @@ describe('transformBuyAgainResponse', () => {
       quantity: 4,
       variantKey: 'JSW-ORDINARY-PORTLAND-CEMENT-43',
       attributes: [],
-      listOfAttributes: [
+      listOfAttributesToDisplay: [
         {
           displayName: '4 Bags',
           type: 'text',

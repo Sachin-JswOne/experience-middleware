@@ -140,20 +140,20 @@ describe('transformGetAddressResponse', () => {
     expect(result.AddressList).toHaveLength(2);
 
     expect(result.AddressList[0]).toEqual({
+      id: '1',
       state: 'Karnataka',
-      shiptoAddressTag: 'Site',
       pincode: '560001',
       isShippingAddress: true,
       isBillingAddress: false,
       district: 'South',
       companyName: 'ABC Pvt Ltd',
       city: 'Bangalore',
-      underApproval: true,
       addressLine1: 'Street 1',
       contactNumber: '9999999999',
+      defaultShippingAddressId: '1',
+      defaultBillingAddressId: '2',
     });
 
-    expect(result.AddressList[1].shiptoAddressTag).toBe('Shop');
     expect(result.AddressList[1].isBillingAddress).toBe(true);
     expect(result.AddressList[1].isShippingAddress).toBe(false);
   });

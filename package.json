@@ -22,7 +22,9 @@
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
     "lint-staged": "lint-staged",
-    "cleanup": "npm run lint:fix && npm run format"
+    "cleanup": "npm run lint:fix && npm run format",
+    "e2e": "playwright test -c e2e",
+    "test:fe": "cd frontend && npm test"
   },
   "dependencies": {
     "@google-cloud/secret-manager": "^6.2.0",
@@ -62,6 +64,7 @@
     "@nestjs/cli": "^11.0.0",
     "@nestjs/schematics": "^11.0.0",
     "@nestjs/testing": "^11.0.1",
+    "@playwright/test": "^1.61.1",
     "@swc/cli": "^0.6.0",
     "@swc/core": "^1.10.7",
     "@types/express": "^5.0.0",

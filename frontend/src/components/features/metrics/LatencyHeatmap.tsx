@@ -21,7 +21,7 @@ const boundLabel = (bound: number | 'inf'): string => {
 
 // The latency band a heatmap row covers: (lower bound of previous bucket,
 // this bucket's bound]. 'inf' is open-ended.
-const rowBand = (row: number | 'inf'): { minMs: number; maxMs: number | null } => {
+export const rowBand = (row: number | 'inf'): { minMs: number; maxMs: number | null } => {
   if (row === 'inf') {
     return { minMs: LATENCY_HISTOGRAM_BOUNDS[LATENCY_HISTOGRAM_BOUNDS.length - 1] ?? 0, maxMs: null };
   }

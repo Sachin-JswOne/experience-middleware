@@ -16,7 +16,13 @@ import NotificationsNoneIcon from '@mui/icons-material/NotificationsNone';
 import NotificationsActiveIcon from '@mui/icons-material/NotificationsActive';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
-import type { MetricsHealth, MetricsSnapshot, MetricsSummary } from '@/_types/metrics.interface';
+import type {
+  AlertConfig,
+  AlertHistoryRecord,
+  MetricsHealth,
+  MetricsSnapshot,
+  MetricsSummary,
+} from '@/_types/metrics.interface';
 import LocalStorage from '@/utils/LocalStorage';
 import { tokens } from '@/styles/theme';
 import { formatTs } from './chartShared';
@@ -37,8 +43,13 @@ export interface TargetAlertRule {
 export interface AlertThresholds {
   errorRatePct: number | null;
   p99Ms: number | null;
+  // Blanket per-downstream-target error rate.
+  targetErrorRatePct: number | null;
   // Total requests dropped by ≥ this % vs the previous window (traffic loss).
   trafficDropPct: number | null;
+  // Availability SLO for the server-side burn-rate alert (webhook only —
+  // burn needs two windows, evaluated by the backend).
+  sloAvailabilityPct: number | null;
   // Any pod's event-loop lag p99 at or above this (needs the health feed).
   eventLoopLagP99Ms: number | null;
   // Alert when the cluster store is enabled but unreachable.
@@ -47,6 +58,33 @@ export interface AlertThresholds {
   routeRules: RouteAlertRule[];
   targetRules: TargetAlertRule[];
 }
+
+// Fields shared with the server-side webhook evaluator (stored in Valkey).
+// Browser-only signals (notify, loop lag, valkey) stay in localStorage.
+export const toServerConfig = (thresholds: AlertThresholds): AlertConfig => ({
+  errorRatePct: thresholds.errorRatePct,
+  p99Ms: thresholds.p99Ms,
+  targetErrorRatePct: thresholds.targetErrorRatePct,
+  trafficDropPct: thresholds.trafficDropPct,
+  sloAvailabilityPct: thresholds.sloAvailabilityPct,
+  routeRules: thresholds.routeRules,
+  targetRules: thresholds.targetRules,
+  updatedAt: 0,
+});
+
+export const mergeServerConfig = (
+  base: AlertThresholds,
+  config: AlertConfig,
+): AlertThresholds => ({
+  ...base,
+  errorRatePct: config.errorRatePct,
+  p99Ms: config.p99Ms,
+  targetErrorRatePct: config.targetErrorRatePct,
+  trafficDropPct: config.trafficDropPct,
+  sloAvailabilityPct: config.sloAvailabilityPct,
+  routeRules: config.routeRules ?? [],
+  targetRules: config.targetRules ?? [],
+});
 
 const STORAGE_KEY = 'metricsAlertThresholds';
 const HISTORY_KEY = 'metricsAlertHistory';
@@ -58,7 +96,9 @@ const MIN_TRAFFIC_BASELINE = 30;
 export const defaultThresholds: AlertThresholds = {
   errorRatePct: null,
   p99Ms: null,
+  targetErrorRatePct: null,
   trafficDropPct: null,
+  sloAvailabilityPct: null,
   eventLoopLagP99Ms: null,
   valkeyUnavailable: false,
   notify: false,
@@ -96,6 +136,18 @@ export const evaluateAlerts = (
       breaches.push(
         `P99 latency ${Math.round(summary.p99LatencyMs)}ms ≥ ${thresholds.p99Ms}ms`,
       );
+    }
+
+    if (thresholds.targetErrorRatePct !== null) {
+      for (const target of snapshot.downstream) {
+        if (target.requestCount < MIN_SCOPED_REQUESTS) continue;
+        const rate = (target.errorCount / target.requestCount) * 100;
+        if (rate >= thresholds.targetErrorRatePct) {
+          breaches.push(
+            `${target.target} error rate ${rate.toFixed(1)}% ≥ ${thresholds.targetErrorRatePct}%`,
+          );
+        }
+      }
     }
 
     for (const rule of thresholds.routeRules) {
@@ -211,6 +263,13 @@ interface Props {
   routeOptions: string[];
   targetOptions: string[];
   utc?: boolean;
+  // True when the config is shared via the backend (cluster mode) — edits
+  // are pushed there so the webhook evaluator uses the same rules.
+  shared?: boolean;
+  onPersistServer?: (config: AlertConfig) => void;
+  // Server-side breach log (webhook posts). Shown instead of the local
+  // browser history when available.
+  serverHistory?: AlertHistoryRecord[] | null;
 }
 
 const numberOrNull = (raw: string): number | null => {
@@ -241,13 +300,24 @@ const NumberField = ({
   />
 );
 
-const AlertSettings = ({ thresholds, onChange, breached, routeOptions, targetOptions, utc }: Props) => {
+const AlertSettings = ({
+  thresholds,
+  onChange,
+  breached,
+  routeOptions,
+  targetOptions,
+  utc,
+  shared,
+  onPersistServer,
+  serverHistory,
+}: Props) => {
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const [history, setHistory] = useState<AlertHistoryEntry[]>([]);
 
   const update = (next: AlertThresholds) => {
     onChange(next);
     LocalStorage.setItem(STORAGE_KEY, next);
+    if (shared && onPersistServer) onPersistServer(toServerConfig(next));
   };
 
   const open = (e: React.MouseEvent<HTMLElement>) => {
@@ -320,7 +390,7 @@ const AlertSettings = ({ thresholds, onChange, breached, routeOptions, targetOpt
               onChange={(v) => update({ ...thresholds, p99Ms: v })}
             />
           </Box>
-          <Box sx={{ display: 'flex', gap: 1.5, mb: 1 }}>
+          <Box sx={{ display: 'flex', gap: 1.5, mb: 1.5 }}>
             <NumberField
               label="Traffic drop ≥ (%)"
               value={thresholds.trafficDropPct}
@@ -330,6 +400,18 @@ const AlertSettings = ({ thresholds, onChange, breached, routeOptions, targetOpt
               label="Loop lag p99 ≥ (ms)"
               value={thresholds.eventLoopLagP99Ms}
               onChange={(v) => update({ ...thresholds, eventLoopLagP99Ms: v })}
+            />
+          </Box>
+          <Box sx={{ display: 'flex', gap: 1.5, mb: 1 }}>
+            <NumberField
+              label="Any target err ≥ (%)"
+              value={thresholds.targetErrorRatePct}
+              onChange={(v) => update({ ...thresholds, targetErrorRatePct: v })}
+            />
+            <NumberField
+              label="SLO burn (avail %)"
+              value={thresholds.sloAvailabilityPct}
+              onChange={(v) => update({ ...thresholds, sloAvailabilityPct: v })}
             />
           </Box>
           <FormControlLabel
@@ -344,7 +426,10 @@ const AlertSettings = ({ thresholds, onChange, breached, routeOptions, targetOpt
           />
           <Typography variant="caption" sx={{ color: tokens.textSubtlest, display: 'block', mb: 1 }}>
             Loop-lag and Valkey checks use the health feed and are evaluated alongside every
-            metrics refresh.
+            metrics refresh. SLO burn is evaluated server-side (webhook) only.
+            {shared
+              ? ' Thresholds are shared — the server webhook uses the same rules.'
+              : ' Cluster mode off — thresholds live in this browser only.'}
           </Typography>
 
           <Divider sx={{ my: 1.5 }} />
@@ -483,9 +568,11 @@ const AlertSettings = ({ thresholds, onChange, breached, routeOptions, targetOpt
           <Divider sx={{ my: 1.5 }} />
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 0.5 }}>
             <Typography variant="body2" sx={{ fontWeight: 600 }}>
-              Recent breaches
+              {serverHistory && serverHistory.length > 0
+                ? 'Recent breaches (server, webhook-posted)'
+                : 'Recent breaches'}
             </Typography>
-            {history.length > 0 && (
+            {!(serverHistory && serverHistory.length > 0) && history.length > 0 && (
               <Button
                 size="small"
                 onClick={() => {
@@ -498,7 +585,18 @@ const AlertSettings = ({ thresholds, onChange, breached, routeOptions, targetOpt
               </Button>
             )}
           </Box>
-          {history.length === 0 ? (
+          {serverHistory && serverHistory.length > 0 ? (
+            serverHistory.slice(0, 8).map((entry) => (
+              <Box key={`${entry.ts}-${entry.kind}`} sx={{ mb: 0.75 }}>
+                <Typography variant="caption" sx={{ color: tokens.textSubtle, fontWeight: 600 }}>
+                  {formatTs(entry.ts, 'DD MMM HH:mm:ss', utc)} · {entry.pod}
+                </Typography>
+                <Typography variant="caption" sx={{ display: 'block', color: tokens.textSubtlest }}>
+                  {entry.message}
+                </Typography>
+              </Box>
+            ))
+          ) : history.length === 0 ? (
             <Typography variant="caption" sx={{ color: tokens.textSubtlest }}>
               No breaches recorded in this browser yet.
             </Typography>

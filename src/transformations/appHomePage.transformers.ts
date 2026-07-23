@@ -523,7 +523,10 @@ export function mergeAppHomePageResponseV4(aggregatedResponses: AggregatedRespon
       inTransit = true;
     }
   }
-  if (page?.link_banner_component?.inTransit) {
+  // Guard the component, not the flag — the flag starts undefined, so
+  // guarding on it made this assignment unreachable and the in-transit
+  // banner could never activate.
+  if (page?.link_banner_component) {
     page.link_banner_component.inTransit = inTransit;
   }
 

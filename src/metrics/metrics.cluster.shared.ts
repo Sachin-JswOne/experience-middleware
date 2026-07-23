@@ -58,6 +58,12 @@ export const histogramToApi = (
   return any ? out : undefined;
 };
 
+// Shared error/slow sample ring: written by MetricsPublisher on flush, read
+// by MetricsClusterStore for the samples drawer. Lives here because both
+// sides import it (publisher ↔ cluster-store would be circular).
+export const CLUSTER_SAMPLES_KEY_SUFFIX = 'samples';
+export const CLUSTER_SAMPLES_MAX = 150;
+
 export const podName = (): string => process.env.HOSTNAME || 'local';
 
 export const appVersion = (): string =>

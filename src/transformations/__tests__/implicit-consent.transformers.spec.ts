@@ -57,7 +57,7 @@ describe('implicit-consent.transformers', () => {
         customerConsent: {
           consentEventName: CONSENT_EVENT_NAME,
           consentRegistrationSource: CONSENT_REGISTRATION_SOURCE,
-          consentTimestamp: '2024-05-01 12:34:56',
+          consentTimestamp: '2024-05-01 18:04:56',
           consentBrowser: 'Chrome',
           consentGeoLocation: {
             latitude: '19.0760',
@@ -106,7 +106,7 @@ describe('implicit-consent.transformers', () => {
         customerConsent: {
           consentEventName: CONSENT_EVENT_NAME,
           consentRegistrationSource: CONSENT_REGISTRATION_SOURCE,
-          consentTimestamp: '2024-05-01 12:34:56',
+          consentTimestamp: '2024-05-01 18:04:56',
           consentBrowser: 'Edge',
           consentGeoLocation: {
             latitude: '12.9716',
@@ -134,7 +134,7 @@ describe('implicit-consent.transformers', () => {
         customerConsent: {
           consentEventName: CONSENT_EVENT_NAME,
           consentRegistrationSource: CONSENT_REGISTRATION_SOURCE,
-          consentTimestamp: '2024-05-01 12:34:56',
+          consentTimestamp: '2024-05-01 18:04:56',
           consentBrowser: '',
           consentGeoLocation: {
             latitude: '',

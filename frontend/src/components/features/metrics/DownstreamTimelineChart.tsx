@@ -1,4 +1,5 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
+import { ToggleButton, ToggleButtonGroup } from '@mui/material';
 import {
   LineChart,
   Line,
@@ -30,7 +31,16 @@ interface Props {
   onZoom?: (fromTs: number, toTs: number) => void;
 }
 
+type LatencyMode = 'avg' | 'p95';
+
 const DownstreamTimelineChart = ({ data, loading, bucketIntervalMs, deployMarkers, utc, onZoom }: Props) => {
+  const [mode, setMode] = useState<LatencyMode>('avg');
+  const hasP95 = useMemo(
+    () => data.some((series) => series.points.some((p) => p.p95LatencyMs !== undefined)),
+    [data],
+  );
+  const effectiveMode: LatencyMode = hasP95 ? mode : 'avg';
+
   const { chartData, targets } = useMemo(() => {
     const targetNames = data.map((d) => d.target);
     const rows = new Map<number, Record<string, number | string>>();
@@ -41,7 +51,9 @@ const DownstreamTimelineChart = ({ data, loading, bucketIntervalMs, deployMarker
           row = { bucketTs: point.bucketTs, time: formatBucketTs(point.bucketTs, bucketIntervalMs, utc) };
           rows.set(point.bucketTs, row);
         }
-        row[series.target] = Math.round(point.avgLatencyMs);
+        const value =
+          effectiveMode === 'p95' ? point.p95LatencyMs ?? point.avgLatencyMs : point.avgLatencyMs;
+        row[series.target] = Math.round(value);
       }
     }
     return {
@@ -50,7 +62,7 @@ const DownstreamTimelineChart = ({ data, loading, bucketIntervalMs, deployMarker
       ),
       targets: targetNames,
     };
-  }, [data, bucketIntervalMs, utc]);
+  }, [data, bucketIntervalMs, utc, effectiveMode]);
 
   const buckets = useMemo(
     () => chartData.map((row) => ({ bucketTs: row.bucketTs as number })),
@@ -65,6 +77,26 @@ const DownstreamTimelineChart = ({ data, loading, bucketIntervalMs, deployMarker
       loading={loading}
       empty={chartData.length === 0}
       emptyMessage="No downstream calls in this window"
+      action={
+        hasP95 ? (
+          <ToggleButtonGroup
+            value={effectiveMode}
+            exclusive
+            size="small"
+            onChange={(_, next: LatencyMode | null) => {
+              if (next) setMode(next);
+            }}
+            aria-label="Latency statistic"
+          >
+            <ToggleButton value="avg" sx={{ px: 1, py: 0.25, fontSize: 11 }}>
+              Avg
+            </ToggleButton>
+            <ToggleButton value="p95" sx={{ px: 1, py: 0.25, fontSize: 11 }}>
+              P95
+            </ToggleButton>
+          </ToggleButtonGroup>
+        ) : undefined
+      }
     >
       <ResponsiveContainer width="100%" height={240}>
         <LineChart

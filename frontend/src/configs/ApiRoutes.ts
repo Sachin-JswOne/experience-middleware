@@ -10,6 +10,9 @@ export const API_ROUTES = {
   METRICS: '/xp-mi/metrics',
   METRICS_SAMPLES: '/xp-mi/metrics/samples',
   METRICS_HEALTH: '/xp-mi/metrics/health',
+  METRICS_ROUTE_TIMELINE: '/xp-mi/metrics/route-timeline',
+  METRICS_ALERT_CONFIG: '/xp-mi/metrics/alert-config',
+  METRICS_ALERT_HISTORY: '/xp-mi/metrics/alert-history',
   AUTH: {
     OUTLOOK_LOGIN: (referer: string) =>
       `/xp-mi/public/v1/auth/outlook-login?referer=${encodeURIComponent(referer)}`,

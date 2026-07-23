@@ -99,6 +99,47 @@ export interface DownstreamTimelinePoint {
   requestCount: number;
   avgLatencyMs: number;
   errorCount: number;
+  p95LatencyMs?: number;
+}
+
+export interface RouteTimelinePoint {
+  bucketTs: number;
+  requestCount: number;
+  avgLatencyMs: number;
+  errorCount: number;
+  p95LatencyMs?: number;
+}
+
+// --- Alerting (shared config, mirrors src/metrics/metrics.types.ts) ------
+
+export interface AlertConfigRouteRule {
+  key: string;
+  errorRatePct: number | null;
+  p95Ms: number | null;
+}
+
+export interface AlertConfigTargetRule {
+  target: string;
+  errorRatePct: number | null;
+  avgLatencyMs: number | null;
+}
+
+export interface AlertConfig {
+  errorRatePct: number | null;
+  p99Ms: number | null;
+  targetErrorRatePct: number | null;
+  trafficDropPct: number | null;
+  sloAvailabilityPct: number | null;
+  routeRules: AlertConfigRouteRule[];
+  targetRules: AlertConfigTargetRule[];
+  updatedAt: number;
+}
+
+export interface AlertHistoryRecord {
+  ts: number;
+  kind: string;
+  message: string;
+  pod: string;
 }
 
 export interface DownstreamTimeline {

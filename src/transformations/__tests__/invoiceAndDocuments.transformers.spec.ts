@@ -13,6 +13,7 @@ jest.mock('../../../src/utils/common-functions.util', () => ({
     if (str === 'other') return 'Other Document';
     return str;
   }),
+  safeDebug: jest.fn(),
 }));
 
 describe('invoiceAndDocuments.transformers', () => {

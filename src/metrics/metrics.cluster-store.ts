@@ -5,6 +5,8 @@ import {
   TimelineBucket,
   RouteBreakdown,
   RouteDownstreamPair,
+  RouteErrorSample,
+  RouteTimelinePoint,
   DownstreamBreakdown,
   DownstreamTimeline,
   StatusClassCounts,
@@ -14,6 +16,8 @@ import {
 } from './metrics.types';
 import {
   BUCKET_INTERVAL_MS,
+  CLUSTER_SAMPLES_KEY_SUFFIX,
+  CLUSTER_SAMPLES_MAX,
   HOUR_INTERVAL_MS,
   estimatePercentileFromHistogram,
   histogramToApi,
@@ -128,6 +132,110 @@ export class MetricsClusterStore {
     return markers.sort((a, b) => a.ts - b.ts);
   }
 
+  // One route's traffic bucketed over a range, extracted from the per-bucket
+  // route hashes. Returns null on Valkey failure (caller falls back local).
+  async getRouteTimeline(
+    method: string,
+    route: string,
+    fromTs: number,
+    toTs: number,
+  ): Promise<{ points: RouteTimelinePoint[]; bucketIntervalMs: number } | null> {
+    const windowMs = toTs - fromTs;
+    const granularity = readGranularity(windowMs);
+    const keyIntervalMs = granularity === 'minute' ? BUCKET_INTERVAL_MS : HOUR_INTERVAL_MS;
+    const rKey = granularity === 'minute' ? 'r' : 'rh';
+    const bucketMs = timelineBucketMs(windowMs);
+    const routeKey = `${method} ${route}`;
+    const prefix = keyPrefix();
+
+    const now = Date.now();
+    const endTs = Math.min(toTs, now);
+    const oldestKeyTs = Math.floor(fromTs / keyIntervalMs) * keyIntervalMs;
+    const keyTimestamps: number[] = [];
+    for (let ts = oldestKeyTs; ts <= endTs; ts += keyIntervalMs) {
+      keyTimestamps.push(ts);
+    }
+
+    const hashes = await this.valkeyClient.execute(async (client) => {
+      const pipeline = client.pipeline();
+      for (const ts of keyTimestamps) {
+        pipeline.hgetall(`${prefix}:${rKey}:${ts}`);
+      }
+      const results = await pipeline.exec();
+      if (!results) throw new Error('Empty pipeline result');
+      return results.map(([err, hash]) => {
+        if (err) throw err;
+        return (hash as Hash) || {};
+      });
+    });
+    if (!hashes) return null;
+
+    const acc = new Map<
+      number,
+      { count: number; latSum: number; err: number; histogram: Record<string, number> }
+    >();
+    // Pre-fill so quiet periods render as zero, not gaps.
+    const oldestBucketTs = Math.floor(fromTs / bucketMs) * bucketMs;
+    for (let ts = oldestBucketTs; ts <= endTs; ts += bucketMs) {
+      acc.set(ts, { count: 0, latSum: 0, err: 0, histogram: {} });
+    }
+    const prefixLen = routeKey.length + 1;
+    for (let i = 0; i < hashes.length; i++) {
+      const coalescedTs = Math.floor(keyTimestamps[i] / bucketMs) * bucketMs;
+      const point = acc.get(coalescedTs);
+      if (!point) continue;
+      const hash = hashes[i];
+      for (const field of Object.keys(hash)) {
+        if (!field.startsWith(routeKey) || field[routeKey.length] !== '|') continue;
+        const metric = field.slice(prefixLen);
+        const value = Number(hash[field]);
+        if (metric === 'count') point.count += value;
+        else if (metric === 'latSum') point.latSum += value;
+        else if (metric === 'err') point.err += value;
+        else if (metric.startsWith('h:')) {
+          point.histogram[metric] = (point.histogram[metric] || 0) + value;
+        }
+      }
+    }
+
+    return {
+      bucketIntervalMs: bucketMs,
+      points: Array.from(acc.entries())
+        .sort(([a], [b]) => a - b)
+        .map(([bucketTs, p]) => {
+          const histTotal = Object.values(p.histogram).reduce((a, b) => a + b, 0);
+          return {
+            bucketTs,
+            requestCount: p.count,
+            avgLatencyMs: p.count > 0 ? p.latSum / p.count : 0,
+            errorCount: p.err,
+            p95LatencyMs:
+              histTotal > 0
+                ? estimatePercentileFromHistogram(p.histogram, histTotal, 95)
+                : undefined,
+          };
+        }),
+    };
+  }
+
+  // Cluster-wide error/slow samples pushed by every pod's publisher.
+  // Returns null on Valkey failure so callers keep the local store.
+  async getClusterSamples(): Promise<RouteErrorSample[] | null> {
+    const entries = await this.valkeyClient.execute((client) =>
+      client.lrange(`${keyPrefix()}:${CLUSTER_SAMPLES_KEY_SUFFIX}`, 0, CLUSTER_SAMPLES_MAX - 1),
+    );
+    if (!entries) return null;
+    const samples: RouteErrorSample[] = [];
+    for (const entry of entries) {
+      try {
+        samples.push(JSON.parse(entry) as RouteErrorSample);
+      } catch {
+        // Skip malformed entries.
+      }
+    }
+    return samples;
+  }
+
   private async fetchBuckets(
     prefix: string,
     granularity: 'minute' | 'hour',
@@ -222,7 +330,7 @@ export class MetricsClusterStore {
     // target -> coalesced bucket -> counters (downstream time series)
     const dsTimelineAcc = new Map<
       string,
-      Map<number, { count: number; err: number; latSum: number }>
+      Map<number, { count: number; err: number; latSum: number; histogram: Record<string, number> }>
     >();
     // "<METHOD> <route>|<target>" -> counters (route-scoped downstream)
     const pairAcc = new Map<string, { count: number; err: number; latSum: number }>();
@@ -331,7 +439,12 @@ export class MetricsClusterStore {
           acc.histogram[metric] = (acc.histogram[metric] || 0) + value;
         } else if (metric in acc) (acc as any)[metric] += value;
 
-        if (metric === 'count' || metric === 'err' || metric === 'latSum') {
+        if (
+          metric === 'count' ||
+          metric === 'err' ||
+          metric === 'latSum' ||
+          metric.startsWith('h:')
+        ) {
           let series = dsTimelineAcc.get(target);
           if (!series) {
             series = new Map();
@@ -339,10 +452,14 @@ export class MetricsClusterStore {
           }
           let point = series.get(coalescedTs);
           if (!point) {
-            point = { count: 0, err: 0, latSum: 0 };
+            point = { count: 0, err: 0, latSum: 0, histogram: {} };
             series.set(coalescedTs, point);
           }
-          (point as any)[metric] += value;
+          if (metric.startsWith('h:')) {
+            point.histogram[metric] = (point.histogram[metric] || 0) + value;
+          } else {
+            (point as any)[metric] += value;
+          }
         }
       }
 
@@ -439,12 +556,19 @@ export class MetricsClusterStore {
         target,
         points: Array.from(series.entries())
           .sort(([a], [b]) => a - b)
-          .map(([bucketTs, p]) => ({
-            bucketTs,
-            requestCount: p.count,
-            avgLatencyMs: p.count > 0 ? p.latSum / p.count : 0,
-            errorCount: p.err,
-          })),
+          .map(([bucketTs, p]) => {
+            const histTotal = Object.values(p.histogram).reduce((a, b) => a + b, 0);
+            return {
+              bucketTs,
+              requestCount: p.count,
+              avgLatencyMs: p.count > 0 ? p.latSum / p.count : 0,
+              errorCount: p.err,
+              p95LatencyMs:
+                histTotal > 0
+                  ? estimatePercentileFromHistogram(p.histogram, histTotal, 95)
+                  : undefined,
+            };
+          }),
       }),
     );
 

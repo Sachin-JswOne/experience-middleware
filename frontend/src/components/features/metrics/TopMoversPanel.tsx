@@ -34,7 +34,7 @@ const latencyOf = (r: RouteBreakdown, other: RouteBreakdown): number =>
     ? r.p95LatencyMs
     : r.avgLatencyMs;
 
-const computeMovers = (current: RouteBreakdown[], previous: RouteBreakdown[]): Mover[] => {
+export const computeMovers = (current: RouteBreakdown[], previous: RouteBreakdown[]): Mover[] => {
   const prevByKey = new Map(previous.map((r) => [`${r.method} ${r.route}`, r]));
   const movers: Mover[] = [];
   for (const route of current) {

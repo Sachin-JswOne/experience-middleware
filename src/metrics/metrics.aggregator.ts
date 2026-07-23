@@ -5,6 +5,7 @@ import {
   TimelineBucket,
   RouteBreakdown,
   RouteDownstreamPair,
+  RouteTimelinePoint,
   DownstreamBreakdown,
   DownstreamTimeline,
   StatusClassCounts,
@@ -217,7 +218,7 @@ export class MetricsAggregator implements OnModuleDestroy {
     >();
     const dsTimelineMap = new Map<
       string,
-      Map<number, { count: number; latSum: number; err: number }>
+      Map<number, { count: number; latSum: number; err: number; durations: number[] }>
     >();
     for (const record of windowRecords) {
       const bucketTs = Math.floor(record.timestamp / bucketMs) * bucketMs;
@@ -265,11 +266,12 @@ export class MetricsAggregator implements OnModuleDestroy {
         }
         let point = series.get(bucketTs);
         if (!point) {
-          point = { count: 0, latSum: 0, err: 0 };
+          point = { count: 0, latSum: 0, err: 0, durations: [] };
           series.set(bucketTs, point);
         }
         point.count++;
         point.latSum += ds.durationMs;
+        point.durations.push(ds.durationMs);
         if (!ds.success) point.err++;
       }
     }
@@ -292,12 +294,16 @@ export class MetricsAggregator implements OnModuleDestroy {
         target,
         points: Array.from(series.entries())
           .sort(([a], [b]) => a - b)
-          .map(([bucketTs, p]) => ({
-            bucketTs,
-            requestCount: p.count,
-            avgLatencyMs: p.count > 0 ? p.latSum / p.count : 0,
-            errorCount: p.err,
-          })),
+          .map(([bucketTs, p]) => {
+            p.durations.sort((x, y) => x - y);
+            return {
+              bucketTs,
+              requestCount: p.count,
+              avgLatencyMs: p.count > 0 ? p.latSum / p.count : 0,
+              errorCount: p.err,
+              p95LatencyMs: this.percentile(p.durations, 95),
+            };
+          }),
       }),
     );
 
@@ -347,6 +353,59 @@ export class MetricsAggregator implements OnModuleDestroy {
       downstreamTimeline,
       routeDownstream,
       recentErrors,
+    };
+  }
+
+  // One route's traffic bucketed over a range — powers the trend chart in
+  // the route samples drawer. Same coverage semantics as getSnapshotRange.
+  getRouteTimeline(
+    method: string,
+    route: string,
+    fromTs: number,
+    toTs: number,
+  ): { points: RouteTimelinePoint[]; bucketIntervalMs: number; coverageMs: number } {
+    const now = Date.now();
+    const availableFrom = now - this.retentionMs;
+    const cutoff = Math.max(fromTs, availableFrom);
+    const end = Math.min(toTs, now);
+    const coverageMs = Math.max(0, end - cutoff);
+    const bucketMs = timelineBucketMs(coverageMs > 0 ? coverageMs : toTs - fromTs);
+
+    const points = new Map<
+      number,
+      { count: number; latSum: number; err: number; durations: number[] }
+    >();
+    const oldestBucketTs = Math.floor(cutoff / bucketMs) * bucketMs;
+    for (let ts = oldestBucketTs; ts <= end; ts += bucketMs) {
+      points.set(ts, { count: 0, latSum: 0, err: 0, durations: [] });
+    }
+    for (const record of this.buffer) {
+      if (record.timestamp < cutoff || record.timestamp > end) continue;
+      if (record.method !== method || record.route !== route) continue;
+      const bucketTs = Math.floor(record.timestamp / bucketMs) * bucketMs;
+      const point = points.get(bucketTs);
+      if (!point) continue;
+      point.count++;
+      point.latSum += record.durationMs;
+      point.durations.push(record.durationMs);
+      if (record.statusCode >= 400) point.err++;
+    }
+
+    return {
+      bucketIntervalMs: bucketMs,
+      coverageMs,
+      points: Array.from(points.entries())
+        .sort(([a], [b]) => a - b)
+        .map(([bucketTs, p]) => {
+          p.durations.sort((x, y) => x - y);
+          return {
+            bucketTs,
+            requestCount: p.count,
+            avgLatencyMs: p.count > 0 ? p.latSum / p.count : 0,
+            errorCount: p.err,
+            p95LatencyMs: this.percentile(p.durations, 95),
+          };
+        }),
     };
   }
 

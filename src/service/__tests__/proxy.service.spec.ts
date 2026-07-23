@@ -1,18 +1,20 @@
-import Redis from 'ioredis';
 import { ProxyService } from '../proxy.service';
 import { RouteHandler } from 'src/enum/route-handler.enum';
+import { CacheService } from 'src/cache/cache.service';
 
 describe('ProxyService - auth gate before cache', () => {
   let service: ProxyService;
 
-  const redisMock = {
+  const cacheServiceMock = {
     get: jest.fn(),
+    getWithSource: jest.fn(),
     set: jest.fn(),
-  } as unknown as Redis;
+    del: jest.fn(),
+  } as unknown as CacheService;
 
   beforeEach(() => {
     jest.clearAllMocks();
-    service = new ProxyService(redisMock);
+    service = new ProxyService(cacheServiceMock);
   });
 
   // it('throws CustomError(400) if route needs auth and Authorization is missing and not guest', async () => {
@@ -73,7 +75,10 @@ describe('ProxyService - auth gate before cache', () => {
     (service as any).findRoute = jest.fn().mockReturnValue(routeNeedingAuth);
 
     const cachedPayload = { ok: true, from: 'cache' };
-    (redisMock.get as jest.Mock).mockResolvedValue(JSON.stringify(cachedPayload));
+    (cacheServiceMock.getWithSource as jest.Mock).mockResolvedValue({
+      value: JSON.stringify(cachedPayload),
+      source: 'valkey',
+    });
 
     const req: any = {
       method: 'GET',
@@ -89,9 +94,9 @@ describe('ProxyService - auth gate before cache', () => {
 
     const result = await service.handleRequest(req);
 
-    expect(redisMock.get).toHaveBeenCalledTimes(1);
+    expect(cacheServiceMock.getWithSource).toHaveBeenCalledTimes(1);
     expect(result).toEqual(cachedPayload);
-    expect(redisMock.set).not.toHaveBeenCalled();
+    expect(cacheServiceMock.set).not.toHaveBeenCalled();
   });
 
   it('allows request with Authorization header and proceeds to handler on cache MISS', async () => {
@@ -109,7 +114,7 @@ describe('ProxyService - auth gate before cache', () => {
     };
 
     (service as any).findRoute = jest.fn().mockReturnValue(routeNeedingAuth);
-    (redisMock.get as jest.Mock).mockResolvedValue(null);
+    (cacheServiceMock.getWithSource as jest.Mock).mockResolvedValue(null);
 
     // Stub downstream call
     (service as any).handleTransformRequest = jest.fn().mockResolvedValue({ ok: true });
@@ -128,7 +133,7 @@ describe('ProxyService - auth gate before cache', () => {
 
     const result = await service.handleRequest(req);
 
-    expect(redisMock.get).toHaveBeenCalledTimes(1);
+    expect(cacheServiceMock.getWithSource).toHaveBeenCalledTimes(1);
     expect((service as any).handleTransformRequest).toHaveBeenCalledTimes(1);
     expect(result).toEqual({ ok: true });
   });

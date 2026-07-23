@@ -1,7 +1,14 @@
 import ApiClient, { IApiClientResponse } from '@/services/ApiClient';
 import { API_ROUTES } from '@/configs/ApiRoutes';
 import LocalStorage from '@/utils/LocalStorage';
-import type { MetricsHealth, MetricsSnapshot, RouteErrorSample } from '@/_types/metrics.interface';
+import type {
+  AlertConfig,
+  AlertHistoryRecord,
+  MetricsHealth,
+  MetricsSnapshot,
+  RouteErrorSample,
+  RouteTimelinePoint,
+} from '@/_types/metrics.interface';
 
 export interface IMetricsResult {
   data: MetricsSnapshot | null;
@@ -9,7 +16,26 @@ export interface IMetricsResult {
 }
 
 export interface IRouteSamplesResult {
-  data: { enabled: boolean; slowThresholdMs?: number; samples: RouteErrorSample[] } | null;
+  data: {
+    enabled: boolean;
+    slowThresholdMs?: number;
+    source?: 'cluster' | 'local';
+    samples: RouteErrorSample[];
+  } | null;
+  error: IApiClientResponse['error'];
+}
+
+export interface IRouteTimelineResult {
+  data: {
+    points: RouteTimelinePoint[];
+    bucketIntervalMs: number;
+    source: 'cluster' | 'local';
+  } | null;
+  error: IApiClientResponse['error'];
+}
+
+export interface IAlertConfigResult {
+  data: { shared: boolean; config: AlertConfig | null } | null;
   error: IApiClientResponse['error'];
 }
 
@@ -95,6 +121,66 @@ const MetricsService = {
     });
     return {
       data: response.data as MetricsHealth,
+      error: response.error,
+    };
+  },
+
+  async getRouteTimeline(
+    method: string,
+    route: string,
+    params: { window?: string; from?: number; to?: number },
+  ): Promise<IRouteTimelineResult> {
+    const query = new URLSearchParams({ method, route });
+    if (params.from !== undefined && params.to !== undefined) {
+      query.set('from', String(params.from));
+      query.set('to', String(params.to));
+    } else if (params.window) {
+      query.set('window', params.window);
+    }
+    const response = await ApiClient.makeRequest({
+      url: `${API_ROUTES.METRICS_ROUTE_TIMELINE}?${query.toString()}`,
+      method: 'GET',
+      headers: authHeaders(),
+    });
+    return {
+      data: response.data as IRouteTimelineResult['data'],
+      error: response.error,
+    };
+  },
+
+  async getAlertConfig(): Promise<IAlertConfigResult> {
+    const response = await ApiClient.makeRequest({
+      url: API_ROUTES.METRICS_ALERT_CONFIG,
+      method: 'GET',
+      headers: authHeaders(),
+    });
+    return {
+      data: response.data as IAlertConfigResult['data'],
+      error: response.error,
+    };
+  },
+
+  async saveAlertConfig(config: AlertConfig): Promise<{ error: IApiClientResponse['error'] }> {
+    const response = await ApiClient.makeRequest({
+      url: API_ROUTES.METRICS_ALERT_CONFIG,
+      method: 'PUT',
+      headers: authHeaders(),
+      body: config as unknown as Record<string, unknown>,
+    });
+    return { error: response.error };
+  },
+
+  async getAlertHistory(limit = 50): Promise<{
+    data: AlertHistoryRecord[] | null;
+    error: IApiClientResponse['error'];
+  }> {
+    const response = await ApiClient.makeRequest({
+      url: `${API_ROUTES.METRICS_ALERT_HISTORY}?limit=${limit}`,
+      method: 'GET',
+      headers: authHeaders(),
+    });
+    return {
+      data: response.data as AlertHistoryRecord[],
       error: response.error,
     };
   },

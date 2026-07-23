@@ -119,6 +119,55 @@ export interface DownstreamTimelinePoint {
   requestCount: number;
   avgLatencyMs: number;
   errorCount: number;
+  // Exact locally, histogram-estimated in cluster mode.
+  p95LatencyMs?: number;
+}
+
+// One route's traffic over time (route-timeline endpoint, drawer trend).
+export interface RouteTimelinePoint {
+  bucketTs: number;
+  requestCount: number;
+  avgLatencyMs: number;
+  errorCount: number;
+  p95LatencyMs?: number;
+}
+
+// --- Alerting -----------------------------------------------------------
+// One config shared by the dashboard UI and the server-side webhook
+// evaluator so thresholds live in exactly one place (Valkey). Env vars act
+// as the fallback when nothing has been saved yet.
+
+export interface AlertConfigRouteRule {
+  // "<METHOD> <route>"
+  key: string;
+  errorRatePct: number | null;
+  p95Ms: number | null;
+}
+
+export interface AlertConfigTargetRule {
+  target: string;
+  errorRatePct: number | null;
+  avgLatencyMs: number | null;
+}
+
+export interface AlertConfig {
+  errorRatePct: number | null;
+  p99Ms: number | null;
+  // Blanket per-downstream-target error rate.
+  targetErrorRatePct: number | null;
+  trafficDropPct: number | null;
+  // Availability SLO for multiwindow burn-rate alerts (e.g. 99.5).
+  sloAvailabilityPct: number | null;
+  routeRules: AlertConfigRouteRule[];
+  targetRules: AlertConfigTargetRule[];
+  updatedAt: number;
+}
+
+export interface AlertHistoryRecord {
+  ts: number;
+  kind: string;
+  message: string;
+  pod: string;
 }
 
 export interface DownstreamTimeline {

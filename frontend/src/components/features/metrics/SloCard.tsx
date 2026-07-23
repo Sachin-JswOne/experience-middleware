@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   Box,
   Card,
@@ -12,23 +12,68 @@ import {
   Typography,
 } from '@mui/material';
 import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
-import type { MetricsSummary } from '@/_types/metrics.interface';
+import {
+  LATENCY_HISTOGRAM_BOUNDS,
+  type MetricsSummary,
+  type TimelineBucket,
+} from '@/_types/metrics.interface';
 import LocalStorage from '@/utils/LocalStorage';
 import { tokens } from '@/styles/theme';
 
 export interface SloConfig {
   availabilityTargetPct: number | null;
   p99TargetMs: number | null;
+  // Apdex threshold T: satisfied ≤ T, tolerating ≤ 4T. Snapped to the
+  // nearest histogram bound at or below the entered value.
+  apdexTargetMs: number | null;
 }
 
 const STORAGE_KEY = 'metricsSloConfig';
 
+const defaultSloConfig: SloConfig = {
+  availabilityTargetPct: null,
+  p99TargetMs: null,
+  apdexTargetMs: null,
+};
+
 export const loadSloConfig = (): SloConfig => {
   const stored = LocalStorage.getItem(STORAGE_KEY);
   if (stored && typeof stored === 'object') {
-    return { availabilityTargetPct: null, p99TargetMs: null, ...(stored as Partial<SloConfig>) };
+    return { ...defaultSloConfig, ...(stored as Partial<SloConfig>) };
   }
-  return { availabilityTargetPct: null, p99TargetMs: null };
+  return defaultSloConfig;
+};
+
+// Apdex over the window's latency histograms. T is snapped to a histogram
+// bound so bucket boundaries line up exactly.
+export const computeApdex = (
+  timeline: TimelineBucket[],
+  targetMs: number,
+): { score: number; total: number; effectiveTargetMs: number } | null => {
+  const boundsAsc: number[] = [...LATENCY_HISTOGRAM_BOUNDS];
+  const smallest = boundsAsc[0] ?? 25;
+  const satBound = [...boundsAsc].reverse().find((b) => b <= targetMs) ?? smallest;
+  const tolBound = [...boundsAsc].reverse().find((b) => b <= satBound * 4) ?? satBound;
+
+  let satisfied = 0;
+  let tolerating = 0;
+  let total = 0;
+  for (const bucket of timeline) {
+    if (!bucket.histogram) continue;
+    for (const [key, count] of Object.entries(bucket.histogram)) {
+      total += count;
+      if (key === 'inf') continue;
+      const bound = Number(key);
+      if (bound <= satBound) satisfied += count;
+      else if (bound <= tolBound) tolerating += count;
+    }
+  }
+  if (total === 0) return null;
+  return {
+    score: (satisfied + tolerating / 2) / total,
+    total,
+    effectiveTargetMs: satBound,
+  };
 };
 
 const numberOrNull = (raw: string): number | null => {
@@ -39,6 +84,7 @@ const numberOrNull = (raw: string): number | null => {
 
 interface Props {
   summary: MetricsSummary;
+  timeline: TimelineBucket[];
   loading: boolean;
   config: SloConfig;
   onConfigChange: (config: SloConfig) => void;
@@ -46,7 +92,7 @@ interface Props {
 
 // Availability + latency SLO against the selected window. Error budget =
 // allowed failure fraction; consumed = actual errors / allowed errors.
-const SloCard = ({ summary, loading, config, onConfigChange }: Props) => {
+const SloCard = ({ summary, timeline, loading, config, onConfigChange }: Props) => {
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
 
   const update = (next: SloConfig) => {
@@ -54,7 +100,15 @@ const SloCard = ({ summary, loading, config, onConfigChange }: Props) => {
     LocalStorage.setItem(STORAGE_KEY, next);
   };
 
-  const configured = config.availabilityTargetPct !== null || config.p99TargetMs !== null;
+  const apdex = useMemo(
+    () => (config.apdexTargetMs !== null ? computeApdex(timeline, config.apdexTargetMs) : null),
+    [timeline, config.apdexTargetMs],
+  );
+
+  const configured =
+    config.availabilityTargetPct !== null ||
+    config.p99TargetMs !== null ||
+    config.apdexTargetMs !== null;
   const availability = 100 - summary.errorRate;
   const budgetPct = config.availabilityTargetPct !== null ? 100 - config.availabilityTargetPct : null;
   const budgetConsumedPct =
@@ -162,6 +216,33 @@ const SloCard = ({ summary, loading, config, onConfigChange }: Props) => {
               />
             </Box>
           )}
+          {apdex && (
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
+              <Tooltip
+                title={`Apdex over ${apdex.total.toLocaleString()} requests: satisfied ≤ ${apdex.effectiveTargetMs}ms, tolerating ≤ ${apdex.effectiveTargetMs * 4}ms`}
+              >
+                <Typography variant="body2" sx={{ color: tokens.textSubtle, cursor: 'default' }}>
+                  Apdex {apdex.score.toFixed(2)} (T={apdex.effectiveTargetMs}ms)
+                </Typography>
+              </Tooltip>
+              <Chip
+                label={apdex.score >= 0.94 ? 'excellent' : apdex.score >= 0.85 ? 'good' : apdex.score >= 0.7 ? 'fair' : 'poor'}
+                size="small"
+                sx={{
+                  height: 18,
+                  fontSize: 10,
+                  fontWeight: 600,
+                  color: tokens.textInverse,
+                  bgcolor:
+                    apdex.score >= 0.85
+                      ? tokens.success
+                      : apdex.score >= 0.7
+                        ? tokens.warning
+                        : tokens.danger,
+                }}
+              />
+            </Box>
+          )}
         </Box>
       )}
       <Popover
@@ -193,10 +274,20 @@ const SloCard = ({ summary, loading, config, onConfigChange }: Props) => {
             fullWidth
             value={config.p99TargetMs ?? ''}
             onChange={(e) => update({ ...config, p99TargetMs: numberOrNull(e.target.value) })}
+            sx={{ mb: 1.5 }}
+          />
+          <TextField
+            label="Apdex threshold T (ms)"
+            type="number"
+            size="small"
+            fullWidth
+            value={config.apdexTargetMs ?? ''}
+            onChange={(e) => update({ ...config, apdexTargetMs: numberOrNull(e.target.value) })}
             sx={{ mb: 1 }}
           />
           <Typography variant="caption" sx={{ color: tokens.textSubtlest }}>
-            e.g. 99.5% availability, 800ms p99. Evaluated over the selected time window.
+            e.g. 99.5% availability, 800ms p99, T=500ms apdex. Evaluated over the selected
+            time window.
           </Typography>
         </Box>
       </Popover>

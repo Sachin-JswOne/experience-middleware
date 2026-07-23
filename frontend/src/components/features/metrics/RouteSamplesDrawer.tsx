@@ -19,10 +19,20 @@ import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import DownloadIcon from '@mui/icons-material/Download';
 import { useQuery } from '@tanstack/react-query';
 import { enqueueSnackbar } from 'notistack';
+import {
+  ComposedChart,
+  Bar,
+  Line,
+  XAxis,
+  YAxis,
+  Tooltip as ChartTooltip,
+  ResponsiveContainer,
+} from 'recharts';
 import MetricsService from '@/services/MetricsService';
 import type { RouteErrorSample } from '@/_types/metrics.interface';
 import { tokens } from '@/styles/theme';
-import { formatMs, formatTs } from './chartShared';
+import type { MetricsRange } from './useMetricsQuery';
+import { formatBucketTs, formatMs, formatTs, logUrlFor } from './chartShared';
 
 // What the drawer shows: one route's samples, or every route's samples
 // inside a time window + latency band (latency-heatmap drill-through).
@@ -41,6 +51,8 @@ interface Props {
   query: SamplesQuery | null;
   onClose: () => void;
   utc?: boolean;
+  // Dashboard's current range — the route trend chart follows it.
+  range?: MetricsRange;
 }
 
 type SampleKind = 'all' | 'errors' | 'slow';
@@ -187,15 +199,32 @@ const SampleAccordion = ({
           {formatMs(sample.durationMs)}
         </Typography>
         {sample.requestId && (
-          <Tooltip title={`Copy request id ${sample.requestId}`}>
+          <Tooltip
+            title={
+              logUrlFor(sample.requestId)
+                ? `Open logs for ${sample.requestId}`
+                : `Copy request id ${sample.requestId}`
+            }
+          >
             <Chip
               label={sample.requestId.slice(0, 8)}
               size="small"
               variant="outlined"
-              onClick={(e) => {
-                e.stopPropagation();
-                void copyText(sample.requestId!, 'Request id copied');
-              }}
+              {...(logUrlFor(sample.requestId)
+                ? {
+                    component: 'a' as const,
+                    href: logUrlFor(sample.requestId)!,
+                    target: '_blank',
+                    rel: 'noopener',
+                    clickable: true,
+                    onClick: (e: React.MouseEvent) => e.stopPropagation(),
+                  }
+                : {
+                    onClick: (e: React.MouseEvent) => {
+                      e.stopPropagation();
+                      void copyText(sample.requestId!, 'Request id copied');
+                    },
+                  })}
               sx={{ height: 18, fontSize: 10, fontFamily: 'monospace', color: tokens.textSubtle }}
             />
           </Tooltip>
@@ -279,7 +308,65 @@ const queryTitle = (query: SamplesQuery, utc?: boolean): string => {
   return `${query.label} · ${formatTs(query.fromTs, 'HH:mm', utc)}–${formatTs(query.toTs, 'HH:mm', utc)}`;
 };
 
-const RouteSamplesDrawer = ({ query, onClose, utc }: Props) => {
+// Compact requests/p95/errors trend for the drawer's route, following the
+// dashboard's selected range.
+const RouteTrendChart = ({
+  method,
+  route,
+  range,
+  utc,
+}: {
+  method: string;
+  route: string;
+  range?: MetricsRange;
+  utc?: boolean;
+}) => {
+  const params =
+    range?.type === 'absolute'
+      ? { from: range.from, to: range.to }
+      : { window: range?.window ?? '1h' };
+
+  const { data } = useQuery({
+    queryKey: ['metrics-route-timeline', method, route, params],
+    queryFn: async () => {
+      const result = await MetricsService.getRouteTimeline(method, route, params);
+      if (!result.data || result.error?.code) {
+        throw new Error(result.error?.message || 'Failed to load route timeline');
+      }
+      return result.data;
+    },
+    refetchInterval: 30_000,
+  });
+
+  if (!data || data.points.every((p) => p.requestCount === 0)) return null;
+  const chartData = data.points.map((p) => ({
+    time: formatBucketTs(p.bucketTs, data.bucketIntervalMs, utc),
+    requests: p.requestCount,
+    errors: p.errorCount,
+    p95: p.p95LatencyMs !== undefined ? Math.round(p.p95LatencyMs) : undefined,
+  }));
+
+  return (
+    <Box sx={{ mt: 1.5 }}>
+      <Typography variant="caption" sx={{ color: tokens.textSubtle }}>
+        Trend over the selected range — requests, errors, p95
+      </Typography>
+      <ResponsiveContainer width="100%" height={110}>
+        <ComposedChart data={chartData} margin={{ top: 4, right: 4, left: -18, bottom: 0 }}>
+          <XAxis dataKey="time" tick={{ fontSize: 9, fill: tokens.textSubtlest }} interval="preserveStartEnd" />
+          <YAxis yAxisId="count" tick={{ fontSize: 9, fill: tokens.textSubtlest }} allowDecimals={false} />
+          <YAxis yAxisId="ms" orientation="right" tick={{ fontSize: 9, fill: tokens.textSubtlest }} width={40} />
+          <ChartTooltip contentStyle={{ fontSize: 11, borderRadius: tokens.radiusSmall }} />
+          <Bar yAxisId="count" dataKey="requests" name="Requests" fill={tokens.brand} fillOpacity={0.45} />
+          <Bar yAxisId="count" dataKey="errors" name="Errors" fill={tokens.danger} />
+          <Line yAxisId="ms" dataKey="p95" name="P95 (ms)" stroke="#AF59E1" strokeWidth={1.5} dot={false} />
+        </ComposedChart>
+      </ResponsiveContainer>
+    </Box>
+  );
+};
+
+const RouteSamplesDrawer = ({ query, onClose, utc, range }: Props) => {
   const open = query !== null;
   const [kind, setKind] = useState<SampleKind>('all');
   const [lastQuery, setLastQuery] = useState<SamplesQuery | null>(null);
@@ -326,8 +413,12 @@ const RouteSamplesDrawer = ({ query, onClose, utc }: Props) => {
             </Typography>
             <Typography variant="body2" sx={{ color: tokens.textSubtle, mt: 0.5 }}>
               {active?.kind === 'band'
-                ? 'Samples in this latency band across all routes (this pod only)'
-                : 'Request samples (last few on this pod, newest first)'}
+                ? data?.source === 'cluster'
+                  ? 'Samples in this latency band — errors & slow cluster-wide'
+                  : 'Samples in this latency band across all routes (this pod only)'
+                : data?.source === 'cluster'
+                  ? 'Errors & slow cluster-wide, successes from this pod — newest first'
+                  : 'Request samples (last few on this pod, newest first)'}
             </Typography>
           </Box>
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
@@ -348,6 +439,9 @@ const RouteSamplesDrawer = ({ query, onClose, utc }: Props) => {
             </IconButton>
           </Box>
         </Box>
+        {active?.kind === 'route' && (
+          <RouteTrendChart method={active.method} route={active.route} range={range} utc={utc} />
+        )}
         <ToggleButtonGroup
           value={kind}
           exclusive

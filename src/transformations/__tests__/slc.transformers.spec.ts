@@ -5,13 +5,13 @@ describe('convertSlcResponse', () => {
   it('should return the slcCart object for SALES_LEAD_CART journeyType', () => {
     const mockResponse = slcMockData;
     const result = convertSlcResponse(mockResponse);
-    expect(result).toEqual({ numberOfItems: 1, totalPrice: '5,911.80' });
+    expect(result).toEqual({ cartSummary: { numberOfItems: 1, totalPrice: '5,911.80' } });
   });
 
   it('should return an empty object if data is missing', () => {
     const mockResponse = {};
     const result = convertSlcResponse(mockResponse);
-    expect(result).toEqual({});
+    expect(result).toEqual({ cartSummary: null });
   });
 
   it('should return the input if response is not an object', () => {
@@ -24,6 +24,6 @@ describe('convertSlcResponse', () => {
     // Force an error by passing an object with data but missing identifier
     const mockResponse = { data: {} };
     const result = convertSlcResponse(mockResponse);
-    expect(result).toEqual({});
+    expect(result).toEqual({ cartSummary: null });
   });
 });

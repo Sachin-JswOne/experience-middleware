@@ -506,7 +506,7 @@ describe('orderListing.transformers', () => {
 
       expect(result).toEqual({ data: {}, meta: {} });
       expect(Logger.error).toHaveBeenCalledWith(
-        'Error for Orders Page API method: mergeMaterialTrackingAndOrderListingResponses traceId: 123 Strapi response is missing or invalid',
+        'Error for Orders Page API method: mergeMaterialTrackingAndOrderListingResponses Strapi response is missing or invalid',
       );
     });
   });

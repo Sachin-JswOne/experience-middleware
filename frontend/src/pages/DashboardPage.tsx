@@ -1,10 +1,11 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import {
   Alert,
   Autocomplete,
   Box,
   Button,
+  Chip,
   IconButton,
   MenuItem,
   Select,
@@ -16,16 +17,21 @@ import {
   Typography,
 } from '@mui/material';
 import RefreshIcon from '@mui/icons-material/Refresh';
+import ZoomOutIcon from '@mui/icons-material/ZoomOut';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import type {
+  AlertConfig,
   DownstreamBreakdown,
   MetricsSnapshot,
   RecentError,
   RouteBreakdown,
 } from '@/_types/metrics.interface';
 import LocalStorage from '@/utils/LocalStorage';
+import MetricsService from '@/services/MetricsService';
 import { tokens } from '@/styles/theme';
 import useMetricsQuery, {
   WINDOW_MS,
+  rangeSpanMs,
   usePreviousMetricsQuery,
   useMetricsHealthQuery,
   type MetricsRange,
@@ -52,9 +58,13 @@ import TopMoversPanel from '@/components/features/metrics/TopMoversPanel';
 import SloCard, { loadSloConfig, type SloConfig } from '@/components/features/metrics/SloCard';
 import SavedViews from '@/components/features/metrics/SavedViews';
 import SystemPanel from '@/components/features/metrics/SystemPanel';
+import DependencyMap from '@/components/features/metrics/DependencyMap';
+import TrafficPatternPanel from '@/components/features/metrics/TrafficPatternPanel';
+import CacheOpportunitiesPanel from '@/components/features/metrics/CacheOpportunitiesPanel';
 import AlertSettings, {
   evaluateAlerts,
   loadThresholds,
+  mergeServerConfig,
   useAlertNotifications,
   type AlertThresholds,
 } from '@/components/features/metrics/AlertSettings';
@@ -134,6 +144,57 @@ const DashboardPage = () => {
   const [thresholds, setThresholds] = useState<AlertThresholds>(loadThresholds);
   const [sloConfig, setSloConfig] = useState<SloConfig>(loadSloConfig);
   const [drawerQuery, setDrawerQuery] = useState<SamplesQuery | null>(null);
+  // Ranges we zoomed away from — the reset chip walks back through them.
+  const [zoomStack, setZoomStack] = useState<MetricsRange[]>([]);
+
+  // --- Shared alert config (Valkey-backed, same rules drive the webhook) ---
+  const alertConfigQuery = useQuery({
+    queryKey: ['metrics-alert-config'],
+    queryFn: async () => {
+      const result = await MetricsService.getAlertConfig();
+      if (!result.data || result.error?.code) {
+        throw new Error(result.error?.message || 'Failed to load alert config');
+      }
+      return result.data;
+    },
+    staleTime: 60_000,
+    retry: 1,
+  });
+  const alertsShared = alertConfigQuery.data?.shared === true;
+
+  // Hydrate thresholds from the server copy once per updatedAt change.
+  const hydratedAt = useRef<number>(-1);
+  useEffect(() => {
+    const config = alertConfigQuery.data?.config;
+    if (!alertsShared || !config || config.updatedAt === hydratedAt.current) return;
+    hydratedAt.current = config.updatedAt;
+    setThresholds((prev) => mergeServerConfig(prev, config));
+  }, [alertsShared, alertConfigQuery.data?.config]);
+
+  const saveConfigMutation = useMutation({
+    mutationFn: (config: AlertConfig) => MetricsService.saveAlertConfig(config),
+  });
+  const persistServerConfig = useCallback(
+    (config: AlertConfig) => {
+      // Mark our own write as seen so the next poll doesn't clobber edits.
+      hydratedAt.current = Date.now();
+      saveConfigMutation.mutate(config);
+    },
+    [saveConfigMutation],
+  );
+
+  const alertHistoryQuery = useQuery({
+    queryKey: ['metrics-alert-history'],
+    queryFn: async () => {
+      const result = await MetricsService.getAlertHistory(50);
+      if (!result.data || result.error?.code) {
+        throw new Error(result.error?.message || 'Failed to load alert history');
+      }
+      return result.data;
+    },
+    enabled: alertsShared,
+    refetchInterval: 60_000,
+  });
 
   // Reflect every view decision in the URL so reload/share restores it.
   useEffect(() => {
@@ -155,6 +216,7 @@ const DashboardPage = () => {
   // Saved views re-apply a previously captured query string.
   const applyViewParams = useCallback((raw: string) => {
     const params = new URLSearchParams(raw);
+    setZoomStack([]);
     setRange(parseRange(params));
     setTab(parseTab(params));
     setFilter({ routes: parseList(params, 'routes'), method: params.get('method') });
@@ -275,10 +337,38 @@ const DashboardPage = () => {
     setDrawerQuery({ kind: 'route', method, route });
   };
 
-  // Drag-select on a timeline chart zooms into that slice (absolute range).
-  const handleZoom = useCallback((fromTs: number, toTs: number) => {
-    setRange({ type: 'absolute', from: fromTs, to: toTs });
+  // Drag-select on a timeline chart zooms into that slice (absolute range);
+  // the reset chip walks back to whatever was selected before.
+  const handleZoom = useCallback(
+    (fromTs: number, toTs: number) => {
+      setZoomStack((stack) => [...stack, range]);
+      setRange({ type: 'absolute', from: fromTs, to: toTs });
+    },
+    [range],
+  );
+
+  const handleZoomReset = useCallback(() => {
+    setZoomStack((stack) => {
+      const previous = stack[stack.length - 1];
+      if (previous) setRange(previous);
+      return stack.slice(0, -1);
+    });
   }, []);
+
+  // Picking a range by hand invalidates the zoom trail.
+  const handleRangeChange = useCallback((next: MetricsRange) => {
+    setZoomStack([]);
+    setRange(next);
+  }, []);
+
+  // Breach count in the browser tab so alerts are visible from other tabs.
+  useEffect(() => {
+    const original = document.title;
+    document.title = breaches.length > 0 ? `(${breaches.length}⚠) Observability` : original;
+    return () => {
+      document.title = original;
+    };
+  }, [breaches.length]);
 
   const handleHeatmapCell = useCallback(
     (band: { fromTs: number; toTs: number; minMs: number; maxMs: number | null }) => {
@@ -319,7 +409,18 @@ const DashboardPage = () => {
             </Typography>
           </Box>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
-            <TimeRangePicker range={range} onChange={setRange} utc={utc} />
+            {zoomStack.length > 0 && (
+              <Tooltip title="Back to the range before the last zoom">
+                <Chip
+                  icon={<ZoomOutIcon sx={{ fontSize: 16 }} />}
+                  label="Reset zoom"
+                  size="small"
+                  onClick={handleZoomReset}
+                  sx={{ fontWeight: 600 }}
+                />
+              </Tooltip>
+            )}
+            <TimeRangePicker range={range} onChange={handleRangeChange} utc={utc} />
             <Tooltip title="Show timestamps in UTC">
               <ToggleButton
                 value="utc"
@@ -353,6 +454,9 @@ const DashboardPage = () => {
               routeOptions={routeOptions}
               targetOptions={targetOptions}
               utc={utc}
+              shared={alertsShared}
+              onPersistServer={persistServerConfig}
+              serverHistory={alertHistoryQuery.data ?? null}
             />
             <IconButton
               onClick={() => refetch()}
@@ -415,6 +519,7 @@ const DashboardPage = () => {
                   deployMarkers={snapshot.deployMarkers}
                   utc={utc}
                   onZoom={handleZoom}
+                  previousData={previousQuery.data?.timeline}
                 />
               </Box>
               <Box sx={{ gridColumn: { xs: '1', lg: '1 / -1' } }}>
@@ -448,10 +553,22 @@ const DashboardPage = () => {
               />
               <SloCard
                 summary={snapshot.summary}
+                timeline={snapshot.timeline}
                 loading={isPending}
                 config={sloConfig}
                 onConfigChange={setSloConfig}
               />
+              {rangeSpanMs(range) >= 6.5 * 24 * 60 * 60 * 1000 && (
+                <Box sx={{ gridColumn: { xs: '1', lg: '1 / -1' } }}>
+                  <TrafficPatternPanel
+                    data={snapshot.timeline}
+                    loading={isPending}
+                    bucketIntervalMs={snapshot.bucketIntervalMs}
+                    windowMs={rangeSpanMs(range)}
+                    utc={utc}
+                  />
+                </Box>
+              )}
             </Box>
           </>
         )}
@@ -481,6 +598,7 @@ const DashboardPage = () => {
               </Box>
               <RouteBreakdownChart data={filteredRoutes} loading={isPending} />
               <CacheHitPieChart data={filteredRoutes} loading={isPending} />
+              <CacheOpportunitiesPanel data={filteredRoutes} loading={isPending} />
             </Box>
           </>
         )}
@@ -538,6 +656,13 @@ const DashboardPage = () => {
               <DownstreamStatusChart data={filteredDownstreamAll} loading={isPending} />
               <LatencyStageChart data={filteredDownstreamAll} loading={isPending} />
               <CacheProviderChart data={snapshot.summary.cacheProviders} loading={isPending} />
+              <Box sx={{ gridColumn: { xs: '1', lg: '1 / -1' } }}>
+                <DependencyMap
+                  pairs={snapshot.routeDownstream}
+                  loading={isPending}
+                  onSelectRoute={(routeKey) => setFilter({ routes: [routeKey], method: null })}
+                />
+              </Box>
             </Box>
           </>
         )}
@@ -546,7 +671,12 @@ const DashboardPage = () => {
           <SystemPanel data={healthQuery.data} loading={healthQuery.isPending} utc={utc} />
         )}
 
-        <RouteSamplesDrawer query={drawerQuery} onClose={() => setDrawerQuery(null)} utc={utc} />
+        <RouteSamplesDrawer
+          query={drawerQuery}
+          onClose={() => setDrawerQuery(null)}
+          utc={utc}
+          range={range}
+        />
       </Box>
     </Box>
   );

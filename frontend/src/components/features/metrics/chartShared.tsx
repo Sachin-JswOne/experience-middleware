@@ -10,6 +10,16 @@ dayjs.extend(utcPlugin);
 // this id (they render the same buckets).
 export const OVERVIEW_SYNC_ID = 'metrics-overview';
 
+// Deep link from a request id to the log store (Kibana etc.). Set
+// VITE_LOG_URL_TEMPLATE to e.g.
+//   https://kibana.example.com/app/discover#/?_a=(query:(query:'{requestId}'))
+// — '{requestId}' is replaced. Unset → chips copy instead of linking.
+export const logUrlFor = (requestId: string): string | null => {
+  const template = import.meta.env.VITE_LOG_URL_TEMPLATE as string | undefined;
+  if (!template) return null;
+  return template.replace('{requestId}', encodeURIComponent(requestId));
+};
+
 // Single categorical palette for all metrics charts.
 export const CHART_COLORS = [
   tokens.brand,

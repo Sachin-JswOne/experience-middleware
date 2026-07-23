@@ -1,7 +1,7 @@
 import { Box, Card, Chip, Skeleton, Tooltip, Typography } from '@mui/material';
 import type { RecentError } from '@/_types/metrics.interface';
 import { tokens } from '@/styles/theme';
-import { formatMs, formatTs } from './chartShared';
+import { formatMs, formatTs, logUrlFor } from './chartShared';
 
 interface Props {
   data: RecentError[] | undefined;
@@ -68,11 +68,27 @@ const RecentErrorsPanel = ({ data, loading, utc, onSelect }: Props) => {
                 {e.route}
               </Typography>
               {e.requestId && (
-                <Tooltip title={`Request id ${e.requestId}`}>
+                <Tooltip
+                  title={
+                    logUrlFor(e.requestId)
+                      ? `Open logs for ${e.requestId}`
+                      : `Request id ${e.requestId}`
+                  }
+                >
                   <Chip
                     label={e.requestId.slice(0, 8)}
                     size="small"
                     variant="outlined"
+                    {...(logUrlFor(e.requestId)
+                      ? {
+                          component: 'a' as const,
+                          href: logUrlFor(e.requestId)!,
+                          target: '_blank',
+                          rel: 'noopener',
+                          clickable: true,
+                          onClick: (ev: React.MouseEvent) => ev.stopPropagation(),
+                        }
+                      : {})}
                     sx={{ height: 18, fontSize: 10, fontFamily: 'monospace', color: tokens.textSubtle }}
                   />
                 </Tooltip>

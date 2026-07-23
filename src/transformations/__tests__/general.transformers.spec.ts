@@ -2,7 +2,6 @@ import * as qs from 'qs';
 import {
   moveBodyToQueryParams,
   convertToGetRequest,
-  convertAuthorizationToAccessTokenInHeader,
   createQueryParams,
 } from '../general.transformers';
 import { BaseRequest } from 'src/models/base-request.model';
@@ -35,20 +34,6 @@ describe('general.transformers', () => {
     it('should set body to null', () => {
       const result = convertToGetRequest(baseRequest);
       expect(result.body).toBeNull();
-    });
-  });
-
-  describe('convertAuthorizationToAccessTokenInHeader', () => {
-    it('should move authorization header to access_token', () => {
-      const result = convertAuthorizationToAccessTokenInHeader(baseRequest);
-      expect(result.headers?.access_token).toBe('Bearer abc123');
-      expect(result.headers?.authorization).toBeUndefined();
-    });
-
-    it('should leave headers unchanged if no authorization present', () => {
-      delete baseRequest.headers.authorization;
-      const result = convertAuthorizationToAccessTokenInHeader(baseRequest);
-      expect(result.headers?.access_token).toBeUndefined();
     });
   });
 

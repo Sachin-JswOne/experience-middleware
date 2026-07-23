@@ -1,8 +1,11 @@
 import { Injectable, Logger, OnModuleDestroy } from '@nestjs/common';
 import { ValkeyClient } from '../cache/valkey/valkey.client';
+import { MetricsSampleStore } from './metrics.sample-store';
 import { RequestRecord } from './metrics.types';
 import {
   BUCKET_INTERVAL_MS,
+  CLUSTER_SAMPLES_KEY_SUFFIX,
+  CLUSTER_SAMPLES_MAX,
   HOUR_INTERVAL_MS,
   histogramField,
   isClusterEnabled,
@@ -39,7 +42,10 @@ export class MetricsPublisher implements OnModuleDestroy {
   private pending: RequestRecord[] = [];
   private flushTimer?: NodeJS.Timeout;
 
-  constructor(private readonly valkeyClient: ValkeyClient) {
+  constructor(
+    private readonly valkeyClient: ValkeyClient,
+    private readonly sampleStore: MetricsSampleStore,
+  ) {
     if (this.enabled) {
       const interval = parseInt(
         process.env.METRICS_FLUSH_INTERVAL_MS || String(DEFAULT_FLUSH_INTERVAL_MS),
@@ -60,7 +66,9 @@ export class MetricsPublisher implements OnModuleDestroy {
   }
 
   private async flush(): Promise<void> {
-    if (this.pending.length === 0) return;
+    // Samples flow even when no counter records are pending.
+    const clusterSamples = this.sampleStore.drainClusterQueue();
+    if (this.pending.length === 0 && clusterSamples.length === 0) return;
     const records = this.pending;
     this.pending = [];
 
@@ -121,6 +129,12 @@ export class MetricsPublisher implements OnModuleDestroy {
         pipeline.lpush(errorsKey, ...errorPayloads);
         pipeline.ltrim(errorsKey, 0, RECENT_ERRORS_MAX - 1);
         pipeline.expire(errorsKey, retentionSeconds());
+      }
+      if (clusterSamples.length > 0) {
+        const samplesKey = `${prefix}:${CLUSTER_SAMPLES_KEY_SUFFIX}`;
+        pipeline.lpush(samplesKey, ...clusterSamples.map((s) => JSON.stringify(s)));
+        pipeline.ltrim(samplesKey, 0, CLUSTER_SAMPLES_MAX - 1);
+        pipeline.expire(samplesKey, 24 * 60 * 60);
       }
       await pipeline.exec();
     });

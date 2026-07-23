@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { isClusterEnabled } from './metrics.cluster.shared';
 import { RouteErrorSample } from './metrics.types';
 
 const DEFAULT_MAX_ERROR_SAMPLES_PER_ROUTE = 20;
@@ -10,6 +11,11 @@ const MASKED = '***masked***';
 
 const SENSITIVE_HEADERS = ['authorization', 'access_token', 'cookie', 'set-cookie', 'x-api-key'];
 const SENSITIVE_BODY_FIELDS = ['password', 'token', 'accessToken', 'refreshToken', 'otp'];
+
+// Cluster copies travel through a shared Valkey ring read on every drawer
+// poll — trim bodies harder than the local store does.
+const CLUSTER_MAX_BODY_CHARS = 2048;
+const CLUSTER_QUEUE_MAX = 100;
 
 /**
  * Keeps the last N request/response samples per route so the dashboard can
@@ -59,6 +65,10 @@ export class MetricsSampleStore {
     return this.slowThresholdMs;
   }
 
+  // Error/slow samples wait here until the publisher flush ships them to
+  // the cluster-wide ring (successes stay per-pod to bound volume).
+  private clusterQueue: RouteErrorSample[] = [];
+
   record(sample: RouteErrorSample): void {
     if (!this.enabled) return;
     const key = `${sample.method} ${sample.route}`;
@@ -79,6 +89,37 @@ export class MetricsSampleStore {
     if (list.length > max) {
       list.splice(0, list.length - max);
     }
+
+    if ((isError || isSlow) && isClusterEnabled()) {
+      this.clusterQueue.push(MetricsSampleStore.slimForCluster(sample));
+      if (this.clusterQueue.length > CLUSTER_QUEUE_MAX) {
+        this.clusterQueue.splice(0, this.clusterQueue.length - CLUSTER_QUEUE_MAX);
+      }
+    }
+  }
+
+  drainClusterQueue(): RouteErrorSample[] {
+    const queue = this.clusterQueue;
+    this.clusterQueue = [];
+    return queue;
+  }
+
+  private static truncate(value: string | undefined): string | undefined {
+    if (value === undefined || value.length <= CLUSTER_MAX_BODY_CHARS) return value;
+    return `${value.slice(0, CLUSTER_MAX_BODY_CHARS)}… [truncated]`;
+  }
+
+  private static slimForCluster(sample: RouteErrorSample): RouteErrorSample {
+    return {
+      ...sample,
+      requestBody: MetricsSampleStore.truncate(sample.requestBody),
+      responseBody: MetricsSampleStore.truncate(sample.responseBody),
+      downstream: sample.downstream.map((d) => ({
+        ...d,
+        requestBody: MetricsSampleStore.truncate(d.requestBody),
+        responseBody: MetricsSampleStore.truncate(d.responseBody),
+      })),
+    };
   }
 
   getSamples(method: string, route: string): RouteErrorSample[] {

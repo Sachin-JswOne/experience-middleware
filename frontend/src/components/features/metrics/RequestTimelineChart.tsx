@@ -27,15 +27,27 @@ interface Props {
   utc?: boolean;
   // Drag-select a region to zoom into it (switches to an absolute range).
   onZoom?: (fromTs: number, toTs: number) => void;
+  // Previous window of the same length — rendered as a ghost line so a
+  // regression is visible at a glance. Aligned bucket-by-bucket.
+  previousData?: TimelineBucket[];
 }
 
-const RequestTimelineChart = ({ data, loading, bucketIntervalMs, deployMarkers, utc, onZoom }: Props) => {
-  const chartData = data.map((b) => ({
+const RequestTimelineChart = ({
+  data,
+  loading,
+  bucketIntervalMs,
+  deployMarkers,
+  utc,
+  onZoom,
+  previousData,
+}: Props) => {
+  const chartData = data.map((b, idx) => ({
     ...b,
     avgLatencyMs: Math.round(b.avgLatencyMs),
     p90LatencyMs: b.p90LatencyMs !== undefined ? Math.round(b.p90LatencyMs) : undefined,
     p99LatencyMs: b.p99LatencyMs !== undefined ? Math.round(b.p99LatencyMs) : undefined,
     time: formatBucketTs(b.bucketTs, bucketIntervalMs, utc),
+    prevRequestCount: previousData?.[idx]?.requestCount,
   }));
   const markers = deployMarkerPositions(deployMarkers, data, bucketIntervalMs, utc);
   const zoom = useDragZoom(onZoom, bucketIntervalMs);
@@ -83,6 +95,16 @@ const RequestTimelineChart = ({ data, loading, bucketIntervalMs, deployMarkers, 
               }}
             />
           ))}
+          <Line
+            yAxisId="left"
+            type="monotone"
+            dataKey="prevRequestCount"
+            stroke={tokens.textSubtlest}
+            strokeWidth={1.5}
+            strokeDasharray="4 4"
+            name="Requests (prev window)"
+            dot={false}
+          />
           <Line
             yAxisId="left"
             type="monotone"
