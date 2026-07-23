@@ -8,19 +8,29 @@ import {
   Tooltip,
   ResponsiveContainer,
   Legend,
+  ReferenceArea,
+  ReferenceLine,
 } from 'recharts';
-import type { DownstreamTimeline } from '@/_types/metrics.interface';
+import type { DeployMarker, DownstreamTimeline } from '@/_types/metrics.interface';
 import { tokens } from '@/styles/theme';
-import ChartCard, { CHART_COLORS, formatBucketTs, formatMs } from './chartShared';
+import ChartCard, {
+  CHART_COLORS,
+  deployMarkerPositions,
+  formatBucketTs,
+  formatMs,
+  useDragZoom,
+} from './chartShared';
 
 interface Props {
   data: DownstreamTimeline[];
   loading: boolean;
   bucketIntervalMs?: number;
+  deployMarkers?: DeployMarker[];
   utc?: boolean;
+  onZoom?: (fromTs: number, toTs: number) => void;
 }
 
-const DownstreamTimelineChart = ({ data, loading, bucketIntervalMs, utc }: Props) => {
+const DownstreamTimelineChart = ({ data, loading, bucketIntervalMs, deployMarkers, utc, onZoom }: Props) => {
   const { chartData, targets } = useMemo(() => {
     const targetNames = data.map((d) => d.target);
     const rows = new Map<number, Record<string, number | string>>();
@@ -42,6 +52,13 @@ const DownstreamTimelineChart = ({ data, loading, bucketIntervalMs, utc }: Props
     };
   }, [data, bucketIntervalMs, utc]);
 
+  const buckets = useMemo(
+    () => chartData.map((row) => ({ bucketTs: row.bucketTs as number })),
+    [chartData],
+  );
+  const markers = deployMarkerPositions(deployMarkers, buckets, bucketIntervalMs, utc);
+  const zoom = useDragZoom(onZoom, bucketIntervalMs);
+
   return (
     <ChartCard
       title="Downstream Latency Over Time"
@@ -50,7 +67,14 @@ const DownstreamTimelineChart = ({ data, loading, bucketIntervalMs, utc }: Props
       emptyMessage="No downstream calls in this window"
     >
       <ResponsiveContainer width="100%" height={240}>
-        <LineChart data={chartData} margin={{ top: 4, right: 4, left: -4, bottom: 0 }}>
+        <LineChart
+          data={chartData}
+          margin={{ top: 4, right: 4, left: -4, bottom: 0 }}
+          onMouseDown={zoom.onMouseDown}
+          onMouseMove={zoom.onMouseMove}
+          onMouseUp={zoom.onMouseUp}
+          style={zoom.zoomEnabled ? { userSelect: 'none', cursor: 'crosshair' } : undefined}
+        >
           <CartesianGrid stroke={tokens.border} strokeDasharray="3 3" />
           <XAxis dataKey="time" tick={{ fontSize: 11, fill: tokens.textSubtle }} />
           <YAxis
@@ -62,6 +86,27 @@ const DownstreamTimelineChart = ({ data, loading, bucketIntervalMs, utc }: Props
             formatter={(value, name) => [formatMs(Number(value)), name as string]}
           />
           <Legend wrapperStyle={{ fontSize: 12 }} />
+          {markers.map((m) => (
+            <ReferenceLine
+              key={`${m.x}-${m.version}`}
+              x={m.x}
+              stroke={tokens.textSubtlest}
+              strokeDasharray="4 4"
+              label={{
+                value: `deploy ${m.version}`,
+                position: 'insideTopRight',
+                style: { fontSize: 10, fill: tokens.textSubtle },
+              }}
+            />
+          ))}
+          {zoom.refArea && (
+            <ReferenceArea
+              x1={zoom.refArea.x1}
+              x2={zoom.refArea.x2}
+              fill={tokens.brand}
+              fillOpacity={0.12}
+            />
+          )}
           {targets.map((target, idx) => (
             <Line
               key={target}

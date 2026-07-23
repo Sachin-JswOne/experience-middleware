@@ -7,11 +7,17 @@ import {
   Tooltip,
   ResponsiveContainer,
   Legend,
+  ReferenceArea,
   ReferenceLine,
 } from 'recharts';
 import type { DeployMarker, TimelineBucket } from '@/_types/metrics.interface';
 import { tokens } from '@/styles/theme';
-import ChartCard, { deployMarkerPositions, formatBucketTs } from './chartShared';
+import ChartCard, {
+  OVERVIEW_SYNC_ID,
+  deployMarkerPositions,
+  formatBucketTs,
+  useDragZoom,
+} from './chartShared';
 
 interface Props {
   data: TimelineBucket[];
@@ -19,9 +25,11 @@ interface Props {
   bucketIntervalMs?: number;
   deployMarkers?: DeployMarker[];
   utc?: boolean;
+  // Drag-select a region to zoom into it (switches to an absolute range).
+  onZoom?: (fromTs: number, toTs: number) => void;
 }
 
-const RequestTimelineChart = ({ data, loading, bucketIntervalMs, deployMarkers, utc }: Props) => {
+const RequestTimelineChart = ({ data, loading, bucketIntervalMs, deployMarkers, utc, onZoom }: Props) => {
   const chartData = data.map((b) => ({
     ...b,
     avgLatencyMs: Math.round(b.avgLatencyMs),
@@ -30,11 +38,20 @@ const RequestTimelineChart = ({ data, loading, bucketIntervalMs, deployMarkers, 
     time: formatBucketTs(b.bucketTs, bucketIntervalMs, utc),
   }));
   const markers = deployMarkerPositions(deployMarkers, data, bucketIntervalMs, utc);
+  const zoom = useDragZoom(onZoom, bucketIntervalMs);
 
   return (
     <ChartCard title="Requests Over Time" loading={loading} empty={chartData.length === 0}>
       <ResponsiveContainer width="100%" height={240}>
-        <LineChart data={chartData} margin={{ top: 4, right: 4, left: -4, bottom: 0 }}>
+        <LineChart
+          data={chartData}
+          margin={{ top: 4, right: 4, left: -4, bottom: 0 }}
+          syncId={OVERVIEW_SYNC_ID}
+          onMouseDown={zoom.onMouseDown}
+          onMouseMove={zoom.onMouseMove}
+          onMouseUp={zoom.onMouseUp}
+          style={zoom.zoomEnabled ? { userSelect: 'none', cursor: 'crosshair' } : undefined}
+        >
           <CartesianGrid stroke={tokens.border} strokeDasharray="3 3" />
           <XAxis dataKey="time" tick={{ fontSize: 11, fill: tokens.textSubtle }} />
           <YAxis
@@ -113,6 +130,15 @@ const RequestTimelineChart = ({ data, loading, bucketIntervalMs, deployMarkers, 
             name="Errors"
             dot={false}
           />
+          {zoom.refArea && (
+            <ReferenceArea
+              yAxisId="left"
+              x1={zoom.refArea.x1}
+              x2={zoom.refArea.x2}
+              fill={tokens.brand}
+              fillOpacity={0.12}
+            />
+          )}
         </LineChart>
       </ResponsiveContainer>
     </ChartCard>

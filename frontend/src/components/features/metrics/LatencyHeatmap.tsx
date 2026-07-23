@@ -9,6 +9,8 @@ interface Props {
   loading: boolean;
   bucketIntervalMs?: number;
   utc?: boolean;
+  // Click a cell to inspect the samples inside that time + latency band.
+  onCellClick?: (band: { fromTs: number; toTs: number; minMs: number; maxMs: number | null }) => void;
 }
 
 const boundLabel = (bound: number | 'inf'): string => {
@@ -17,10 +19,20 @@ const boundLabel = (bound: number | 'inf'): string => {
   return `≤${bound}ms`;
 };
 
+// The latency band a heatmap row covers: (lower bound of previous bucket,
+// this bucket's bound]. 'inf' is open-ended.
+const rowBand = (row: number | 'inf'): { minMs: number; maxMs: number | null } => {
+  if (row === 'inf') {
+    return { minMs: LATENCY_HISTOGRAM_BOUNDS[LATENCY_HISTOGRAM_BOUNDS.length - 1] ?? 0, maxMs: null };
+  }
+  const idx = LATENCY_HISTOGRAM_BOUNDS.indexOf(row as (typeof LATENCY_HISTOGRAM_BOUNDS)[number]);
+  return { minMs: idx > 0 ? (LATENCY_HISTOGRAM_BOUNDS[idx - 1] ?? 0) : 0, maxMs: row };
+};
+
 // Slowest row on top, like Kibana/Grafana latency heatmaps.
 const ROWS: Array<number | 'inf'> = ['inf', ...[...LATENCY_HISTOGRAM_BOUNDS].reverse()];
 
-const LatencyHeatmap = ({ data, loading, bucketIntervalMs, utc }: Props) => {
+const LatencyHeatmap = ({ data, loading, bucketIntervalMs, utc, onCellClick }: Props) => {
   const { cells, maxCount, hasData } = useMemo(() => {
     let max = 0;
     let any = false;
@@ -80,18 +92,30 @@ const LatencyHeatmap = ({ data, loading, bucketIntervalMs, utc }: Props) => {
                   const count = col.counts[rowIdx] ?? 0;
                   const intensity =
                     count > 0 ? 0.15 + 0.85 * (Math.log(count + 1) / Math.log(maxCount + 1)) : 0;
+                  const clickable = count > 0 && Boolean(onCellClick);
                   return (
                     <Box
                       key={`${String(row)}-${col.bucketTs}`}
                       title={
                         count > 0
-                          ? `${formatBucketTs(col.bucketTs, bucketIntervalMs, utc)} · ${boundLabel(row)} · ${count} req`
+                          ? `${formatBucketTs(col.bucketTs, bucketIntervalMs, utc)} · ${boundLabel(row)} · ${count} req${clickable ? ' — click for samples' : ''}`
+                          : undefined
+                      }
+                      onClick={
+                        clickable
+                          ? () =>
+                              onCellClick?.({
+                                fromTs: col.bucketTs,
+                                toTs: col.bucketTs + (bucketIntervalMs ?? 60_000),
+                                ...rowBand(row),
+                              })
                           : undefined
                       }
                       sx={{
                         bgcolor: count > 0 ? tokens.brand : tokens.surfaceSunken,
                         opacity: count > 0 ? intensity : 1,
                         borderRadius: '2px',
+                        cursor: clickable ? 'pointer' : 'default',
                       }}
                     />
                   );

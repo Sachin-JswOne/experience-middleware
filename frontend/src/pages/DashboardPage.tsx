@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import {
   Alert,
@@ -19,6 +19,7 @@ import RefreshIcon from '@mui/icons-material/Refresh';
 import type {
   DownstreamBreakdown,
   MetricsSnapshot,
+  RecentError,
   RouteBreakdown,
 } from '@/_types/metrics.interface';
 import LocalStorage from '@/utils/LocalStorage';
@@ -43,8 +44,13 @@ import LatencyStageChart from '@/components/features/metrics/LatencyStageChart';
 import CacheHitPieChart from '@/components/features/metrics/CacheHitPieChart';
 import CacheProviderChart from '@/components/features/metrics/CacheProviderChart';
 import RoutesTable from '@/components/features/metrics/RoutesTable';
-import RouteSamplesDrawer from '@/components/features/metrics/RouteSamplesDrawer';
+import RouteSamplesDrawer, {
+  type SamplesQuery,
+} from '@/components/features/metrics/RouteSamplesDrawer';
 import RecentErrorsPanel from '@/components/features/metrics/RecentErrorsPanel';
+import TopMoversPanel from '@/components/features/metrics/TopMoversPanel';
+import SloCard, { loadSloConfig, type SloConfig } from '@/components/features/metrics/SloCard';
+import SavedViews from '@/components/features/metrics/SavedViews';
 import SystemPanel from '@/components/features/metrics/SystemPanel';
 import AlertSettings, {
   evaluateAlerts,
@@ -102,6 +108,12 @@ const parseList = (params: URLSearchParams, key: string): string[] => {
   return raw ? raw.split(',').filter(Boolean) : [];
 };
 
+// Latency band label for the heatmap drill-through drawer title.
+const bandLabel = (minMs: number, maxMs: number | null): string => {
+  if (maxMs === null) return `>${minMs >= 1000 ? `${minMs / 1000}s` : `${minMs}ms`}`;
+  return maxMs >= 1000 ? `≤${maxMs / 1000}s` : `≤${maxMs}ms`;
+};
+
 const DashboardPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -120,7 +132,8 @@ const DashboardPage = () => {
     return typeof stored === 'number' ? stored : 10_000;
   });
   const [thresholds, setThresholds] = useState<AlertThresholds>(loadThresholds);
-  const [selectedRoute, setSelectedRoute] = useState<RouteBreakdown | null>(null);
+  const [sloConfig, setSloConfig] = useState<SloConfig>(loadSloConfig);
+  const [drawerQuery, setDrawerQuery] = useState<SamplesQuery | null>(null);
 
   // Reflect every view decision in the URL so reload/share restores it.
   useEffect(() => {
@@ -139,17 +152,37 @@ const DashboardPage = () => {
     setSearchParams(params, { replace: true });
   }, [range, tab, refreshMs, filter, targetFilter, utc, setSearchParams]);
 
+  // Saved views re-apply a previously captured query string.
+  const applyViewParams = useCallback((raw: string) => {
+    const params = new URLSearchParams(raw);
+    setRange(parseRange(params));
+    setTab(parseTab(params));
+    setFilter({ routes: parseList(params, 'routes'), method: params.get('method') });
+    setTargetFilter(parseList(params, 'targets'));
+    setUtc(params.get('utc') === '1');
+    const refresh = params.get('refresh');
+    if (refresh !== null && !isNaN(Number(refresh))) setRefreshMs(Number(refresh));
+  }, []);
+
   const { data, isPending, isFetching, isError, refetch } = useMetricsQuery(
     range,
     refreshMs > 0 ? refreshMs : false,
   );
   const previousQuery = usePreviousMetricsQuery(range, refreshMs > 0 ? refreshMs : false);
-  const healthQuery = useMetricsHealthQuery(tab === 3);
+  // The health feed also powers loop-lag / Valkey / pod alerts, so keep it
+  // polling whenever such a rule is configured — not just on the System tab.
+  const healthRulesActive =
+    thresholds.eventLoopLagP99Ms !== null || thresholds.valkeyUnavailable;
+  const healthQuery = useMetricsHealthQuery(tab === 3 || healthRulesActive);
   const snapshot = data ?? emptySnapshot;
 
   const breaches = useMemo(
-    () => evaluateAlerts(snapshot, thresholds),
-    [snapshot, thresholds],
+    () =>
+      evaluateAlerts(snapshot, thresholds, {
+        previous: previousQuery.data?.summary,
+        health: healthQuery.data,
+      }),
+    [snapshot, thresholds, previousQuery.data?.summary, healthQuery.data],
   );
   useAlertNotifications(breaches, thresholds);
 
@@ -238,6 +271,26 @@ const DashboardPage = () => {
     setTab(2);
   };
 
+  const openRouteSamples = (method: string, route: string) => {
+    setDrawerQuery({ kind: 'route', method, route });
+  };
+
+  // Drag-select on a timeline chart zooms into that slice (absolute range).
+  const handleZoom = useCallback((fromTs: number, toTs: number) => {
+    setRange({ type: 'absolute', from: fromTs, to: toTs });
+  }, []);
+
+  const handleHeatmapCell = useCallback(
+    (band: { fromTs: number; toTs: number; minMs: number; maxMs: number | null }) => {
+      setDrawerQuery({ kind: 'band', ...band, label: bandLabel(band.minMs, band.maxMs) });
+    },
+    [],
+  );
+
+  const handleErrorSelect = useCallback((error: RecentError) => {
+    setDrawerQuery({ kind: 'route', method: error.method, route: error.route });
+  }, []);
+
   return (
     <Box>
       <Box sx={{ mt: 5 }}>
@@ -292,10 +345,14 @@ const DashboardPage = () => {
                 </MenuItem>
               ))}
             </Select>
+            <SavedViews currentParams={searchParams.toString()} onApply={applyViewParams} />
             <AlertSettings
               thresholds={thresholds}
               onChange={setThresholds}
               breached={breaches.length > 0}
+              routeOptions={routeOptions}
+              targetOptions={targetOptions}
+              utc={utc}
             />
             <IconButton
               onClick={() => refetch()}
@@ -357,6 +414,7 @@ const DashboardPage = () => {
                   bucketIntervalMs={snapshot.bucketIntervalMs}
                   deployMarkers={snapshot.deployMarkers}
                   utc={utc}
+                  onZoom={handleZoom}
                 />
               </Box>
               <Box sx={{ gridColumn: { xs: '1', lg: '1 / -1' } }}>
@@ -365,6 +423,7 @@ const DashboardPage = () => {
                   loading={isPending}
                   bucketIntervalMs={snapshot.bucketIntervalMs}
                   utc={utc}
+                  onCellClick={handleHeatmapCell}
                 />
               </Box>
               <StatusClassTimelineChart
@@ -373,8 +432,26 @@ const DashboardPage = () => {
                 bucketIntervalMs={snapshot.bucketIntervalMs}
                 deployMarkers={snapshot.deployMarkers}
                 utc={utc}
+                onZoom={handleZoom}
               />
-              <RecentErrorsPanel data={snapshot.recentErrors} loading={isPending} utc={utc} />
+              <RecentErrorsPanel
+                data={snapshot.recentErrors}
+                loading={isPending}
+                utc={utc}
+                onSelect={handleErrorSelect}
+              />
+              <TopMoversPanel
+                current={snapshot.routeBreakdown}
+                previous={previousQuery.data?.routeBreakdown}
+                loading={isPending}
+                onSelect={(route) => openRouteSamples(route.method, route.route)}
+              />
+              <SloCard
+                summary={snapshot.summary}
+                loading={isPending}
+                config={sloConfig}
+                onConfigChange={setSloConfig}
+              />
             </Box>
           </>
         )}
@@ -398,7 +475,7 @@ const DashboardPage = () => {
                 <RoutesTable
                   data={filteredRoutes}
                   loading={isPending}
-                  onRowClick={setSelectedRoute}
+                  onRowClick={(r) => openRouteSamples(r.method, r.route)}
                   onDrill={handleDrill}
                 />
               </Box>
@@ -452,7 +529,9 @@ const DashboardPage = () => {
                   data={filteredDownstreamTimeline}
                   loading={isPending}
                   bucketIntervalMs={snapshot.bucketIntervalMs}
+                  deployMarkers={snapshot.deployMarkers}
                   utc={utc}
+                  onZoom={handleZoom}
                 />
               </Box>
               <DownstreamLatencyChart data={downstreamAggregates} loading={isPending} />
@@ -467,7 +546,7 @@ const DashboardPage = () => {
           <SystemPanel data={healthQuery.data} loading={healthQuery.isPending} utc={utc} />
         )}
 
-        <RouteSamplesDrawer route={selectedRoute} onClose={() => setSelectedRoute(null)} utc={utc} />
+        <RouteSamplesDrawer query={drawerQuery} onClose={() => setDrawerQuery(null)} utc={utc} />
       </Box>
     </Box>
   );

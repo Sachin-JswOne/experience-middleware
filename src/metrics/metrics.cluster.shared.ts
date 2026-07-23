@@ -1,7 +1,9 @@
 export const BUCKET_INTERVAL_MS = 60 * 1000;
 export const HOUR_INTERVAL_MS = 60 * 60 * 1000;
 
-const DEFAULT_RETENTION_MS = 7 * 24 * 60 * 60 * 1000;
+// Hourly rollup keys are tiny (4 hashes/hour), so a month of history costs
+// ~2.9k keys — cheap enough to keep by default. Override: METRICS_RETENTION_MS.
+const DEFAULT_RETENTION_MS = 30 * 24 * 60 * 60 * 1000;
 const DEFAULT_LOCAL_RETENTION_MS = 60 * 60 * 1000;
 // Must cover the largest window served from minute-granularity keys (6h).
 const DEFAULT_MINUTE_RETENTION_MS = 6 * HOUR_INTERVAL_MS + 10 * 60 * 1000;
@@ -94,5 +96,8 @@ export const readGranularity = (windowMs: number): 'minute' | 'hour' =>
 export const timelineBucketMs = (windowMs: number): number => {
   if (windowMs <= 2 * HOUR_INTERVAL_MS) return BUCKET_INTERVAL_MS;
   if (windowMs <= 6 * HOUR_INTERVAL_MS) return 5 * BUCKET_INTERVAL_MS;
-  return HOUR_INTERVAL_MS;
+  // Past a week, hourly points overwhelm the charts (30d = 720) — coalesce
+  // hourly keys into 6h buckets (30d = 120 points).
+  if (windowMs <= 7 * 24 * HOUR_INTERVAL_MS) return HOUR_INTERVAL_MS;
+  return 6 * HOUR_INTERVAL_MS;
 };

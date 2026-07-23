@@ -16,15 +16,29 @@ import {
 import CloseIcon from '@mui/icons-material/Close';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+import DownloadIcon from '@mui/icons-material/Download';
 import { useQuery } from '@tanstack/react-query';
 import { enqueueSnackbar } from 'notistack';
 import MetricsService from '@/services/MetricsService';
-import type { RouteBreakdown, RouteErrorSample } from '@/_types/metrics.interface';
+import type { RouteErrorSample } from '@/_types/metrics.interface';
 import { tokens } from '@/styles/theme';
 import { formatMs, formatTs } from './chartShared';
 
+// What the drawer shows: one route's samples, or every route's samples
+// inside a time window + latency band (latency-heatmap drill-through).
+export type SamplesQuery =
+  | { kind: 'route'; method: string; route: string }
+  | {
+      kind: 'band';
+      fromTs: number;
+      toTs: number;
+      minMs: number;
+      maxMs: number | null;
+      label: string;
+    };
+
 interface Props {
-  route: RouteBreakdown | null;
+  query: SamplesQuery | null;
   onClose: () => void;
   utc?: boolean;
 }
@@ -58,13 +72,36 @@ const buildCurl = (sample: RouteErrorSample): string => {
   return parts.join(' \\\n');
 };
 
-const copyCurl = async (sample: RouteErrorSample) => {
+const copyText = async (text: string, okMessage: string) => {
   try {
-    await navigator.clipboard.writeText(buildCurl(sample));
-    enqueueSnackbar('cURL copied to clipboard', { variant: 'success' });
+    await navigator.clipboard.writeText(text);
+    enqueueSnackbar(okMessage, { variant: 'success' });
   } catch {
     enqueueSnackbar('Could not copy to clipboard', { variant: 'error' });
   }
+};
+
+const exportSamplesCsv = (samples: RouteErrorSample[]) => {
+  const header = 'timestamp,method,route,statusCode,durationMs,requestId,url';
+  const escape = (value: string) => `"${value.replace(/"/g, '""')}"`;
+  const lines = samples.map((s) =>
+    [
+      new Date(s.ts).toISOString(),
+      s.method,
+      escape(s.route),
+      s.statusCode,
+      Math.round(s.durationMs),
+      s.requestId ?? '',
+      escape(s.url),
+    ].join(','),
+  );
+  const blob = new Blob([[header, ...lines].join('\n')], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'request-samples.csv';
+  a.click();
+  URL.revokeObjectURL(url);
 };
 
 const CodeBlock = ({ label, value }: { label: string; value?: string }) => (
@@ -96,10 +133,13 @@ const CodeBlock = ({ label, value }: { label: string; value?: string }) => (
 const SampleAccordion = ({
   sample,
   slow,
+  showRoute,
   utc,
 }: {
   sample: RouteErrorSample;
   slow: boolean;
+  // Band mode mixes routes — identify each sample's route inline.
+  showRoute?: boolean;
   utc?: boolean;
 }) => (
   <Accordion disableGutters elevation={0} sx={{ border: `1px solid ${tokens.border}`, borderRadius: 1, '&:before': { display: 'none' }, mb: 1 }}>
@@ -136,18 +176,37 @@ const SampleAccordion = ({
           variant="body2"
           sx={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
         >
+          {showRoute ? (
+            <Typography component="span" variant="body2" sx={{ fontWeight: 600, mr: 0.75 }}>
+              {`${sample.method} ${sample.route}`}
+            </Typography>
+          ) : null}
           {sample.url}
         </Typography>
         <Typography variant="body2" sx={{ color: tokens.textSubtle }}>
           {formatMs(sample.durationMs)}
         </Typography>
+        {sample.requestId && (
+          <Tooltip title={`Copy request id ${sample.requestId}`}>
+            <Chip
+              label={sample.requestId.slice(0, 8)}
+              size="small"
+              variant="outlined"
+              onClick={(e) => {
+                e.stopPropagation();
+                void copyText(sample.requestId!, 'Request id copied');
+              }}
+              sx={{ height: 18, fontSize: 10, fontFamily: 'monospace', color: tokens.textSubtle }}
+            />
+          </Tooltip>
+        )}
         <Tooltip title="Copy as cURL">
           <IconButton
             size="small"
             aria-label="Copy request as cURL"
             onClick={(e) => {
               e.stopPropagation();
-              void copyCurl(sample);
+              void copyText(buildCurl(sample), 'cURL copied to clipboard');
             }}
           >
             <ContentCopyIcon sx={{ fontSize: 14 }} />
@@ -156,6 +215,11 @@ const SampleAccordion = ({
       </Box>
     </AccordionSummary>
     <AccordionDetails>
+      {sample.requestId && (
+        <Typography variant="body2" sx={{ mb: 1, color: tokens.textSubtle, fontFamily: 'monospace' }}>
+          request-id: {sample.requestId}
+        </Typography>
+      )}
       <CodeBlock label="Request headers" value={JSON.stringify(sample.requestHeaders)} />
       <CodeBlock label={sample.method === 'GET' ? 'Query params' : 'Request body'} value={sample.requestBody} />
       <CodeBlock label="Response body" value={sample.responseBody} />
@@ -210,18 +274,31 @@ const SampleAccordion = ({
   </Accordion>
 );
 
-const RouteSamplesDrawer = ({ route, onClose, utc }: Props) => {
-  const open = route !== null;
+const queryTitle = (query: SamplesQuery, utc?: boolean): string => {
+  if (query.kind === 'route') return `${query.method} ${query.route}`;
+  return `${query.label} · ${formatTs(query.fromTs, 'HH:mm', utc)}–${formatTs(query.toTs, 'HH:mm', utc)}`;
+};
+
+const RouteSamplesDrawer = ({ query, onClose, utc }: Props) => {
+  const open = query !== null;
   const [kind, setKind] = useState<SampleKind>('all');
-  const [lastRoute, setLastRoute] = useState<RouteBreakdown | null>(null);
-  // Keep the last route while the drawer animates closed.
-  if (route && route !== lastRoute) setLastRoute(route);
-  const active = route ?? lastRoute;
+  const [lastQuery, setLastQuery] = useState<SamplesQuery | null>(null);
+  // Keep the last query while the drawer animates closed.
+  if (query && query !== lastQuery) setLastQuery(query);
+  const active = query ?? lastQuery;
 
   const { data, isPending } = useQuery({
-    queryKey: ['metrics-samples', active?.method, active?.route],
+    queryKey: ['metrics-samples', active],
     queryFn: async () => {
-      const result = await MetricsService.getRouteSamples(active!.method, active!.route);
+      const result =
+        active!.kind === 'route'
+          ? await MetricsService.getRouteSamples(active!.method, active!.route)
+          : await MetricsService.getSamplesInBand({
+              from: active!.fromTs,
+              to: active!.toTs,
+              minMs: active!.minMs > 0 ? active!.minMs : undefined,
+              maxMs: active!.maxMs ?? undefined,
+            });
       if (!result.data || result.error?.code) {
         throw new Error(result.error?.message || 'Failed to load samples');
       }
@@ -233,6 +310,11 @@ const RouteSamplesDrawer = ({ route, onClose, utc }: Props) => {
 
   const slowThresholdMs = data?.slowThresholdMs ?? 3000;
   const isSlow = (s: RouteErrorSample) => s.statusCode < 400 && s.durationMs >= slowThresholdMs;
+  const filtered = (data?.samples ?? []).filter((s) => {
+    if (kind === 'errors') return s.statusCode >= 400;
+    if (kind === 'slow') return isSlow(s);
+    return true;
+  });
 
   return (
     <Drawer anchor="right" open={open} onClose={onClose}>
@@ -240,15 +322,31 @@ const RouteSamplesDrawer = ({ route, onClose, utc }: Props) => {
         <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', mb: 0.5 }}>
           <Box sx={{ minWidth: 0 }}>
             <Typography variant="h5" sx={{ wordBreak: 'break-all' }}>
-              {active ? `${active.method} ${active.route}` : ''}
+              {active ? queryTitle(active, utc) : ''}
             </Typography>
             <Typography variant="body2" sx={{ color: tokens.textSubtle, mt: 0.5 }}>
-              Request samples (last few on this pod, newest first)
+              {active?.kind === 'band'
+                ? 'Samples in this latency band across all routes (this pod only)'
+                : 'Request samples (last few on this pod, newest first)'}
             </Typography>
           </Box>
-          <IconButton size="small" onClick={onClose} aria-label="Close samples drawer">
-            <CloseIcon sx={{ fontSize: 18 }} />
-          </IconButton>
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            <Tooltip title="Export samples as CSV">
+              <span>
+                <IconButton
+                  size="small"
+                  aria-label="Export samples as CSV"
+                  onClick={() => exportSamplesCsv(filtered)}
+                  disabled={filtered.length === 0}
+                >
+                  <DownloadIcon sx={{ fontSize: 18 }} />
+                </IconButton>
+              </span>
+            </Tooltip>
+            <IconButton size="small" onClick={onClose} aria-label="Close samples drawer">
+              <CloseIcon sx={{ fontSize: 18 }} />
+            </IconButton>
+          </Box>
         </Box>
         <ToggleButtonGroup
           value={kind}
@@ -276,21 +374,23 @@ const RouteSamplesDrawer = ({ route, onClose, utc }: Props) => {
                 </Typography>
               );
             }
-            const samples = (data?.samples ?? []).filter((s) => {
-              if (kind === 'errors') return s.statusCode >= 400;
-              if (kind === 'slow') return isSlow(s);
-              return true;
-            });
-            if (samples.length === 0) {
+            if (filtered.length === 0) {
               return (
                 <Typography variant="body2" sx={{ color: tokens.textSubtle }}>
                   No {kind === 'errors' ? 'error ' : kind === 'slow' ? 'slow ' : ''}samples
-                  captured for this route yet (kept in memory since the pod started).
+                  captured {active?.kind === 'band' ? 'in this band' : 'for this route'} yet
+                  (kept in memory since the pod started).
                 </Typography>
               );
             }
-            return samples.map((s, idx) => (
-              <SampleAccordion key={`${s.ts}-${idx}`} sample={s} slow={isSlow(s)} utc={utc} />
+            return filtered.map((s, idx) => (
+              <SampleAccordion
+                key={`${s.ts}-${idx}`}
+                sample={s}
+                slow={isSlow(s)}
+                showRoute={active?.kind === 'band'}
+                utc={utc}
+              />
             ));
           })()}
         </Box>

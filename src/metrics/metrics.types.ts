@@ -38,6 +38,9 @@ export interface RequestRecord {
   cacheHit: boolean;
   cacheServedBy?: CacheServedBy;
   downstreamTargets: DownstreamRecord[];
+  // Correlation id from x-request-id / x-correlation-id, when the caller or
+  // ingress supplied one. Lets the dashboard link a sample to log lines.
+  requestId?: string;
 }
 
 export interface CacheProviderStats {
@@ -103,6 +106,9 @@ export interface DownstreamBreakdown {
   avgLatencyMs: number;
   requestCount: number;
   errorCount: number;
+  // Exact locally, histogram-estimated in cluster mode (same as routes).
+  p95LatencyMs?: number;
+  p99LatencyMs?: number;
   statusClasses?: StatusClassCounts;
   networkErrorCount?: number;
   avgStages?: StageTimings;
@@ -127,12 +133,24 @@ export interface RecentError {
   statusCode: number;
   durationMs: number;
   pod?: string;
+  requestId?: string;
 }
 
 export interface DeployMarker {
   ts: number;
   version: string;
   pod?: string;
+}
+
+// One heartbeat's worth of pod stats, kept as a short ring so the System tab
+// can draw trend sparklines (heap creep, lag spikes) instead of a lone number.
+export interface PodHealthPoint {
+  ts: number;
+  heapUsedMb: number;
+  rssMb: number;
+  eventLoopLagP99Ms: number;
+  requestsLastMin: number;
+  cpuPct: number;
 }
 
 export interface PodHealth {
@@ -147,6 +165,12 @@ export interface PodHealth {
   eventLoopLagP99Ms: number;
   bufferRecords: number;
   requestsLastMin: number;
+  // Process CPU usage since the previous sample, as % of one core.
+  cpuPct?: number;
+  // GC activity since the previous sample.
+  gcCount?: number;
+  gcPauseMs?: number;
+  history?: PodHealthPoint[];
 }
 
 export interface MetricsHealth {
@@ -174,6 +198,7 @@ export interface RouteErrorSample {
   statusCode: number;
   durationMs: number;
   url: string;
+  requestId?: string;
   requestHeaders: Record<string, string>;
   requestBody?: string;
   responseBody?: string;

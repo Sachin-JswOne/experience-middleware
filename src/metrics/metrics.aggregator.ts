@@ -208,7 +208,12 @@ export class MetricsAggregator implements OnModuleDestroy {
     // Downstream breakdown + per-target timeline
     const downstreamMap = new Map<
       string,
-      { db: DownstreamBreakdown; stageSums: StageTimings; stageCount: number }
+      {
+        db: DownstreamBreakdown;
+        stageSums: StageTimings;
+        stageCount: number;
+        durations: number[];
+      }
     >();
     const dsTimelineMap = new Map<
       string,
@@ -230,6 +235,7 @@ export class MetricsAggregator implements OnModuleDestroy {
             },
             stageSums: { buildRequestMs: 0, createClientMs: 0, downstreamMs: 0, resTransformMs: 0 },
             stageCount: 0,
+            durations: [],
           };
           downstreamMap.set(ds.target, entry);
         }
@@ -237,6 +243,7 @@ export class MetricsAggregator implements OnModuleDestroy {
         const prevDown = db.avgLatencyMs * db.requestCount;
         db.requestCount++;
         db.avgLatencyMs = (prevDown + ds.durationMs) / db.requestCount;
+        entry.durations.push(ds.durationMs);
         if (!ds.success) db.errorCount++;
         if (typeof ds.statusCode === 'number') {
           addStatusClass(db.statusClasses!, ds.statusCode);
@@ -267,6 +274,9 @@ export class MetricsAggregator implements OnModuleDestroy {
       }
     }
     for (const entry of downstreamMap.values()) {
+      entry.durations.sort((a, b) => a - b);
+      entry.db.p95LatencyMs = this.percentile(entry.durations, 95);
+      entry.db.p99LatencyMs = this.percentile(entry.durations, 99);
       if (entry.stageCount > 0) {
         entry.db.avgStages = {
           buildRequestMs: entry.stageSums.buildRequestMs / entry.stageCount,
@@ -304,6 +314,7 @@ export class MetricsAggregator implements OnModuleDestroy {
         statusCode: r.statusCode,
         durationMs: r.durationMs,
         pod,
+        requestId: r.requestId,
       }));
 
     return {

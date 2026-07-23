@@ -1,5 +1,5 @@
 import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
-import { monitorEventLoopDelay, IntervalHistogram } from 'perf_hooks';
+import { monitorEventLoopDelay, IntervalHistogram, PerformanceObserver } from 'perf_hooks';
 import { ValkeyClient } from '../cache/valkey/valkey.client';
 import { MetricsAggregator } from './metrics.aggregator';
 import { DEPLOYS_KEY_SUFFIX, DEPLOYS_MAX } from './metrics.cluster-store';
@@ -10,15 +10,19 @@ import {
   podName,
   retentionSeconds,
 } from './metrics.cluster.shared';
-import { DeployMarker, MetricsHealth, PodHealth } from './metrics.types';
+import { DeployMarker, MetricsHealth, PodHealth, PodHealthPoint } from './metrics.types';
 
 const HEARTBEAT_INTERVAL_MS = 15_000;
 // Pods that missed two heartbeats are considered gone.
 const POD_STALE_AFTER_MS = HEARTBEAT_INTERVAL_MS * 4;
 const PODS_KEY_SUFFIX = 'pods';
+// ~10 minutes of trend at one point per heartbeat — enough for the System
+// tab sparklines to show heap creep or lag spikes.
+const HISTORY_MAX_POINTS = 40;
 
 /**
- * Pod-level runtime telemetry: event-loop lag, memory, uptime. Each pod
+ * Pod-level runtime telemetry: event-loop lag, memory, CPU, GC activity,
+ * uptime — plus a short history ring per pod for trend sparklines. Each pod
  * heartbeats its own stats into a shared Valkey hash so the dashboard's
  * System tab can show every pod in the cluster, not just the one that
  * happened to answer the request. Also registers a deploy marker on boot so
@@ -29,7 +33,18 @@ export class MetricsHealthService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(MetricsHealthService.name);
   private readonly bootTs = Date.now();
   private loopMonitor?: IntervalHistogram;
+  private gcObserver?: PerformanceObserver;
   private heartbeatTimer?: NodeJS.Timeout;
+  private history: PodHealthPoint[] = [];
+
+  // CPU usage is reported as a delta between samples.
+  private lastCpuUsage = process.cpuUsage();
+  private lastCpuTs = Date.now();
+  private lastCpuPct = 0;
+
+  // GC counters accumulate in the observer and are drained per sample.
+  private gcCount = 0;
+  private gcPauseMs = 0;
 
   constructor(
     private readonly valkeyClient: ValkeyClient,
@@ -40,17 +55,32 @@ export class MetricsHealthService implements OnModuleInit, OnModuleDestroy {
     this.loopMonitor = monitorEventLoopDelay({ resolution: 20 });
     this.loopMonitor.enable();
 
+    try {
+      this.gcObserver = new PerformanceObserver((list) => {
+        for (const entry of list.getEntries()) {
+          this.gcCount++;
+          this.gcPauseMs += entry.duration;
+        }
+      });
+      this.gcObserver.observe({ entryTypes: ['gc'] });
+    } catch {
+      // GC observation is best-effort; some runtimes disallow it.
+    }
+
     if (isClusterEnabled()) {
       void this.registerDeployMarker();
-      void this.heartbeat();
-      this.heartbeatTimer = setInterval(() => void this.heartbeat(), HEARTBEAT_INTERVAL_MS);
-      this.heartbeatTimer.unref?.();
     }
+    // The sampler always runs — it feeds the local history ring; the Valkey
+    // heartbeat inside is cluster-mode only.
+    void this.heartbeat();
+    this.heartbeatTimer = setInterval(() => void this.heartbeat(), HEARTBEAT_INTERVAL_MS);
+    this.heartbeatTimer.unref?.();
   }
 
   onModuleDestroy(): void {
     if (this.heartbeatTimer) clearInterval(this.heartbeatTimer);
     this.loopMonitor?.disable();
+    this.gcObserver?.disconnect();
   }
 
   getLocalHealth(): PodHealth {
@@ -61,10 +91,28 @@ export class MetricsHealthService implements OnModuleInit, OnModuleDestroy {
     const lagP99Ms = this.loopMonitor ? this.loopMonitor.percentile(99) / 1e6 : 0;
     this.loopMonitor?.reset();
     const bufferStats = this.aggregator.getBufferStats();
+
+    // CPU % of one core since the previous sample. Too-short gaps produce
+    // noise — keep the previous reading instead.
+    const now = Date.now();
+    const elapsedMs = now - this.lastCpuTs;
+    if (elapsedMs >= 1_000) {
+      const delta = process.cpuUsage(this.lastCpuUsage);
+      this.lastCpuUsage = process.cpuUsage();
+      this.lastCpuTs = now;
+      this.lastCpuPct = Math.round(((delta.user + delta.system) / 1_000 / elapsedMs) * 1000) / 10;
+    }
+
+    // Drain GC counters accumulated since the previous sample.
+    const gcCount = this.gcCount;
+    const gcPauseMs = Math.round(this.gcPauseMs * 10) / 10;
+    this.gcCount = 0;
+    this.gcPauseMs = 0;
+
     return {
       pod: podName(),
       version: appVersion(),
-      lastSeen: Date.now(),
+      lastSeen: now,
       uptimeSec: Math.round(process.uptime()),
       heapUsedMb: toMb(mem.heapUsed),
       heapTotalMb: toMb(mem.heapTotal),
@@ -73,11 +121,15 @@ export class MetricsHealthService implements OnModuleInit, OnModuleDestroy {
       eventLoopLagP99Ms: Math.round(lagP99Ms * 10) / 10,
       bufferRecords: bufferStats.records,
       requestsLastMin: bufferStats.requestsLastMin,
+      cpuPct: this.lastCpuPct,
+      gcCount,
+      gcPauseMs,
     };
   }
 
   async getHealth(): Promise<MetricsHealth> {
     const local = this.getLocalHealth();
+    local.history = this.history;
     if (!isClusterEnabled()) {
       return { pod: local, cluster: [], valkey: 'disabled' };
     }
@@ -115,6 +167,21 @@ export class MetricsHealthService implements OnModuleInit, OnModuleDestroy {
 
   private async heartbeat(): Promise<void> {
     const health = this.getLocalHealth();
+
+    this.history.push({
+      ts: health.lastSeen,
+      heapUsedMb: health.heapUsedMb,
+      rssMb: health.rssMb,
+      eventLoopLagP99Ms: health.eventLoopLagP99Ms,
+      requestsLastMin: health.requestsLastMin,
+      cpuPct: health.cpuPct ?? 0,
+    });
+    if (this.history.length > HISTORY_MAX_POINTS) {
+      this.history.splice(0, this.history.length - HISTORY_MAX_POINTS);
+    }
+
+    if (!isClusterEnabled()) return;
+    health.history = this.history;
     await this.valkeyClient.executeWrite(async (client) => {
       const key = `${keyPrefix()}:${PODS_KEY_SUFFIX}`;
       const pipeline = client.pipeline();

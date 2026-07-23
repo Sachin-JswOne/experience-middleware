@@ -61,6 +61,9 @@ export class MetricsInterceptor implements NestInterceptor {
 
         const statusCode = (req['_metricsErrorStatus'] as number) || res.statusCode;
 
+        const requestIdHeader = req.headers['x-request-id'] ?? req.headers['x-correlation-id'];
+        const requestId = Array.isArray(requestIdHeader) ? requestIdHeader[0] : requestIdHeader;
+
         const record: RequestRecord = {
           timestamp: Date.now(),
           route,
@@ -70,6 +73,7 @@ export class MetricsInterceptor implements NestInterceptor {
           cacheHit,
           cacheServedBy,
           downstreamTargets,
+          requestId,
         };
 
         this.aggregator.recordRequest(record);
@@ -83,6 +87,7 @@ export class MetricsInterceptor implements NestInterceptor {
             statusCode,
             durationMs,
             url: req.originalUrl || req.url,
+            requestId,
             requestHeaders: MetricsSampleStore.sanitizeHeaders(req.headers as Record<string, unknown>),
             requestBody: MetricsSampleStore.sanitizeBody(
               method === 'GET' || method === 'HEAD' ? req.query : req.body,

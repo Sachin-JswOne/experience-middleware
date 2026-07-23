@@ -25,6 +25,8 @@ const QUICK_RANGES: Array<{ window: MetricsWindow; label: string }> = [
   { window: '6h', label: 'Last 6 hours' },
   { window: '24h', label: 'Last 24 hours' },
   { window: '7d', label: 'Last 7 days' },
+  { window: '14d', label: 'Last 14 days' },
+  { window: '30d', label: 'Last 30 days' },
 ];
 
 export const rangeLabel = (range: MetricsRange, utc = false): string => {

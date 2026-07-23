@@ -62,7 +62,9 @@ export class MetricsClusterStore {
   async getSnapshotRange(fromTs: number, toTs: number): Promise<MetricsSnapshot | null> {
     const windowMs = toTs - fromTs;
     // Large windows read far more keys — cache their snapshots longer.
-    const cacheTtlMs = windowMs > 6 * HOUR_INTERVAL_MS ? 30_000 : 5_000;
+    // (30d reads ~2.9k hashes; a 60s cache keeps that off the hot path.)
+    const cacheTtlMs =
+      windowMs > 48 * HOUR_INTERVAL_MS ? 60_000 : windowMs > 6 * HOUR_INTERVAL_MS ? 30_000 : 5_000;
     // Round the cache key so a sliding relative window reuses entries.
     const cacheKey = `${Math.floor(fromTs / 5_000)}:${Math.floor(toTs / 5_000)}`;
     const cached = this.snapshotCache.get(cacheKey);
@@ -214,6 +216,7 @@ export class MetricsClusterStore {
         stClient: number;
         stDown: number;
         stXform: number;
+        histogram: Record<string, number>;
       }
     >();
     // target -> coalesced bucket -> counters (downstream time series)
@@ -319,11 +322,14 @@ export class MetricsClusterStore {
             stClient: 0,
             stDown: 0,
             stXform: 0,
+            histogram: {},
           };
           dsAcc.set(target, acc);
         }
         const value = Number(minute.d[field]);
-        if (metric in acc) (acc as any)[metric] += value;
+        if (metric.startsWith('h:')) {
+          acc.histogram[metric] = (acc.histogram[metric] || 0) + value;
+        } else if (metric in acc) (acc as any)[metric] += value;
 
         if (metric === 'count' || metric === 'err' || metric === 'latSum') {
           let series = dsTimelineAcc.get(target);
@@ -401,11 +407,19 @@ export class MetricsClusterStore {
       })
       .sort((a, b) => b.avgLatencyMs - a.avgLatencyMs);
 
-    const downstream: DownstreamBreakdown[] = Array.from(dsAcc.entries()).map(([target, acc]) => ({
+    const downstream: DownstreamBreakdown[] = Array.from(dsAcc.entries()).map(([target, acc]) => {
+      // Counters written before per-target histograms shipped have no h:*
+      // fields — estimate over what the histogram actually covers, or skip.
+      const histTotal = Object.values(acc.histogram).reduce((a, b) => a + b, 0);
+      return {
       target,
       requestCount: acc.count,
       avgLatencyMs: acc.count > 0 ? acc.latSum / acc.count : 0,
       errorCount: acc.err,
+      p95LatencyMs:
+        histTotal > 0 ? estimatePercentileFromHistogram(acc.histogram, histTotal, 95) : undefined,
+      p99LatencyMs:
+        histTotal > 0 ? estimatePercentileFromHistogram(acc.histogram, histTotal, 99) : undefined,
       networkErrorCount: acc.netErr,
       statusClasses: { c2xx: acc.s2, c3xx: acc.s3, c4xx: acc.s4, c5xx: acc.s5 },
       avgStages:
@@ -417,7 +431,8 @@ export class MetricsClusterStore {
               resTransformMs: acc.stXform / acc.stCount,
             }
           : undefined,
-    }));
+      };
+    });
 
     const downstreamTimeline: DownstreamTimeline[] = Array.from(dsTimelineAcc.entries()).map(
       ([target, series]) => ({

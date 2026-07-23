@@ -16,6 +16,8 @@ const WINDOW_PRESETS: Record<string, number> = {
   '6h': 6 * 60 * 60 * 1000,
   '24h': 24 * 60 * 60 * 1000,
   '7d': 7 * 24 * 60 * 60 * 1000,
+  '14d': 14 * 24 * 60 * 60 * 1000,
+  '30d': 30 * 24 * 60 * 60 * 1000,
 };
 
 @Controller()
@@ -32,14 +34,40 @@ export class MetricsController {
   getRouteSamples(
     @Query('route') route?: string,
     @Query('method') method?: string,
+    @Query('from') from?: string,
+    @Query('to') to?: string,
+    @Query('minMs') minMs?: string,
+    @Query('maxMs') maxMs?: string,
   ): { enabled: boolean; slowThresholdMs: number; samples: RouteErrorSample[] } {
-    if (!route || !method) {
-      throw new BadRequestException('route and method query params are required');
-    }
-    return {
+    const base = {
       enabled: this.sampleStore.isEnabled(),
       slowThresholdMs: this.sampleStore.getSlowThresholdMs(),
-      samples: this.sampleStore.getSamples(method.toUpperCase(), route),
+    };
+    if (route && method) {
+      return { ...base, samples: this.sampleStore.getSamples(method.toUpperCase(), route) };
+    }
+    // Band mode (heatmap drill-through): all routes, time window + latency band.
+    const fromTs = parseInt(from ?? '', 10);
+    const toTs = parseInt(to ?? '', 10);
+    if (isNaN(fromTs) || isNaN(toTs) || fromTs >= toTs) {
+      throw new BadRequestException(
+        'either route+method or from/to (epoch ms, from < to) query params are required',
+      );
+    }
+    const minDurationMs = minMs !== undefined ? Number(minMs) : undefined;
+    const maxDurationMs = maxMs !== undefined ? Number(maxMs) : undefined;
+    if ((minDurationMs !== undefined && isNaN(minDurationMs)) ||
+        (maxDurationMs !== undefined && isNaN(maxDurationMs))) {
+      throw new BadRequestException('minMs/maxMs must be numbers');
+    }
+    return {
+      ...base,
+      samples: this.sampleStore.getSamplesInBand({
+        fromTs,
+        toTs,
+        minDurationMs,
+        maxDurationMs,
+      }),
     };
   }
 

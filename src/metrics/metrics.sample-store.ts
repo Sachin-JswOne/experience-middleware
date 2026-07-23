@@ -88,6 +88,32 @@ export class MetricsSampleStore {
     return [...entry.errors, ...entry.slows, ...entry.successes].sort((a, b) => b.ts - a.ts);
   }
 
+  // Cross-route query for the latency-heatmap drill-through: every sample in
+  // a time window whose duration falls inside a latency band.
+  getSamplesInBand(filter: {
+    fromTs: number;
+    toTs: number;
+    minDurationMs?: number;
+    maxDurationMs?: number;
+    limit?: number;
+  }): RouteErrorSample[] {
+    const limit = filter.limit ?? 100;
+    const out: RouteErrorSample[] = [];
+    for (const entry of this.samples.values()) {
+      for (const list of [entry.errors, entry.slows, entry.successes]) {
+        for (const sample of list) {
+          if (sample.ts < filter.fromTs || sample.ts > filter.toTs) continue;
+          if (filter.minDurationMs !== undefined && sample.durationMs < filter.minDurationMs)
+            continue;
+          if (filter.maxDurationMs !== undefined && sample.durationMs > filter.maxDurationMs)
+            continue;
+          out.push(sample);
+        }
+      }
+    }
+    return out.sort((a, b) => b.ts - a.ts).slice(0, limit);
+  }
+
   static sanitizeHeaders(headers: Record<string, unknown> | undefined): Record<string, string> {
     const out: Record<string, string> = {};
     if (!headers) return out;

@@ -6,6 +6,7 @@ import { MetricsPublisher } from './metrics.publisher';
 import { MetricsClusterStore } from './metrics.cluster-store';
 import { MetricsSampleStore } from './metrics.sample-store';
 import { MetricsHealthService } from './metrics.health.service';
+import { MetricsAlertsService } from './metrics.alerts.service';
 import { MetricsAuthGuard } from './metrics.auth.guard';
 import { CacheModule } from '../cache/cache.module';
 import { APP_INTERCEPTOR } from '@nestjs/core';
@@ -20,6 +21,7 @@ import { APP_INTERCEPTOR } from '@nestjs/core';
     MetricsClusterStore,
     MetricsSampleStore,
     MetricsHealthService,
+    MetricsAlertsService,
     MetricsAuthGuard,
     {
       provide: APP_INTERCEPTOR,

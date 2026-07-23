@@ -7,9 +7,11 @@ interface Props {
   data: RecentError[] | undefined;
   loading: boolean;
   utc?: boolean;
+  // Click an error to open its route's samples drawer.
+  onSelect?: (error: RecentError) => void;
 }
 
-const RecentErrorsPanel = ({ data, loading, utc }: Props) => {
+const RecentErrorsPanel = ({ data, loading, utc, onSelect }: Props) => {
   const errors = (data ?? []).slice(0, 10);
 
   return (
@@ -30,12 +32,16 @@ const RecentErrorsPanel = ({ data, loading, utc }: Props) => {
           {errors.map((e, idx) => (
             <Box
               key={`${e.ts}-${idx}`}
+              onClick={onSelect ? () => onSelect(e) : undefined}
+              title={onSelect ? 'View samples for this route' : undefined}
               sx={{
                 display: 'flex',
                 alignItems: 'center',
                 gap: 1.5,
                 py: 0.5,
                 borderBottom: idx < errors.length - 1 ? `1px solid ${tokens.border}` : 'none',
+                cursor: onSelect ? 'pointer' : 'default',
+                '&:hover': onSelect ? { bgcolor: tokens.surfaceSunken } : undefined,
               }}
             >
               <Typography variant="body2" sx={{ color: tokens.textSubtle, minWidth: 60 }}>
@@ -61,6 +67,16 @@ const RecentErrorsPanel = ({ data, loading, utc }: Props) => {
                 </Typography>
                 {e.route}
               </Typography>
+              {e.requestId && (
+                <Tooltip title={`Request id ${e.requestId}`}>
+                  <Chip
+                    label={e.requestId.slice(0, 8)}
+                    size="small"
+                    variant="outlined"
+                    sx={{ height: 18, fontSize: 10, fontFamily: 'monospace', color: tokens.textSubtle }}
+                  />
+                </Tooltip>
+              )}
               {e.pod && (
                 <Tooltip title={`Served by pod ${e.pod}`}>
                   <Chip

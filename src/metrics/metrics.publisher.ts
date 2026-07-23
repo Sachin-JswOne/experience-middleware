@@ -86,6 +86,7 @@ export class MetricsPublisher implements OnModuleDestroy {
           statusCode: r.statusCode,
           durationMs: r.durationMs,
           pod,
+          requestId: r.requestId,
         }),
       );
 
@@ -169,11 +170,13 @@ export class MetricsPublisher implements OnModuleDestroy {
     inc(deltas.r, `${routeKey}|${statusClassField(record.statusCode)}`);
     inc(deltas.r, `${routeKey}|${histogramField(record.durationMs)}`);
 
-    // Per-downstream counters
+    // Per-downstream counters (histogram powers the per-target p95/p99
+    // estimates, mirroring the per-route fields).
     for (const ds of record.downstreamTargets) {
       const t = ds.target;
       inc(deltas.d, `${t}|count`);
       inc(deltas.d, `${t}|latSum`, ds.durationMs);
+      inc(deltas.d, `${t}|${histogramField(ds.durationMs)}`);
       if (!ds.success) inc(deltas.d, `${t}|err`);
       if (typeof ds.statusCode === 'number') {
         inc(deltas.d, `${t}|${statusClassField(ds.statusCode)}`);

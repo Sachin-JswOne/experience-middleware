@@ -86,6 +86,9 @@ export interface DownstreamBreakdown {
   avgLatencyMs: number;
   requestCount: number;
   errorCount: number;
+  // Exact locally, histogram-estimated in cluster mode (same as routes).
+  p95LatencyMs?: number;
+  p99LatencyMs?: number;
   statusClasses?: StatusClassCounts;
   networkErrorCount?: number;
   avgStages?: StageTimings;
@@ -110,12 +113,24 @@ export interface RecentError {
   statusCode: number;
   durationMs: number;
   pod?: string;
+  requestId?: string;
 }
 
 export interface DeployMarker {
   ts: number;
   version: string;
   pod?: string;
+}
+
+// One heartbeat's worth of pod stats — the System tab draws these as
+// trend sparklines.
+export interface PodHealthPoint {
+  ts: number;
+  heapUsedMb: number;
+  rssMb: number;
+  eventLoopLagP99Ms: number;
+  requestsLastMin: number;
+  cpuPct: number;
 }
 
 export interface PodHealth {
@@ -130,6 +145,10 @@ export interface PodHealth {
   eventLoopLagP99Ms: number;
   bufferRecords: number;
   requestsLastMin: number;
+  cpuPct?: number;
+  gcCount?: number;
+  gcPauseMs?: number;
+  history?: PodHealthPoint[];
 }
 
 export interface MetricsHealth {
@@ -156,6 +175,7 @@ export interface RouteErrorSample {
   statusCode: number;
   durationMs: number;
   url: string;
+  requestId?: string;
   requestHeaders: Record<string, string>;
   requestBody?: string;
   responseBody?: string;

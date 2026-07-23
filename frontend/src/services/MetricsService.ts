@@ -65,6 +65,28 @@ const MetricsService = {
     };
   },
 
+  // Heatmap drill-through: samples across all routes inside a time window and
+  // latency band.
+  async getSamplesInBand(params: {
+    from: number;
+    to: number;
+    minMs?: number;
+    maxMs?: number;
+  }): Promise<IRouteSamplesResult> {
+    const query = new URLSearchParams({ from: String(params.from), to: String(params.to) });
+    if (params.minMs !== undefined) query.set('minMs', String(params.minMs));
+    if (params.maxMs !== undefined) query.set('maxMs', String(params.maxMs));
+    const response = await ApiClient.makeRequest({
+      url: `${API_ROUTES.METRICS_SAMPLES}?${query.toString()}`,
+      method: 'GET',
+      headers: authHeaders(),
+    });
+    return {
+      data: response.data as IRouteSamplesResult['data'],
+      error: response.error,
+    };
+  },
+
   async getHealth(): Promise<IMetricsHealthResult> {
     const response = await ApiClient.makeRequest({
       url: API_ROUTES.METRICS_HEALTH,

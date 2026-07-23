@@ -21,6 +21,7 @@ const DownstreamLatencyChart = ({ data, loading }: Props) => {
   const chartData = data.map((d) => ({
     name: d.target,
     avgLatencyMs: Math.round(d.avgLatencyMs),
+    p95LatencyMs: d.p95LatencyMs !== undefined ? Math.round(d.p95LatencyMs) : undefined,
     requestCount: d.requestCount,
     errorCount: d.errorCount,
   }));
@@ -50,7 +51,9 @@ const DownstreamLatencyChart = ({ data, loading }: Props) => {
           <Tooltip
             contentStyle={{ fontSize: 12, borderRadius: tokens.radiusSmall }}
             formatter={(value, name) => {
-              if (name === 'Avg Latency (ms)') return [formatMs(Number(value)), name];
+              if (name === 'Avg Latency (ms)' || name === 'P95 (ms)') {
+                return [formatMs(Number(value)), name];
+              }
               return [value as number | string, name as string];
             }}
           />
@@ -60,6 +63,12 @@ const DownstreamLatencyChart = ({ data, loading }: Props) => {
             name="Avg Latency (ms)"
             yAxisId="latency"
             fill="#357DE8"
+          />
+          <Bar
+            dataKey="p95LatencyMs"
+            name="P95 (ms)"
+            yAxisId="latency"
+            fill="#AF59E1"
           />
           <Bar
             dataKey="errorCount"

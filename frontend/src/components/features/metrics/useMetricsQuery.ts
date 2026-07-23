@@ -2,7 +2,7 @@ import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import MetricsService from '@/services/MetricsService';
 import type { MetricsHealth, MetricsSnapshot } from '@/_types/metrics.interface';
 
-export type MetricsWindow = '5m' | '15m' | '30m' | '1h' | '6h' | '24h' | '7d';
+export type MetricsWindow = '5m' | '15m' | '30m' | '1h' | '6h' | '24h' | '7d' | '14d' | '30d';
 
 export type MetricsRange =
   | { type: 'relative'; window: MetricsWindow }
@@ -18,6 +18,8 @@ export const WINDOW_MS: Record<MetricsWindow, number> = {
   '6h': 6 * 60 * 60 * 1000,
   '24h': 24 * 60 * 60 * 1000,
   '7d': 7 * 24 * 60 * 60 * 1000,
+  '14d': 14 * 24 * 60 * 60 * 1000,
+  '30d': 30 * 24 * 60 * 60 * 1000,
 };
 
 export const rangeSpanMs = (range: MetricsRange): number =>

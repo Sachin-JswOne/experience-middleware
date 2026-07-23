@@ -1,10 +1,14 @@
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { Box, Card, Skeleton, Typography } from '@mui/material';
 import dayjs from 'dayjs';
 import utcPlugin from 'dayjs/plugin/utc';
 import { tokens } from '@/styles/theme';
 
 dayjs.extend(utcPlugin);
+
+// Tooltips of the Overview timeline charts move together when they share
+// this id (they render the same buckets).
+export const OVERVIEW_SYNC_ID = 'metrics-overview';
 
 // Single categorical palette for all metrics charts.
 export const CHART_COLORS = [
@@ -75,6 +79,93 @@ export const deployMarkerPositions = (
     }
   }
   return out;
+};
+
+// --- Drag-to-zoom ------------------------------------------------------
+// Charts pass Recharts' mouse state here; rows must carry a `bucketTs`
+// field. Releasing the drag reports [from, to) in epoch ms so the page can
+// switch to an absolute range — Kibana-style zoom.
+
+interface RechartsMouseState {
+  activeLabel?: string | number;
+  activePayload?: Array<{ payload?: { bucketTs?: number } }>;
+}
+
+interface DragPoint {
+  label: string;
+  ts: number;
+}
+
+export const useDragZoom = (
+  onZoom: ((fromTs: number, toTs: number) => void) | undefined,
+  bucketIntervalMs: number | undefined,
+) => {
+  const [start, setStart] = useState<DragPoint | null>(null);
+  const [end, setEnd] = useState<DragPoint | null>(null);
+
+  const pointOf = (state: RechartsMouseState | null): DragPoint | null => {
+    const ts = state?.activePayload?.[0]?.payload?.bucketTs;
+    if (ts === undefined || state?.activeLabel === undefined) return null;
+    return { label: String(state.activeLabel), ts };
+  };
+
+  const onMouseDown = (state: RechartsMouseState | null) => {
+    if (!onZoom) return;
+    const point = pointOf(state);
+    if (point) {
+      setStart(point);
+      setEnd(point);
+    }
+  };
+
+  const onMouseMove = (state: RechartsMouseState | null) => {
+    if (!start) return;
+    const point = pointOf(state);
+    if (point) setEnd(point);
+  };
+
+  const onMouseUp = () => {
+    if (start && end && start.ts !== end.ts && onZoom) {
+      const from = Math.min(start.ts, end.ts);
+      const to = Math.max(start.ts, end.ts) + (bucketIntervalMs ?? 60_000);
+      onZoom(from, to);
+    }
+    setStart(null);
+    setEnd(null);
+  };
+
+  // ReferenceArea props while a drag is live (labels for the category axis).
+  const refArea = start && end && start.label !== end.label ? { x1: start.label, x2: end.label } : null;
+
+  return { onMouseDown, onMouseMove, onMouseUp, refArea, zoomEnabled: Boolean(onZoom) };
+};
+
+// Tiny inline trend line for table cells (System tab). Pure SVG — no
+// recharts overhead per row.
+export const Sparkline = ({
+  values,
+  width = 72,
+  height = 18,
+  color = tokens.brand,
+}: {
+  values: number[];
+  width?: number;
+  height?: number;
+  color?: string;
+}) => {
+  if (values.length < 2) return null;
+  const max = Math.max(...values);
+  const min = Math.min(...values);
+  const span = max - min || 1;
+  const step = width / (values.length - 1);
+  const points = values
+    .map((v, i) => `${(i * step).toFixed(1)},${(height - 2 - ((v - min) / span) * (height - 4)).toFixed(1)}`)
+    .join(' ');
+  return (
+    <svg width={width} height={height} style={{ display: 'block' }} aria-hidden>
+      <polyline points={points} fill="none" stroke={color} strokeWidth={1.5} />
+    </svg>
+  );
 };
 
 interface ChartCardProps {
