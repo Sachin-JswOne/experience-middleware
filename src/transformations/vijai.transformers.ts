@@ -1,5 +1,4 @@
 import { BaseRequest } from 'src/models/base-request.model';
-import { CustomError } from 'src/utils/CustomError';
 
 export function transformVijaiUserListRequest(request: any) {
   const finalTransformedRequest: BaseRequest = {
@@ -14,6 +13,8 @@ export function transformVijaiUserListRequest(request: any) {
   const isOrderList = request.url.searchParams.get('isOrderList');
   const isAccountById = request.url.searchParams.get('isAccountById');
   const accountIds = request.url.searchParams.get('accountIds');
+  const developerName = request.url.searchParams.get('developerName');
+  const nextRecordsUrl = request.url.searchParams.get('nextRecordsUrl');
   const last30Days = last30DaysDate();
 
   let soql = '';
@@ -28,8 +29,8 @@ export function transformVijaiUserListRequest(request: any) {
        CheckIn_CMV__Check_out_Coordinates__c,
        CheckIn_CMV__Check_out_Comments__c,
        Met_with_Contact__c, Met_with_Contact__r.LastName,
-       Site__c, CreatedDate, Site__r.name, Site__r.Google_Maps_Coordinates__c, 
-       Site__r.Project_Address__c, Site__r.pin_code__c, Site__r.auto_state__c, 
+       Site__c, CreatedDate, Site__r.name, Site__r.Google_Maps_Coordinates__c,
+       Site__r.Project_Address__c, Site__r.pin_code__c, Site__r.auto_state__c,
        Site__r.auto_district__c, Site__r.City__c,Site__r.RecordType.Name
 FROM CheckIn_CMV__Visit__c
 WHERE OwnerId = '${ownerId}'
@@ -41,8 +42,8 @@ ORDER BY CheckIn_CMV__Check_in_Date_Time__c DESC`
   if (isOpportunityList === 'true' && ownerId) {
     soql = `SELECT Id, Name, StageName, RecordType.DeveloperName, CreatedDate, 
        Credit_limit_requested__c, Credit_tenure_request_days__c, 
-       Category_Team_Owner__c, Credit_sales_SPOC__c, Risk_SPOC__c,
-       Sales_SPOC__c, JOTS_Owner__c, Opportunity_History_String__c,
+       Category_Team_Owner__r.Name, Credit_sales_SPOC__r.Name, Risk_SPOC__r.Name,
+       Sales_SPOC__r.Name, JOTS_Owner__r.Name, Opportunity_History_String__c, Total_revised_quantity__c,
        (SELECT Id, Name, Attributes_to_Display__c, Attributes__c,
                Final_Distributor_Quote__c, SKU_Subtotal__c,
                Primary_Revised_Quantity__c
@@ -55,8 +56,13 @@ ORDER BY CheckIn_CMV__Check_in_Date_Time__c DESC`
        Total_Order_Value__c,
        Delivery_address__r.Address_City_State_Pincode_Formula__c,
        Account.Billing_Address__r.Address_City_State_Pincode_Formula__c
-FROM Opportunity
-WHERE OwnerId = '${ownerId}' OR Sales_SPOC__c = '${ownerId}'`
+        FROM Opportunity
+        WHERE (OwnerId = '${ownerId}' OR Sales_SPOC__c = '${ownerId}')
+        AND ${
+          developerName === 'Credit'
+            ? "RecordType.DeveloperName = 'Credit'"
+            : "RecordType.DeveloperName != 'Credit'"
+        }`
       .replace(/\s+/g, ' ')
       .trim();
   }
@@ -111,7 +117,13 @@ ORDER BY CreatedDate DESC`
     )`;
   }
 
-  finalTransformedRequest.url.search = `?q=${soql}`;
+  if (nextRecordsUrl) {
+    finalTransformedRequest.url.pathname = `/services/data/v59.0/query/${nextRecordsUrl}`;
+    finalTransformedRequest.url.search = '';
+  } else {
+    finalTransformedRequest.url.pathname = '/services/data/v59.0/query';
+    finalTransformedRequest.url.search = `?q=${soql}`;
+  }
   return finalTransformedRequest;
 }
 
