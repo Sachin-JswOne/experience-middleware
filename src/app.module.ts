@@ -1,4 +1,3 @@
-// import { PrometheusModule } from '@willsoto/nestjs-prometheus';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { ConfigModule } from '@nestjs/config';
 import { ProxyService } from './service/proxy.service';
@@ -20,12 +19,6 @@ const hasFrontendDist = existsSync(FRONTEND_DIST_PATH);
 
 @Module({
   imports: [
-    // PrometheusModule.register({
-    //   path: '/metrics',
-    // }),
-    // PrometheusModule.register({
-    //   path: '/metrics',
-    // }),
     WinstonModule.forRoot(winstonConfig),
     ...(hasFrontendDist
       ? [

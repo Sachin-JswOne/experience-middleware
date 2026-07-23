@@ -8,10 +8,15 @@ import {
   isClusterEnabled,
   keyPrefix,
   minuteRetentionSeconds,
+  podName,
   retentionSeconds,
 } from './metrics.cluster.shared';
 
 const DEFAULT_FLUSH_INTERVAL_MS = 10_000;
+// Cluster-wide error feed: capped list so it can never grow unbounded.
+export const RECENT_ERRORS_KEY_SUFFIX = 'recent-errors';
+export const RECENT_ERRORS_MAX = 100;
+const RECENT_ERRORS_PER_FLUSH = 50;
 
 type CounterMap = Map<string, number>;
 
@@ -19,6 +24,7 @@ interface BucketDeltas {
   g: CounterMap;
   r: CounterMap;
   d: CounterMap;
+  p: CounterMap;
 }
 
 /**
@@ -67,11 +73,27 @@ export class MetricsPublisher implements OnModuleDestroy {
     const minuteTtl = minuteRetentionSeconds() + 300;
     const hourTtl = retentionSeconds() + 3600;
 
+    // Newest errors from this flush feed the shared recent-errors list.
+    const pod = podName();
+    const errorPayloads = records
+      .filter((r) => r.statusCode >= 400)
+      .slice(-RECENT_ERRORS_PER_FLUSH)
+      .map((r) =>
+        JSON.stringify({
+          ts: r.timestamp,
+          route: r.route,
+          method: r.method,
+          statusCode: r.statusCode,
+          durationMs: r.durationMs,
+          pod,
+        }),
+      );
+
     const ok = await this.valkeyClient.executeWrite(async (client) => {
       const pipeline = client.pipeline();
       const writeBuckets = (
         buckets: Map<number, BucketDeltas>,
-        prefixes: [string, string, string],
+        prefixes: [string, string, string, string],
         ttl: number,
       ) => {
         for (const [bucketTs, deltas] of buckets.entries()) {
@@ -79,6 +101,7 @@ export class MetricsPublisher implements OnModuleDestroy {
             [`${prefix}:${prefixes[0]}:${bucketTs}`, deltas.g],
             [`${prefix}:${prefixes[1]}:${bucketTs}`, deltas.r],
             [`${prefix}:${prefixes[2]}:${bucketTs}`, deltas.d],
+            [`${prefix}:${prefixes[3]}:${bucketTs}`, deltas.p],
           ];
           for (const [key, counters] of groups) {
             if (counters.size === 0) continue;
@@ -90,8 +113,14 @@ export class MetricsPublisher implements OnModuleDestroy {
           }
         }
       };
-      writeBuckets(minuteBuckets, ['g', 'r', 'd'], minuteTtl);
-      writeBuckets(hourBuckets, ['gh', 'rh', 'dh'], hourTtl);
+      writeBuckets(minuteBuckets, ['g', 'r', 'd', 'p'], minuteTtl);
+      writeBuckets(hourBuckets, ['gh', 'rh', 'dh', 'ph'], hourTtl);
+      if (errorPayloads.length > 0) {
+        const errorsKey = `${prefix}:${RECENT_ERRORS_KEY_SUFFIX}`;
+        pipeline.lpush(errorsKey, ...errorPayloads);
+        pipeline.ltrim(errorsKey, 0, RECENT_ERRORS_MAX - 1);
+        pipeline.expire(errorsKey, retentionSeconds());
+      }
       await pipeline.exec();
     });
 
@@ -106,7 +135,7 @@ export class MetricsPublisher implements OnModuleDestroy {
       const bucketTs = Math.floor(record.timestamp / intervalMs) * intervalMs;
       let deltas = buckets.get(bucketTs);
       if (!deltas) {
-        deltas = { g: new Map(), r: new Map(), d: new Map() };
+        deltas = { g: new Map(), r: new Map(), d: new Map(), p: new Map() };
         buckets.set(bucketTs, deltas);
       }
       this.foldRecord(deltas, record);
@@ -130,12 +159,15 @@ export class MetricsPublisher implements OnModuleDestroy {
     inc(deltas.g, statusClassField(record.statusCode));
     inc(deltas.g, histogramField(record.durationMs));
 
-    // Per-route counters
+    // Per-route counters (status classes + latency histogram enable the
+    // per-route 4xx/5xx split and p95 column on the dashboard).
     const routeKey = `${record.method} ${record.route}`;
     inc(deltas.r, `${routeKey}|count`);
     inc(deltas.r, `${routeKey}|latSum`, record.durationMs);
     if (record.statusCode >= 400) inc(deltas.r, `${routeKey}|err`);
     if (record.cacheHit) inc(deltas.r, `${routeKey}|hit`);
+    inc(deltas.r, `${routeKey}|${statusClassField(record.statusCode)}`);
+    inc(deltas.r, `${routeKey}|${histogramField(record.durationMs)}`);
 
     // Per-downstream counters
     for (const ds of record.downstreamTargets) {
@@ -155,6 +187,12 @@ export class MetricsPublisher implements OnModuleDestroy {
         inc(deltas.d, `${t}|stDown`, ds.stages.downstreamMs);
         inc(deltas.d, `${t}|stXform`, ds.stages.resTransformMs);
       }
+
+      // Per (route, target) pair counters — powers the downstream tab's
+      // route filter. Fields: "<METHOD> <route>|<target>|count/latSum/err".
+      inc(deltas.p, `${routeKey}|${t}|count`);
+      inc(deltas.p, `${routeKey}|${t}|latSum`, ds.durationMs);
+      if (!ds.success) inc(deltas.p, `${routeKey}|${t}|err`);
     }
   }
 }

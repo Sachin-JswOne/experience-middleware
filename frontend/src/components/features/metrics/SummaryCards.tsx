@@ -1,4 +1,4 @@
-import { Box, Card, Chip, Skeleton, Typography } from '@mui/material';
+import { Box, Card, Chip, Skeleton, Tooltip, Typography } from '@mui/material';
 import type { MetricsSummary } from '@/_types/metrics.interface';
 import { tokens } from '@/styles/theme';
 import { formatNumber } from './chartShared';
@@ -6,6 +6,10 @@ import { formatNumber } from './chartShared';
 interface SummaryCardsProps {
   summary: MetricsSummary;
   loading: boolean;
+  // Same-length window immediately before the selected one, for delta chips.
+  previous?: MetricsSummary;
+  // Requests per second over the covered window.
+  rps?: number;
 }
 
 const errorColor = (rate: number) => {
@@ -14,23 +18,62 @@ const errorColor = (rate: number) => {
   return tokens.danger;
 };
 
+// higherIsBad: latency/error deltas going up render red, down green.
+// higherIsGood inverts; neutral keeps the subtle color either way.
+type DeltaSense = 'higherIsBad' | 'higherIsGood' | 'neutral';
+
+const DeltaChip = ({
+  current,
+  previous,
+  sense,
+}: {
+  current: number;
+  previous: number | undefined;
+  sense: DeltaSense;
+}) => {
+  if (previous === undefined || !isFinite(previous)) return null;
+  // No baseline traffic — a delta would be noise.
+  if (previous === 0 && current === 0) return null;
+  const deltaPct = previous === 0 ? 100 : ((current - previous) / previous) * 100;
+  if (!isFinite(deltaPct) || Math.abs(deltaPct) < 0.05) return null;
+  const up = deltaPct > 0;
+  let color = tokens.textSubtle;
+  if (sense === 'higherIsBad') color = up ? tokens.danger : tokens.success;
+  if (sense === 'higherIsGood') color = up ? tokens.success : tokens.danger;
+  const label = `${up ? '▲' : '▼'} ${Math.abs(deltaPct) >= 100 ? Math.round(Math.abs(deltaPct)) : Math.abs(deltaPct).toFixed(1)}%`;
+  return (
+    <Tooltip title="vs previous window of the same length">
+      <Chip
+        label={label}
+        size="small"
+        sx={{ height: 18, fontSize: 10, fontWeight: 600, color, bgcolor: 'transparent', border: `1px solid ${color}` }}
+      />
+    </Tooltip>
+  );
+};
+
 const MetricCard = ({
   label,
   value,
   unit,
   color,
   loading,
+  delta,
 }: {
   label: string;
   value: string;
   unit?: string;
   color?: string;
   loading: boolean;
+  delta?: React.ReactNode;
 }) => (
   <Card sx={{ p: 2, height: '100%' }}>
-    <Typography variant="body2" sx={{ color: tokens.textSubtle, mb: 0.5 }}>
-      {label}
-    </Typography>
+    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 0.5 }}>
+      <Typography variant="body2" sx={{ color: tokens.textSubtle }}>
+        {label}
+      </Typography>
+      {!loading && delta}
+    </Box>
     {loading ? (
       <Skeleton variant="text" sx={{ fontSize: '1.25rem' }} width={80} />
     ) : (
@@ -46,7 +89,7 @@ const MetricCard = ({
   </Card>
 );
 
-const SummaryCards = ({ summary, loading }: SummaryCardsProps) => {
+const SummaryCards = ({ summary, loading, previous, rps }: SummaryCardsProps) => {
   const avgLatMs = Math.round(summary.avgLatencyMs);
   const p50Ms = Math.round(summary.p50LatencyMs);
   const p90Ms = Math.round(summary.p90LatencyMs);
@@ -62,25 +105,65 @@ const SummaryCards = ({ summary, loading }: SummaryCardsProps) => {
         mb: 3,
       }}
     >
-      <MetricCard label="Total Requests" value={formatNumber(summary.totalRequests)} loading={loading} />
+      <MetricCard
+        label="Total Requests"
+        value={formatNumber(summary.totalRequests)}
+        loading={loading}
+        delta={
+          <DeltaChip
+            current={summary.totalRequests}
+            previous={previous?.totalRequests}
+            sense="neutral"
+          />
+        }
+      />
+      {rps !== undefined && (
+        <MetricCard
+          label="Throughput"
+          value={rps >= 10 ? rps.toFixed(0) : rps.toFixed(2)}
+          unit="req/s"
+          loading={loading}
+        />
+      )}
       <MetricCard
         label="Error Rate"
         value={`${summary.errorRate.toFixed(1)}`}
         unit="%"
         color={loading ? undefined : errorColor(summary.errorRate)}
         loading={loading}
+        delta={
+          <DeltaChip
+            current={summary.errorRate}
+            previous={previous?.errorRate}
+            sense="higherIsBad"
+          />
+        }
       />
       <MetricCard
         label="Avg Latency"
         value={String(avgLatMs)}
         unit="ms"
         loading={loading}
+        delta={
+          <DeltaChip
+            current={summary.avgLatencyMs}
+            previous={previous?.avgLatencyMs}
+            sense="higherIsBad"
+          />
+        }
       />
       <MetricCard
         label="Cache Hit Rate"
         value={`${summary.cacheHitRate.toFixed(1)}`}
         unit="%"
         loading={loading}
+        delta={
+          <DeltaChip
+            current={summary.cacheHitRate}
+            previous={previous?.cacheHitRate}
+            sense="higherIsGood"
+          />
+        }
       />
       <Card sx={{ p: 2, height: '100%' }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 0.5 }}>
@@ -89,6 +172,13 @@ const SummaryCards = ({ summary, loading }: SummaryCardsProps) => {
           </Typography>
           {!loading && estimated && (
             <Chip label="estimated" size="small" variant="outlined" sx={{ height: 18, fontSize: 10 }} />
+          )}
+          {!loading && (
+            <DeltaChip
+              current={summary.p99LatencyMs}
+              previous={previous?.p99LatencyMs}
+              sense="higherIsBad"
+            />
           )}
         </Box>
         {loading ? (

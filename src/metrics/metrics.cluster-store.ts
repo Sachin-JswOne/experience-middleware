@@ -4,19 +4,25 @@ import {
   MetricsSnapshot,
   TimelineBucket,
   RouteBreakdown,
+  RouteDownstreamPair,
   DownstreamBreakdown,
+  DownstreamTimeline,
   StatusClassCounts,
   CacheProviderStats,
+  RecentError,
+  DeployMarker,
 } from './metrics.types';
 import {
   BUCKET_INTERVAL_MS,
-  HISTOGRAM_BOUNDS,
   HOUR_INTERVAL_MS,
+  estimatePercentileFromHistogram,
+  histogramToApi,
   isClusterEnabled,
   keyPrefix,
   readGranularity,
   timelineBucketMs,
 } from './metrics.cluster.shared';
+import { RECENT_ERRORS_KEY_SUFFIX, RECENT_ERRORS_MAX } from './metrics.publisher';
 
 type Hash = Record<string, string>;
 
@@ -25,7 +31,12 @@ interface MinuteData {
   g: Hash;
   r: Hash;
   d: Hash;
+  p: Hash;
 }
+
+export const DEPLOYS_KEY_SUFFIX = 'deploys';
+export const DEPLOYS_MAX = 50;
+const MAX_RECENT_ERRORS_RETURNED = 20;
 
 /**
  * Reads the cluster-wide metric counters written by MetricsPublisher (from all
@@ -79,34 +90,73 @@ export class MetricsClusterStore {
     return snapshot;
   }
 
+  // Cluster-wide error feed published by every pod. Returns null on Valkey
+  // failure so the caller can keep the local pod's errors instead.
+  async getRecentErrors(fromTs: number, toTs: number): Promise<RecentError[] | null> {
+    const entries = await this.valkeyClient.execute((client) =>
+      client.lrange(`${keyPrefix()}:${RECENT_ERRORS_KEY_SUFFIX}`, 0, RECENT_ERRORS_MAX - 1),
+    );
+    if (!entries) return null;
+    const errors: RecentError[] = [];
+    for (const entry of entries) {
+      try {
+        const parsed = JSON.parse(entry) as RecentError;
+        if (parsed.ts >= fromTs && parsed.ts <= toTs) errors.push(parsed);
+      } catch {
+        // Skip malformed entries.
+      }
+    }
+    return errors.sort((a, b) => b.ts - a.ts).slice(0, MAX_RECENT_ERRORS_RETURNED);
+  }
+
+  async getDeployMarkers(fromTs: number, toTs: number): Promise<DeployMarker[] | null> {
+    const entries = await this.valkeyClient.execute((client) =>
+      client.lrange(`${keyPrefix()}:${DEPLOYS_KEY_SUFFIX}`, 0, DEPLOYS_MAX - 1),
+    );
+    if (!entries) return null;
+    const markers: DeployMarker[] = [];
+    for (const entry of entries) {
+      try {
+        const parsed = JSON.parse(entry) as DeployMarker;
+        if (parsed.ts >= fromTs && parsed.ts <= toTs) markers.push(parsed);
+      } catch {
+        // Skip malformed entries.
+      }
+    }
+    return markers.sort((a, b) => a.ts - b.ts);
+  }
+
   private async fetchBuckets(
     prefix: string,
     granularity: 'minute' | 'hour',
     bucketTimestamps: number[],
   ): Promise<MinuteData[] | null> {
-    const [gKey, rKey, dKey] =
-      granularity === 'minute' ? ['g', 'r', 'd'] : ['gh', 'rh', 'dh'];
+    const [gKey, rKey, dKey, pKey] =
+      granularity === 'minute' ? ['g', 'r', 'd', 'p'] : ['gh', 'rh', 'dh', 'ph'];
     return this.valkeyClient.execute(async (client) => {
       const pipeline = client.pipeline();
       for (const ts of bucketTimestamps) {
         pipeline.hgetall(`${prefix}:${gKey}:${ts}`);
         pipeline.hgetall(`${prefix}:${rKey}:${ts}`);
         pipeline.hgetall(`${prefix}:${dKey}:${ts}`);
+        pipeline.hgetall(`${prefix}:${pKey}:${ts}`);
       }
       const results = await pipeline.exec();
       if (!results) throw new Error('Empty pipeline result');
 
       const minutes: MinuteData[] = [];
       for (let i = 0; i < bucketTimestamps.length; i++) {
-        const [gErr, g] = results[i * 3];
-        const [rErr, r] = results[i * 3 + 1];
-        const [dErr, d] = results[i * 3 + 2];
-        if (gErr || rErr || dErr) throw gErr || rErr || dErr;
+        const [gErr, g] = results[i * 4];
+        const [rErr, r] = results[i * 4 + 1];
+        const [dErr, d] = results[i * 4 + 2];
+        const [pErr, p] = results[i * 4 + 3];
+        if (gErr || rErr || dErr || pErr) throw gErr || rErr || dErr || pErr;
         minutes.push({
           bucketTs: bucketTimestamps[i],
           g: (g as Hash) || {},
           r: (r as Hash) || {},
           d: (d as Hash) || {},
+          p: (p as Hash) || {},
         });
       }
       return minutes;
@@ -121,22 +171,58 @@ export class MetricsClusterStore {
     let cpValkey = 0;
     let cpLocal = 0;
     const statusClasses: StatusClassCounts = { c2xx: 0, c3xx: 0, c4xx: 0, c5xx: 0 };
-    const histogram = new Map<string, number>();
+    const histogram: Record<string, number> = {};
 
     const bucketMs = timelineBucketMs(windowMs);
     const timelineAcc = new Map<
       number,
-      { count: number; err: number; latSum: number; statusClasses: StatusClassCounts }
+      {
+        count: number;
+        err: number;
+        latSum: number;
+        statusClasses: StatusClassCounts;
+        histogram: Record<string, number>;
+      }
     >();
-    const routeAcc = new Map<string, { count: number; err: number; latSum: number; hit: number }>();
+    const routeAcc = new Map<
+      string,
+      {
+        count: number;
+        err: number;
+        latSum: number;
+        hit: number;
+        s2: number;
+        s3: number;
+        s4: number;
+        s5: number;
+        histogram: Record<string, number>;
+      }
+    >();
     const dsAcc = new Map<
       string,
       {
-        count: number; err: number; netErr: number; latSum: number;
-        s2: number; s3: number; s4: number; s5: number;
-        stCount: number; stBuild: number; stClient: number; stDown: number; stXform: number;
+        count: number;
+        err: number;
+        netErr: number;
+        latSum: number;
+        s2: number;
+        s3: number;
+        s4: number;
+        s5: number;
+        stCount: number;
+        stBuild: number;
+        stClient: number;
+        stDown: number;
+        stXform: number;
       }
     >();
+    // target -> coalesced bucket -> counters (downstream time series)
+    const dsTimelineAcc = new Map<
+      string,
+      Map<number, { count: number; err: number; latSum: number }>
+    >();
+    // "<METHOD> <route>|<target>" -> counters (route-scoped downstream)
+    const pairAcc = new Map<string, { count: number; err: number; latSum: number }>();
 
     const num = (hash: Hash, field: string): number => {
       const v = hash[field];
@@ -160,16 +246,16 @@ export class MetricsClusterStore {
       statusClasses.c4xx += num(g, 's4');
       statusClasses.c5xx += num(g, 's5');
 
-      for (const field of Object.keys(g)) {
-        if (field.startsWith('h:')) {
-          histogram.set(field, (histogram.get(field) || 0) + Number(g[field]));
-        }
-      }
-
       const coalescedTs = Math.floor(minute.bucketTs / bucketMs) * bucketMs;
       let tb = timelineAcc.get(coalescedTs);
       if (!tb) {
-        tb = { count: 0, err: 0, latSum: 0, statusClasses: { c2xx: 0, c3xx: 0, c4xx: 0, c5xx: 0 } };
+        tb = {
+          count: 0,
+          err: 0,
+          latSum: 0,
+          statusClasses: { c2xx: 0, c3xx: 0, c4xx: 0, c5xx: 0 },
+          histogram: {},
+        };
         timelineAcc.set(coalescedTs, tb);
       }
       tb.count += count;
@@ -180,6 +266,14 @@ export class MetricsClusterStore {
       tb.statusClasses.c4xx += num(g, 's4');
       tb.statusClasses.c5xx += num(g, 's5');
 
+      for (const field of Object.keys(g)) {
+        if (field.startsWith('h:')) {
+          const value = Number(g[field]);
+          histogram[field] = (histogram[field] || 0) + value;
+          tb.histogram[field] = (tb.histogram[field] || 0) + value;
+        }
+      }
+
       for (const field of Object.keys(minute.r)) {
         const sep = field.lastIndexOf('|');
         if (sep < 0) continue;
@@ -187,7 +281,7 @@ export class MetricsClusterStore {
         const metric = field.slice(sep + 1);
         let acc = routeAcc.get(routeKey);
         if (!acc) {
-          acc = { count: 0, err: 0, latSum: 0, hit: 0 };
+          acc = { count: 0, err: 0, latSum: 0, hit: 0, s2: 0, s3: 0, s4: 0, s5: 0, histogram: {} };
           routeAcc.set(routeKey, acc);
         }
         const value = Number(minute.r[field]);
@@ -195,6 +289,13 @@ export class MetricsClusterStore {
         else if (metric === 'err') acc.err += value;
         else if (metric === 'latSum') acc.latSum += value;
         else if (metric === 'hit') acc.hit += value;
+        else if (metric === 's2') acc.s2 += value;
+        else if (metric === 's3') acc.s3 += value;
+        else if (metric === 's4') acc.s4 += value;
+        else if (metric === 's5') acc.s5 += value;
+        else if (metric.startsWith('h:')) {
+          acc.histogram[metric] = (acc.histogram[metric] || 0) + value;
+        }
       }
 
       for (const field of Object.keys(minute.d)) {
@@ -205,20 +306,87 @@ export class MetricsClusterStore {
         let acc = dsAcc.get(target);
         if (!acc) {
           acc = {
-            count: 0, err: 0, netErr: 0, latSum: 0,
-            s2: 0, s3: 0, s4: 0, s5: 0,
-            stCount: 0, stBuild: 0, stClient: 0, stDown: 0, stXform: 0,
+            count: 0,
+            err: 0,
+            netErr: 0,
+            latSum: 0,
+            s2: 0,
+            s3: 0,
+            s4: 0,
+            s5: 0,
+            stCount: 0,
+            stBuild: 0,
+            stClient: 0,
+            stDown: 0,
+            stXform: 0,
           };
           dsAcc.set(target, acc);
         }
         const value = Number(minute.d[field]);
         if (metric in acc) (acc as any)[metric] += value;
+
+        if (metric === 'count' || metric === 'err' || metric === 'latSum') {
+          let series = dsTimelineAcc.get(target);
+          if (!series) {
+            series = new Map();
+            dsTimelineAcc.set(target, series);
+          }
+          let point = series.get(coalescedTs);
+          if (!point) {
+            point = { count: 0, err: 0, latSum: 0 };
+            series.set(coalescedTs, point);
+          }
+          (point as any)[metric] += value;
+        }
       }
+
+      // Pair fields: "<METHOD> <route>|<target>|<metric>" — parse from the
+      // right since route paths may themselves contain no separator but
+      // targets/metrics never do.
+      for (const field of Object.keys(minute.p)) {
+        const metricSep = field.lastIndexOf('|');
+        if (metricSep < 0) continue;
+        const metric = field.slice(metricSep + 1);
+        if (metric !== 'count' && metric !== 'err' && metric !== 'latSum') continue;
+        const pairKey = field.slice(0, metricSep);
+        if (pairKey.lastIndexOf('|') < 0) continue;
+        let acc = pairAcc.get(pairKey);
+        if (!acc) {
+          acc = { count: 0, err: 0, latSum: 0 };
+          pairAcc.set(pairKey, acc);
+        }
+        (acc as any)[metric] += Number(minute.p[field]);
+      }
+    }
+
+    // Route targets derived from pair keys (no extra storage).
+    const routeTargets = new Map<string, Set<string>>();
+    const routeDownstream: RouteDownstreamPair[] = [];
+    for (const [pairKey, acc] of pairAcc.entries()) {
+      const targetSep = pairKey.lastIndexOf('|');
+      const routeKey = pairKey.slice(0, targetSep);
+      const target = pairKey.slice(targetSep + 1);
+      let targets = routeTargets.get(routeKey);
+      if (!targets) {
+        targets = new Set();
+        routeTargets.set(routeKey, targets);
+      }
+      targets.add(target);
+      const spaceIdx = routeKey.indexOf(' ');
+      routeDownstream.push({
+        method: spaceIdx > 0 ? routeKey.slice(0, spaceIdx) : '',
+        route: spaceIdx > 0 ? routeKey.slice(spaceIdx + 1) : routeKey,
+        target,
+        requestCount: acc.count,
+        avgLatencyMs: acc.count > 0 ? acc.latSum / acc.count : 0,
+        errorCount: acc.err,
+      });
     }
 
     const routeBreakdown: RouteBreakdown[] = Array.from(routeAcc.entries())
       .map(([routeKey, acc]) => {
         const spaceIdx = routeKey.indexOf(' ');
+        const targets = routeTargets.get(routeKey);
         return {
           method: spaceIdx > 0 ? routeKey.slice(0, spaceIdx) : '',
           route: spaceIdx > 0 ? routeKey.slice(spaceIdx + 1) : routeKey,
@@ -226,6 +394,9 @@ export class MetricsClusterStore {
           avgLatencyMs: acc.count > 0 ? acc.latSum / acc.count : 0,
           errorCount: acc.err,
           cacheHitRate: acc.count > 0 ? (acc.hit / acc.count) * 100 : 0,
+          p95LatencyMs: estimatePercentileFromHistogram(acc.histogram, acc.count, 95),
+          statusClasses: { c2xx: acc.s2, c3xx: acc.s3, c4xx: acc.s4, c5xx: acc.s5 },
+          targets: targets ? Array.from(targets).sort() : undefined,
         };
       })
       .sort((a, b) => b.avgLatencyMs - a.avgLatencyMs);
@@ -248,6 +419,20 @@ export class MetricsClusterStore {
           : undefined,
     }));
 
+    const downstreamTimeline: DownstreamTimeline[] = Array.from(dsTimelineAcc.entries()).map(
+      ([target, series]) => ({
+        target,
+        points: Array.from(series.entries())
+          .sort(([a], [b]) => a - b)
+          .map(([bucketTs, p]) => ({
+            bucketTs,
+            requestCount: p.count,
+            avgLatencyMs: p.count > 0 ? p.latSum / p.count : 0,
+            errorCount: p.err,
+          })),
+      }),
+    );
+
     const cacheProviders: CacheProviderStats[] = [];
     if (cpValkey > 0) cacheProviders.push({ provider: 'valkey', hits: cpValkey, misses: 0 });
     if (cpLocal > 0) cacheProviders.push({ provider: 'local', hits: cpLocal, misses: 0 });
@@ -263,6 +448,9 @@ export class MetricsClusterStore {
         avgLatencyMs: tb.count > 0 ? tb.latSum / tb.count : 0,
         errorCount: tb.err,
         statusClasses: tb.statusClasses,
+        p90LatencyMs: estimatePercentileFromHistogram(tb.histogram, tb.count, 90),
+        p99LatencyMs: estimatePercentileFromHistogram(tb.histogram, tb.count, 99),
+        histogram: histogramToApi(tb.histogram),
       }));
 
     return {
@@ -276,9 +464,9 @@ export class MetricsClusterStore {
         errorRate: totalRequests > 0 ? (errorCount / totalRequests) * 100 : 0,
         avgLatencyMs: totalRequests > 0 ? latSum / totalRequests : 0,
         cacheHitRate: totalRequests > 0 ? (cacheHits / totalRequests) * 100 : 0,
-        p50LatencyMs: this.estimatePercentile(histogram, totalRequests, 50),
-        p90LatencyMs: this.estimatePercentile(histogram, totalRequests, 90),
-        p99LatencyMs: this.estimatePercentile(histogram, totalRequests, 99),
+        p50LatencyMs: estimatePercentileFromHistogram(histogram, totalRequests, 50),
+        p90LatencyMs: estimatePercentileFromHistogram(histogram, totalRequests, 90),
+        p99LatencyMs: estimatePercentileFromHistogram(histogram, totalRequests, 99),
         statusClasses,
         cacheProviders,
         percentileSource: 'histogram',
@@ -286,25 +474,8 @@ export class MetricsClusterStore {
       timeline,
       routeBreakdown,
       downstream,
+      downstreamTimeline,
+      routeDownstream,
     };
-  }
-
-  private estimatePercentile(histogram: Map<string, number>, total: number, p: number): number {
-    if (total === 0) return 0;
-    const targetRank = Math.ceil((p / 100) * total);
-    let cumulative = 0;
-    let prevBound = 0;
-    for (const bound of HISTOGRAM_BOUNDS) {
-      const count = histogram.get(`h:${bound}`) || 0;
-      if (cumulative + count >= targetRank) {
-        // Linear interpolation within the bucket
-        const positionInBucket = targetRank - cumulative;
-        return prevBound + ((bound - prevBound) * positionInBucket) / count;
-      }
-      cumulative += count;
-      prevBound = bound;
-    }
-    // Fell into the open-ended bucket; report its lower bound.
-    return prevBound;
   }
 }

@@ -15,6 +15,7 @@ import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 import dayjs from 'dayjs';
 import { tokens } from '@/styles/theme';
 import type { MetricsRange, MetricsWindow } from './useMetricsQuery';
+import { formatTs } from './chartShared';
 
 const QUICK_RANGES: Array<{ window: MetricsWindow; label: string }> = [
   { window: '5m', label: 'Last 5 minutes' },
@@ -26,11 +27,11 @@ const QUICK_RANGES: Array<{ window: MetricsWindow; label: string }> = [
   { window: '7d', label: 'Last 7 days' },
 ];
 
-export const rangeLabel = (range: MetricsRange): string => {
+export const rangeLabel = (range: MetricsRange, utc = false): string => {
   if (range.type === 'relative') {
     return QUICK_RANGES.find((q) => q.window === range.window)?.label ?? range.window;
   }
-  return `${dayjs(range.from).format('DD MMM HH:mm')} → ${dayjs(range.to).format('DD MMM HH:mm')}`;
+  return `${formatTs(range.from, 'DD MMM HH:mm', utc)} → ${formatTs(range.to, 'DD MMM HH:mm', utc)}`;
 };
 
 const toInputValue = (ts: number) => dayjs(ts).format('YYYY-MM-DDTHH:mm');
@@ -38,9 +39,10 @@ const toInputValue = (ts: number) => dayjs(ts).format('YYYY-MM-DDTHH:mm');
 interface Props {
   range: MetricsRange;
   onChange: (range: MetricsRange) => void;
+  utc?: boolean;
 }
 
-const TimeRangePicker = ({ range, onChange }: Props) => {
+const TimeRangePicker = ({ range, onChange, utc }: Props) => {
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const [fromInput, setFromInput] = useState(() =>
     toInputValue(range.type === 'absolute' ? range.from : Date.now() - 60 * 60 * 1000),
@@ -74,7 +76,7 @@ const TimeRangePicker = ({ range, onChange }: Props) => {
         onClick={(e) => setAnchorEl(e.currentTarget)}
         aria-label="Select time range"
       >
-        {rangeLabel(range)}
+        {rangeLabel(range, utc)}
       </Button>
       <Popover
         open={Boolean(anchorEl)}

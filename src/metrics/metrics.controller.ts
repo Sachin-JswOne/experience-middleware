@@ -1,8 +1,10 @@
-import { BadRequestException, Controller, Get, Query } from '@nestjs/common';
+import { BadRequestException, Controller, Get, Query, UseGuards } from '@nestjs/common';
 import { MetricsAggregator } from './metrics.aggregator';
 import { MetricsClusterStore } from './metrics.cluster-store';
+import { MetricsHealthService } from './metrics.health.service';
 import { MetricsSampleStore } from './metrics.sample-store';
-import { MetricsSnapshot, RouteErrorSample } from './metrics.types';
+import { MetricsAuthGuard } from './metrics.auth.guard';
+import { DeployMarker, MetricsHealth, MetricsSnapshot, RouteErrorSample } from './metrics.types';
 import { retentionMs } from './metrics.cluster.shared';
 
 const WINDOW_PRESETS: Record<string, number> = {
@@ -17,25 +19,33 @@ const WINDOW_PRESETS: Record<string, number> = {
 };
 
 @Controller()
+@UseGuards(MetricsAuthGuard)
 export class MetricsController {
   constructor(
     private readonly aggregator: MetricsAggregator,
     private readonly clusterStore: MetricsClusterStore,
     private readonly sampleStore: MetricsSampleStore,
+    private readonly healthService: MetricsHealthService,
   ) {}
 
   @Get('metrics/samples')
   getRouteSamples(
     @Query('route') route?: string,
     @Query('method') method?: string,
-  ): { enabled: boolean; samples: RouteErrorSample[] } {
+  ): { enabled: boolean; slowThresholdMs: number; samples: RouteErrorSample[] } {
     if (!route || !method) {
       throw new BadRequestException('route and method query params are required');
     }
     return {
       enabled: this.sampleStore.isEnabled(),
+      slowThresholdMs: this.sampleStore.getSlowThresholdMs(),
       samples: this.sampleStore.getSamples(method.toUpperCase(), route),
     };
+  }
+
+  @Get('metrics/health')
+  async getHealth(): Promise<MetricsHealth> {
+    return this.healthService.getHealth();
   }
 
   @Get('metrics')
@@ -76,17 +86,29 @@ export class MetricsController {
     }
 
     const localSnapshot = this.aggregator.getSnapshotRange(fromTs, toTs);
+    let snapshot = localSnapshot;
 
     if (this.clusterStore.isEnabled()) {
       const clusterSnapshot = await this.clusterStore.getSnapshotRange(fromTs, toTs);
       if (clusterSnapshot) {
-        // Recent errors are only available from the local buffer; counters
-        // written to Valkey cannot carry per-request detail.
-        clusterSnapshot.recentErrors = localSnapshot.recentErrors;
-        return clusterSnapshot;
+        // Prefer the cluster-wide error feed; fall back to this pod's buffer
+        // when Valkey can't serve it.
+        const clusterErrors = await this.clusterStore.getRecentErrors(fromTs, toTs);
+        clusterSnapshot.recentErrors =
+          clusterErrors && clusterErrors.length > 0 ? clusterErrors : localSnapshot.recentErrors;
+        snapshot = clusterSnapshot;
       }
     }
 
-    return localSnapshot;
+    snapshot.deployMarkers = await this.resolveDeployMarkers(fromTs, toTs);
+    return snapshot;
+  }
+
+  private async resolveDeployMarkers(fromTs: number, toTs: number): Promise<DeployMarker[]> {
+    if (this.clusterStore.isEnabled()) {
+      const markers = await this.clusterStore.getDeployMarkers(fromTs, toTs);
+      if (markers) return markers;
+    }
+    return this.healthService.getLocalDeployMarkers(fromTs, toTs);
   }
 }

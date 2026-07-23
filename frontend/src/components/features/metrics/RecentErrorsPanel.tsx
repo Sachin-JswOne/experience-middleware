@@ -1,15 +1,15 @@
-import { Box, Card, Chip, Skeleton, Typography } from '@mui/material';
-import dayjs from 'dayjs';
+import { Box, Card, Chip, Skeleton, Tooltip, Typography } from '@mui/material';
 import type { RecentError } from '@/_types/metrics.interface';
 import { tokens } from '@/styles/theme';
-import { formatMs } from './chartShared';
+import { formatMs, formatTs } from './chartShared';
 
 interface Props {
   data: RecentError[] | undefined;
   loading: boolean;
+  utc?: boolean;
 }
 
-const RecentErrorsPanel = ({ data, loading }: Props) => {
+const RecentErrorsPanel = ({ data, loading, utc }: Props) => {
   const errors = (data ?? []).slice(0, 10);
 
   return (
@@ -39,7 +39,7 @@ const RecentErrorsPanel = ({ data, loading }: Props) => {
               }}
             >
               <Typography variant="body2" sx={{ color: tokens.textSubtle, minWidth: 60 }}>
-                {dayjs(e.ts).format('HH:mm:ss')}
+                {formatTs(e.ts, 'HH:mm:ss', utc)}
               </Typography>
               <Chip
                 label={e.statusCode}
@@ -61,6 +61,16 @@ const RecentErrorsPanel = ({ data, loading }: Props) => {
                 </Typography>
                 {e.route}
               </Typography>
+              {e.pod && (
+                <Tooltip title={`Served by pod ${e.pod}`}>
+                  <Chip
+                    label={e.pod}
+                    size="small"
+                    variant="outlined"
+                    sx={{ height: 18, fontSize: 10, maxWidth: 120, color: tokens.textSubtle }}
+                  />
+                </Tooltip>
+              )}
               <Typography variant="body2" sx={{ color: tokens.textSubtle }}>
                 {formatMs(e.durationMs)}
               </Typography>

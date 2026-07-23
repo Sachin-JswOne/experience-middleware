@@ -1,7 +1,10 @@
 import type { ReactNode } from 'react';
 import { Box, Card, Skeleton, Typography } from '@mui/material';
 import dayjs from 'dayjs';
+import utcPlugin from 'dayjs/plugin/utc';
 import { tokens } from '@/styles/theme';
+
+dayjs.extend(utcPlugin);
 
 // Single categorical palette for all metrics charts.
 export const CHART_COLORS = [
@@ -43,9 +46,36 @@ export const formatMs = (value: number): string => {
 
 export const formatPercent = (value: number): string => `${value.toFixed(1)}%`;
 
+// All chart/time labels go through this so the dashboard's UTC toggle
+// affects every timestamp consistently.
+export const formatTs = (ts: number, template: string, utc = false): string =>
+  (utc ? dayjs(ts).utc() : dayjs(ts)).format(template);
+
 // Hour-or-coarser buckets span days — include the date in the axis label.
-export const formatBucketTs = (ts: number, bucketIntervalMs?: number): string =>
-  dayjs(ts).format((bucketIntervalMs ?? 0) >= 3_600_000 ? 'DD MMM HH:mm' : 'HH:mm');
+export const formatBucketTs = (ts: number, bucketIntervalMs?: number, utc = false): string =>
+  formatTs(ts, (bucketIntervalMs ?? 0) >= 3_600_000 ? 'DD MMM HH:mm' : 'HH:mm', utc);
+
+// Recharts category axes take string labels — map each deploy marker to the
+// label of the bucket it falls into so ReferenceLine can anchor to it.
+export const deployMarkerPositions = (
+  markers: Array<{ ts: number; version: string }> | undefined,
+  buckets: Array<{ bucketTs: number }>,
+  bucketIntervalMs: number | undefined,
+  utc = false,
+): Array<{ x: string; version: string }> => {
+  if (!markers || markers.length === 0 || buckets.length === 0) return [];
+  const interval = bucketIntervalMs ?? 60_000;
+  const out: Array<{ x: string; version: string }> = [];
+  for (const marker of markers) {
+    const bucket = buckets.find(
+      (b) => marker.ts >= b.bucketTs && marker.ts < b.bucketTs + interval,
+    );
+    if (bucket) {
+      out.push({ x: formatBucketTs(bucket.bucketTs, bucketIntervalMs, utc), version: marker.version });
+    }
+  }
+  return out;
+};
 
 interface ChartCardProps {
   title: string;

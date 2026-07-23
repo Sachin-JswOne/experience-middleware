@@ -1,5 +1,12 @@
 export type CacheServedBy = 'valkey' | 'local' | 'none';
 
+// Mirrors HISTOGRAM_BOUNDS in src/metrics/metrics.cluster.shared.ts — the
+// upper bounds (ms) of the latency histogram buckets, plus the open 'inf'
+// bucket. Order matters: heatmap rows render in this order.
+export const LATENCY_HISTOGRAM_BOUNDS = [
+  25, 50, 100, 250, 500, 1000, 2500, 5000, 10000, 30000,
+] as const;
+
 export interface StatusClassCounts {
   c2xx: number;
   c3xx: number;
@@ -47,6 +54,10 @@ export interface TimelineBucket {
   avgLatencyMs: number;
   errorCount: number;
   statusClasses?: StatusClassCounts;
+  p90LatencyMs?: number;
+  p99LatencyMs?: number;
+  // Latency histogram counts keyed by upper bound ('25'…'30000', 'inf').
+  histogram?: Record<string, number>;
 }
 
 export interface RouteBreakdown {
@@ -56,6 +67,18 @@ export interface RouteBreakdown {
   avgLatencyMs: number;
   errorCount: number;
   cacheHitRate: number;
+  p95LatencyMs?: number;
+  statusClasses?: StatusClassCounts;
+  targets?: string[];
+}
+
+export interface RouteDownstreamPair {
+  route: string;
+  method: string;
+  target: string;
+  requestCount: number;
+  avgLatencyMs: number;
+  errorCount: number;
 }
 
 export interface DownstreamBreakdown {
@@ -68,12 +91,51 @@ export interface DownstreamBreakdown {
   avgStages?: StageTimings;
 }
 
+export interface DownstreamTimelinePoint {
+  bucketTs: number;
+  requestCount: number;
+  avgLatencyMs: number;
+  errorCount: number;
+}
+
+export interface DownstreamTimeline {
+  target: string;
+  points: DownstreamTimelinePoint[];
+}
+
 export interface RecentError {
   ts: number;
   route: string;
   method: string;
   statusCode: number;
   durationMs: number;
+  pod?: string;
+}
+
+export interface DeployMarker {
+  ts: number;
+  version: string;
+  pod?: string;
+}
+
+export interface PodHealth {
+  pod: string;
+  version: string;
+  lastSeen: number;
+  uptimeSec: number;
+  heapUsedMb: number;
+  heapTotalMb: number;
+  rssMb: number;
+  eventLoopLagMs: number;
+  eventLoopLagP99Ms: number;
+  bufferRecords: number;
+  requestsLastMin: number;
+}
+
+export interface MetricsHealth {
+  pod: PodHealth;
+  cluster: PodHealth[];
+  valkey: 'connected' | 'unavailable' | 'disabled';
 }
 
 export interface SampleDownstream {
@@ -108,7 +170,10 @@ export interface MetricsSnapshot {
   timeline: TimelineBucket[];
   routeBreakdown: RouteBreakdown[];
   downstream: DownstreamBreakdown[];
+  downstreamTimeline?: DownstreamTimeline[];
+  routeDownstream?: RouteDownstreamPair[];
   bucketIntervalMs?: number;
   source?: 'local' | 'cluster';
   recentErrors?: RecentError[];
+  deployMarkers?: DeployMarker[];
 }

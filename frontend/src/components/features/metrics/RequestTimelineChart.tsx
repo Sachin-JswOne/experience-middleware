@@ -7,23 +7,29 @@ import {
   Tooltip,
   ResponsiveContainer,
   Legend,
+  ReferenceLine,
 } from 'recharts';
-import type { TimelineBucket } from '@/_types/metrics.interface';
+import type { DeployMarker, TimelineBucket } from '@/_types/metrics.interface';
 import { tokens } from '@/styles/theme';
-import ChartCard, { formatBucketTs } from './chartShared';
+import ChartCard, { deployMarkerPositions, formatBucketTs } from './chartShared';
 
 interface Props {
   data: TimelineBucket[];
   loading: boolean;
   bucketIntervalMs?: number;
+  deployMarkers?: DeployMarker[];
+  utc?: boolean;
 }
 
-const RequestTimelineChart = ({ data, loading, bucketIntervalMs }: Props) => {
+const RequestTimelineChart = ({ data, loading, bucketIntervalMs, deployMarkers, utc }: Props) => {
   const chartData = data.map((b) => ({
     ...b,
     avgLatencyMs: Math.round(b.avgLatencyMs),
-    time: formatBucketTs(b.bucketTs, bucketIntervalMs),
+    p90LatencyMs: b.p90LatencyMs !== undefined ? Math.round(b.p90LatencyMs) : undefined,
+    p99LatencyMs: b.p99LatencyMs !== undefined ? Math.round(b.p99LatencyMs) : undefined,
+    time: formatBucketTs(b.bucketTs, bucketIntervalMs, utc),
   }));
+  const markers = deployMarkerPositions(deployMarkers, data, bucketIntervalMs, utc);
 
   return (
     <ChartCard title="Requests Over Time" loading={loading} empty={chartData.length === 0}>
@@ -46,6 +52,20 @@ const RequestTimelineChart = ({ data, loading, bucketIntervalMs }: Props) => {
             contentStyle={{ fontSize: 12, borderRadius: tokens.radiusSmall }}
           />
           <Legend />
+          {markers.map((m) => (
+            <ReferenceLine
+              key={`${m.x}-${m.version}`}
+              yAxisId="left"
+              x={m.x}
+              stroke={tokens.textSubtlest}
+              strokeDasharray="4 4"
+              label={{
+                value: `deploy ${m.version}`,
+                position: 'insideTopRight',
+                style: { fontSize: 10, fill: tokens.textSubtle },
+              }}
+            />
+          ))}
           <Line
             yAxisId="left"
             type="monotone"
@@ -62,6 +82,26 @@ const RequestTimelineChart = ({ data, loading, bucketIntervalMs }: Props) => {
             stroke={tokens.warning}
             strokeWidth={2}
             name="Avg Latency (ms)"
+            dot={false}
+          />
+          <Line
+            yAxisId="right"
+            type="monotone"
+            dataKey="p90LatencyMs"
+            stroke="#AF59E1"
+            strokeWidth={1.5}
+            strokeDasharray="5 3"
+            name="P90 (ms)"
+            dot={false}
+          />
+          <Line
+            yAxisId="right"
+            type="monotone"
+            dataKey="p99LatencyMs"
+            stroke="#E06C00"
+            strokeWidth={1.5}
+            strokeDasharray="2 3"
+            name="P99 (ms)"
             dot={false}
           />
           <Line

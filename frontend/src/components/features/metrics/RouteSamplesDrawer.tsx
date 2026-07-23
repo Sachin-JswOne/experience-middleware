@@ -10,21 +10,26 @@ import {
   Skeleton,
   ToggleButton,
   ToggleButtonGroup,
+  Tooltip,
   Typography,
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import { useQuery } from '@tanstack/react-query';
-import dayjs from 'dayjs';
+import { enqueueSnackbar } from 'notistack';
 import MetricsService from '@/services/MetricsService';
 import type { RouteBreakdown, RouteErrorSample } from '@/_types/metrics.interface';
 import { tokens } from '@/styles/theme';
-import { formatMs } from './chartShared';
+import { formatMs, formatTs } from './chartShared';
 
 interface Props {
   route: RouteBreakdown | null;
   onClose: () => void;
+  utc?: boolean;
 }
+
+type SampleKind = 'all' | 'errors' | 'slow';
 
 const tryPretty = (value?: string): string => {
   if (!value) return '—';
@@ -32,6 +37,33 @@ const tryPretty = (value?: string): string => {
     return JSON.stringify(JSON.parse(value), null, 2);
   } catch {
     return value;
+  }
+};
+
+// Rebuild the request as a shell command for local reproduction. Headers the
+// backend masked stay masked — the user swaps in a real token.
+const buildCurl = (sample: RouteErrorSample): string => {
+  const parts = [`curl -X ${sample.method} '${sample.url}'`];
+  for (const [key, value] of Object.entries(sample.requestHeaders ?? {})) {
+    // Hop-by-hop / auto-computed headers make the command noisier, not more
+    // reproducible.
+    if (['host', 'connection', 'content-length', 'accept-encoding'].includes(key.toLowerCase())) {
+      continue;
+    }
+    parts.push(`  -H '${key}: ${String(value).replace(/'/g, "'\\''")}'`);
+  }
+  if (sample.requestBody && sample.method !== 'GET' && sample.method !== 'HEAD') {
+    parts.push(`  -d '${sample.requestBody.replace(/'/g, "'\\''")}'`);
+  }
+  return parts.join(' \\\n');
+};
+
+const copyCurl = async (sample: RouteErrorSample) => {
+  try {
+    await navigator.clipboard.writeText(buildCurl(sample));
+    enqueueSnackbar('cURL copied to clipboard', { variant: 'success' });
+  } catch {
+    enqueueSnackbar('Could not copy to clipboard', { variant: 'error' });
   }
 };
 
@@ -61,7 +93,15 @@ const CodeBlock = ({ label, value }: { label: string; value?: string }) => (
   </Box>
 );
 
-const SampleAccordion = ({ sample }: { sample: RouteErrorSample }) => (
+const SampleAccordion = ({
+  sample,
+  slow,
+  utc,
+}: {
+  sample: RouteErrorSample;
+  slow: boolean;
+  utc?: boolean;
+}) => (
   <Accordion disableGutters elevation={0} sx={{ border: `1px solid ${tokens.border}`, borderRadius: 1, '&:before': { display: 'none' }, mb: 1 }}>
     <AccordionSummary expandIcon={<ExpandMoreIcon />}>
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flex: 1, minWidth: 0 }}>
@@ -81,8 +121,16 @@ const SampleAccordion = ({ sample }: { sample: RouteErrorSample }) => (
                   : tokens.success,
           }}
         />
+        {slow && (
+          <Chip
+            label="slow"
+            size="small"
+            variant="outlined"
+            sx={{ height: 20, fontSize: 10, color: tokens.warning, borderColor: tokens.warning }}
+          />
+        )}
         <Typography variant="body2" sx={{ color: tokens.textSubtle }}>
-          {dayjs(sample.ts).format('HH:mm:ss')}
+          {formatTs(sample.ts, 'HH:mm:ss', utc)}
         </Typography>
         <Typography
           variant="body2"
@@ -93,6 +141,18 @@ const SampleAccordion = ({ sample }: { sample: RouteErrorSample }) => (
         <Typography variant="body2" sx={{ color: tokens.textSubtle }}>
           {formatMs(sample.durationMs)}
         </Typography>
+        <Tooltip title="Copy as cURL">
+          <IconButton
+            size="small"
+            aria-label="Copy request as cURL"
+            onClick={(e) => {
+              e.stopPropagation();
+              void copyCurl(sample);
+            }}
+          >
+            <ContentCopyIcon sx={{ fontSize: 14 }} />
+          </IconButton>
+        </Tooltip>
       </Box>
     </AccordionSummary>
     <AccordionDetails>
@@ -150,9 +210,9 @@ const SampleAccordion = ({ sample }: { sample: RouteErrorSample }) => (
   </Accordion>
 );
 
-const RouteSamplesDrawer = ({ route, onClose }: Props) => {
+const RouteSamplesDrawer = ({ route, onClose, utc }: Props) => {
   const open = route !== null;
-  const [kind, setKind] = useState<'all' | 'errors'>('all');
+  const [kind, setKind] = useState<SampleKind>('all');
   const [lastRoute, setLastRoute] = useState<RouteBreakdown | null>(null);
   // Keep the last route while the drawer animates closed.
   if (route && route !== lastRoute) setLastRoute(route);
@@ -170,6 +230,9 @@ const RouteSamplesDrawer = ({ route, onClose }: Props) => {
     enabled: open && !!active,
     refetchInterval: open ? 15_000 : false,
   });
+
+  const slowThresholdMs = data?.slowThresholdMs ?? 3000;
+  const isSlow = (s: RouteErrorSample) => s.statusCode < 400 && s.durationMs >= slowThresholdMs;
 
   return (
     <Drawer anchor="right" open={open} onClose={onClose}>
@@ -191,14 +254,17 @@ const RouteSamplesDrawer = ({ route, onClose }: Props) => {
           value={kind}
           exclusive
           size="small"
-          onChange={(_, next: 'all' | 'errors' | null) => {
+          onChange={(_, next: SampleKind | null) => {
             if (next) setKind(next);
           }}
           sx={{ mt: 1.5 }}
           aria-label="Sample filter"
         >
           <ToggleButton value="all" aria-label="All samples">All</ToggleButton>
-          <ToggleButton value="errors" aria-label="Error samples only">Errors only</ToggleButton>
+          <ToggleButton value="errors" aria-label="Error samples only">Errors</ToggleButton>
+          <ToggleButton value="slow" aria-label="Slow samples only">
+            {`Slow (≥${formatMs(slowThresholdMs)})`}
+          </ToggleButton>
         </ToggleButtonGroup>
         <Box sx={{ mt: 2 }}>
           {(() => {
@@ -210,19 +276,21 @@ const RouteSamplesDrawer = ({ route, onClose }: Props) => {
                 </Typography>
               );
             }
-            const samples = (data?.samples ?? []).filter(
-              (s) => kind === 'all' || s.statusCode >= 400,
-            );
+            const samples = (data?.samples ?? []).filter((s) => {
+              if (kind === 'errors') return s.statusCode >= 400;
+              if (kind === 'slow') return isSlow(s);
+              return true;
+            });
             if (samples.length === 0) {
               return (
                 <Typography variant="body2" sx={{ color: tokens.textSubtle }}>
-                  No {kind === 'errors' ? 'error ' : ''}samples captured for this
-                  route yet (kept in memory since the pod started).
+                  No {kind === 'errors' ? 'error ' : kind === 'slow' ? 'slow ' : ''}samples
+                  captured for this route yet (kept in memory since the pod started).
                 </Typography>
               );
             }
             return samples.map((s, idx) => (
-              <SampleAccordion key={`${s.ts}-${idx}`} sample={s} />
+              <SampleAccordion key={`${s.ts}-${idx}`} sample={s} slow={isSlow(s)} utc={utc} />
             ));
           })()}
         </Box>

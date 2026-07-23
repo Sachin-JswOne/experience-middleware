@@ -65,6 +65,12 @@ export interface TimelineBucket {
   avgLatencyMs: number;
   errorCount: number;
   statusClasses?: StatusClassCounts;
+  p90LatencyMs?: number;
+  p99LatencyMs?: number;
+  // Latency histogram counts keyed by upper bound ('25'…'30000', 'inf').
+  // Only non-zero buckets are included; consumers fill gaps from the shared
+  // bounds list. Feeds the latency heatmap.
+  histogram?: Record<string, number>;
 }
 
 export interface RouteBreakdown {
@@ -74,6 +80,22 @@ export interface RouteBreakdown {
   avgLatencyMs: number;
   errorCount: number;
   cacheHitRate: number;
+  p95LatencyMs?: number;
+  statusClasses?: StatusClassCounts;
+  // Downstream targets this route called within the window.
+  targets?: string[];
+}
+
+// Per (route, downstream target) aggregate so the downstream tab can be
+// scoped to a route selection. Carries counts only — status classes and
+// stage timings stay per-target to bound counter cardinality.
+export interface RouteDownstreamPair {
+  route: string;
+  method: string;
+  target: string;
+  requestCount: number;
+  avgLatencyMs: number;
+  errorCount: number;
 }
 
 export interface DownstreamBreakdown {
@@ -86,12 +108,52 @@ export interface DownstreamBreakdown {
   avgStages?: StageTimings;
 }
 
+export interface DownstreamTimelinePoint {
+  bucketTs: number;
+  requestCount: number;
+  avgLatencyMs: number;
+  errorCount: number;
+}
+
+export interface DownstreamTimeline {
+  target: string;
+  points: DownstreamTimelinePoint[];
+}
+
 export interface RecentError {
   ts: number;
   route: string;
   method: string;
   statusCode: number;
   durationMs: number;
+  pod?: string;
+}
+
+export interface DeployMarker {
+  ts: number;
+  version: string;
+  pod?: string;
+}
+
+export interface PodHealth {
+  pod: string;
+  version: string;
+  lastSeen: number;
+  uptimeSec: number;
+  heapUsedMb: number;
+  heapTotalMb: number;
+  rssMb: number;
+  eventLoopLagMs: number;
+  eventLoopLagP99Ms: number;
+  bufferRecords: number;
+  requestsLastMin: number;
+}
+
+export interface MetricsHealth {
+  pod: PodHealth;
+  // All pods that heartbeated recently (cluster mode only; includes self).
+  cluster: PodHealth[];
+  valkey: 'connected' | 'unavailable' | 'disabled';
 }
 
 export interface SampleDownstream {
@@ -128,7 +190,10 @@ export interface MetricsSnapshot {
   timeline: TimelineBucket[];
   routeBreakdown: RouteBreakdown[];
   downstream: DownstreamBreakdown[];
+  downstreamTimeline?: DownstreamTimeline[];
+  routeDownstream?: RouteDownstreamPair[];
   bucketIntervalMs?: number;
   source?: 'local' | 'cluster';
   recentErrors?: RecentError[];
+  deployMarkers?: DeployMarker[];
 }

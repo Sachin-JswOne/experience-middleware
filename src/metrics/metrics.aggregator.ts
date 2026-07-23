@@ -4,13 +4,21 @@ import {
   MetricsSnapshot,
   TimelineBucket,
   RouteBreakdown,
+  RouteDownstreamPair,
   DownstreamBreakdown,
+  DownstreamTimeline,
   StatusClassCounts,
   StageTimings,
   CacheServedBy,
   RecentError,
 } from './metrics.types';
-import { localRetentionMs, timelineBucketMs } from './metrics.cluster.shared';
+import {
+  histogramField,
+  histogramToApi,
+  localRetentionMs,
+  podName,
+  timelineBucketMs,
+} from './metrics.cluster.shared';
 
 const DEFAULT_MAX_RECORDS = 250_000;
 const MAX_RECENT_ERRORS = 10;
@@ -60,6 +68,17 @@ export class MetricsAggregator implements OnModuleDestroy {
     }
   }
 
+  // Cheap stats for the health endpoint.
+  getBufferStats(): { records: number; requestsLastMin: number } {
+    const oneMinuteAgo = Date.now() - 60_000;
+    let requestsLastMin = 0;
+    for (let i = this.buffer.length - 1; i >= 0; i--) {
+      if (this.buffer[i].timestamp < oneMinuteAgo) break;
+      requestsLastMin++;
+    }
+    return { records: this.buffer.length, requestsLastMin };
+  }
+
   getSnapshot(windowMs?: number): MetricsSnapshot {
     const now = Date.now();
     const requestedWindow = windowMs || this.retentionMs;
@@ -105,8 +124,19 @@ export class MetricsAggregator implements OnModuleDestroy {
     const bucketMs = timelineBucketMs(coverageMs > 0 ? coverageMs : requestedWindow);
     const timeline = this.computeTimeline(windowRecords, cutoff, Math.min(toTs, now), bucketMs);
 
-    // Route breakdown
-    const routeMap = new Map<string, { rb: RouteBreakdown; cacheHits: number }>();
+    // Route breakdown (exact percentiles — durations kept per route)
+    const routeMap = new Map<
+      string,
+      {
+        rb: RouteBreakdown;
+        cacheHits: number;
+        durations: number[];
+        statusClasses: StatusClassCounts;
+        targets: Set<string>;
+      }
+    >();
+    // Per (route, target) pair aggregates for downstream-by-route filtering.
+    const pairMap = new Map<string, RouteDownstreamPair & { latSum: number }>();
     for (const record of windowRecords) {
       const rk = `${record.method} ${record.route}`;
       let entry = routeMap.get(rk);
@@ -121,6 +151,9 @@ export class MetricsAggregator implements OnModuleDestroy {
             cacheHitRate: 0,
           },
           cacheHits: 0,
+          durations: [],
+          statusClasses: emptyStatusClasses(),
+          targets: new Set<string>(),
         };
         routeMap.set(rk, entry);
       }
@@ -130,21 +163,59 @@ export class MetricsAggregator implements OnModuleDestroy {
       rb.avgLatencyMs = (prevTotal + record.durationMs) / rb.requestCount;
       if (record.statusCode >= 400) rb.errorCount++;
       if (record.cacheHit) entry.cacheHits++;
+      entry.durations.push(record.durationMs);
+      addStatusClass(entry.statusClasses, record.statusCode);
+
+      for (const ds of record.downstreamTargets) {
+        entry.targets.add(ds.target);
+        const pk = `${rk}|${ds.target}`;
+        let pair = pairMap.get(pk);
+        if (!pair) {
+          pair = {
+            route: record.route,
+            method: record.method,
+            target: ds.target,
+            requestCount: 0,
+            avgLatencyMs: 0,
+            errorCount: 0,
+            latSum: 0,
+          };
+          pairMap.set(pk, pair);
+        }
+        pair.requestCount++;
+        pair.latSum += ds.durationMs;
+        if (!ds.success) pair.errorCount++;
+      }
     }
 
-    // Finalize cache hit rates
+    // Finalize cache hit rates + per-route percentiles
     for (const entry of routeMap.values()) {
-      entry.rb.cacheHitRate = entry.rb.requestCount > 0
-        ? (entry.cacheHits / entry.rb.requestCount) * 100
-        : 0;
+      entry.rb.cacheHitRate =
+        entry.rb.requestCount > 0 ? (entry.cacheHits / entry.rb.requestCount) * 100 : 0;
+      entry.durations.sort((a, b) => a - b);
+      entry.rb.p95LatencyMs = this.percentile(entry.durations, 95);
+      entry.rb.statusClasses = entry.statusClasses;
+      entry.rb.targets = Array.from(entry.targets).sort();
     }
 
-    // Downstream breakdown
+    const routeDownstream: RouteDownstreamPair[] = Array.from(pairMap.values()).map(
+      ({ latSum, ...pair }) => ({
+        ...pair,
+        avgLatencyMs: pair.requestCount > 0 ? latSum / pair.requestCount : 0,
+      }),
+    );
+
+    // Downstream breakdown + per-target timeline
     const downstreamMap = new Map<
       string,
       { db: DownstreamBreakdown; stageSums: StageTimings; stageCount: number }
     >();
+    const dsTimelineMap = new Map<
+      string,
+      Map<number, { count: number; latSum: number; err: number }>
+    >();
     for (const record of windowRecords) {
+      const bucketTs = Math.floor(record.timestamp / bucketMs) * bucketMs;
       for (const ds of record.downstreamTargets) {
         let entry = downstreamMap.get(ds.target);
         if (!entry) {
@@ -179,6 +250,20 @@ export class MetricsAggregator implements OnModuleDestroy {
           entry.stageSums.resTransformMs += ds.stages.resTransformMs;
           entry.stageCount++;
         }
+
+        let series = dsTimelineMap.get(ds.target);
+        if (!series) {
+          series = new Map();
+          dsTimelineMap.set(ds.target, series);
+        }
+        let point = series.get(bucketTs);
+        if (!point) {
+          point = { count: 0, latSum: 0, err: 0 };
+          series.set(bucketTs, point);
+        }
+        point.count++;
+        point.latSum += ds.durationMs;
+        if (!ds.success) point.err++;
       }
     }
     for (const entry of downstreamMap.values()) {
@@ -192,7 +277,22 @@ export class MetricsAggregator implements OnModuleDestroy {
       }
     }
 
+    const downstreamTimeline: DownstreamTimeline[] = Array.from(dsTimelineMap.entries()).map(
+      ([target, series]) => ({
+        target,
+        points: Array.from(series.entries())
+          .sort(([a], [b]) => a - b)
+          .map(([bucketTs, p]) => ({
+            bucketTs,
+            requestCount: p.count,
+            avgLatencyMs: p.count > 0 ? p.latSum / p.count : 0,
+            errorCount: p.err,
+          })),
+      }),
+    );
+
     // Recent errors (newest first)
+    const pod = podName();
     const recentErrors: RecentError[] = windowRecords
       .filter((r) => r.statusCode >= 400)
       .slice(-MAX_RECENT_ERRORS)
@@ -203,6 +303,7 @@ export class MetricsAggregator implements OnModuleDestroy {
         method: r.method,
         statusCode: r.statusCode,
         durationMs: r.durationMs,
+        pod,
       }));
 
     return {
@@ -228,8 +329,12 @@ export class MetricsAggregator implements OnModuleDestroy {
         percentileSource: 'exact',
       },
       timeline,
-      routeBreakdown: Array.from(routeMap.values()).map((e) => e.rb).sort((a, b) => b.avgLatencyMs - a.avgLatencyMs),
+      routeBreakdown: Array.from(routeMap.values())
+        .map((e) => e.rb)
+        .sort((a, b) => b.avgLatencyMs - a.avgLatencyMs),
       downstream: Array.from(downstreamMap.values()).map((e) => e.db),
+      downstreamTimeline,
+      routeDownstream,
       recentErrors,
     };
   }
@@ -244,12 +349,26 @@ export class MetricsAggregator implements OnModuleDestroy {
     const oldestBucketTs = Math.floor(cutoff / bucketIntervalMs) * bucketIntervalMs;
     const bucketMap = new Map<
       number,
-      { totalLatency: number; requestCount: number; errorCount: number; statusClasses: StatusClassCounts }
+      {
+        totalLatency: number;
+        requestCount: number;
+        errorCount: number;
+        statusClasses: StatusClassCounts;
+        durations: number[];
+        histogram: Record<string, number>;
+      }
     >();
 
     // Initialize all buckets in range (even empty ones)
     for (let ts = oldestBucketTs; ts <= now; ts += bucketIntervalMs) {
-      bucketMap.set(ts, { totalLatency: 0, requestCount: 0, errorCount: 0, statusClasses: emptyStatusClasses() });
+      bucketMap.set(ts, {
+        totalLatency: 0,
+        requestCount: 0,
+        errorCount: 0,
+        statusClasses: emptyStatusClasses(),
+        durations: [],
+        histogram: {},
+      });
     }
 
     for (const record of records) {
@@ -260,18 +379,27 @@ export class MetricsAggregator implements OnModuleDestroy {
         bucket.requestCount++;
         if (record.statusCode >= 400) bucket.errorCount++;
         addStatusClass(bucket.statusClasses, record.statusCode);
+        bucket.durations.push(record.durationMs);
+        const hf = histogramField(record.durationMs);
+        bucket.histogram[hf] = (bucket.histogram[hf] || 0) + 1;
       }
     }
 
     return Array.from(bucketMap.entries())
       .sort(([a], [b]) => a - b)
-      .map(([bucketTs, b]) => ({
-        bucketTs,
-        requestCount: b.requestCount,
-        avgLatencyMs: b.requestCount > 0 ? b.totalLatency / b.requestCount : 0,
-        errorCount: b.errorCount,
-        statusClasses: b.statusClasses,
-      }));
+      .map(([bucketTs, b]) => {
+        b.durations.sort((x, y) => x - y);
+        return {
+          bucketTs,
+          requestCount: b.requestCount,
+          avgLatencyMs: b.requestCount > 0 ? b.totalLatency / b.requestCount : 0,
+          errorCount: b.errorCount,
+          statusClasses: b.statusClasses,
+          p90LatencyMs: this.percentile(b.durations, 90),
+          p99LatencyMs: this.percentile(b.durations, 99),
+          histogram: histogramToApi(b.histogram),
+        };
+      });
   }
 
   private percentile(sorted: number[], p: number): number {

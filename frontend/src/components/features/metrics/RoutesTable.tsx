@@ -15,6 +15,7 @@ import {
   Typography,
 } from '@mui/material';
 import DownloadIcon from '@mui/icons-material/Download';
+import AccountTreeIcon from '@mui/icons-material/AccountTree';
 import type { RouteBreakdown } from '@/_types/metrics.interface';
 import { tokens } from '@/styles/theme';
 import { formatMs, formatPercent } from './chartShared';
@@ -23,21 +24,49 @@ interface Props {
   data: RouteBreakdown[];
   loading: boolean;
   onRowClick?: (route: RouteBreakdown) => void;
+  // "View downstream" drill — jumps to the Downstream tab scoped to the route.
+  onDrill?: (route: RouteBreakdown) => void;
 }
 
-type SortKey = 'requestCount' | 'avgLatencyMs' | 'errorCount' | 'cacheHitRate';
+type SortKey =
+  | 'requestCount'
+  | 'avgLatencyMs'
+  | 'p95LatencyMs'
+  | 'errorCount'
+  | 'c4xx'
+  | 'c5xx'
+  | 'cacheHitRate';
 
 const COLUMNS: Array<{ key: SortKey; label: string }> = [
   { key: 'requestCount', label: 'Requests' },
   { key: 'avgLatencyMs', label: 'Avg Latency' },
-  { key: 'errorCount', label: 'Errors' },
+  { key: 'p95LatencyMs', label: 'P95' },
+  { key: 'c4xx', label: '4xx' },
+  { key: 'c5xx', label: '5xx' },
   { key: 'cacheHitRate', label: 'Cache Hit' },
 ];
 
+const sortValue = (r: RouteBreakdown, key: SortKey): number => {
+  if (key === 'c4xx') return r.statusClasses?.c4xx ?? 0;
+  if (key === 'c5xx') return r.statusClasses?.c5xx ?? 0;
+  if (key === 'p95LatencyMs') return r.p95LatencyMs ?? 0;
+  if (key === 'errorCount') return r.errorCount;
+  return r[key];
+};
+
 const exportCsv = (rows: RouteBreakdown[]) => {
-  const header = 'method,route,requestCount,avgLatencyMs,errorCount,cacheHitRate';
+  const header = 'method,route,requestCount,avgLatencyMs,p95LatencyMs,errors4xx,errors5xx,cacheHitRate';
   const lines = rows.map((r) =>
-    [r.method, `"${r.route}"`, r.requestCount, Math.round(r.avgLatencyMs), r.errorCount, r.cacheHitRate.toFixed(1)].join(','),
+    [
+      r.method,
+      `"${r.route}"`,
+      r.requestCount,
+      Math.round(r.avgLatencyMs),
+      r.p95LatencyMs !== undefined ? Math.round(r.p95LatencyMs) : '',
+      r.statusClasses?.c4xx ?? '',
+      r.statusClasses?.c5xx ?? '',
+      r.cacheHitRate.toFixed(1),
+    ].join(','),
   );
   const blob = new Blob([[header, ...lines].join('\n')], { type: 'text/csv' });
   const url = URL.createObjectURL(blob);
@@ -48,14 +77,16 @@ const exportCsv = (rows: RouteBreakdown[]) => {
   URL.revokeObjectURL(url);
 };
 
-const RoutesTable = ({ data, loading, onRowClick }: Props) => {
+const RoutesTable = ({ data, loading, onRowClick, onDrill }: Props) => {
   const [sortKey, setSortKey] = useState<SortKey>('avgLatencyMs');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
 
   const sorted = useMemo(
     () =>
       [...data].sort((a, b) =>
-        sortDir === 'desc' ? b[sortKey] - a[sortKey] : a[sortKey] - b[sortKey],
+        sortDir === 'desc'
+          ? sortValue(b, sortKey) - sortValue(a, sortKey)
+          : sortValue(a, sortKey) - sortValue(b, sortKey),
       ),
     [data, sortKey, sortDir],
   );
@@ -111,6 +142,7 @@ const RoutesTable = ({ data, loading, onRowClick }: Props) => {
                     </TableSortLabel>
                   </TableCell>
                 ))}
+                {onDrill && <TableCell align="right" />}
               </TableRow>
             </TableHead>
             <TableBody>
@@ -131,10 +163,40 @@ const RoutesTable = ({ data, loading, onRowClick }: Props) => {
                   </TableCell>
                   <TableCell align="right">{r.requestCount}</TableCell>
                   <TableCell align="right">{formatMs(r.avgLatencyMs)}</TableCell>
-                  <TableCell align="right" sx={{ color: r.errorCount > 0 ? tokens.danger : undefined }}>
-                    {r.errorCount}
+                  <TableCell align="right">
+                    {r.p95LatencyMs !== undefined ? formatMs(r.p95LatencyMs) : '—'}
+                  </TableCell>
+                  <TableCell
+                    align="right"
+                    sx={{ color: (r.statusClasses?.c4xx ?? 0) > 0 ? tokens.warning : undefined }}
+                  >
+                    {r.statusClasses?.c4xx ?? '—'}
+                  </TableCell>
+                  <TableCell
+                    align="right"
+                    sx={{ color: (r.statusClasses?.c5xx ?? 0) > 0 ? tokens.danger : undefined }}
+                  >
+                    {r.statusClasses?.c5xx ?? '—'}
                   </TableCell>
                   <TableCell align="right">{formatPercent(r.cacheHitRate)}</TableCell>
+                  {onDrill && (
+                    <TableCell align="right" sx={{ width: 40 }}>
+                      {(r.targets?.length ?? 0) > 0 && (
+                        <Tooltip title="View downstream calls for this route">
+                          <IconButton
+                            size="small"
+                            aria-label={`View downstream for ${r.method} ${r.route}`}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onDrill(r);
+                            }}
+                          >
+                            <AccountTreeIcon sx={{ fontSize: 16 }} />
+                          </IconButton>
+                        </Tooltip>
+                      )}
+                    </TableCell>
+                  )}
                 </TableRow>
               ))}
             </TableBody>

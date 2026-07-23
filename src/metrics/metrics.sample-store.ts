@@ -3,6 +3,8 @@ import { RouteErrorSample } from './metrics.types';
 
 const DEFAULT_MAX_ERROR_SAMPLES_PER_ROUTE = 20;
 const DEFAULT_MAX_SUCCESS_SAMPLES_PER_ROUTE = 10;
+const DEFAULT_MAX_SLOW_SAMPLES_PER_ROUTE = 10;
+const DEFAULT_SLOW_THRESHOLD_MS = 3000;
 const MAX_BODY_CHARS = 4096;
 const MASKED = '***masked***';
 
@@ -11,16 +13,21 @@ const SENSITIVE_BODY_FIELDS = ['password', 'token', 'accessToken', 'refreshToken
 
 /**
  * Keeps the last N request/response samples per route so the dashboard can
- * show what actually flowed through. Errors and successes are kept in
- * separate quotas so a burst of healthy traffic never evicts the error
- * samples. Bodies truncated, auth masked. In-memory and per-pod, like the
- * aggregator buffer.
+ * show what actually flowed through. Errors, slow requests and plain
+ * successes are kept in separate quotas so a burst of healthy traffic never
+ * evicts the error or slow samples. Bodies truncated, auth masked. In-memory
+ * and per-pod, like the aggregator buffer.
  */
 @Injectable()
 export class MetricsSampleStore {
-  private samples = new Map<string, { errors: RouteErrorSample[]; successes: RouteErrorSample[] }>();
+  private samples = new Map<
+    string,
+    { errors: RouteErrorSample[]; slows: RouteErrorSample[]; successes: RouteErrorSample[] }
+  >();
   private maxErrorsPerRoute: number;
   private maxSuccessesPerRoute: number;
+  private maxSlowsPerRoute: number;
+  private slowThresholdMs: number;
   private enabled: boolean;
 
   constructor() {
@@ -33,6 +40,14 @@ export class MetricsSampleStore {
         String(DEFAULT_MAX_SUCCESS_SAMPLES_PER_ROUTE),
       10,
     );
+    this.maxSlowsPerRoute = parseInt(
+      process.env.METRICS_MAX_SLOW_SAMPLES_PER_ROUTE || String(DEFAULT_MAX_SLOW_SAMPLES_PER_ROUTE),
+      10,
+    );
+    this.slowThresholdMs = parseInt(
+      process.env.METRICS_SLOW_SAMPLE_THRESHOLD_MS || String(DEFAULT_SLOW_THRESHOLD_MS),
+      10,
+    );
     this.enabled = process.env.METRICS_SAMPLES_ENABLED !== 'false';
   }
 
@@ -40,17 +55,26 @@ export class MetricsSampleStore {
     return this.enabled;
   }
 
+  getSlowThresholdMs(): number {
+    return this.slowThresholdMs;
+  }
+
   record(sample: RouteErrorSample): void {
     if (!this.enabled) return;
     const key = `${sample.method} ${sample.route}`;
     let entry = this.samples.get(key);
     if (!entry) {
-      entry = { errors: [], successes: [] };
+      entry = { errors: [], slows: [], successes: [] };
       this.samples.set(key, entry);
     }
     const isError = sample.statusCode >= 400;
-    const list = isError ? entry.errors : entry.successes;
-    const max = isError ? this.maxErrorsPerRoute : this.maxSuccessesPerRoute;
+    const isSlow = !isError && sample.durationMs >= this.slowThresholdMs;
+    const list = isError ? entry.errors : isSlow ? entry.slows : entry.successes;
+    const max = isError
+      ? this.maxErrorsPerRoute
+      : isSlow
+        ? this.maxSlowsPerRoute
+        : this.maxSuccessesPerRoute;
     list.push(sample);
     if (list.length > max) {
       list.splice(0, list.length - max);
@@ -60,8 +84,8 @@ export class MetricsSampleStore {
   getSamples(method: string, route: string): RouteErrorSample[] {
     const entry = this.samples.get(`${method} ${route}`);
     if (!entry) return [];
-    // Newest first, errors and successes interleaved by time.
-    return [...entry.errors, ...entry.successes].sort((a, b) => b.ts - a.ts);
+    // Newest first, all kinds interleaved by time.
+    return [...entry.errors, ...entry.slows, ...entry.successes].sort((a, b) => b.ts - a.ts);
   }
 
   static sanitizeHeaders(headers: Record<string, unknown> | undefined): Record<string, string> {
