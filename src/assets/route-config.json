@@ -2410,7 +2410,7 @@
     "path": "/xp-mi/public/v3/customer-profile",
     "method": "GET",
     "routeHandler": "TRANSFORM",
-    "isCacheRequired": false,
+    "isCacheRequired": true,
     "target": {
       "name": "central-commerce-customer-profile",
       "url": "${MSME_BASE_URL}/central_commerce/customer/v1/profile",
