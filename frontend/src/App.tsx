@@ -10,6 +10,7 @@ import NotFoundPage from '@/pages/NotFoundPage';
 // small entry chunk.
 const DashboardPage = lazy(() => import('@/pages/DashboardPage'));
 const PromptsPage = lazy(() => import('@/pages/PromptsPage'));
+const ValkeyAdminPage = lazy(() => import('@/pages/ValkeyAdminPage'));
 
 const PageFallback = () => (
   <Box sx={{ display: 'flex', justifyContent: 'center', mt: 10 }}>
@@ -26,6 +27,7 @@ const App = () => (
         <Route path="/" element={<DashboardPage />} />
         <Route path="/prompts" element={<PromptsPage />} />
         <Route path="/prompts/:type" element={<PromptsPage />} />
+        <Route path="/cache-admin" element={<ValkeyAdminPage />} />
       </Route>
       <Route path="*" element={<NotFoundPage />} />
     </Routes>

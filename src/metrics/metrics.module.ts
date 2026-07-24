@@ -28,6 +28,6 @@ import { APP_INTERCEPTOR } from '@nestjs/core';
       useClass: MetricsInterceptor,
     },
   ],
-  exports: [MetricsAggregator],
+  exports: [MetricsAggregator, MetricsAuthGuard],
 })
 export class MetricsModule {}

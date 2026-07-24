@@ -23,6 +23,7 @@ type AppConfigType = {
   COMPATIBLE_VERSION: string;
   UAMApplications: string[];
   CACHE_TTL: number;
+  VALKEY_WRITE_PERMISSION: string;
 };
 
 type PromptFeatureMenu = INavigationMenu & { children: INavigationMenu[] };
@@ -80,6 +81,14 @@ const AppConfig: AppConfigType = {
       applicableRoutes: ['/prompts'],
       children: buildPromptMenuChildren(),
     },
+    {
+      id: 8,
+      label: 'Cache Admin',
+      route: '/cache-admin',
+      requiredAction: '',
+      icon: 'Storage',
+      applicableRoutes: ['/cache-admin'],
+    },
   ],
   CACHE_TTL: 10 * 60 * 1000, // 10 minutes
   SNACKBAR_AUTO_HIDE_DURATIONS: {
@@ -91,6 +100,8 @@ const AppConfig: AppConfigType = {
   },
   COMPATIBLE_VERSION: '0.1.0',
   UAMApplications: ['central_catalogue_admin'],
+  // Must match the backend VALKEY_WRITE_PERMISSION env default.
+  VALKEY_WRITE_PERMISSION: 'VALKEY_ADMIN_WRITE',
 };
 
 export default AppConfig;

@@ -13,6 +13,15 @@ export const API_ROUTES = {
   METRICS_ROUTE_TIMELINE: '/xp-mi/metrics/route-timeline',
   METRICS_ALERT_CONFIG: '/xp-mi/metrics/alert-config',
   METRICS_ALERT_HISTORY: '/xp-mi/metrics/alert-history',
+  VALKEY_ADMIN: {
+    STATUS: '/xp-mi/admin/cache/status',
+    INFO: '/xp-mi/admin/cache/info',
+    CLUSTER_NODES: '/xp-mi/admin/cache/cluster/nodes',
+    KEYS: '/xp-mi/admin/cache/keys',
+    KEY_DETAIL: (key: string) => `/xp-mi/admin/cache/keys/detail?key=${encodeURIComponent(key)}`,
+    KEYS_DELETE: '/xp-mi/admin/cache/keys/delete',
+    FLUSH: '/xp-mi/admin/cache/flush',
+  },
   AUTH: {
     OUTLOOK_LOGIN: (referer: string) =>
       `/xp-mi/public/v1/auth/outlook-login?referer=${encodeURIComponent(referer)}`,

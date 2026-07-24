@@ -17,6 +17,7 @@ import PeopleIcon from '@mui/icons-material/People';
 import InventoryIcon from '@mui/icons-material/Inventory';
 import CategoryIcon from '@mui/icons-material/Category';
 import AssistantIcon from '@mui/icons-material/Assistant';
+import StorageIcon from '@mui/icons-material/Storage';
 import ExpandLess from '@mui/icons-material/ExpandLess';
 import ExpandMore from '@mui/icons-material/ExpandMore';
 import { useState, type ElementType } from 'react';
@@ -32,6 +33,7 @@ const iconMap: Record<string, ElementType> = {
   Inventory: InventoryIcon,
   Category: CategoryIcon,
   Assistant: AssistantIcon,
+  Storage: StorageIcon,
 };
 
 export const SIDEBAR_WIDTH = 240;

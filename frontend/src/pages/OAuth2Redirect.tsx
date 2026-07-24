@@ -58,11 +58,13 @@ const OAuth2Redirect = () => {
           const userResponse = await UserService.getUAMUserInfo(accessToken);
           const uamUserInfo: ILooseObject | undefined = userResponse?.data;
           if (uamUserInfo?.name) {
-            processUamAuthorities(uamUserInfo, AppConfig.UAMApplications);
+            const uamPermissions = processUamAuthorities(uamUserInfo, AppConfig.UAMApplications);
             userInfo.username = uamUserInfo.name ?? '';
             userInfo.email = uamUserInfo.email_id ?? '';
             userInfo.name = uamUserInfo.name;
-            userInfo.permissions = uamUserInfo.roles;
+            // UAM permission names plus flat role names (some deployments
+            // grant admin actions via role name).
+            userInfo.permissions = [...new Set([...uamPermissions, ...(uamUserInfo.roles ?? [])])];
             userInfo.organizations = uamUserInfo.uamAuthorities?.organizations ?? [];
           }
         } catch (uamError) {
