@@ -40,7 +40,32 @@ ORDER BY CheckIn_CMV__Check_in_Date_Time__c DESC`
   }
 
   if (isOpportunityList === 'true' && ownerId) {
-    soql = `SELECT Id, Name, StageName, RecordType.DeveloperName, CreatedDate, 
+    if (developerName === 'Credit') {
+      soql = `SELECT Id, Name, StageName, RecordType.DeveloperName, CreatedDate, 
+       Credit_limit_requested__c, Credit_tenure_request_days__c, 
+       Category_Team_Owner__r.Name, Credit_sales_SPOC__r.Name, Risk_SPOC__r.Name,
+       Sales_SPOC__r.Name, JOTS_Owner__r.Name, Opportunity_History_String__c, Total_revised_quantity__c,
+       Rejection_remarks__c, Success_Marked_Time__c,
+       (SELECT Id, Name, Attributes_to_Display__c, Attributes__c,
+               Final_Distributor_Quote__c, SKU_Subtotal__c,
+               Primary_Revised_Quantity__c
+        FROM Enquiry_Line_items__r), 
+       (SELECT Id, Stage_name__c, Cumulative_stage_age__c, 
+        Current_stage_age__c, Opportunity__c, Stage_entry_time__c, 
+        Stage_exit_time__c, Current_age__c FROM JSW_Ageing__r)
+       Total_revised_quantity__c,
+       Sum_of_SKU_subtotal_Final_Quote__c,
+       Total_Order_Value__c,
+       Delivery_address__r.Address_City_State_Pincode_Formula__c,
+       Account.Billing_Address__r.Address_City_State_Pincode_Formula__c
+        FROM Opportunity
+        WHERE (OwnerId = '${ownerId}' OR Sales_SPOC__c = '${ownerId}')
+        AND RecordType.DeveloperName = '${developerName}' 
+        ORDER BY CreatedDate DESC`
+        .replace(/\s+/g, ' ')
+        .trim();
+    } else {
+      soql = `SELECT Id, Name, StageName, RecordType.DeveloperName, CreatedDate, 
        Credit_limit_requested__c, Credit_tenure_request_days__c, 
        Category_Team_Owner__r.Name, Credit_sales_SPOC__r.Name, Risk_SPOC__r.Name,
        Sales_SPOC__r.Name, JOTS_Owner__r.Name, Opportunity_History_String__c, Total_revised_quantity__c,
@@ -58,13 +83,11 @@ ORDER BY CheckIn_CMV__Check_in_Date_Time__c DESC`
        Account.Billing_Address__r.Address_City_State_Pincode_Formula__c
         FROM Opportunity
         WHERE (OwnerId = '${ownerId}' OR Sales_SPOC__c = '${ownerId}')
-        AND ${
-          developerName === 'Credit'
-            ? "RecordType.DeveloperName = 'Credit'"
-            : "RecordType.DeveloperName != 'Credit'"
-        }`
-      .replace(/\s+/g, ' ')
-      .trim();
+        AND RecordType.DeveloperName != '${developerName}'
+        ORDER BY CreatedDate DESC`
+        .replace(/\s+/g, ' ')
+        .trim();
+    }
   }
 
   if (isAccountList === 'true' && ownerId) {
