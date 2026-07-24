@@ -39,13 +39,13 @@ import { formatBucketTs, formatMs, formatTs, logUrlFor } from './chartShared';
 export type SamplesQuery =
   | { kind: 'route'; method: string; route: string }
   | {
-      kind: 'band';
-      fromTs: number;
-      toTs: number;
-      minMs: number;
-      maxMs: number | null;
-      label: string;
-    };
+    kind: 'band';
+    fromTs: number;
+    toTs: number;
+    minMs: number;
+    maxMs: number | null;
+    label: string;
+  };
 
 interface Props {
   query: SamplesQuery | null;
@@ -212,19 +212,19 @@ const SampleAccordion = ({
               variant="outlined"
               {...(logUrlFor(sample.requestId)
                 ? {
-                    component: 'a' as const,
-                    href: logUrlFor(sample.requestId)!,
-                    target: '_blank',
-                    rel: 'noopener',
-                    clickable: true,
-                    onClick: (e: React.MouseEvent) => e.stopPropagation(),
-                  }
+                  component: 'a' as const,
+                  href: logUrlFor(sample.requestId)!,
+                  target: '_blank',
+                  rel: 'noopener',
+                  clickable: true,
+                  onClick: (e: React.MouseEvent) => e.stopPropagation(),
+                }
                 : {
-                    onClick: (e: React.MouseEvent) => {
-                      e.stopPropagation();
-                      void copyText(sample.requestId!, 'Request id copied');
-                    },
-                  })}
+                  onClick: (e: React.MouseEvent) => {
+                    e.stopPropagation();
+                    void copyText(sample.requestId!, 'Request id copied');
+                  },
+                })}
               sx={{ height: 18, fontSize: 10, fontFamily: 'monospace', color: tokens.textSubtle }}
             />
           </Tooltip>
@@ -381,11 +381,11 @@ const RouteSamplesDrawer = ({ query, onClose, utc, range }: Props) => {
         active!.kind === 'route'
           ? await MetricsService.getRouteSamples(active!.method, active!.route)
           : await MetricsService.getSamplesInBand({
-              from: active!.fromTs,
-              to: active!.toTs,
-              minMs: active!.minMs > 0 ? active!.minMs : undefined,
-              maxMs: active!.maxMs ?? undefined,
-            });
+            from: active!.fromTs,
+            to: active!.toTs,
+            minMs: active!.minMs > 0 ? active!.minMs : undefined,
+            maxMs: active!.maxMs ?? undefined,
+          });
       if (!result.data || result.error?.code) {
         throw new Error(result.error?.message || 'Failed to load samples');
       }
@@ -405,7 +405,7 @@ const RouteSamplesDrawer = ({ query, onClose, utc, range }: Props) => {
 
   return (
     <Drawer anchor="right" open={open} onClose={onClose}>
-      <Box sx={{ width: { xs: '100vw', md: '50vw' }, p: 2.5 }}>
+      <Box sx={{ width: { xs: '100vw', md: '80vw' }, p: 2.5 }}>
         <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', mb: 0.5 }}>
           <Box sx={{ minWidth: 0 }}>
             <Typography variant="h5" sx={{ wordBreak: 'break-all' }}>
