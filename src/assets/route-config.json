@@ -2182,6 +2182,7 @@
   {
     "path": "/xp-mi/public/v1/central_commerce/categories/breadcrumb",
     "method": "GET",
+    "isCacheRequired": true,
     "routeHandler": "TRANSFORM",
     "target": {
       "name": "get-breadcrumbs-product",
