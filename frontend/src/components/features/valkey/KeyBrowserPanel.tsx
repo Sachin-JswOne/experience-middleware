@@ -23,16 +23,20 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material';
+import AccountTreeOutlinedIcon from '@mui/icons-material/AccountTreeOutlined';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import SearchIcon from '@mui/icons-material/Search';
+import ViewListOutlinedIcon from '@mui/icons-material/ViewListOutlined';
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
+import { ToggleButton, ToggleButtonGroup } from '@mui/material';
 
 import ValkeyAdminService from '@/services/ValkeyAdminService';
 import type { ValkeyKeyDetail } from '@/_types/valkey.interface';
 import KeyDetailDialog from './KeyDetailDialog';
 import EditKeyDialog from './EditKeyDialog';
+import KeyTreeView from './KeyTreeView';
 
 interface KeyBrowserPanelProps {
   canWrite: boolean;
@@ -61,6 +65,7 @@ const KeyBrowserPanel = ({ canWrite }: KeyBrowserPanelProps) => {
   });
   const [deleteKey, setDeleteKey] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [view, setView] = useState<'tree' | 'list'>('tree');
 
   const scan = async (fresh = true) => {
     if (fresh) {
@@ -151,6 +156,36 @@ const KeyBrowserPanel = ({ canWrite }: KeyBrowserPanelProps) => {
       );
     }
 
+    const loadMore = cursor && (
+      <Box sx={{ display: 'flex', justifyContent: 'center', py: 1.5 }}>
+        <Button size="small" onClick={() => scan(false)} disabled={loadingMore}>
+          {loadingMore ? 'Loading…' : 'Load more'}
+        </Button>
+      </Box>
+    );
+
+    if (view === 'tree') {
+      return (
+        <Box>
+          {loading && <LinearProgress />}
+          {keys.length === 0 ? (
+            <Paper variant="outlined" sx={{ py: 4, textAlign: 'center' }}>
+              <Typography color="text.secondary">No keys match this pattern</Typography>
+            </Paper>
+          ) : (
+            <KeyTreeView
+              keys={keys}
+              canWrite={canWrite}
+              onView={handleView}
+              onEdit={handleEdit}
+              onDelete={setDeleteKey}
+            />
+          )}
+          {loadMore}
+        </Box>
+      );
+    }
+
     return (
       <TableContainer component={Paper} variant="outlined">
         {loading && <LinearProgress />}
@@ -215,13 +250,7 @@ const KeyBrowserPanel = ({ canWrite }: KeyBrowserPanelProps) => {
             )}
           </TableBody>
         </Table>
-        {cursor && (
-          <Box sx={{ display: 'flex', justifyContent: 'center', py: 1.5 }}>
-            <Button size="small" onClick={() => scan(false)} disabled={loadingMore}>
-              {loadingMore ? 'Loading…' : 'Load more'}
-            </Button>
-          </Box>
-        )}
+        {loadMore}
       </TableContainer>
     );
   };
@@ -247,6 +276,26 @@ const KeyBrowserPanel = ({ canWrite }: KeyBrowserPanelProps) => {
         >
           Scan
         </Button>
+        <ToggleButtonGroup
+          size="small"
+          exclusive
+          value={view}
+          onChange={(_, next) => {
+            if (next) setView(next as 'tree' | 'list');
+          }}
+          aria-label="Key view mode"
+        >
+          <ToggleButton value="tree" aria-label="Tree view">
+            <Tooltip title="Tree view">
+              <AccountTreeOutlinedIcon fontSize="small" />
+            </Tooltip>
+          </ToggleButton>
+          <ToggleButton value="list" aria-label="List view">
+            <Tooltip title="List view">
+              <ViewListOutlinedIcon fontSize="small" />
+            </Tooltip>
+          </ToggleButton>
+        </ToggleButtonGroup>
         <Box sx={{ flex: 1 }} />
         {canWrite && (
           <Button
