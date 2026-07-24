@@ -21,6 +21,13 @@ const authHeaders = (): Record<string, string> => {
   return userInfo?.token ? { authorization: `Bearer ${userInfo.token}` } : {};
 };
 
+// ApiClient leaves `error` undefined on success — normalize so callers can
+// always read error.code/error.message.
+const toResult = <T>(response: IApiClientResponse): IResult<T> => ({
+  data: (response.data as T) ?? null,
+  error: response.error ?? { code: 0, message: '' },
+});
+
 const ValkeyAdminService = {
   async getStatus(): Promise<IResult<ValkeyStatus>> {
     const response = await ApiClient.makeRequest({
@@ -28,7 +35,7 @@ const ValkeyAdminService = {
       method: 'GET',
       headers: authHeaders(),
     });
-    return { data: response.data as ValkeyStatus, error: response.error };
+    return toResult<ValkeyStatus>(response);
   },
 
   async getInfo(): Promise<IResult<ValkeyInfo>> {
@@ -37,7 +44,7 @@ const ValkeyAdminService = {
       method: 'GET',
       headers: authHeaders(),
     });
-    return { data: response.data as ValkeyInfo, error: response.error };
+    return toResult<ValkeyInfo>(response);
   },
 
   async getClusterNodes(): Promise<IResult<ValkeyClusterNodes>> {
@@ -46,7 +53,7 @@ const ValkeyAdminService = {
       method: 'GET',
       headers: authHeaders(),
     });
-    return { data: response.data as ValkeyClusterNodes, error: response.error };
+    return toResult<ValkeyClusterNodes>(response);
   },
 
   async scanKeys(
@@ -61,7 +68,7 @@ const ValkeyAdminService = {
       method: 'GET',
       headers: authHeaders(),
     });
-    return { data: response.data as ValkeyScanResult, error: response.error };
+    return toResult<ValkeyScanResult>(response);
   },
 
   async getKeyDetail(key: string): Promise<IResult<ValkeyKeyDetail>> {
@@ -70,7 +77,7 @@ const ValkeyAdminService = {
       method: 'GET',
       headers: authHeaders(),
     });
-    return { data: response.data as ValkeyKeyDetail, error: response.error };
+    return toResult<ValkeyKeyDetail>(response);
   },
 
   async setKey(key: string, value: string, ttlSeconds?: number): Promise<IResult<{ ok: boolean }>> {
@@ -80,7 +87,7 @@ const ValkeyAdminService = {
       headers: authHeaders(),
       body: { key, value, ...(ttlSeconds && ttlSeconds > 0 ? { ttlSeconds } : {}) },
     });
-    return { data: response.data as { ok: boolean }, error: response.error };
+    return toResult<{ ok: boolean }>(response);
   },
 
   async deleteKeys(keys: string[]): Promise<IResult<{ deleted: number }>> {
@@ -90,7 +97,7 @@ const ValkeyAdminService = {
       headers: authHeaders(),
       body: { keys },
     });
-    return { data: response.data as { deleted: number }, error: response.error };
+    return toResult<{ deleted: number }>(response);
   },
 
   async flush(scope: 'db' | 'all', confirm: string): Promise<IResult<ValkeyFlushResult>> {
@@ -100,7 +107,7 @@ const ValkeyAdminService = {
       headers: authHeaders(),
       body: { scope, confirm },
     });
-    return { data: response.data as ValkeyFlushResult, error: response.error };
+    return toResult<ValkeyFlushResult>(response);
   },
 };
 
