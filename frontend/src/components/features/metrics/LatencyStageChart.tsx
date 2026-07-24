@@ -10,7 +10,12 @@ import {
 } from 'recharts';
 import type { DownstreamBreakdown } from '@/_types/metrics.interface';
 import { tokens } from '@/styles/theme';
-import ChartCard, { CHART_COLORS, formatMs } from './chartShared';
+import ChartCard, {
+  CHART_COLORS,
+  CHART_TOOLTIP_LABEL_STYLE,
+  CHART_TOOLTIP_STYLE,
+  formatMs,
+} from './chartShared';
 
 interface Props {
   data: DownstreamBreakdown[];
@@ -36,7 +41,7 @@ const LatencyStageChart = ({ data, loading }: Props) => {
 
   return (
     <ChartCard
-      title="Latency by Stage (avg)"
+      title="Latency by stage (avg)"
       loading={loading}
       empty={chartData.length === 0}
       emptyMessage="No stage timings yet"
@@ -44,13 +49,14 @@ const LatencyStageChart = ({ data, loading }: Props) => {
       <ResponsiveContainer width="100%" height={240}>
         <BarChart data={chartData} margin={{ top: 4, right: 8, left: -4, bottom: 0 }}>
           <CartesianGrid stroke={tokens.border} strokeDasharray="3 3" />
-          <XAxis dataKey="name" tick={{ fontSize: 11, fill: tokens.textSubtle }} />
+          <XAxis dataKey="name" tick={{ fontSize: 12, fill: tokens.textSubtle }} />
           <YAxis
-            tick={{ fontSize: 11, fill: tokens.textSubtle }}
-            label={{ value: 'ms', angle: -90, position: 'insideLeft', style: { fontSize: 11, fill: tokens.textSubtle } }}
+            tick={{ fontSize: 12, fill: tokens.textSubtle }}
+            label={{ value: 'ms', angle: -90, position: 'insideLeft', style: { fontSize: 12, fill: tokens.textSubtle } }}
           />
           <Tooltip
-            contentStyle={{ fontSize: 12, borderRadius: tokens.radiusSmall }}
+            contentStyle={CHART_TOOLTIP_STYLE}
+            labelStyle={CHART_TOOLTIP_LABEL_STYLE}
             formatter={(value, name) => [formatMs(Number(value)), name as string]}
           />
           <Legend wrapperStyle={{ fontSize: 12 }} />

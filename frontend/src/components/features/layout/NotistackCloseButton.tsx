@@ -8,6 +8,7 @@ interface NotistackCloseButtonProps {
 
 const NotistackCloseButton = ({ snackbarKey }: NotistackCloseButtonProps) => (
   <IconButton
+    aria-label="Dismiss notification"
     onClick={() => closeSnackbar(snackbarKey)}
     size="small"
     color="inherit"

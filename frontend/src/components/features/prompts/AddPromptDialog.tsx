@@ -29,9 +29,21 @@ const AddPromptDialog = ({ open, promptType, onClose, onCreated }: AddPromptDial
 
   const canSubmit = prompt.trim().length > 0 && description.trim().length > 0;
   const userInfo: ILooseObject | undefined = LocalStorage.getItem('userInfo');
+  const isDirty = prompt.trim().length > 0 || description.trim().length > 0;
+
+  const requestClose = () => {
+    if (submitting) return;
+    if (isDirty && !window.confirm('Discard this prompt? Your changes will be lost.')) {
+      return;
+    }
+    setPrompt('');
+    setDescription('');
+    onClose();
+  };
+
   const handleClose = (_event: object, reason: 'backdropClick' | 'escapeKeyDown') => {
     if (submitting && reason === 'backdropClick') return;
-    onClose();
+    requestClose();
   };
 
   const handleSubmit = async () => {
@@ -67,6 +79,7 @@ const AddPromptDialog = ({ open, promptType, onClose, onCreated }: AddPromptDial
             onChange={(e) => setDescription(e.target.value)}
             fullWidth
             required
+            autoFocus
             disabled={submitting}
           />
           <TextField
@@ -79,13 +92,16 @@ const AddPromptDialog = ({ open, promptType, onClose, onCreated }: AddPromptDial
             required
             disabled={submitting}
             inputProps={{
-              style: { fontFamily: 'monospace', fontSize: '13px' },
+              style: {
+                fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
+                fontSize: '0.875em',
+              },
             }}
           />
         </Box>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose} disabled={submitting}>
+        <Button onClick={requestClose} disabled={submitting}>
           Cancel
         </Button>
         <Button

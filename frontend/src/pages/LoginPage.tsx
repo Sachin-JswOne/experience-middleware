@@ -1,6 +1,6 @@
-import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Box, Card, Typography } from '@mui/material';
+import { useEffect, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { Alert, Box, Card, Typography } from '@mui/material';
 import type { ILooseObject } from '@/_types/common.interface';
 import Login from '@/components/features/login/Login';
 import LocalStorage from '@/utils/LocalStorage';
@@ -9,6 +9,10 @@ import { tokens } from '@/styles/theme';
 
 const LoginPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const [notice, setNotice] = useState<string | null>(
+    (location.state as ILooseObject | undefined)?.authError ?? null
+  );
 
   useEffect(() => {
     const userInfo: ILooseObject | undefined =
@@ -17,6 +21,7 @@ const LoginPage = () => {
     if (userInfo?.token) {
       if (userInfo.compatibleVersion !== AppConfig.COMPATIBLE_VERSION) {
         LocalStorage.removeItem('userInfo');
+        setNotice('You were signed out — please sign in again.');
         return;
       }
       navigate('/', { replace: true });
@@ -73,6 +78,21 @@ const LoginPage = () => {
               </Typography>
             </Box>
           </Box>
+
+          {notice && (
+            <Alert
+              severity="error"
+              onClose={() => setNotice(null)}
+              sx={{
+                bgcolor: tokens.danger,
+                color: tokens.textInverse,
+                '& .MuiAlert-icon': { color: tokens.textInverse },
+                '& .MuiAlert-action': { color: tokens.textInverse },
+              }}
+            >
+              {notice}
+            </Alert>
+          )}
 
           <Login />
 

@@ -152,6 +152,21 @@ const DependencyMap = ({ pairs, loading, onSelectRoute }: Props) => {
               onMouseEnter={() => setHovered(node.key)}
               onMouseLeave={() => setHovered(null)}
               onClick={onSelectRoute ? () => onSelectRoute(node.key) : undefined}
+              onFocus={() => setHovered(node.key)}
+              onBlur={() => setHovered(null)}
+              onKeyDown={
+                onSelectRoute
+                  ? (e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        onSelectRoute(node.key);
+                      }
+                    }
+                  : undefined
+              }
+              tabIndex={onSelectRoute ? 0 : undefined}
+              role={onSelectRoute ? 'button' : undefined}
+              aria-label={`${node.label} · ${formatNumber(node.requests)} downstream calls`}
               style={{ cursor: onSelectRoute ? 'pointer' : 'default' }}
             >
               <title>{`${node.label} · ${formatNumber(node.requests)} downstream calls`}</title>
@@ -160,9 +175,9 @@ const DependencyMap = ({ pairs, loading, onSelectRoute }: Props) => {
                 x={NODE_W - 14}
                 y={3.5}
                 textAnchor="end"
-                fontSize={10.5}
+                fontSize={12}
                 fill={hovered === node.key ? tokens.text : tokens.textSubtle}
-                fontWeight={hovered === node.key ? 600 : 400}
+                fontWeight={hovered === node.key ? tokens.weightBold : 400}
               >
                 {node.label.length > 34 ? `…${node.label.slice(-33)}` : node.label}
               </text>
@@ -180,9 +195,9 @@ const DependencyMap = ({ pairs, loading, onSelectRoute }: Props) => {
               <text
                 x={14}
                 y={3.5}
-                fontSize={10.5}
+                fontSize={12}
                 fill={hovered === node.key ? tokens.text : tokens.textSubtle}
-                fontWeight={hovered === node.key ? 600 : 400}
+                fontWeight={hovered === node.key ? tokens.weightBold : 400}
               >
                 {node.label.length > 30 ? `${node.label.slice(0, 29)}…` : node.label}
               </text>
@@ -193,6 +208,20 @@ const DependencyMap = ({ pairs, loading, onSelectRoute }: Props) => {
       <Typography variant="caption" sx={{ color: tokens.textSubtlest, display: 'block', mt: 0.5 }}>
         Line width = call volume · color = error rate (top {MAX_ROUTES} routes)
       </Typography>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mt: 0.5 }}>
+        {[
+          { label: '<1% errors', color: tokens.brand },
+          { label: '1–5% errors', color: tokens.warning },
+          { label: '≥5% errors', color: tokens.danger },
+        ].map((band) => (
+          <Box key={band.label} sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+            <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: band.color }} />
+            <Typography variant="caption" sx={{ color: tokens.textSubtlest }}>
+              {band.label}
+            </Typography>
+          </Box>
+        ))}
+      </Box>
     </ChartCard>
   );
 };

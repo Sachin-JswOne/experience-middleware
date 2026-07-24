@@ -1,5 +1,4 @@
-import { useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { Navigate, useNavigate, useParams } from 'react-router-dom';
 import { Box, Tab, Tabs, Typography } from '@mui/material';
 
 import PromptVersionsPanel from '@/components/features/prompts/PromptVersionsPanel';
@@ -11,15 +10,13 @@ const PromptsPage = () => {
   const navigate = useNavigate();
 
   const firstType = PROMPT_TYPES[0]?.promptType ?? '';
-  const activeType = PROMPT_TYPES.some((t) => t.promptType === type)
-    ? type
-    : firstType;
+  const isValidType = !!type && PROMPT_TYPES.some((t) => t.promptType === type);
 
-  useEffect(() => {
-    if (!type || !PROMPT_TYPES.some((t) => t.promptType === type)) {
-      navigate(`/prompts/${firstType}`, { replace: true });
-    }
-  }, [type, firstType, navigate]);
+  if (!isValidType) {
+    return <Navigate to={`/prompts/${firstType}`} replace />;
+  }
+
+  const activeType = type;
 
   const activeLabel = PROMPT_TYPES.find((t) => t.promptType === activeType)?.label ?? 'Prompts';
 
@@ -42,22 +39,22 @@ const PromptsPage = () => {
           onChange={(_, value) => handleTypeChange(value)}
           aria-label="Prompt types"
         >
-          {PROMPT_TYPES.map((type) => (
+          {PROMPT_TYPES.map((promptType) => (
             <Tab
-              key={type.promptType}
-              label={type.label}
-              value={type.promptType}
+              key={promptType.promptType}
+              label={promptType.label}
+              value={promptType.promptType}
             />
           ))}
         </Tabs>
       </Box>
 
       <Box sx={{ mt: 3 }}>
-        {PROMPT_TYPES.map((type) =>
-          type.promptType === activeType ? (
+        {PROMPT_TYPES.map((promptType) =>
+          promptType.promptType === activeType ? (
             <PromptVersionsPanel
-              key={type.promptType}
-              promptType={type.promptType}
+              key={promptType.promptType}
+              promptType={promptType.promptType}
             />
           ) : null
         )}

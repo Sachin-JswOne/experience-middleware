@@ -53,7 +53,7 @@ const LatencyHeatmap = ({ data, loading, bucketIntervalMs, utc, onCellClick }: P
 
   return (
     <ChartCard
-      title="Latency Heatmap"
+      title="Latency heatmap"
       loading={loading}
       empty={!hasData}
       emptyMessage="No latency distribution data yet"
@@ -69,7 +69,7 @@ const LatencyHeatmap = ({ data, loading, bucketIntervalMs, utc, onCellClick }: P
                   height: 16,
                   lineHeight: '16px',
                   color: tokens.textSubtlest,
-                  fontSize: 10,
+                  fontSize: 12,
                   textAlign: 'right',
                   minWidth: 44,
                 }}
@@ -93,22 +93,32 @@ const LatencyHeatmap = ({ data, loading, bucketIntervalMs, utc, onCellClick }: P
                   const intensity =
                     count > 0 ? 0.15 + 0.85 * (Math.log(count + 1) / Math.log(maxCount + 1)) : 0;
                   const clickable = count > 0 && Boolean(onCellClick);
+                  const label =
+                    count > 0
+                      ? `${formatBucketTs(col.bucketTs, bucketIntervalMs, utc)} · ${boundLabel(row)} · ${count} req${clickable ? ' — click for samples' : ''}`
+                      : undefined;
+                  const handleActivate = () =>
+                    onCellClick?.({
+                      fromTs: col.bucketTs,
+                      toTs: col.bucketTs + (bucketIntervalMs ?? 60_000),
+                      ...rowBand(row),
+                    });
                   return (
                     <Box
                       key={`${String(row)}-${col.bucketTs}`}
-                      title={
-                        count > 0
-                          ? `${formatBucketTs(col.bucketTs, bucketIntervalMs, utc)} · ${boundLabel(row)} · ${count} req${clickable ? ' — click for samples' : ''}`
-                          : undefined
-                      }
-                      onClick={
+                      title={label}
+                      aria-label={label}
+                      role={clickable ? 'button' : undefined}
+                      tabIndex={clickable ? 0 : undefined}
+                      onClick={clickable ? handleActivate : undefined}
+                      onKeyDown={
                         clickable
-                          ? () =>
-                              onCellClick?.({
-                                fromTs: col.bucketTs,
-                                toTs: col.bucketTs + (bucketIntervalMs ?? 60_000),
-                                ...rowBand(row),
-                              })
+                          ? (e) => {
+                              if (e.key === 'Enter' || e.key === ' ') {
+                                e.preventDefault();
+                                handleActivate();
+                              }
+                            }
                           : undefined
                       }
                       sx={{
@@ -116,6 +126,9 @@ const LatencyHeatmap = ({ data, loading, bucketIntervalMs, utc, onCellClick }: P
                         opacity: count > 0 ? intensity : 1,
                         borderRadius: '2px',
                         cursor: clickable ? 'pointer' : 'default',
+                        '&:focus-visible': clickable
+                          ? { outline: `2px solid ${tokens.borderFocused}`, outlineOffset: 1 }
+                          : undefined,
                       }}
                     />
                   );
@@ -131,7 +144,7 @@ const LatencyHeatmap = ({ data, loading, bucketIntervalMs, utc, onCellClick }: P
                     flex: 1,
                     minWidth: 0,
                     color: tokens.textSubtlest,
-                    fontSize: 10,
+                    fontSize: 12,
                     whiteSpace: 'nowrap',
                     overflow: 'visible',
                   }}
@@ -141,6 +154,20 @@ const LatencyHeatmap = ({ data, loading, bucketIntervalMs, utc, onCellClick }: P
               ))}
             </Box>
           </Box>
+        </Box>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 1 }}>
+          <Typography variant="caption" sx={{ color: tokens.textSubtlest }}>
+            Fewer requests
+          </Typography>
+          {[0.15, 0.4, 0.65, 1].map((opacity) => (
+            <Box
+              key={opacity}
+              sx={{ width: 16, height: 10, borderRadius: '2px', bgcolor: tokens.brand, opacity }}
+            />
+          ))}
+          <Typography variant="caption" sx={{ color: tokens.textSubtlest }}>
+            More requests
+          </Typography>
         </Box>
       </Box>
     </ChartCard>

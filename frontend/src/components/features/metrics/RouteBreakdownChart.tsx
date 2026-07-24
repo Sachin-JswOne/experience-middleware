@@ -48,26 +48,26 @@ const RouteTooltip = ({ active, payload }: RouteTooltipProps) => {
   return (
     <Box
       sx={{
-        bgcolor: 'background.paper',
-        border: `1px solid ${tokens.border}`,
+        bgcolor: tokens.backgroundNeutralBold,
         borderRadius: `${tokens.radiusSmall}px`,
-        p: 1.25,
+        p: 1.5,
         fontSize: 12,
-        boxShadow: 1,
+        boxShadow: tokens.shadowOverlay,
+        color: tokens.textInverse,
       }}
     >
-      <Typography variant="body2" sx={{ fontWeight: 600, mb: 0.5 }}>
+      <Typography variant="body2" sx={{ fontWeight: tokens.weightBold, mb: 0.5, color: 'inherit' }}>
         {p.fullName ?? p.name}
       </Typography>
       <Box sx={{ display: 'grid', gridTemplateColumns: 'auto auto', columnGap: 1.5, rowGap: 0.25 }}>
-        <Typography variant="body2" sx={{ color: tokens.textSubtle }}>Avg latency</Typography>
-        <Typography variant="body2">{formatMs(p.avgLatencyMs)}</Typography>
-        <Typography variant="body2" sx={{ color: tokens.textSubtle }}>Requests</Typography>
-        <Typography variant="body2">{p.requestCount}</Typography>
-        <Typography variant="body2" sx={{ color: tokens.textSubtle }}>Errors</Typography>
-        <Typography variant="body2">{p.errorCount}</Typography>
-        <Typography variant="body2" sx={{ color: tokens.textSubtle }}>Cache hit</Typography>
-        <Typography variant="body2">{formatPercent(p.cacheHitRate)}</Typography>
+        <Typography variant="body2" sx={{ color: tokens.textInverse, opacity: 0.7 }}>Avg latency</Typography>
+        <Typography variant="body2" sx={{ color: 'inherit' }}>{formatMs(p.avgLatencyMs)}</Typography>
+        <Typography variant="body2" sx={{ color: tokens.textInverse, opacity: 0.7 }}>Requests</Typography>
+        <Typography variant="body2" sx={{ color: 'inherit' }}>{p.requestCount}</Typography>
+        <Typography variant="body2" sx={{ color: tokens.textInverse, opacity: 0.7 }}>Errors</Typography>
+        <Typography variant="body2" sx={{ color: 'inherit' }}>{p.errorCount}</Typography>
+        <Typography variant="body2" sx={{ color: tokens.textInverse, opacity: 0.7 }}>Cache hit</Typography>
+        <Typography variant="body2" sx={{ color: 'inherit' }}>{formatPercent(p.cacheHitRate)}</Typography>
       </Box>
     </Box>
   );
@@ -92,7 +92,7 @@ const RouteBreakdownChart = ({ data, loading }: Props) => {
 
   return (
     <ChartCard
-      title={`Slow Routes (>${MIN_AVG_LATENCY_MS} ms)`}
+      title={`Slow routes (>${MIN_AVG_LATENCY_MS} ms)`}
       loading={loading}
       empty={chartData.length === 0}
       emptyMessage={`No routes above ${MIN_AVG_LATENCY_MS} ms avg latency`}
@@ -100,11 +100,15 @@ const RouteBreakdownChart = ({ data, loading }: Props) => {
       <ResponsiveContainer width="100%" height={Math.max(240, chartData.length * 36 + 40)}>
         <BarChart data={chartData} layout="vertical" margin={{ top: 4, right: 16, left: 0, bottom: 0 }}>
           <CartesianGrid stroke={tokens.border} strokeDasharray="3 3" />
-          <XAxis type="number" tick={{ fontSize: 11, fill: tokens.textSubtle }} />
+          <XAxis
+            type="number"
+            tick={{ fontSize: 12, fill: tokens.textSubtle }}
+            tickFormatter={(value: number) => `${value} ms`}
+          />
           <YAxis
             type="category"
             dataKey="name"
-            tick={{ fontSize: 11, fill: tokens.textSubtle }}
+            tick={{ fontSize: 12, fill: tokens.textSubtle }}
             width={140}
             tickFormatter={(value: string) => truncate(value)}
           />

@@ -13,6 +13,8 @@ import {
 import type { DeployMarker, TimelineBucket } from '@/_types/metrics.interface';
 import { tokens } from '@/styles/theme';
 import ChartCard, {
+  CHART_TOOLTIP_LABEL_STYLE,
+  CHART_TOOLTIP_STYLE,
   OVERVIEW_SYNC_ID,
   STATUS_CLASS_COLORS,
   STATUS_CLASS_LABELS,
@@ -47,7 +49,7 @@ const StatusClassTimelineChart = ({ data, loading, bucketIntervalMs, deployMarke
 
   return (
     <ChartCard
-      title="Responses by Status Class"
+      title="Responses by status class"
       loading={loading}
       empty={!hasStatusData || chartData.length === 0}
     >
@@ -62,9 +64,9 @@ const StatusClassTimelineChart = ({ data, loading, bucketIntervalMs, deployMarke
           style={zoom.zoomEnabled ? { userSelect: 'none', cursor: 'crosshair' } : undefined}
         >
           <CartesianGrid stroke={tokens.border} strokeDasharray="3 3" />
-          <XAxis dataKey="time" tick={{ fontSize: 11, fill: tokens.textSubtle }} />
-          <YAxis tick={{ fontSize: 11, fill: tokens.textSubtle }} allowDecimals={false} />
-          <Tooltip contentStyle={{ fontSize: 12, borderRadius: tokens.radiusSmall }} />
+          <XAxis dataKey="time" tick={{ fontSize: 12, fill: tokens.textSubtle }} />
+          <YAxis tick={{ fontSize: 12, fill: tokens.textSubtle }} allowDecimals={false} />
+          <Tooltip contentStyle={CHART_TOOLTIP_STYLE} labelStyle={CHART_TOOLTIP_LABEL_STYLE} />
           <Legend wrapperStyle={{ fontSize: 12 }} />
           {markers.map((m) => (
             <ReferenceLine
@@ -75,7 +77,7 @@ const StatusClassTimelineChart = ({ data, loading, bucketIntervalMs, deployMarke
               label={{
                 value: `deploy ${m.version}`,
                 position: 'insideTopRight',
-                style: { fontSize: 10, fill: tokens.textSubtle },
+                style: { fontSize: 12, fill: tokens.textSubtle },
               }}
             />
           ))}

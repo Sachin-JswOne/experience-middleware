@@ -51,7 +51,7 @@ const TrafficPatternPanel = ({ data, loading, bucketIntervalMs, windowMs, utc }:
 
   return (
     <ChartCard
-      title="Weekly Traffic Pattern"
+      title="Weekly traffic pattern"
       loading={loading}
       empty={tooNarrow || !hasData}
       emptyMessage={
@@ -68,7 +68,7 @@ const TrafficPatternPanel = ({ data, loading, bucketIntervalMs, windowMs, utc }:
               <Typography
                 key={label}
                 variant="caption"
-                sx={{ height: 20, lineHeight: '20px', color: tokens.textSubtlest, fontSize: 10, minWidth: 28 }}
+                sx={{ height: 20, lineHeight: '20px', color: tokens.textSubtlest, fontSize: 12, minWidth: 28 }}
               >
                 {label}
               </Typography>
@@ -88,18 +88,23 @@ const TrafficPatternPanel = ({ data, loading, bucketIntervalMs, windowMs, utc }:
                   const intensity =
                     count > 0 ? 0.15 + 0.85 * (Math.log(count + 1) / Math.log(maxCount + 1)) : 0;
                   const startHour = col * colHours;
+                  const label =
+                    count > 0
+                      ? `${DAY_LABELS[dow]} ${String(startHour).padStart(2, '0')}:00–${String(Math.min(24, startHour + colHours)).padStart(2, '0')}:00 · ${formatNumber(count)} req`
+                      : undefined;
                   return (
                     <Box
                       key={`${dow}-${col}`}
-                      title={
-                        count > 0
-                          ? `${DAY_LABELS[dow]} ${String(startHour).padStart(2, '0')}:00–${String(Math.min(24, startHour + colHours)).padStart(2, '0')}:00 · ${formatNumber(count)} req`
-                          : undefined
-                      }
+                      title={label}
+                      aria-label={label}
+                      tabIndex={count > 0 ? 0 : undefined}
                       sx={{
                         bgcolor: count > 0 ? tokens.brand : tokens.surfaceSunken,
                         opacity: count > 0 ? intensity : 1,
                         borderRadius: '2px',
+                        '&:focus-visible': count > 0
+                          ? { outline: `2px solid ${tokens.borderFocused}`, outlineOffset: 1 }
+                          : undefined,
                       }}
                     />
                   );
@@ -111,7 +116,7 @@ const TrafficPatternPanel = ({ data, loading, bucketIntervalMs, windowMs, utc }:
                 <Typography
                   key={col}
                   variant="caption"
-                  sx={{ flex: 1, color: tokens.textSubtlest, fontSize: 9 }}
+                  sx={{ flex: 1, color: tokens.textSubtlest, fontSize: 12 }}
                 >
                   {col % Math.max(1, Math.floor(cols / 8)) === 0
                     ? `${String(col * colHours).padStart(2, '0')}h`
@@ -120,6 +125,20 @@ const TrafficPatternPanel = ({ data, loading, bucketIntervalMs, windowMs, utc }:
               ))}
             </Box>
           </Box>
+        </Box>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 1 }}>
+          <Typography variant="caption" sx={{ color: tokens.textSubtlest }}>
+            Fewer requests
+          </Typography>
+          {[0.15, 0.4, 0.65, 1].map((opacity) => (
+            <Box
+              key={opacity}
+              sx={{ width: 16, height: 10, borderRadius: '2px', bgcolor: tokens.brand, opacity }}
+            />
+          ))}
+          <Typography variant="caption" sx={{ color: tokens.textSubtlest }}>
+            More requests
+          </Typography>
         </Box>
       </Box>
     </ChartCard>

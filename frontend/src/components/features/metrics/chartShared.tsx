@@ -20,24 +20,30 @@ export const logUrlFor = (requestId: string): string | null => {
   return template.replace('{requestId}', encodeURIComponent(requestId));
 };
 
-// Single categorical palette for all metrics charts.
+// Single categorical palette for all metrics charts (DESIGN.md chart-categorical-1..8).
 export const CHART_COLORS = [
-  tokens.brand,
   '#357DE8',
-  '#2898BD',
-  '#AF59E1',
-  '#E06C00',
-  '#5B7F24',
-  '#55A0F5',
-  '#80C0FF',
+  '#82B536',
+  '#BF63F3',
+  '#F68909',
+  '#1558BC',
+  '#964AC0',
+  '#42B2D7',
+  '#BD5B00',
 ];
+
+// Single-hue semantic chart colors (DESIGN.md §4 Chart colors) for series that
+// need a distinct hue outside the categorical palette above.
+export const CHART_BRAND = '#357DE8'; // chart-brand
+export const CHART_PURPLE = '#BF63F3'; // chart-purple-bold
+export const CHART_WARNING = '#F68909'; // chart-warning
 
 // Colors for HTTP status classes, shared by every status-class chart.
 export const STATUS_CLASS_COLORS = {
-  c2xx: tokens.success,
-  c3xx: '#55A0F5',
-  c4xx: tokens.warning,
-  c5xx: tokens.danger,
+  c2xx: '#82B536', // chart-success
+  c3xx: '#357DE8', // chart-information
+  c4xx: '#F68909', // chart-warning
+  c5xx: '#E2483D', // chart-danger
 } as const;
 
 export const STATUS_CLASS_LABELS = {
@@ -59,6 +65,18 @@ export const formatMs = (value: number): string => {
 };
 
 export const formatPercent = (value: number): string => `${value.toFixed(1)}%`;
+
+// Recharts tooltips render light by default; align chart tooltip chrome to
+// the app's dark inverted MuiTooltip style (see theme.ts) across every chart.
+export const CHART_TOOLTIP_STYLE = {
+  backgroundColor: tokens.backgroundNeutralBold,
+  border: 'none',
+  borderRadius: tokens.radiusSmall,
+  color: tokens.textInverse,
+  fontSize: 12,
+};
+
+export const CHART_TOOLTIP_LABEL_STYLE = { color: tokens.textInverse };
 
 // All chart/time labels go through this so the dashboard's UTC toggle
 // affects every timestamp consistently.
@@ -192,7 +210,7 @@ const ChartCard = ({
   title,
   loading,
   empty,
-  emptyMessage = 'No data yet',
+  emptyMessage = 'No data for this time range. Try a wider range or clear filters.',
   height = 240,
   action,
   children,

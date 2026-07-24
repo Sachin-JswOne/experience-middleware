@@ -395,7 +395,7 @@ const DashboardPage = () => {
           }}
         >
           <Box>
-            <Typography variant="h3" component="h2">
+            <Typography variant="h3" component="h1">
               Observability
             </Typography>
             <Typography variant="body2" sx={{ color: tokens.textSubtle, mt: 0.5 }}>
@@ -416,7 +416,7 @@ const DashboardPage = () => {
                   label="Reset zoom"
                   size="small"
                   onClick={handleZoomReset}
-                  sx={{ fontWeight: 600 }}
+                  sx={{ fontWeight: tokens.weightBold }}
                 />
               </Tooltip>
             )}
@@ -438,10 +438,10 @@ const DashboardPage = () => {
               onChange={(e) => handleRefreshChange(Number(e.target.value))}
               size="small"
               aria-label="Auto-refresh interval"
-              sx={{ fontSize: 13 }}
+              sx={{ fontSize: '0.875rem' }}
             >
               {REFRESH_OPTIONS.map((opt) => (
-                <MenuItem key={opt.value} value={opt.value} sx={{ fontSize: 13 }}>
+                <MenuItem key={opt.value} value={opt.value} sx={{ fontSize: '0.875rem' }}>
                   {opt.label}
                 </MenuItem>
               ))}
@@ -485,7 +485,7 @@ const DashboardPage = () => {
               </Button>
             }
           >
-            Failed to load metrics.
+            We can't reach the metrics service. Check your connection and retry.
           </Alert>
         )}
 

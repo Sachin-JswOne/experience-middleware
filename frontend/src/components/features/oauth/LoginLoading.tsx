@@ -1,11 +1,12 @@
 import { Backdrop, Box, CircularProgress, Typography } from '@mui/material';
+import { tokens } from '@/styles/theme';
 
 const LoginLoading = () => (
   <Backdrop
     open
     sx={{
       zIndex: (theme) => theme.zIndex.drawer + 1,
-      color: '#FFFFFF',
+      color: tokens.textInverse,
     }}
   >
     <Box sx={{ textAlign: 'center' }}>

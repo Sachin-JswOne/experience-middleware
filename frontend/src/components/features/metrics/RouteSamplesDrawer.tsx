@@ -34,6 +34,24 @@ import { tokens } from '@/styles/theme';
 import type { MetricsRange } from './useMetricsQuery';
 import { formatBucketTs, formatMs, formatTs, logUrlFor } from './chartShared';
 
+// Bordered lozenge status pill per DESIGN.md (bg-subtler + border + bolder text).
+type PillTone = 'success' | 'danger' | 'warning';
+const PILL_STYLES: Record<PillTone, { bg: string; border: string; text: string }> = {
+  success: { bg: '#D3F1A7', border: '#6A9A23', text: '#37471F' },
+  danger: { bg: '#FFD5D2', border: '#E2483D', text: '#5D1F1A' },
+  warning: { bg: '#FCE4A6', border: '#E06C00', text: '#693200' },
+};
+const pillSx = (tone: PillTone) => ({
+  height: 20,
+  fontSize: 12,
+  fontWeight: tokens.weightBold,
+  color: PILL_STYLES[tone].text,
+  bgcolor: PILL_STYLES[tone].bg,
+  border: `1px solid ${PILL_STYLES[tone].border}`,
+});
+
+const CHART_PURPLE_BOLD = '#BF63F3';
+
 // What the drawer shows: one route's samples, or every route's samples
 // inside a time window + latency band (latency-heatmap drill-through).
 export type SamplesQuery =
@@ -118,18 +136,18 @@ const exportSamplesCsv = (samples: RouteErrorSample[]) => {
 
 const CodeBlock = ({ label, value }: { label: string; value?: string }) => (
   <Box sx={{ mb: 1.5 }}>
-    <Typography variant="body2" sx={{ color: tokens.textSubtle, mb: 0.5, fontWeight: 600 }}>
+    <Typography variant="body2" sx={{ color: tokens.textSubtle, mb: 0.5, fontWeight: tokens.weightBold }}>
       {label}
     </Typography>
     <Box
       component="pre"
       sx={{
         m: 0,
-        p: 1.25,
+        p: 1.5,
         bgcolor: tokens.surfaceSunken,
         border: `1px solid ${tokens.border}`,
         borderRadius: `${tokens.radiusSmall}px`,
-        fontSize: 11,
+        fontSize: 12,
         lineHeight: 1.5,
         overflow: 'auto',
         maxHeight: 240,
@@ -160,25 +178,16 @@ const SampleAccordion = ({
         <Chip
           label={sample.statusCode}
           size="small"
-          sx={{
-            height: 20,
-            fontSize: 11,
-            fontWeight: 600,
-            color: tokens.textInverse,
-            bgcolor:
-              sample.statusCode >= 500
-                ? tokens.danger
-                : sample.statusCode >= 400
-                  ? tokens.warning
-                  : tokens.success,
-          }}
+          sx={pillSx(
+            sample.statusCode >= 500 ? 'danger' : sample.statusCode >= 400 ? 'warning' : 'success',
+          )}
         />
         {slow && (
           <Chip
             label="slow"
             size="small"
             variant="outlined"
-            sx={{ height: 20, fontSize: 10, color: tokens.warning, borderColor: tokens.warning }}
+            sx={{ height: 20, fontSize: 12, color: tokens.warning, borderColor: tokens.warning }}
           />
         )}
         <Typography variant="body2" sx={{ color: tokens.textSubtle }}>
@@ -189,7 +198,7 @@ const SampleAccordion = ({
           sx={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
         >
           {showRoute ? (
-            <Typography component="span" variant="body2" sx={{ fontWeight: 600, mr: 0.75 }}>
+            <Typography component="span" variant="body2" sx={{ fontWeight: tokens.weightBold, mr: 0.75 }}>
               {`${sample.method} ${sample.route}`}
             </Typography>
           ) : null}
@@ -225,7 +234,7 @@ const SampleAccordion = ({
                     void copyText(sample.requestId!, 'Request id copied');
                   },
                 })}
-              sx={{ height: 18, fontSize: 10, fontFamily: 'monospace', color: tokens.textSubtle }}
+              sx={{ height: 18, fontSize: 12, fontFamily: 'monospace', color: tokens.textSubtle }}
             />
           </Tooltip>
         )}
@@ -254,7 +263,7 @@ const SampleAccordion = ({
       <CodeBlock label="Response body" value={sample.responseBody} />
       {sample.downstream.length > 0 && (
         <Box>
-          <Typography variant="body2" sx={{ color: tokens.textSubtle, mb: 0.5, fontWeight: 600 }}>
+          <Typography variant="body2" sx={{ color: tokens.textSubtle, mb: 0.5, fontWeight: tokens.weightBold }}>
             Downstream calls
           </Typography>
           {sample.downstream.map((d, idx) => (
@@ -272,7 +281,7 @@ const SampleAccordion = ({
                     variant="outlined"
                     sx={{
                       height: 18,
-                      fontSize: 10,
+                      fontSize: 12,
                       color: d.success ? tokens.success : tokens.danger,
                       borderColor: d.success ? tokens.success : tokens.danger,
                     }}
@@ -346,20 +355,36 @@ const RouteTrendChart = ({
     p95: p.p95LatencyMs !== undefined ? Math.round(p.p95LatencyMs) : undefined,
   }));
 
+  const legend: Array<{ label: string; color: string }> = [
+    { label: 'Requests', color: tokens.brand },
+    { label: 'Errors', color: tokens.danger },
+    { label: 'P95 (ms)', color: CHART_PURPLE_BOLD },
+  ];
+
   return (
     <Box sx={{ mt: 1.5 }}>
       <Typography variant="caption" sx={{ color: tokens.textSubtle }}>
         Trend over the selected range — requests, errors, p95
       </Typography>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mt: 0.5 }}>
+        {legend.map((item) => (
+          <Box key={item.label} sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+            <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: item.color }} />
+            <Typography variant="caption" sx={{ color: tokens.textSubtlest }}>
+              {item.label}
+            </Typography>
+          </Box>
+        ))}
+      </Box>
       <ResponsiveContainer width="100%" height={110}>
         <ComposedChart data={chartData} margin={{ top: 4, right: 4, left: -18, bottom: 0 }}>
-          <XAxis dataKey="time" tick={{ fontSize: 9, fill: tokens.textSubtlest }} interval="preserveStartEnd" />
-          <YAxis yAxisId="count" tick={{ fontSize: 9, fill: tokens.textSubtlest }} allowDecimals={false} />
-          <YAxis yAxisId="ms" orientation="right" tick={{ fontSize: 9, fill: tokens.textSubtlest }} width={40} />
-          <ChartTooltip contentStyle={{ fontSize: 11, borderRadius: tokens.radiusSmall }} />
+          <XAxis dataKey="time" tick={{ fontSize: 12, fill: tokens.textSubtlest }} interval="preserveStartEnd" />
+          <YAxis yAxisId="count" tick={{ fontSize: 12, fill: tokens.textSubtlest }} allowDecimals={false} />
+          <YAxis yAxisId="ms" orientation="right" tick={{ fontSize: 12, fill: tokens.textSubtlest }} width={40} />
+          <ChartTooltip contentStyle={{ fontSize: 12, borderRadius: tokens.radiusSmall }} />
           <Bar yAxisId="count" dataKey="requests" name="Requests" fill={tokens.brand} fillOpacity={0.45} />
           <Bar yAxisId="count" dataKey="errors" name="Errors" fill={tokens.danger} />
-          <Line yAxisId="ms" dataKey="p95" name="P95 (ms)" stroke="#AF59E1" strokeWidth={1.5} dot={false} />
+          <Line yAxisId="ms" dataKey="p95" name="P95 (ms)" stroke={CHART_PURPLE_BOLD} strokeWidth={1.5} dot={false} />
         </ComposedChart>
       </ResponsiveContainer>
     </Box>
@@ -408,7 +433,7 @@ const RouteSamplesDrawer = ({ query, onClose, utc, range }: Props) => {
       <Box sx={{ width: { xs: '100vw', md: '80vw' }, p: 2.5 }}>
         <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', mb: 0.5 }}>
           <Box sx={{ minWidth: 0 }}>
-            <Typography variant="h5" sx={{ wordBreak: 'break-all' }}>
+            <Typography variant="h5" component="h2" sx={{ wordBreak: 'break-all' }}>
               {active ? queryTitle(active, utc) : ''}
             </Typography>
             <Typography variant="body2" sx={{ color: tokens.textSubtle, mt: 0.5 }}>
@@ -464,7 +489,7 @@ const RouteSamplesDrawer = ({ query, onClose, utc, range }: Props) => {
             if (data && !data.enabled) {
               return (
                 <Typography variant="body2" sx={{ color: tokens.textSubtle }}>
-                  Sample capture is disabled (METRICS_SAMPLES_ENABLED=false).
+                  Request sampling is disabled (METRICS_SAMPLES_ENABLED).
                 </Typography>
               );
             }

@@ -14,7 +14,24 @@ import {
 } from '@mui/material';
 import type { MetricsHealth, PodHealth } from '@/_types/metrics.interface';
 import { tokens } from '@/styles/theme';
-import { Sparkline, formatTs } from './chartShared';
+import { Sparkline, formatNumber, formatTs } from './chartShared';
+
+// Bordered lozenge status pill per DESIGN.md (bg-subtler + border + bolder text).
+type PillTone = 'success' | 'danger' | 'warning' | 'neutral';
+const PILL_STYLES: Record<PillTone, { bg: string; border: string; text: string }> = {
+  success: { bg: '#D3F1A7', border: '#6A9A23', text: '#37471F' },
+  danger: { bg: '#FFD5D2', border: '#E2483D', text: '#5D1F1A' },
+  warning: { bg: '#FCE4A6', border: '#E06C00', text: '#693200' },
+  neutral: { bg: '#F0F1F2', border: '#7D818A', text: '#292A2E' },
+};
+const pillSx = (tone: PillTone) => ({
+  height: 18,
+  fontSize: 12,
+  fontWeight: tokens.weightBold,
+  color: PILL_STYLES[tone].text,
+  bgcolor: PILL_STYLES[tone].bg,
+  border: `1px solid ${PILL_STYLES[tone].border}`,
+});
 
 interface Props {
   data: MetricsHealth | undefined;
@@ -33,10 +50,10 @@ const formatUptime = (sec: number): string => {
   return `${sec}s`;
 };
 
-const VALKEY_CHIP: Record<MetricsHealth['valkey'], { label: string; color: string }> = {
-  connected: { label: 'Valkey: connected', color: tokens.success },
-  unavailable: { label: 'Valkey: unavailable', color: tokens.danger },
-  disabled: { label: 'Valkey: disabled (local mode)', color: tokens.textSubtle },
+const VALKEY_CHIP: Record<MetricsHealth['valkey'], { label: string; tone: PillTone }> = {
+  connected: { label: 'Valkey: connected', tone: 'success' },
+  unavailable: { label: 'Valkey: unavailable', tone: 'danger' },
+  disabled: { label: 'Valkey: disabled (local mode)', tone: 'neutral' },
 };
 
 const StatCard = ({ label, value, unit }: { label: string; value: string; unit?: string }) => (
@@ -44,7 +61,7 @@ const StatCard = ({ label, value, unit }: { label: string; value: string; unit?:
     <Typography variant="body2" sx={{ color: tokens.textSubtle, mb: 0.5 }}>
       {label}
     </Typography>
-    <Typography variant="h4" sx={{ fontWeight: 700 }}>
+    <Typography variant="h4" sx={{ fontWeight: tokens.weightBold }}>
       {value}
       {unit && (
         <Typography component="span" variant="body2" sx={{ ml: 0.5, color: tokens.textSubtle }}>
@@ -108,22 +125,12 @@ const PodsTable = ({ pods, utc }: { pods: PodHealth[]; utc?: boolean }) => (
           const history = p.history ?? [];
           return (
             <TableRow key={p.pod} hover>
-              <TableCell sx={{ fontWeight: 600 }}>
+              <TableCell sx={{ fontWeight: tokens.weightBold }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
                   {p.pod}
                   {p.uptimeSec < RESTART_BADGE_UNDER_SEC && (
                     <Tooltip title={`Pod started ${formatUptime(p.uptimeSec)} ago`}>
-                      <Chip
-                        label="restarted"
-                        size="small"
-                        sx={{
-                          height: 18,
-                          fontSize: 10,
-                          fontWeight: 600,
-                          color: tokens.textInverse,
-                          bgcolor: tokens.warning,
-                        }}
-                      />
+                      <Chip label="restarted" size="small" sx={pillSx('warning')} />
                     </Tooltip>
                   )}
                 </Box>
@@ -196,11 +203,7 @@ const SystemPanel = ({ data, loading, utc }: Props) => {
   return (
     <Box>
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-        <Chip
-          label={valkeyChip.label}
-          size="small"
-          sx={{ fontWeight: 600, color: tokens.textInverse, bgcolor: valkeyChip.color }}
-        />
+        <Chip label={valkeyChip.label} size="small" sx={pillSx(valkeyChip.tone)} />
         <Typography variant="body2" sx={{ color: tokens.textSubtle }}>
           Answering pod: {local.pod} · v{local.version}
         </Typography>
@@ -215,28 +218,28 @@ const SystemPanel = ({ data, loading, utc }: Props) => {
         }}
       >
         <StatCard label="CPU (of one core)" value={local.cpuPct !== undefined ? String(local.cpuPct) : '—'} unit="%" />
-        <StatCard label="Event Loop Lag (avg / p99)" value={`${local.eventLoopLagMs} / ${local.eventLoopLagP99Ms}`} unit="ms" />
-        <StatCard label="Heap Used" value={`${local.heapUsedMb}`} unit={`/ ${local.heapTotalMb} MB`} />
+        <StatCard label="Event loop lag (avg / p99)" value={`${local.eventLoopLagMs} / ${local.eventLoopLagP99Ms}`} unit="ms" />
+        <StatCard label="Heap used" value={`${local.heapUsedMb}`} unit={`/ ${local.heapTotalMb} MB`} />
         <StatCard label="RSS" value={`${local.rssMb}`} unit="MB" />
         <StatCard
           label="GC (since last sample)"
           value={local.gcCount !== undefined ? `${local.gcCount}` : '—'}
           unit={local.gcPauseMs !== undefined ? `runs · ${local.gcPauseMs}ms paused` : undefined}
         />
-        <StatCard label="Metrics Buffer" value={local.bufferRecords.toLocaleString()} unit="records" />
+        <StatCard label="Metrics buffer" value={formatNumber(local.bufferRecords)} unit="records" />
         <StatCard label="Requests (last min)" value={String(local.requestsLastMin)} />
         <StatCard label="Uptime" value={formatUptime(local.uptimeSec)} />
       </Box>
 
       <Card sx={{ p: 2 }}>
-        <Typography variant="h5" sx={{ mb: 1.5 }}>
+        <Typography variant="h5" component="h2" sx={{ mb: 1.5 }}>
           Pods
         </Typography>
         {data.cluster.length === 0 ? (
           <Box>
             <Typography variant="body2" sx={{ color: tokens.textSubtle, mb: 1.5 }}>
-              Cluster metrics disabled — only this pod is visible. Enable METRICS_CLUSTER_ENABLED
-              to see every pod.
+              Only this pod is visible because cluster-wide metrics are disabled
+              (METRICS_CLUSTER_ENABLED).
             </Typography>
             <PodsTable pods={[local]} utc={utc} />
           </Box>

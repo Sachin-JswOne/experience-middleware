@@ -16,6 +16,8 @@ import type { DeployMarker, DownstreamTimeline } from '@/_types/metrics.interfac
 import { tokens } from '@/styles/theme';
 import ChartCard, {
   CHART_COLORS,
+  CHART_TOOLTIP_LABEL_STYLE,
+  CHART_TOOLTIP_STYLE,
   deployMarkerPositions,
   formatBucketTs,
   formatMs,
@@ -73,7 +75,7 @@ const DownstreamTimelineChart = ({ data, loading, bucketIntervalMs, deployMarker
 
   return (
     <ChartCard
-      title="Downstream Latency Over Time"
+      title="Downstream latency over time"
       loading={loading}
       empty={chartData.length === 0}
       emptyMessage="No downstream calls in this window"
@@ -108,13 +110,14 @@ const DownstreamTimelineChart = ({ data, loading, bucketIntervalMs, deployMarker
           style={zoom.zoomEnabled ? { userSelect: 'none', cursor: 'crosshair' } : undefined}
         >
           <CartesianGrid stroke={tokens.border} strokeDasharray="3 3" />
-          <XAxis dataKey="time" tick={{ fontSize: 11, fill: tokens.textSubtle }} />
+          <XAxis dataKey="time" tick={{ fontSize: 12, fill: tokens.textSubtle }} />
           <YAxis
-            tick={{ fontSize: 11, fill: tokens.textSubtle }}
-            label={{ value: 'ms', angle: -90, position: 'insideLeft', style: { fontSize: 11, fill: tokens.textSubtle } }}
+            tick={{ fontSize: 12, fill: tokens.textSubtle }}
+            label={{ value: 'ms', angle: -90, position: 'insideLeft', style: { fontSize: 12, fill: tokens.textSubtle } }}
           />
           <Tooltip
-            contentStyle={{ fontSize: 12, borderRadius: tokens.radiusSmall }}
+            contentStyle={CHART_TOOLTIP_STYLE}
+            labelStyle={CHART_TOOLTIP_LABEL_STYLE}
             formatter={(value, name) => [formatMs(Number(value)), name as string]}
           />
           <Legend wrapperStyle={{ fontSize: 12 }} />
@@ -127,7 +130,7 @@ const DownstreamTimelineChart = ({ data, loading, bucketIntervalMs, deployMarker
               label={{
                 value: `deploy ${m.version}`,
                 position: 'insideTopRight',
-                style: { fontSize: 10, fill: tokens.textSubtle },
+                style: { fontSize: 12, fill: tokens.textSubtle },
               }}
             />
           ))}

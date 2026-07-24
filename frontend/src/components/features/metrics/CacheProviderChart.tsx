@@ -10,7 +10,7 @@ import {
 } from 'recharts';
 import type { CacheProviderStats } from '@/_types/metrics.interface';
 import { tokens } from '@/styles/theme';
-import ChartCard from './chartShared';
+import ChartCard, { CHART_TOOLTIP_LABEL_STYLE, CHART_TOOLTIP_STYLE } from './chartShared';
 
 interface Props {
   data: CacheProviderStats[] | undefined;
@@ -34,7 +34,7 @@ const CacheProviderChart = ({ data, loading }: Props) => {
 
   return (
     <ChartCard
-      title="Cache by Provider"
+      title="Cache by provider"
       loading={loading}
       empty={chartData.length === 0}
       emptyMessage="No cache activity yet"
@@ -42,9 +42,9 @@ const CacheProviderChart = ({ data, loading }: Props) => {
       <ResponsiveContainer width="100%" height={240}>
         <BarChart data={chartData} margin={{ top: 4, right: 8, left: -4, bottom: 0 }}>
           <CartesianGrid stroke={tokens.border} strokeDasharray="3 3" />
-          <XAxis dataKey="name" tick={{ fontSize: 11, fill: tokens.textSubtle }} />
-          <YAxis tick={{ fontSize: 11, fill: tokens.textSubtle }} allowDecimals={false} />
-          <Tooltip contentStyle={{ fontSize: 12, borderRadius: tokens.radiusSmall }} />
+          <XAxis dataKey="name" tick={{ fontSize: 12, fill: tokens.textSubtle }} />
+          <YAxis tick={{ fontSize: 12, fill: tokens.textSubtle }} allowDecimals={false} />
+          <Tooltip contentStyle={CHART_TOOLTIP_STYLE} labelStyle={CHART_TOOLTIP_LABEL_STYLE} />
           <Legend wrapperStyle={{ fontSize: 12 }} />
           <Bar dataKey="hits" name="Hits" stackId="cache" fill={tokens.success} />
           <Bar dataKey="misses" name="Misses" stackId="cache" fill={tokens.warning} />

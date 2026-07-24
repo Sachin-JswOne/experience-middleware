@@ -98,14 +98,14 @@ const TimeRangePicker = ({ range, onChange, utc }: Props) => {
                   close();
                 }}
               >
-                <ListItemText primary={q.label} primaryTypographyProps={{ fontSize: 13 }} />
+                <ListItemText primary={q.label} primaryTypographyProps={{ fontSize: '0.875rem' }} />
               </ListItemButton>
             ))}
           </List>
           <Divider orientation="vertical" flexItem sx={{ display: { xs: 'none', sm: 'block' } }} />
           <Divider sx={{ display: { xs: 'block', sm: 'none' } }} />
           <Box sx={{ p: 2, minWidth: 240 }}>
-            <Typography variant="body2" sx={{ fontWeight: 600, mb: 1.5 }}>
+            <Typography variant="body2" sx={{ fontWeight: tokens.weightBold, mb: 1.5 }}>
               Absolute range
             </Typography>
             <TextField

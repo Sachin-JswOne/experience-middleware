@@ -16,8 +16,8 @@ const RecentErrorsPanel = ({ data, loading, utc, onSelect }: Props) => {
 
   return (
     <Card sx={{ p: 2, height: '100%' }}>
-      <Typography variant="h5" sx={{ mb: 1.5 }}>
-        Recent Errors
+      <Typography variant="h5" component="h2" sx={{ mb: 1.5 }}>
+        Recent errors
       </Typography>
       {loading ? (
         <Skeleton variant="rounded" height={160} />
@@ -33,7 +33,19 @@ const RecentErrorsPanel = ({ data, loading, utc, onSelect }: Props) => {
             <Box
               key={`${e.ts}-${idx}`}
               onClick={onSelect ? () => onSelect(e) : undefined}
-              title={onSelect ? 'View samples for this route' : undefined}
+              role={onSelect ? 'button' : undefined}
+              tabIndex={onSelect ? 0 : undefined}
+              aria-label={onSelect ? `View samples for ${e.method} ${e.route}` : undefined}
+              onKeyDown={
+                onSelect
+                  ? (ev) => {
+                      if (ev.key === 'Enter' || ev.key === ' ') {
+                        ev.preventDefault();
+                        onSelect(e);
+                      }
+                    }
+                  : undefined
+              }
               sx={{
                 display: 'flex',
                 alignItems: 'center',
@@ -42,6 +54,9 @@ const RecentErrorsPanel = ({ data, loading, utc, onSelect }: Props) => {
                 borderBottom: idx < errors.length - 1 ? `1px solid ${tokens.border}` : 'none',
                 cursor: onSelect ? 'pointer' : 'default',
                 '&:hover': onSelect ? { bgcolor: tokens.surfaceSunken } : undefined,
+                '&:focus-visible': onSelect
+                  ? { outline: `2px solid ${tokens.borderFocused}`, outlineOffset: -2 }
+                  : undefined,
               }}
             >
               <Typography variant="body2" sx={{ color: tokens.textSubtle, minWidth: 60 }}>
@@ -52,21 +67,23 @@ const RecentErrorsPanel = ({ data, loading, utc, onSelect }: Props) => {
                 size="small"
                 sx={{
                   height: 20,
-                  fontSize: 11,
-                  fontWeight: 600,
+                  fontSize: 12,
+                  fontWeight: tokens.weightBold,
                   color: tokens.textInverse,
                   bgcolor: e.statusCode >= 500 ? tokens.danger : tokens.warning,
                 }}
               />
-              <Typography
-                variant="body2"
-                sx={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
-              >
-                <Typography component="span" variant="body2" sx={{ fontWeight: 600, mr: 0.75 }}>
-                  {e.method}
+              <Tooltip title={`${e.method} ${e.route}`}>
+                <Typography
+                  variant="body2"
+                  sx={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+                >
+                  <Typography component="span" variant="body2" sx={{ fontWeight: tokens.weightBold, mr: 0.75 }}>
+                    {e.method}
+                  </Typography>
+                  {e.route}
                 </Typography>
-                {e.route}
-              </Typography>
+              </Tooltip>
               {e.requestId && (
                 <Tooltip
                   title={
@@ -89,7 +106,7 @@ const RecentErrorsPanel = ({ data, loading, utc, onSelect }: Props) => {
                           onClick: (ev: React.MouseEvent) => ev.stopPropagation(),
                         }
                       : {})}
-                    sx={{ height: 18, fontSize: 10, fontFamily: 'monospace', color: tokens.textSubtle }}
+                    sx={{ height: 18, fontSize: 12, fontFamily: 'monospace', color: tokens.textSubtle }}
                   />
                 </Tooltip>
               )}
@@ -99,7 +116,7 @@ const RecentErrorsPanel = ({ data, loading, utc, onSelect }: Props) => {
                     label={e.pod}
                     size="small"
                     variant="outlined"
-                    sx={{ height: 18, fontSize: 10, maxWidth: 120, color: tokens.textSubtle }}
+                    sx={{ height: 18, fontSize: 12, maxWidth: 120, color: tokens.textSubtle }}
                   />
                 </Tooltip>
               )}

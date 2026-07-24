@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { useState } from 'react';
+import { Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import {
   AppBar,
   Avatar,
@@ -23,22 +23,17 @@ const ProtectedLayout = () => {
   const location = useLocation();
   const theme = useTheme();
   const isDesktop = useMediaQuery(theme.breakpoints.up('md'));
-  const [userInfo, setUserInfo] = useState<ILooseObject | null>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  useEffect(() => {
-    const stored: ILooseObject | undefined = LocalStorage.getItem('userInfo');
-    if (stored?.token) {
-      setUserInfo(stored);
-    }
+  const stored: ILooseObject | undefined = LocalStorage.getItem('userInfo');
+  const hasToken = Boolean(stored?.token);
+  const isOAuth2Route = location.pathname === '/oauth2';
 
-    const hasToken = Boolean(stored?.token);
-    const isOAuth2Route = location.pathname === '/oauth2';
+  if (!hasToken && !isOAuth2Route) {
+    return <Navigate to="/login" replace />;
+  }
 
-    if (!hasToken && !isOAuth2Route) {
-      navigate('/login', { replace: true });
-    }
-  }, [location.pathname, navigate]);
+  const userInfo = hasToken ? stored ?? null : null;
 
   const handleLogout = () => {
     LocalStorage.removeItem('userInfo');

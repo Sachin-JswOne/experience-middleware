@@ -22,7 +22,10 @@ const OAuth2Redirect = () => {
       const redirectTo = searchParams.get('redirectTo') || '/';
 
       if (!authId) {
-        navigate('/login', { replace: true });
+        navigate('/login', {
+          replace: true,
+          state: { authError: 'Sign-in failed: missing authorization details. Please try again.' },
+        });
         return;
       }
 
@@ -32,7 +35,10 @@ const OAuth2Redirect = () => {
         const accessToken: string | undefined = tokenResponse?.data?.token;
 
         if (!accessToken) {
-          navigate('/login', { replace: true });
+          navigate('/login', {
+            replace: true,
+            state: { authError: 'Sign-in failed: no access token was returned. Please try again.' },
+          });
           return;
         }
 
@@ -51,7 +57,6 @@ const OAuth2Redirect = () => {
         try {
           const userResponse = await UserService.getUAMUserInfo(accessToken);
           const uamUserInfo: ILooseObject | undefined = userResponse?.data;
-          console.log("uamUserInfo : ", uamUserInfo)
           if (uamUserInfo?.name) {
             processUamAuthorities(uamUserInfo, AppConfig.UAMApplications);
             userInfo.username = uamUserInfo.name ?? '';
@@ -69,7 +74,10 @@ const OAuth2Redirect = () => {
         navigate(redirectTo, { replace: true });
       } catch (error) {
         console.error('OAuth2 authentication failed:', error);
-        navigate('/login', { replace: true });
+        navigate('/login', {
+          replace: true,
+          state: { authError: 'Sign-in failed. Please try again.' },
+        });
       }
     };
 

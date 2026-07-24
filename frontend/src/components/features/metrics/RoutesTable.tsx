@@ -18,7 +18,7 @@ import DownloadIcon from '@mui/icons-material/Download';
 import AccountTreeIcon from '@mui/icons-material/AccountTree';
 import type { RouteBreakdown } from '@/_types/metrics.interface';
 import { tokens } from '@/styles/theme';
-import { formatMs, formatPercent } from './chartShared';
+import { formatMs, formatNumber, formatPercent } from './chartShared';
 
 interface Props {
   data: RouteBreakdown[];
@@ -39,11 +39,11 @@ type SortKey =
 
 const COLUMNS: Array<{ key: SortKey; label: string }> = [
   { key: 'requestCount', label: 'Requests' },
-  { key: 'avgLatencyMs', label: 'Avg Latency' },
+  { key: 'avgLatencyMs', label: 'Avg latency' },
   { key: 'p95LatencyMs', label: 'P95' },
   { key: 'c4xx', label: '4xx' },
   { key: 'c5xx', label: '5xx' },
-  { key: 'cacheHitRate', label: 'Cache Hit' },
+  { key: 'cacheHitRate', label: 'Cache hit' },
 ];
 
 const sortValue = (r: RouteBreakdown, key: SortKey): number => {
@@ -103,7 +103,7 @@ const RoutesTable = ({ data, loading, onRowClick, onDrill }: Props) => {
   return (
     <Card sx={{ p: 2, height: '100%' }}>
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1.5 }}>
-        <Typography variant="h5">Routes</Typography>
+        <Typography variant="h5" component="h2">Routes</Typography>
         <Tooltip title="Export CSV">
           <span>
             <IconButton
@@ -122,7 +122,7 @@ const RoutesTable = ({ data, loading, onRowClick, onDrill }: Props) => {
       ) : sorted.length === 0 ? (
         <Box sx={{ height: 200, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <Typography variant="body2" sx={{ color: tokens.textSubtle }}>
-            No data yet
+            No requests in this time range. Try a wider range or clear filters.
           </Typography>
         </Box>
       ) : (
@@ -151,17 +151,38 @@ const RoutesTable = ({ data, loading, onRowClick, onDrill }: Props) => {
                   key={`${r.method} ${r.route}`}
                   hover
                   onClick={() => onRowClick?.(r)}
-                  sx={{ cursor: onRowClick ? 'pointer' : 'default' }}
+                  role={onRowClick ? 'button' : undefined}
+                  tabIndex={onRowClick ? 0 : undefined}
+                  onKeyDown={
+                    onRowClick
+                      ? (e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            onRowClick(r);
+                          }
+                        }
+                      : undefined
+                  }
+                  sx={{
+                    cursor: onRowClick ? 'pointer' : 'default',
+                    '&:focus-visible': onRowClick
+                      ? { outline: `2px solid ${tokens.borderFocused}`, outlineOffset: -2 }
+                      : undefined,
+                  }}
                 >
                   <TableCell sx={{ maxWidth: 320, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    <Typography component="span" variant="body2" sx={{ fontWeight: 600, mr: 0.75 }}>
-                      {r.method}
-                    </Typography>
-                    <Typography component="span" variant="body2">
-                      {r.route}
-                    </Typography>
+                    <Tooltip title={`${r.method} ${r.route}`}>
+                      <Box component="span">
+                        <Typography component="span" variant="body2" sx={{ fontWeight: tokens.weightBold, mr: 0.75 }}>
+                          {r.method}
+                        </Typography>
+                        <Typography component="span" variant="body2">
+                          {r.route}
+                        </Typography>
+                      </Box>
+                    </Tooltip>
                   </TableCell>
-                  <TableCell align="right">{r.requestCount}</TableCell>
+                  <TableCell align="right">{formatNumber(r.requestCount)}</TableCell>
                   <TableCell align="right">{formatMs(r.avgLatencyMs)}</TableCell>
                   <TableCell align="right">
                     {r.p95LatencyMs !== undefined ? formatMs(r.p95LatencyMs) : '—'}

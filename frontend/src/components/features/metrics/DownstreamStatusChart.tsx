@@ -10,7 +10,12 @@ import {
 } from 'recharts';
 import type { DownstreamBreakdown } from '@/_types/metrics.interface';
 import { tokens } from '@/styles/theme';
-import ChartCard, { STATUS_CLASS_COLORS, STATUS_CLASS_LABELS } from './chartShared';
+import ChartCard, {
+  CHART_TOOLTIP_LABEL_STYLE,
+  CHART_TOOLTIP_STYLE,
+  STATUS_CLASS_COLORS,
+  STATUS_CLASS_LABELS,
+} from './chartShared';
 
 interface Props {
   data: DownstreamBreakdown[];
@@ -41,22 +46,23 @@ const DownstreamStatusChart = ({ data, loading }: Props) => {
 
   return (
     <ChartCard
-      title="Downstream Responses by Status"
+      title="Downstream responses by status"
       loading={loading}
       empty={!hasStatusData || chartData.length === 0}
     >
       <ResponsiveContainer width="100%" height={Math.max(240, chartData.length * 44 + 60)}>
         <BarChart data={chartData} layout="vertical" margin={{ top: 4, right: 16, left: 0, bottom: 0 }}>
           <CartesianGrid stroke={tokens.border} strokeDasharray="3 3" />
-          <XAxis type="number" tick={{ fontSize: 11, fill: tokens.textSubtle }} allowDecimals={false} />
+          <XAxis type="number" tick={{ fontSize: 12, fill: tokens.textSubtle }} allowDecimals={false} />
           <YAxis
             type="category"
             dataKey="name"
-            tick={{ fontSize: 11, fill: tokens.textSubtle }}
+            tick={{ fontSize: 12, fill: tokens.textSubtle }}
             width={120}
           />
           <Tooltip
-            contentStyle={{ fontSize: 12, borderRadius: tokens.radiusSmall }}
+            contentStyle={CHART_TOOLTIP_STYLE}
+            labelStyle={CHART_TOOLTIP_LABEL_STYLE}
             cursor={{ fill: tokens.backgroundNeutralSubtleHovered }}
           />
           <Legend wrapperStyle={{ fontSize: 12 }} />

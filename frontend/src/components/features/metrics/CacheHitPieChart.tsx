@@ -32,10 +32,10 @@ const CacheTooltip = ({ active, payload }: CacheTooltipProps) => {
   return (
     <div
       style={{
-        background: tokens.surface,
-        border: `1px solid ${tokens.border}`,
+        background: tokens.backgroundNeutralBold,
+        color: tokens.textInverse,
         borderRadius: tokens.radiusSmall,
-        padding: '6px 10px',
+        padding: '6px 12px',
         fontSize: 12,
       }}
     >
@@ -56,7 +56,7 @@ const CacheHitPieChart = ({ data, loading }: Props) => {
 
   return (
     <ChartCard
-      title="Cache Hits by Route"
+      title="Cache hits by route"
       loading={loading}
       empty={chartData.length === 0}
       emptyMessage="No cache hits yet"

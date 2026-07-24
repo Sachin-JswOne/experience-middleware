@@ -80,7 +80,7 @@ const SavedViews = ({ currentParams, onApply }: Props) => {
         transformOrigin={{ vertical: 'top', horizontal: 'right' }}
       >
         <Box sx={{ p: 2, width: 300 }}>
-          <Typography variant="body2" sx={{ fontWeight: 600, mb: 1 }}>
+          <Typography variant="body2" sx={{ fontWeight: tokens.weightBold, mb: 1 }}>
             Saved views
           </Typography>
           <Box sx={{ display: 'flex', gap: 1, mb: 1 }}>
@@ -114,9 +114,9 @@ const SavedViews = ({ currentParams, onApply }: Props) => {
               >
                 <ListItemText
                   primary={view.name}
-                  primaryTypographyProps={{ fontSize: 13 }}
+                  primaryTypographyProps={{ fontSize: '0.875rem' }}
                   secondary={new Date(view.savedAt).toLocaleDateString()}
-                  secondaryTypographyProps={{ fontSize: 11 }}
+                  secondaryTypographyProps={{ fontSize: 12 }}
                 />
                 <IconButton
                   size="small"

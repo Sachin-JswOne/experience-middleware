@@ -6,5 +6,5 @@ export interface IPromptTypeConfig {
 
 export const PROMPT_TYPES: IPromptTypeConfig[] = [
   { promptType: 'ai-invoke', label: 'Registration', feature: 'Industry Segmentation' },
-  { promptType: 'business-classification', label: 'Bussiness Classification', feature: 'Industry Segmentation' },
+  { promptType: 'business-classification', label: 'Business Classification', feature: 'Industry Segmentation' },
 ];

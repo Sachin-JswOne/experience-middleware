@@ -19,6 +19,23 @@ import {
 } from '@/_types/metrics.interface';
 import LocalStorage from '@/utils/LocalStorage';
 import { tokens } from '@/styles/theme';
+import { formatMs } from './chartShared';
+
+// Bordered lozenge status pill per DESIGN.md (bg-subtler + border + bolder text).
+type PillTone = 'success' | 'danger' | 'warning';
+const PILL_STYLES: Record<PillTone, { bg: string; border: string; text: string }> = {
+  success: { bg: '#D3F1A7', border: '#6A9A23', text: '#37471F' },
+  danger: { bg: '#FFD5D2', border: '#E2483D', text: '#5D1F1A' },
+  warning: { bg: '#FCE4A6', border: '#E06C00', text: '#693200' },
+};
+const pillSx = (tone: PillTone) => ({
+  height: 18,
+  fontSize: 12,
+  fontWeight: tokens.weightBold,
+  color: PILL_STYLES[tone].text,
+  bgcolor: PILL_STYLES[tone].bg,
+  border: `1px solid ${PILL_STYLES[tone].border}`,
+});
 
 export interface SloConfig {
   availabilityTargetPct: number | null;
@@ -157,7 +174,7 @@ const SloCard = ({ summary, timeline, loading, config, onConfigChange }: Props) 
           {config.availabilityTargetPct !== null && (
             <Box sx={{ mb: 1 }}>
               <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1 }}>
-                <Typography variant="h5" sx={{ fontWeight: 700, color: availabilityOk ? tokens.text : tokens.danger }}>
+                <Typography variant="h5" sx={{ fontWeight: tokens.weightBold, color: availabilityOk ? tokens.text : tokens.danger }}>
                   {availability.toFixed(2)}%
                 </Typography>
                 <Typography variant="caption" sx={{ color: tokens.textSubtle }}>
@@ -166,13 +183,7 @@ const SloCard = ({ summary, timeline, loading, config, onConfigChange }: Props) 
                 <Chip
                   label={availabilityOk ? 'meeting' : 'breaching'}
                   size="small"
-                  sx={{
-                    height: 18,
-                    fontSize: 10,
-                    fontWeight: 600,
-                    color: tokens.textInverse,
-                    bgcolor: availabilityOk ? tokens.success : tokens.danger,
-                  }}
+                  sx={pillSx(availabilityOk ? 'success' : 'danger')}
                 />
               </Box>
               {budgetConsumedPct !== null && (
@@ -185,7 +196,7 @@ const SloCard = ({ summary, timeline, loading, config, onConfigChange }: Props) 
                       value={Math.min(100, budgetConsumedPct)}
                       sx={{
                         height: 6,
-                        borderRadius: 3,
+                        borderRadius: 2,
                         bgcolor: tokens.surfaceSunken,
                         '& .MuiLinearProgress-bar': { bgcolor: budgetColor },
                       }}
@@ -201,18 +212,12 @@ const SloCard = ({ summary, timeline, loading, config, onConfigChange }: Props) 
           {config.p99TargetMs !== null && (
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <Typography variant="body2" sx={{ color: tokens.textSubtle }}>
-                P99 {Math.round(summary.p99LatencyMs)}ms / {config.p99TargetMs}ms
+                P99 {formatMs(summary.p99LatencyMs)} / {formatMs(config.p99TargetMs)}
               </Typography>
               <Chip
                 label={latencyOk ? 'meeting' : 'breaching'}
                 size="small"
-                sx={{
-                  height: 18,
-                  fontSize: 10,
-                  fontWeight: 600,
-                  color: tokens.textInverse,
-                  bgcolor: latencyOk ? tokens.success : tokens.danger,
-                }}
+                sx={pillSx(latencyOk ? 'success' : 'danger')}
               />
             </Box>
           )}
@@ -228,18 +233,7 @@ const SloCard = ({ summary, timeline, loading, config, onConfigChange }: Props) 
               <Chip
                 label={apdex.score >= 0.94 ? 'excellent' : apdex.score >= 0.85 ? 'good' : apdex.score >= 0.7 ? 'fair' : 'poor'}
                 size="small"
-                sx={{
-                  height: 18,
-                  fontSize: 10,
-                  fontWeight: 600,
-                  color: tokens.textInverse,
-                  bgcolor:
-                    apdex.score >= 0.85
-                      ? tokens.success
-                      : apdex.score >= 0.7
-                        ? tokens.warning
-                        : tokens.danger,
-                }}
+                sx={pillSx(apdex.score >= 0.85 ? 'success' : apdex.score >= 0.7 ? 'warning' : 'danger')}
               />
             </Box>
           )}
@@ -253,7 +247,7 @@ const SloCard = ({ summary, timeline, loading, config, onConfigChange }: Props) 
         transformOrigin={{ vertical: 'top', horizontal: 'right' }}
       >
         <Box sx={{ p: 2, width: 260 }}>
-          <Typography variant="body2" sx={{ fontWeight: 600, mb: 1.5 }}>
+          <Typography variant="body2" sx={{ fontWeight: tokens.weightBold, mb: 1.5 }}>
             SLO targets
           </Typography>
           <TextField

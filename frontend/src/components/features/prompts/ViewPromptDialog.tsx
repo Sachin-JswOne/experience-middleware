@@ -66,7 +66,7 @@ const ViewPromptDialog = ({ item, onClose }: ViewPromptDialogProps) => {
             </div>
           </Box>
           <Tooltip title="Copy prompt">
-            <IconButton onClick={handleCopy} size="small">
+            <IconButton aria-label="Copy prompt" onClick={handleCopy} size="small">
               <ContentCopyIcon fontSize="small" />
             </IconButton>
           </Tooltip>
@@ -76,8 +76,8 @@ const ViewPromptDialog = ({ item, onClose }: ViewPromptDialogProps) => {
           sx={{
             whiteSpace: 'pre-wrap',
             wordBreak: 'break-word',
-            fontFamily: 'monospace',
-            fontSize: '13px',
+            fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
+            fontSize: '0.875em',
             maxHeight: '60vh',
             overflow: 'auto',
             bgcolor: tokens.surfaceSunken,

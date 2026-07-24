@@ -13,6 +13,10 @@ import {
 import type { DeployMarker, TimelineBucket } from '@/_types/metrics.interface';
 import { tokens } from '@/styles/theme';
 import ChartCard, {
+  CHART_PURPLE,
+  CHART_TOOLTIP_LABEL_STYLE,
+  CHART_TOOLTIP_STYLE,
+  CHART_WARNING,
   OVERVIEW_SYNC_ID,
   deployMarkerPositions,
   formatBucketTs,
@@ -53,7 +57,7 @@ const RequestTimelineChart = ({
   const zoom = useDragZoom(onZoom, bucketIntervalMs);
 
   return (
-    <ChartCard title="Requests Over Time" loading={loading} empty={chartData.length === 0}>
+    <ChartCard title="Requests over time" loading={loading} empty={chartData.length === 0}>
       <ResponsiveContainer width="100%" height={240}>
         <LineChart
           data={chartData}
@@ -65,20 +69,21 @@ const RequestTimelineChart = ({
           style={zoom.zoomEnabled ? { userSelect: 'none', cursor: 'crosshair' } : undefined}
         >
           <CartesianGrid stroke={tokens.border} strokeDasharray="3 3" />
-          <XAxis dataKey="time" tick={{ fontSize: 11, fill: tokens.textSubtle }} />
+          <XAxis dataKey="time" tick={{ fontSize: 12, fill: tokens.textSubtle }} />
           <YAxis
             yAxisId="left"
-            tick={{ fontSize: 11, fill: tokens.textSubtle }}
-            label={{ value: 'Requests', angle: -90, position: 'insideLeft', style: { fontSize: 11, fill: tokens.textSubtle } }}
+            tick={{ fontSize: 12, fill: tokens.textSubtle }}
+            label={{ value: 'Requests', angle: -90, position: 'insideLeft', style: { fontSize: 12, fill: tokens.textSubtle } }}
           />
           <YAxis
             yAxisId="right"
             orientation="right"
-            tick={{ fontSize: 11, fill: tokens.textSubtle }}
-            label={{ value: 'ms', angle: 90, position: 'insideRight', style: { fontSize: 11, fill: tokens.textSubtle } }}
+            tick={{ fontSize: 12, fill: tokens.textSubtle }}
+            label={{ value: 'ms', angle: 90, position: 'insideRight', style: { fontSize: 12, fill: tokens.textSubtle } }}
           />
           <Tooltip
-            contentStyle={{ fontSize: 12, borderRadius: tokens.radiusSmall }}
+            contentStyle={CHART_TOOLTIP_STYLE}
+            labelStyle={CHART_TOOLTIP_LABEL_STYLE}
           />
           <Legend />
           {markers.map((m) => (
@@ -91,7 +96,7 @@ const RequestTimelineChart = ({
               label={{
                 value: `deploy ${m.version}`,
                 position: 'insideTopRight',
-                style: { fontSize: 10, fill: tokens.textSubtle },
+                style: { fontSize: 12, fill: tokens.textSubtle },
               }}
             />
           ))}
@@ -120,14 +125,14 @@ const RequestTimelineChart = ({
             dataKey="avgLatencyMs"
             stroke={tokens.warning}
             strokeWidth={2}
-            name="Avg Latency (ms)"
+            name="Avg latency (ms)"
             dot={false}
           />
           <Line
             yAxisId="right"
             type="monotone"
             dataKey="p90LatencyMs"
-            stroke="#AF59E1"
+            stroke={CHART_PURPLE}
             strokeWidth={1.5}
             strokeDasharray="5 3"
             name="P90 (ms)"
@@ -137,7 +142,7 @@ const RequestTimelineChart = ({
             yAxisId="right"
             type="monotone"
             dataKey="p99LatencyMs"
-            stroke="#E06C00"
+            stroke={CHART_WARNING}
             strokeWidth={1.5}
             strokeDasharray="2 3"
             name="P99 (ms)"

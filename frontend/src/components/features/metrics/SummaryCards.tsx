@@ -1,7 +1,9 @@
 import { Box, Card, Chip, Skeleton, Tooltip, Typography } from '@mui/material';
+import ArrowDropUpIcon from '@mui/icons-material/ArrowDropUp';
+import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 import type { MetricsSummary } from '@/_types/metrics.interface';
 import { tokens } from '@/styles/theme';
-import { formatNumber } from './chartShared';
+import { formatMs, formatNumber } from './chartShared';
 
 interface SummaryCardsProps {
   summary: MetricsSummary;
@@ -40,13 +42,18 @@ const DeltaChip = ({
   let color = tokens.textSubtle;
   if (sense === 'higherIsBad') color = up ? tokens.danger : tokens.success;
   if (sense === 'higherIsGood') color = up ? tokens.success : tokens.danger;
-  const label = `${up ? '▲' : '▼'} ${Math.abs(deltaPct) >= 100 ? Math.round(Math.abs(deltaPct)) : Math.abs(deltaPct).toFixed(1)}%`;
+  const label = (
+    <Box component="span" sx={{ display: 'flex', alignItems: 'center' }}>
+      {up ? <ArrowDropUpIcon sx={{ fontSize: 14 }} /> : <ArrowDropDownIcon sx={{ fontSize: 14 }} />}
+      {Math.abs(deltaPct) >= 100 ? Math.round(Math.abs(deltaPct)) : Math.abs(deltaPct).toFixed(1)}%
+    </Box>
+  );
   return (
     <Tooltip title="vs previous window of the same length">
       <Chip
         label={label}
         size="small"
-        sx={{ height: 18, fontSize: 10, fontWeight: 600, color, bgcolor: 'transparent', border: `1px solid ${color}` }}
+        sx={{ height: 18, fontSize: 12, fontWeight: tokens.weightBold, color, bgcolor: 'transparent', border: `1px solid ${color}` }}
       />
     </Tooltip>
   );
@@ -77,7 +84,7 @@ const MetricCard = ({
     {loading ? (
       <Skeleton variant="text" sx={{ fontSize: '1.25rem' }} width={80} />
     ) : (
-      <Typography variant="h4" sx={{ color: color ?? tokens.text, fontWeight: 700 }}>
+      <Typography variant="h4" sx={{ color: color ?? tokens.text, fontWeight: tokens.weightBold }}>
         {value}
         {unit && (
           <Typography component="span" variant="body2" sx={{ ml: 0.5, color: tokens.textSubtle }}>
@@ -90,10 +97,6 @@ const MetricCard = ({
 );
 
 const SummaryCards = ({ summary, loading, previous, rps }: SummaryCardsProps) => {
-  const avgLatMs = Math.round(summary.avgLatencyMs);
-  const p50Ms = Math.round(summary.p50LatencyMs);
-  const p90Ms = Math.round(summary.p90LatencyMs);
-  const p99Ms = Math.round(summary.p99LatencyMs);
   const estimated = summary.percentileSource === 'histogram';
 
   return (
@@ -106,7 +109,7 @@ const SummaryCards = ({ summary, loading, previous, rps }: SummaryCardsProps) =>
       }}
     >
       <MetricCard
-        label="Total Requests"
+        label="Total requests"
         value={formatNumber(summary.totalRequests)}
         loading={loading}
         delta={
@@ -126,7 +129,7 @@ const SummaryCards = ({ summary, loading, previous, rps }: SummaryCardsProps) =>
         />
       )}
       <MetricCard
-        label="Error Rate"
+        label="Error rate"
         value={`${summary.errorRate.toFixed(1)}`}
         unit="%"
         color={loading ? undefined : errorColor(summary.errorRate)}
@@ -140,9 +143,8 @@ const SummaryCards = ({ summary, loading, previous, rps }: SummaryCardsProps) =>
         }
       />
       <MetricCard
-        label="Avg Latency"
-        value={String(avgLatMs)}
-        unit="ms"
+        label="Avg latency"
+        value={formatMs(summary.avgLatencyMs)}
         loading={loading}
         delta={
           <DeltaChip
@@ -153,7 +155,7 @@ const SummaryCards = ({ summary, loading, previous, rps }: SummaryCardsProps) =>
         }
       />
       <MetricCard
-        label="Cache Hit Rate"
+        label="Cache hit rate"
         value={`${summary.cacheHitRate.toFixed(1)}`}
         unit="%"
         loading={loading}
@@ -168,10 +170,10 @@ const SummaryCards = ({ summary, loading, previous, rps }: SummaryCardsProps) =>
       <Card sx={{ p: 2, height: '100%' }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 0.5 }}>
           <Typography variant="body2" sx={{ color: tokens.textSubtle }}>
-            Latency Percentiles
+            Latency percentiles
           </Typography>
           {!loading && estimated && (
-            <Chip label="estimated" size="small" variant="outlined" sx={{ height: 18, fontSize: 10 }} />
+            <Chip label="estimated" size="small" variant="outlined" sx={{ height: 18, fontSize: 12 }} />
           )}
           {!loading && (
             <DeltaChip
@@ -186,14 +188,11 @@ const SummaryCards = ({ summary, loading, previous, rps }: SummaryCardsProps) =>
         ) : (
           <Box sx={{ display: 'flex', alignItems: 'baseline', flexWrap: 'wrap', gap: 1 }}>
             <Typography variant="body2" sx={{ color: tokens.textSubtle }}>P50</Typography>
-            <Typography variant="h6" sx={{ fontWeight: 700 }}>{p50Ms}</Typography>
-            <Typography variant="body2" sx={{ color: tokens.textSubtle }}>ms</Typography>
+            <Typography variant="h6" sx={{ fontWeight: tokens.weightBold }}>{formatMs(summary.p50LatencyMs)}</Typography>
             <Typography variant="body2" sx={{ color: tokens.textSubtle }}>P90</Typography>
-            <Typography variant="h6" sx={{ fontWeight: 700 }}>{p90Ms}</Typography>
-            <Typography variant="body2" sx={{ color: tokens.textSubtle }}>ms</Typography>
+            <Typography variant="h6" sx={{ fontWeight: tokens.weightBold }}>{formatMs(summary.p90LatencyMs)}</Typography>
             <Typography variant="body2" sx={{ color: tokens.textSubtle }}>P99</Typography>
-            <Typography variant="h6" sx={{ fontWeight: 700 }}>{p99Ms}</Typography>
-            <Typography variant="body2" sx={{ color: tokens.textSubtle }}>ms</Typography>
+            <Typography variant="h6" sx={{ fontWeight: tokens.weightBold }}>{formatMs(summary.p99LatencyMs)}</Typography>
           </Box>
         )}
       </Card>

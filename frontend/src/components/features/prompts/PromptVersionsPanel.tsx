@@ -11,6 +11,7 @@ import {
   DialogContentText,
   DialogTitle,
   IconButton,
+  LinearProgress,
   Paper,
   Table,
   TableBody,
@@ -57,9 +58,6 @@ const PromptVersionsPanel = ({ promptType }: PromptVersionsPanelProps) => {
     const result = await PromptService.getVersions(promptType);
     if (result.error.message || result.error.code) {
       setError(result.error.message || 'Failed to load prompt versions');
-      enqueueSnackbar(result.error.message || 'Failed to load prompt versions', {
-        variant: 'error',
-      });
     } else {
       const sorted = [...result.data].sort((a, b) => {
         const av = typeof a.version === 'number' ? a.version : parseInt(String(a.version), 10) || 0;
@@ -90,7 +88,9 @@ const PromptVersionsPanel = ({ promptType }: PromptVersionsPanelProps) => {
   };
 
   const renderTable = () => {
-    if (loading) {
+    const isInitialLoad = loading && versions.length === 0;
+
+    if (isInitialLoad) {
       return (
         <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
           <CircularProgress />
@@ -98,7 +98,7 @@ const PromptVersionsPanel = ({ promptType }: PromptVersionsPanelProps) => {
       );
     }
 
-    if (error) {
+    if (error && versions.length === 0) {
       return (
         <Box sx={{ p: 3, textAlign: 'center' }}>
           <Typography color="error" sx={{ mb: 2 }}>
@@ -113,6 +113,7 @@ const PromptVersionsPanel = ({ promptType }: PromptVersionsPanelProps) => {
 
     return (
       <TableContainer component={Paper} variant="outlined">
+        {loading && <LinearProgress />}
         <Table size="small">
           <TableHead>
             <TableRow>
@@ -155,13 +156,18 @@ const PromptVersionsPanel = ({ promptType }: PromptVersionsPanelProps) => {
                         {decodedPreview}
                       </Box>
                     </TableCell>
-                    <TableCell>{item.createdBy}</TableCell>
+                    <TableCell>
+                      <Box sx={cellEllipsis} title={item.createdBy || undefined}>
+                        {item.createdBy || '—'}
+                      </Box>
+                    </TableCell>
                     <TableCell>
                       {item.createdAt ? new Date(item.createdAt).toLocaleString() : '—'}
                     </TableCell>
                     <TableCell align="right">
                       <Tooltip title="View">
                         <IconButton
+                          aria-label="View prompt"
                           size="small"
                           onClick={() => setViewItem(item)}
                           sx={{ mr: 1 }}
@@ -193,14 +199,11 @@ const PromptVersionsPanel = ({ promptType }: PromptVersionsPanelProps) => {
     <Box>
       <Toolbar
         disableGutters
-        sx={{ display: 'flex', justifyContent: 'space-between', mb: 2, px: 0 }}
+        sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2, px: 0 }}
       >
-        <Box>
-
-        </Box>
         <Box sx={{ display: 'flex', gap: 1 }}>
           <Tooltip title="Refresh">
-            <IconButton onClick={fetchVersions} disabled={loading}>
+            <IconButton aria-label="Refresh versions" onClick={fetchVersions} disabled={loading}>
               <RefreshIcon />
             </IconButton>
           </Tooltip>
