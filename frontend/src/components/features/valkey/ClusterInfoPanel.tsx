@@ -22,6 +22,7 @@ import RefreshIcon from '@mui/icons-material/Refresh';
 import ValkeyAdminService from '@/services/ValkeyAdminService';
 import type { ValkeyClusterNodes, ValkeyInfo } from '@/_types/valkey.interface';
 import { tokens } from '@/styles/theme';
+import ClientsDialog from './ClientsDialog';
 import FlushConfirmDialog from './FlushConfirmDialog';
 
 interface ClusterInfoPanelProps {
@@ -43,14 +44,38 @@ const formatUptime = (seconds: number): string => {
   return hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`;
 };
 
-const StatCard = ({ label, value }: { label: string; value: string }) => (
-  <Paper variant="outlined" sx={{ p: 2, minWidth: 160, flex: 1 }}>
+const StatCard = ({
+  label,
+  value,
+  caption,
+  onClick,
+}: {
+  label: string;
+  value: string;
+  caption?: string;
+  onClick?: () => void;
+}) => (
+  <Paper
+    variant="outlined"
+    onClick={onClick}
+    sx={{
+      p: 2,
+      minWidth: 160,
+      flex: 1,
+      ...(onClick && { cursor: 'pointer', '&:hover': { bgcolor: 'action.hover' } }),
+    }}
+  >
     <Typography variant="body2" sx={{ color: tokens.textSubtle }}>
       {label}
     </Typography>
     <Typography variant="h5" sx={{ mt: 0.5 }}>
       {value}
     </Typography>
+    {caption && (
+      <Typography variant="caption" sx={{ color: tokens.textSubtle }}>
+        {caption}
+      </Typography>
+    )}
   </Paper>
 );
 
@@ -60,6 +85,7 @@ const ClusterInfoPanel = ({ canWrite }: ClusterInfoPanelProps) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [flushScope, setFlushScope] = useState<'db' | 'all' | null>(null);
+  const [clientsOpen, setClientsOpen] = useState(false);
 
   const fetchAll = async () => {
     setLoading(true);
@@ -120,8 +146,25 @@ const ClusterInfoPanel = ({ canWrite }: ClusterInfoPanelProps) => {
 
       <Box sx={{ display: 'flex', gap: 2, mb: 3, flexWrap: 'wrap' }}>
         <StatCard label="Total keys" value={String(totals?.dbSize ?? 0)} />
-        <StatCard label="Memory used" value={formatBytes(totals?.usedMemoryBytes ?? 0)} />
-        <StatCard label="Connected clients" value={String(totals?.connectedClients ?? 0)} />
+        <StatCard
+          label="Memory used"
+          value={
+            totals && totals.memoryLimitBytes > 0
+              ? `${formatBytes(totals.usedMemoryBytes)} / ${formatBytes(totals.memoryLimitBytes)}`
+              : formatBytes(totals?.usedMemoryBytes ?? 0)
+          }
+          caption={
+            totals && totals.memoryLimitBytes > 0
+              ? `${((totals.usedMemoryBytes / totals.memoryLimitBytes) * 100).toFixed(1)}% used`
+              : undefined
+          }
+        />
+        <StatCard
+          label="Connected clients"
+          value={String(totals?.connectedClients ?? 0)}
+          caption="Click for details"
+          onClick={() => setClientsOpen(true)}
+        />
         <StatCard label="Hit rate" value={hitRate} />
       </Box>
 
@@ -158,6 +201,7 @@ const ClusterInfoPanel = ({ canWrite }: ClusterInfoPanelProps) => {
                 <TableCell align="right">{node.dbSize}</TableCell>
                 <TableCell align="right">
                   {node.usedMemoryHuman || formatBytes(node.usedMemoryBytes)}
+                  {node.maxMemoryBytes > 0 ? ` / ${formatBytes(node.maxMemoryBytes)}` : ''}
                 </TableCell>
                 <TableCell align="right">{node.connectedClients}</TableCell>
                 <TableCell align="right">
@@ -235,6 +279,8 @@ const ClusterInfoPanel = ({ canWrite }: ClusterInfoPanelProps) => {
           </Box>
         </Paper>
       )}
+
+      <ClientsDialog open={clientsOpen} onClose={() => setClientsOpen(false)} />
 
       <FlushConfirmDialog
         scope={flushScope}

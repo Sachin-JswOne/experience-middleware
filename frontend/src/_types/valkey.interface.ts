@@ -14,6 +14,7 @@ export interface ValkeyNodeInfo {
   usedMemoryBytes: number;
   usedMemoryHuman: string;
   maxMemoryBytes: number;
+  totalSystemMemoryBytes: number;
   keyspaceHits: number;
   keyspaceMisses: number;
   hitRate: number | null;
@@ -23,9 +24,27 @@ export interface ValkeyNodeInfo {
 export interface ValkeyInfoTotals {
   dbSize: number;
   usedMemoryBytes: number;
+  /** Sum of maxmemory (or system memory when unlimited) across nodes. */
+  memoryLimitBytes: number;
   connectedClients: number;
   keyspaceHits: number;
   keyspaceMisses: number;
+}
+
+export interface ValkeyClientInfo {
+  id: string;
+  addr: string;
+  name: string;
+  ageSeconds: number;
+  idleSeconds: number;
+  db: number;
+  lastCommand: string;
+  user: string;
+}
+
+export interface ValkeyClients {
+  total: number;
+  nodes: Array<{ node: string; clients: ValkeyClientInfo[] }>;
 }
 
 export interface ValkeyInfo {

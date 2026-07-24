@@ -39,6 +39,11 @@ export class ValkeyAdminController {
     return this.adminService.getClusterNodes();
   }
 
+  @Get('clients')
+  getClients() {
+    return this.adminService.getClients();
+  }
+
   @Get('keys')
   scanKeys(
     @Query('pattern') pattern?: string,

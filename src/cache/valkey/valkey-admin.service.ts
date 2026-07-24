@@ -30,6 +30,7 @@ export interface ValkeyNodeInfo {
   usedMemoryBytes: number;
   usedMemoryHuman: string;
   maxMemoryBytes: number;
+  totalSystemMemoryBytes: number;
   keyspaceHits: number;
   keyspaceMisses: number;
   hitRate: number | null;
@@ -46,6 +47,17 @@ export interface ValkeyScanResult {
   keys: ValkeyScanKey[];
   cursor: string | null;
   complete: boolean;
+}
+
+export interface ValkeyClientInfo {
+  id: string;
+  addr: string;
+  name: string;
+  ageSeconds: number;
+  idleSeconds: number;
+  db: number;
+  lastCommand: string;
+  user: string;
 }
 
 export interface ValkeyKeyDetail {
@@ -118,6 +130,7 @@ export class ValkeyAdminService {
           usedMemoryBytes: Number(info.used_memory ?? 0),
           usedMemoryHuman: info.used_memory_human ?? '',
           maxMemoryBytes: Number(info.maxmemory ?? 0),
+          totalSystemMemoryBytes: Number(info.total_system_memory ?? 0),
           keyspaceHits: hits,
           keyspaceMisses: misses,
           hitRate: hits + misses > 0 ? hits / (hits + misses) : null,
@@ -130,15 +143,58 @@ export class ValkeyAdminService {
       (acc, n) => {
         acc.dbSize += n.dbSize;
         acc.usedMemoryBytes += n.usedMemoryBytes;
+        // maxmemory=0 means unlimited — fall back to the node's system memory.
+        acc.memoryLimitBytes += n.maxMemoryBytes > 0 ? n.maxMemoryBytes : n.totalSystemMemoryBytes;
         acc.connectedClients += n.connectedClients;
         acc.keyspaceHits += n.keyspaceHits;
         acc.keyspaceMisses += n.keyspaceMisses;
         return acc;
       },
-      { dbSize: 0, usedMemoryBytes: 0, connectedClients: 0, keyspaceHits: 0, keyspaceMisses: 0 },
+      {
+        dbSize: 0,
+        usedMemoryBytes: 0,
+        memoryLimitBytes: 0,
+        connectedClients: 0,
+        keyspaceHits: 0,
+        keyspaceMisses: 0,
+      },
     );
 
     return { totals, nodes };
+  }
+
+  async getClients(): Promise<{
+    total: number;
+    nodes: Array<{ node: string; clients: ValkeyClientInfo[] }>;
+  }> {
+    const client = this.requireClient();
+    const nodes = await Promise.all(
+      this.masters(client).map(async (node) => {
+        const raw = (await node.client('LIST')) as string;
+        const clients = raw
+          .split('\n')
+          .filter(Boolean)
+          .map((line) => {
+            const fields: Record<string, string> = {};
+            for (const pair of line.split(' ')) {
+              const idx = pair.indexOf('=');
+              if (idx > 0) fields[pair.slice(0, idx)] = pair.slice(idx + 1);
+            }
+            return {
+              id: fields.id ?? '',
+              addr: fields.addr ?? '',
+              name: fields.name ?? '',
+              ageSeconds: Number(fields.age ?? 0),
+              idleSeconds: Number(fields.idle ?? 0),
+              db: Number(fields.db ?? 0),
+              lastCommand: fields.cmd ?? '',
+              user: fields.user ?? '',
+            };
+          });
+        return { node: this.nodeAddress(node), clients };
+      }),
+    );
+    return { total: nodes.reduce((sum, n) => sum + n.clients.length, 0), nodes };
   }
 
   async getClusterNodes(): Promise<{

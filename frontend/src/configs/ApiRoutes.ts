@@ -17,6 +17,7 @@ export const API_ROUTES = {
     STATUS: '/xp-mi/admin/cache/status',
     INFO: '/xp-mi/admin/cache/info',
     CLUSTER_NODES: '/xp-mi/admin/cache/cluster/nodes',
+    CLIENTS: '/xp-mi/admin/cache/clients',
     KEYS: '/xp-mi/admin/cache/keys',
     KEY_DETAIL: (key: string) => `/xp-mi/admin/cache/keys/detail?key=${encodeURIComponent(key)}`,
     KEYS_DELETE: '/xp-mi/admin/cache/keys/delete',

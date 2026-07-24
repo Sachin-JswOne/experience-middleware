@@ -2,6 +2,7 @@ import ApiClient, { IApiClientResponse } from '@/services/ApiClient';
 import { API_ROUTES } from '@/configs/ApiRoutes';
 import LocalStorage from '@/utils/LocalStorage';
 import type {
+  ValkeyClients,
   ValkeyClusterNodes,
   ValkeyFlushResult,
   ValkeyInfo,
@@ -54,6 +55,15 @@ const ValkeyAdminService = {
       headers: authHeaders(),
     });
     return toResult<ValkeyClusterNodes>(response);
+  },
+
+  async getClients(): Promise<IResult<ValkeyClients>> {
+    const response = await ApiClient.makeRequest({
+      url: API_ROUTES.VALKEY_ADMIN.CLIENTS,
+      method: 'GET',
+      headers: authHeaders(),
+    });
+    return toResult<ValkeyClients>(response);
   },
 
   async scanKeys(
