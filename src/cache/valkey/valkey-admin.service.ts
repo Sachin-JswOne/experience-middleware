@@ -36,8 +36,14 @@ export interface ValkeyNodeInfo {
   dbSize: number;
 }
 
+export interface ValkeyScanKey {
+  key: string;
+  /** Seconds; -1 = no expiry, -2 = missing (expired between SCAN and TTL). */
+  ttl: number;
+}
+
 export interface ValkeyScanResult {
-  keys: string[];
+  keys: ValkeyScanKey[];
   cursor: string | null;
   complete: boolean;
 }
@@ -221,8 +227,12 @@ export class ValkeyAdminService {
     }
 
     const complete = nodeIdx >= nodes.length;
+    const pageKeys = keys.slice(0, MAX_KEYS_PER_REQUEST);
+    // Per-key TTL (not pipelined): in cluster mode keys hash to different
+    // slots, and ioredis routes each command to the right node.
+    const ttls = await Promise.all(pageKeys.map((k) => client.ttl(k)));
     return {
-      keys: keys.slice(0, MAX_KEYS_PER_REQUEST),
+      keys: pageKeys.map((key, i) => ({ key, ttl: ttls[i] ?? -2 })),
       cursor: complete ? null : `${nodeIdx}|${nodeCursor}`,
       complete,
     };

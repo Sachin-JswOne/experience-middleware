@@ -33,7 +33,7 @@ import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
 import { ToggleButton, ToggleButtonGroup } from '@mui/material';
 
 import ValkeyAdminService from '@/services/ValkeyAdminService';
-import type { ValkeyKeyDetail } from '@/_types/valkey.interface';
+import type { ValkeyKeyDetail, ValkeyScanKey } from '@/_types/valkey.interface';
 import KeyDetailDialog from './KeyDetailDialog';
 import EditKeyDialog from './EditKeyDialog';
 import KeyTreeView from './KeyTreeView';
@@ -49,10 +49,19 @@ const cellEllipsis = {
   whiteSpace: 'nowrap',
 } as const;
 
+const formatTtl = (ttl: number): string => {
+  if (ttl === -1) return 'No expiry';
+  if (ttl === -2) return '—';
+  if (ttl >= 86400) return `${Math.floor(ttl / 86400)}d ${Math.floor((ttl % 86400) / 3600)}h`;
+  if (ttl >= 3600) return `${Math.floor(ttl / 3600)}h ${Math.floor((ttl % 3600) / 60)}m`;
+  if (ttl >= 60) return `${Math.floor(ttl / 60)}m ${ttl % 60}s`;
+  return `${ttl}s`;
+};
+
 const KeyBrowserPanel = ({ canWrite }: KeyBrowserPanelProps) => {
   const { enqueueSnackbar } = useSnackbar();
   const [pattern, setPattern] = useState('*');
-  const [keys, setKeys] = useState<string[]>([]);
+  const [keys, setKeys] = useState<ValkeyScanKey[]>([]);
   const [cursor, setCursor] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -128,7 +137,7 @@ const KeyBrowserPanel = ({ canWrite }: KeyBrowserPanelProps) => {
       enqueueSnackbar(result.error.message || 'Delete failed', { variant: 'error' });
     } else {
       enqueueSnackbar(`Deleted '${deleteKey}'`, { variant: 'success' });
-      setKeys((prev) => prev.filter((k) => k !== deleteKey));
+      setKeys((prev) => prev.filter((k) => k.key !== deleteKey));
       setDeleteKey(null);
     }
     setDeleting(false);
@@ -174,7 +183,7 @@ const KeyBrowserPanel = ({ canWrite }: KeyBrowserPanelProps) => {
             </Paper>
           ) : (
             <KeyTreeView
-              keys={keys}
+              keys={keys.map((k) => k.key)}
               canWrite={canWrite}
               onView={handleView}
               onEdit={handleEdit}
@@ -193,24 +202,26 @@ const KeyBrowserPanel = ({ canWrite }: KeyBrowserPanelProps) => {
           <TableHead>
             <TableRow>
               <TableCell>Key</TableCell>
+              <TableCell>TTL</TableCell>
               <TableCell align="right">Actions</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {keys.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={2} align="center" sx={{ py: 4 }}>
+                <TableCell colSpan={3} align="center" sx={{ py: 4 }}>
                   No keys match this pattern
                 </TableCell>
               </TableRow>
             ) : (
-              keys.map((key) => (
+              keys.map(({ key, ttl }) => (
                 <TableRow key={key} hover>
                   <TableCell>
                     <Box sx={cellEllipsis} title={key}>
                       {key}
                     </Box>
                   </TableCell>
+                  <TableCell sx={{ whiteSpace: 'nowrap' }}>{formatTtl(ttl)}</TableCell>
                   <TableCell align="right">
                     <Tooltip title="View">
                       <IconButton

@@ -46,8 +46,14 @@ export interface ValkeyClusterNodes {
   nodes: ValkeyClusterNode[];
 }
 
+export interface ValkeyScanKey {
+  key: string;
+  /** Seconds; -1 = no expiry, -2 = missing (expired between SCAN and TTL). */
+  ttl: number;
+}
+
 export interface ValkeyScanResult {
-  keys: string[];
+  keys: ValkeyScanKey[];
   cursor: string | null;
   complete: boolean;
 }
