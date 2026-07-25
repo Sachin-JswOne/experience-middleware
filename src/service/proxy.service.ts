@@ -6,7 +6,7 @@ import { createHttpClient } from '../utils/http-client.factory';
 import { applyTransform } from '../utils/transformer.util';
 import { ROUTE_CONFIG } from '../config/route.config';
 import { BaseRequest } from '../models/base-request.model';
-import { safeToLog } from 'src/utils/common-functions.util';
+import { safeToLog, safeDebug, maskSensitiveFields } from 'src/utils/common-functions.util';
 import {
   AggregateRouteConfig,
   ConditionalRouteConfig,
@@ -442,19 +442,16 @@ export class ProxyService {
             prevResponses,
           );
 
-          maskedHeaders = {
-            ...transformedRequestBody.headers,
-            authorization: transformedRequestBody.headers?.authorization
-              ? '***masked***'
-              : undefined,
-            Authorization: transformedRequestBody.headers?.Authorization
-              ? '***masked***'
-              : undefined,
-            access_token: transformedRequestBody.headers?.access_token ? '***masked***' : undefined,
-          };
+          maskedHeaders = maskSensitiveFields(transformedRequestBody.headers) as Record<
+            string,
+            any
+          >;
+          const maskedBody = maskSensitiveFields(transformedRequestBody.body ?? null);
 
-          this.logger.log(
-            `[DOWNSTREAM REQUEST] target=${target.name || target.url} route=${req.path} method=${target.method} url=${transformedRequestBody.url.href} headers=${JSON.stringify(maskedHeaders)} body=${JSON.stringify(transformedRequestBody.body ?? null)}`,
+          safeDebug(
+            this.logger,
+            () =>
+              `[DOWNSTREAM REQUEST] target=${target.name || target.url} route=${req.path} method=${target.method} url=${transformedRequestBody!.url.href} headers=${JSON.stringify(maskedHeaders)} body=${JSON.stringify(maskedBody)}`,
           );
 
           const buildMs = this.nowMs() - buildStart;
@@ -516,7 +513,7 @@ export class ProxyService {
           );
 
           if (responseData) {
-            const responseStr = inspect(responseData);
+            const responseStr = inspect(maskSensitiveFields(responseData));
             span.setAttribute('api.response.size', responseStr.length);
 
             if (responseStr.length > 1000) {

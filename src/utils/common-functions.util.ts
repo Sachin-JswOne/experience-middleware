@@ -109,3 +109,35 @@ export const safeToLog = (value: unknown): string => {
   }
   return String(value);
 };
+
+const SENSITIVE_KEY_PATTERN =
+  /password|passcode|otp|pin|token|secret|authorization|access_token|refresh_token/i;
+
+/**
+ * Recursively replaces values of sensitive-looking keys (password, otp, token, ...)
+ * with a masked placeholder so request/response payloads can be logged safely.
+ */
+export function maskSensitiveFields(value: unknown, seen = new WeakSet<object>()): unknown {
+  if (value === null || value === undefined) {
+    return value;
+  }
+
+  if (Array.isArray(value)) {
+    return value.map((item) => maskSensitiveFields(item, seen));
+  }
+
+  if (typeof value === 'object') {
+    if (seen.has(value as object)) {
+      return '[Circular]';
+    }
+    seen.add(value as object);
+
+    const masked: Record<string, unknown> = {};
+    for (const [key, val] of Object.entries(value as Record<string, unknown>)) {
+      masked[key] = SENSITIVE_KEY_PATTERN.test(key) ? '***masked***' : maskSensitiveFields(val, seen);
+    }
+    return masked;
+  }
+
+  return value;
+}
