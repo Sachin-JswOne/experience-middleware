@@ -11,8 +11,16 @@ on:
     types: [created]
 
 # Never stack overlapping reviews for the same PR — cancel the older run.
+# The suffix keeps this group scoped to triggers that actually start a review
+# (a PR event, or a comment containing the trigger phrase). Other comments on
+# the same PR (e.g. bots like Atlantis commenting on every PR) get their own
+# per-comment group via comment.id, so they can't cancel a real review that's
+# already in flight just by sharing the PR number.
 concurrency:
-  group: claude-review-${{ github.event.pull_request.number || github.event.issue.number }}
+  group: >-
+    claude-review-${{ github.event.pull_request.number || github.event.issue.number }}-${{
+    (github.event_name == 'pull_request' || contains(github.event.comment.body, '@claude review'))
+    && 'active' || github.event.comment.id }}
   cancel-in-progress: true
 
 jobs:
@@ -32,6 +40,7 @@ jobs:
       pull-requests: write
       issues: read
       id-token: write
+      actions: write
     steps:
       - name: Get PR head ref
         id: pr
@@ -75,6 +84,11 @@ jobs:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           plugin_marketplaces: "https://github.com/anthropics/claude-code.git"
           plugins: "code-review@claude-code-plugins"
+          # Providing a custom `prompt` makes claude-code-action auto-detect
+          # "agent" mode, which runs the review but does NOT post a PR
+          # comment on its own. track_progress forces tag-mode-style tracking
+          # comments so the review result actually shows up on the PR.
+          track_progress: true
           prompt: |
             Before starting the review, gather context by reading these local files:
             1. Read `review.md` in the repository root — it contains code style guidelines,
