@@ -33,7 +33,11 @@ export default defineConfig({
     },
   },
   test: {
-    environment: 'node',
-    include: ['src/**/*.test.ts'],
+    // jsdom so component and browser-storage tests can run alongside the
+    // pure-logic ones. Node builtins still work for the contract-drift check.
+    environment: 'jsdom',
+    globals: true,
+    setupFiles: ['./src/test/setup.ts'],
+    include: ['src/**/*.test.{ts,tsx}'],
   },
 });

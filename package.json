@@ -24,7 +24,9 @@
     "lint-staged": "lint-staged",
     "cleanup": "npm run lint:fix && npm run format",
     "e2e": "playwright test -c e2e",
-    "test:fe": "cd frontend && npm test"
+    "test:fe": "cd frontend && npm test",
+    "lint:fe": "cd frontend && npm run lint",
+    "typecheck:fe": "cd frontend && npm run typecheck"
   },
   "dependencies": {
     "@google-cloud/secret-manager": "^6.2.0",
@@ -50,6 +52,7 @@
     "axios": "^1.10.0",
     "dotenv": "^17.2.0",
     "fs": "0.0.1-security",
+    "helmet": "^8.3.0",
     "ioredis": "^5.11.1",
     "jsonwebtoken": "^9.0.2",
     "nest-winston": "^1.10.2",
@@ -113,7 +116,10 @@
   },
   "lint-staged": {
     "*.{ts,js}": [
-      "eslint --fix",
+      "eslint --fix --no-warn-ignored",
+      "prettier --write"
+    ],
+    "frontend/src/**/*.{ts,tsx}": [
       "prettier --write"
     ],
     "*.{json,md,yml,yaml}": [

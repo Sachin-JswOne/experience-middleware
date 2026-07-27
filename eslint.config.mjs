@@ -6,7 +6,16 @@ import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
   {
-    ignores: ['eslint.config.mjs', 'dist/**', 'node_modules/**', 'coverage/**'],
+    // frontend/ is a separate Vite/React project with its own flat config
+    // (browser globals, ESM, react-hooks) — lint it via `npm run lint:fe`.
+    ignores: [
+      'eslint.config.mjs',
+      'dist/**',
+      'dist-frontend/**',
+      'node_modules/**',
+      'coverage/**',
+      'frontend/**',
+    ],
   },
 
   eslint.configs.recommended,
