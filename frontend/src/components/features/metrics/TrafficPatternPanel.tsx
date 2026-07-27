@@ -1,10 +1,11 @@
-import { useMemo } from 'react';
+import { memo, useMemo  } from 'react';
 import { Box, Typography } from '@mui/material';
 import dayjs from 'dayjs';
 import utcPlugin from 'dayjs/plugin/utc';
 import type { TimelineBucket } from '@/_types/metrics.interface';
 import { tokens } from '@/styles/theme';
-import ChartCard, { formatNumber } from './chartShared';
+import { formatNumber } from '@/utils/format';
+import ChartCard from './chartShared';
 
 dayjs.extend(utcPlugin);
 
@@ -34,9 +35,7 @@ const TrafficPatternPanel = ({ data, loading, bucketIntervalMs, windowMs, utc }:
       Math.min(6, Math.round((bucketIntervalMs ?? 3_600_000) / 3_600_000)),
     );
     const colCount = Math.ceil(24 / colHrs);
-    const cells: number[][] = Array.from({ length: 7 }, () => Array(colCount).fill(0));
-    let max = 0;
-    let any = false;
+    const cells: number[][] = Array.from({ length: 7 }, () => Array<number>(colCount).fill(0));
     for (const bucket of data) {
       if (bucket.requestCount === 0) continue;
       const d = utc ? dayjs(bucket.bucketTs).utc() : dayjs(bucket.bucketTs);
@@ -44,12 +43,11 @@ const TrafficPatternPanel = ({ data, loading, bucketIntervalMs, windowMs, utc }:
       const col = Math.min(colCount - 1, Math.floor(d.hour() / colHrs));
       const row = cells[dow];
       if (!row) continue;
-      const next = (row[col] ?? 0) + bucket.requestCount;
-      row[col] = next;
-      if (next > max) max = next;
-      any = true;
+      row[col] = (row[col] ?? 0) + bucket.requestCount;
     }
-    return { grid: cells, cols: colCount, colHours: colHrs, maxCount: max, hasData: any };
+    // Derived once the grid is complete rather than tracked while filling it.
+    const max = cells.reduce((acc, row) => Math.max(acc, ...row), 0);
+    return { grid: cells, cols: colCount, colHours: colHrs, maxCount: max, hasData: max > 0 };
   }, [data, bucketIntervalMs, utc]);
 
   return (
@@ -153,4 +151,4 @@ const TrafficPatternPanel = ({ data, loading, bucketIntervalMs, windowMs, utc }:
   );
 };
 
-export default TrafficPatternPanel;
+export default memo(TrafficPatternPanel);

@@ -31,6 +31,19 @@ export const tokens = {
   dangerHovered: '#AE2E24',
   success: '#5B7F24',
   warning: '#E06C00',
+  // Status lozenges (DESIGN.md: bg-subtler + border + bolder text)
+  pillSuccessBg: '#D3F1A7',
+  pillSuccessBorder: '#6A9A23',
+  pillSuccessText: '#37471F',
+  pillDangerBg: '#FFD5D2',
+  pillDangerBorder: '#E2483D',
+  pillDangerText: '#5D1F1A',
+  pillWarningBg: '#FCE4A6',
+  pillWarningBorder: '#E06C00',
+  pillWarningText: '#693200',
+  pillNeutralBg: '#F0F1F2',
+  pillNeutralBorder: '#7D818A',
+  pillNeutralText: '#292A2E',
   // Overlay blanket
   blanket: '#050C1F75',
   // Elevation (pair raised/overlay surfaces with these only)

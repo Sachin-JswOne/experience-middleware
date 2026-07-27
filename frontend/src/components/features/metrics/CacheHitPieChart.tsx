@@ -1,7 +1,9 @@
+import { memo } from 'react';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
 import type { RouteBreakdown } from '@/_types/metrics.interface';
 import { tokens } from '@/styles/theme';
-import ChartCard, { CHART_COLORS, formatPercent } from './chartShared';
+import { formatPercent } from '@/utils/format';
+import ChartCard, { CHART_COLORS } from './chartShared';
 
 interface Props {
   data: RouteBreakdown[];
@@ -81,4 +83,4 @@ const CacheHitPieChart = ({ data, loading }: Props) => {
   );
 };
 
-export default CacheHitPieChart;
+export default memo(CacheHitPieChart);

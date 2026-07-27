@@ -21,13 +21,9 @@ export interface StageTimings {
   resTransformMs: number;
 }
 
-export interface DownstreamRecord {
-  target: string;
-  durationMs: number;
-  success: boolean;
-  statusCode?: number;
-  stages?: StageTimings;
-}
+// The backend's `DownstreamRecord` is not mirrored here: it is an internal
+// aggregator type whose raw request/response fields are stripped before
+// anything reaches the API. What the dashboard receives is `SampleDownstream`.
 
 export interface CacheProviderStats {
   provider: CacheServedBy;

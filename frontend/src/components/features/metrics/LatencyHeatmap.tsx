@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { memo, useMemo  } from 'react';
 import { Box, Typography } from '@mui/material';
 import { LATENCY_HISTOGRAM_BOUNDS, type TimelineBucket } from '@/_types/metrics.interface';
 import { tokens } from '@/styles/theme';
@@ -42,18 +42,14 @@ const ROWS: Array<number | 'inf'> = ['inf', ...[...LATENCY_HISTOGRAM_BOUNDS].rev
 
 const LatencyHeatmap = ({ data, loading, bucketIntervalMs, utc, onCellClick }: Props) => {
   const { cells, maxCount, hasData } = useMemo(() => {
-    let max = 0;
-    let any = false;
-    const grid = data.map((bucket) => {
-      const counts = ROWS.map((row) => {
-        const count = bucket.histogram?.[String(row)] ?? 0;
-        if (count > max) max = count;
-        if (count > 0) any = true;
-        return count;
-      });
-      return { bucketTs: bucket.bucketTs, counts };
-    });
-    return { cells: grid, maxCount: max, hasData: any };
+    const grid = data.map((bucket) => ({
+      bucketTs: bucket.bucketTs,
+      counts: ROWS.map((row) => bucket.histogram?.[String(row)] ?? 0),
+    }));
+    // Derived in a second pass rather than accumulated inside the map, so the
+    // mapper stays a pure function of its input.
+    const max = grid.reduce((acc, cell) => Math.max(acc, ...cell.counts), 0);
+    return { cells: grid, maxCount: max, hasData: max > 0 };
   }, [data]);
 
   // Label roughly every ~8th column so long ranges stay readable.
@@ -184,4 +180,4 @@ const LatencyHeatmap = ({ data, loading, bucketIntervalMs, utc, onCellClick }: P
   );
 };
 
-export default LatencyHeatmap;
+export default memo(LatencyHeatmap);

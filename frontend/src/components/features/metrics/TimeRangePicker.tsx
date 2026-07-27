@@ -15,7 +15,7 @@ import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 import dayjs from 'dayjs';
 import { tokens } from '@/styles/theme';
 import type { MetricsRange, MetricsWindow } from './useMetricsQuery';
-import { formatTs } from './chartShared';
+import { formatTs } from '@/utils/format';
 
 const QUICK_RANGES: Array<{ window: MetricsWindow; label: string }> = [
   { window: '5m', label: 'Last 5 minutes' },

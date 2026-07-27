@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useSnackbar } from 'notistack';
 import {
   Box,
@@ -19,6 +19,8 @@ import {
   TableHead,
   TableRow,
   TextField,
+  ToggleButton,
+  ToggleButtonGroup,
   Toolbar,
   Tooltip,
   Typography,
@@ -30,13 +32,13 @@ import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import SearchIcon from '@mui/icons-material/Search';
 import ViewListOutlinedIcon from '@mui/icons-material/ViewListOutlined';
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
-import { ToggleButton, ToggleButtonGroup } from '@mui/material';
 
-import ValkeyAdminService from '@/services/ValkeyAdminService';
-import type { ValkeyKeyDetail, ValkeyScanKey } from '@/_types/valkey.interface';
+import type { ValkeyKeyDetail } from '@/_types/valkey.interface';
+import { formatTtl } from '@/utils/format';
 import KeyDetailDialog from './KeyDetailDialog';
 import EditKeyDialog from './EditKeyDialog';
 import KeyTreeView from './KeyTreeView';
+import { useDeleteKey, useKeyDetailFetcher, useValkeyScan } from './useValkeyQueries';
 
 interface KeyBrowserPanelProps {
   canWrite: boolean;
@@ -49,23 +51,12 @@ const cellEllipsis = {
   whiteSpace: 'nowrap',
 } as const;
 
-const formatTtl = (ttl: number): string => {
-  if (ttl === -1) return 'No expiry';
-  if (ttl === -2) return '—';
-  if (ttl >= 86400) return `${Math.floor(ttl / 86400)}d ${Math.floor((ttl % 86400) / 3600)}h`;
-  if (ttl >= 3600) return `${Math.floor(ttl / 3600)}h ${Math.floor((ttl % 3600) / 60)}m`;
-  if (ttl >= 60) return `${Math.floor(ttl / 60)}m ${ttl % 60}s`;
-  return `${ttl}s`;
-};
-
 const KeyBrowserPanel = ({ canWrite }: KeyBrowserPanelProps) => {
   const { enqueueSnackbar } = useSnackbar();
+  // Draft lives in the text field; `pattern` is what's actually scanned, so
+  // typing doesn't refire the query on every keystroke.
+  const [draftPattern, setDraftPattern] = useState('*');
   const [pattern, setPattern] = useState('*');
-  const [keys, setKeys] = useState<ValkeyScanKey[]>([]);
-  const [cursor, setCursor] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [loadingMore, setLoadingMore] = useState(false);
-  const [error, setError] = useState('');
   const [viewItem, setViewItem] = useState<ValkeyKeyDetail | null>(null);
   const [editState, setEditState] = useState<{ open: boolean; key: string | null; value: string }>({
     open: false,
@@ -73,78 +64,54 @@ const KeyBrowserPanel = ({ canWrite }: KeyBrowserPanelProps) => {
     value: '',
   });
   const [deleteKey, setDeleteKey] = useState<string | null>(null);
-  const [deleting, setDeleting] = useState(false);
   const [view, setView] = useState<'tree' | 'list'>('tree');
 
-  const scan = async (fresh = true) => {
-    if (fresh) {
-      setLoading(true);
-      setError('');
-    } else {
-      setLoadingMore(true);
-    }
-    const result = await ValkeyAdminService.scanKeys(
-      pattern,
-      fresh ? undefined : (cursor ?? undefined),
-    );
-    if (result.error.message || result.error.code) {
-      const message = result.error.message || 'Failed to scan keys';
-      if (fresh) setError(message);
-      else enqueueSnackbar(message, { variant: 'error' });
-    } else if (result.data) {
-      const batch = result.data.keys;
-      setKeys((prev) => (fresh ? batch : [...prev, ...batch]));
-      setCursor(result.data.cursor);
-    }
-    setLoading(false);
-    setLoadingMore(false);
-  };
+  const scan = useValkeyScan(pattern);
+  const fetchKeyDetail = useKeyDetailFetcher();
+  const deleteMutation = useDeleteKey(() => setDeleteKey(null));
 
-  useEffect(() => {
-    void scan(true);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  const keys = useMemo(() => scan.data?.pages.flatMap((page) => page.keys) ?? [], [scan.data]);
+  const errorMessage = scan.error instanceof Error ? scan.error.message : '';
 
   const handleView = async (key: string) => {
-    const result = await ValkeyAdminService.getKeyDetail(key);
-    if (result.error.message || result.error.code) {
-      enqueueSnackbar(result.error.message || `Failed to load key '${key}'`, { variant: 'error' });
-    } else if (result.data) {
-      setViewItem(result.data);
+    try {
+      setViewItem(await fetchKeyDetail(key));
+    } catch (error) {
+      enqueueSnackbar((error as Error).message, { variant: 'error' });
     }
   };
 
   const handleEdit = async (key: string) => {
-    const result = await ValkeyAdminService.getKeyDetail(key);
-    if (result.error.message || result.error.code) {
-      enqueueSnackbar(result.error.message || `Failed to load key '${key}'`, { variant: 'error' });
-      return;
+    try {
+      const detail = await fetchKeyDetail(key);
+      if (detail.type !== 'string') {
+        enqueueSnackbar(`Only string keys are editable (this key is ${detail.type})`, {
+          variant: 'warning',
+        });
+        return;
+      }
+      setEditState({ open: true, key, value: String(detail.value ?? '') });
+    } catch (error) {
+      enqueueSnackbar((error as Error).message, { variant: 'error' });
     }
-    if (result.data && result.data.type !== 'string') {
-      enqueueSnackbar(`Only string keys are editable (this key is ${result.data.type})`, {
-        variant: 'warning',
-      });
-      return;
-    }
-    setEditState({ open: true, key, value: String(result.data?.value ?? '') });
   };
 
-  const handleDelete = async () => {
-    if (!deleteKey) return;
-    setDeleting(true);
-    const result = await ValkeyAdminService.deleteKeys([deleteKey]);
-    if (result.error.message || result.error.code) {
-      enqueueSnackbar(result.error.message || 'Delete failed', { variant: 'error' });
-    } else {
-      enqueueSnackbar(`Deleted '${deleteKey}'`, { variant: 'success' });
-      setKeys((prev) => prev.filter((k) => k.key !== deleteKey));
-      setDeleteKey(null);
-    }
-    setDeleting(false);
-  };
+  const closeEdit = () => setEditState({ open: false, key: null, value: '' });
+
+  const loadMore = scan.hasNextPage && (
+    <Box sx={{ display: 'flex', justifyContent: 'center', py: 1.5 }}>
+      <Button
+        size="small"
+        onClick={() => void scan.fetchNextPage()}
+        disabled={scan.isFetchingNextPage}
+      >
+        {scan.isFetchingNextPage ? 'Loading…' : 'Load more'}
+      </Button>
+    </Box>
+  );
 
   const renderTable = () => {
-    if (loading && keys.length === 0) {
+    if (scan.isPending) {
       return (
         <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
           <CircularProgress />
@@ -152,31 +119,23 @@ const KeyBrowserPanel = ({ canWrite }: KeyBrowserPanelProps) => {
       );
     }
 
-    if (error && keys.length === 0) {
+    if (scan.isError && keys.length === 0) {
       return (
         <Box sx={{ p: 3, textAlign: 'center' }}>
           <Typography color="error" sx={{ mb: 2 }}>
-            {error}
+            {errorMessage || 'Failed to scan keys'}
           </Typography>
-          <Button variant="outlined" onClick={() => scan(true)}>
+          <Button variant="outlined" onClick={() => void scan.refetch()}>
             Retry
           </Button>
         </Box>
       );
     }
 
-    const loadMore = cursor && (
-      <Box sx={{ display: 'flex', justifyContent: 'center', py: 1.5 }}>
-        <Button size="small" onClick={() => scan(false)} disabled={loadingMore}>
-          {loadingMore ? 'Loading…' : 'Load more'}
-        </Button>
-      </Box>
-    );
-
     if (view === 'tree') {
       return (
         <Box>
-          {loading && <LinearProgress />}
+          {scan.isFetching && <LinearProgress />}
           {keys.length === 0 ? (
             <Paper variant="outlined" sx={{ py: 4, textAlign: 'center' }}>
               <Typography color="text.secondary">No keys match this pattern</Typography>
@@ -197,7 +156,7 @@ const KeyBrowserPanel = ({ canWrite }: KeyBrowserPanelProps) => {
 
     return (
       <TableContainer component={Paper} variant="outlined">
-        {loading && <LinearProgress />}
+        {scan.isFetching && <LinearProgress />}
         <Table size="small">
           <TableHead>
             <TableRow>
@@ -224,11 +183,7 @@ const KeyBrowserPanel = ({ canWrite }: KeyBrowserPanelProps) => {
                   <TableCell sx={{ whiteSpace: 'nowrap' }}>{formatTtl(ttl)}</TableCell>
                   <TableCell align="right">
                     <Tooltip title="View">
-                      <IconButton
-                        aria-label="View key"
-                        size="small"
-                        onClick={() => handleView(key)}
-                      >
+                      <IconButton aria-label="View key" size="small" onClick={() => handleView(key)}>
                         <VisibilityOutlinedIcon fontSize="small" />
                       </IconButton>
                     </Tooltip>
@@ -272,18 +227,18 @@ const KeyBrowserPanel = ({ canWrite }: KeyBrowserPanelProps) => {
         <TextField
           size="small"
           label="Key pattern"
-          value={pattern}
-          onChange={(e) => setPattern(e.target.value)}
+          value={draftPattern}
+          onChange={(e) => setDraftPattern(e.target.value)}
           onKeyDown={(e) => {
-            if (e.key === 'Enter') scan(true);
+            if (e.key === 'Enter') setPattern(draftPattern);
           }}
           sx={{ width: 320 }}
         />
         <Button
           variant="outlined"
           startIcon={<SearchIcon />}
-          onClick={() => scan(true)}
-          disabled={loading}
+          onClick={() => setPattern(draftPattern)}
+          disabled={scan.isFetching}
         >
           Scan
         </Button>
@@ -291,8 +246,8 @@ const KeyBrowserPanel = ({ canWrite }: KeyBrowserPanelProps) => {
           size="small"
           exclusive
           value={view}
-          onChange={(_, next) => {
-            if (next) setView(next as 'tree' | 'list');
+          onChange={(_, next: 'tree' | 'list' | null) => {
+            if (next) setView(next);
           }}
           aria-label="Key view mode"
         >
@@ -327,11 +282,8 @@ const KeyBrowserPanel = ({ canWrite }: KeyBrowserPanelProps) => {
         open={editState.open}
         editKey={editState.key}
         initialValue={editState.value}
-        onClose={() => setEditState({ open: false, key: null, value: '' })}
-        onSaved={async () => {
-          setEditState({ open: false, key: null, value: '' });
-          await scan(true);
-        }}
+        onClose={closeEdit}
+        onSaved={closeEdit}
       />
 
       <Dialog open={!!deleteKey} onClose={() => setDeleteKey(null)} maxWidth="sm" fullWidth>
@@ -342,11 +294,16 @@ const KeyBrowserPanel = ({ canWrite }: KeyBrowserPanelProps) => {
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDeleteKey(null)} disabled={deleting}>
+          <Button onClick={() => setDeleteKey(null)} disabled={deleteMutation.isPending}>
             Cancel
           </Button>
-          <Button onClick={handleDelete} color="error" variant="contained" disabled={deleting}>
-            {deleting ? 'Deleting…' : 'Delete'}
+          <Button
+            onClick={() => deleteKey && deleteMutation.mutate(deleteKey)}
+            color="error"
+            variant="contained"
+            disabled={deleteMutation.isPending}
+          >
+            {deleteMutation.isPending ? 'Deleting…' : 'Delete'}
           </Button>
         </DialogActions>
       </Dialog>

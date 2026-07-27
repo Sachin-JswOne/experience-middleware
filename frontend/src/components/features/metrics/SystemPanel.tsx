@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import {
   Box,
   Card,
@@ -14,24 +15,13 @@ import {
 } from '@mui/material';
 import type { MetricsHealth, PodHealth } from '@/_types/metrics.interface';
 import { tokens } from '@/styles/theme';
-import { Sparkline, formatNumber, formatTs } from './chartShared';
+import { formatNumber, formatTs } from '@/utils/format';
+import { Sparkline } from './chartShared';
 
-// Bordered lozenge status pill per DESIGN.md (bg-subtler + border + bolder text).
-type PillTone = 'success' | 'danger' | 'warning' | 'neutral';
-const PILL_STYLES: Record<PillTone, { bg: string; border: string; text: string }> = {
-  success: { bg: '#D3F1A7', border: '#6A9A23', text: '#37471F' },
-  danger: { bg: '#FFD5D2', border: '#E2483D', text: '#5D1F1A' },
-  warning: { bg: '#FCE4A6', border: '#E06C00', text: '#693200' },
-  neutral: { bg: '#F0F1F2', border: '#7D818A', text: '#292A2E' },
-};
-const pillSx = (tone: PillTone) => ({
-  height: 18,
-  fontSize: 12,
-  fontWeight: tokens.weightBold,
-  color: PILL_STYLES[tone].text,
-  bgcolor: PILL_STYLES[tone].bg,
-  border: `1px solid ${PILL_STYLES[tone].border}`,
-});
+import { pillSx as basePillSx, type PillTone } from './statusPill';
+
+// The System tab uses the shorter lozenge variant.
+const pillSx = (tone: PillTone) => basePillSx(tone, 18);
 
 interface Props {
   data: MetricsHealth | undefined;
@@ -269,4 +259,4 @@ const SystemPanel = ({ data, loading, utc }: Props) => {
   );
 };
 
-export default SystemPanel;
+export default memo(SystemPanel);

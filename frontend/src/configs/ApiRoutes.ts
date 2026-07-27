@@ -1,4 +1,5 @@
 const PROMPTS_BASE = '/xp-mi/public/v1/central_commerce/ai/prompts';
+const AUTH_BASE = '/xp-mi/public/v1/auth';
 
 export const API_ROUTES = {
   PROMPTS: {
@@ -26,6 +27,10 @@ export const API_ROUTES = {
   },
   AUTH: {
     OUTLOOK_LOGIN: (referer: string) =>
-      `/xp-mi/public/v1/auth/outlook-login?referer=${encodeURIComponent(referer)}`,
+      `${AUTH_BASE}/outlook-login?referer=${encodeURIComponent(referer)}`,
+    SESSION_EXCHANGE: (authId: string) =>
+      `${AUTH_BASE}/session/exchange?auth-id=${encodeURIComponent(authId)}`,
+    SESSION: `${AUTH_BASE}/session`,
+    SESSION_LOGOUT: `${AUTH_BASE}/session/logout`,
   },
 };

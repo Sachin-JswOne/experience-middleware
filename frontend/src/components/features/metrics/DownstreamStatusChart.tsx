@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import {
   BarChart,
   Bar,
@@ -94,4 +95,4 @@ const DownstreamStatusChart = ({ data, loading }: Props) => {
   );
 };
 
-export default DownstreamStatusChart;
+export default memo(DownstreamStatusChart);

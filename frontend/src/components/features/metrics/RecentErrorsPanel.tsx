@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { memo, useMemo, useState  } from 'react';
 import {
   Box,
   Card,
@@ -11,7 +11,8 @@ import {
 } from '@mui/material';
 import type { RecentError } from '@/_types/metrics.interface';
 import { tokens } from '@/styles/theme';
-import { formatMs, formatTs, logUrlFor } from './chartShared';
+import { formatMs, formatTs } from '@/utils/format';
+import { logUrlFor } from './chartShared';
 
 interface Props {
   data: RecentError[] | undefined;
@@ -290,4 +291,4 @@ const RecentErrorsPanel = ({ data, loading, utc, onSelect }: Props) => {
   );
 };
 
-export default RecentErrorsPanel;
+export default memo(RecentErrorsPanel);

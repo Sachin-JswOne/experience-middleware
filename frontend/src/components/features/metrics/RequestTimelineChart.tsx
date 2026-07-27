@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import {
   LineChart,
   Line,
@@ -220,4 +221,4 @@ const RequestTimelineChart = ({
   );
 };
 
-export default RequestTimelineChart;
+export default memo(RequestTimelineChart);

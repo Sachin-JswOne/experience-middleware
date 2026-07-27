@@ -14,7 +14,7 @@ import {
 } from '@mui/material';
 import BookmarkBorderIcon from '@mui/icons-material/BookmarkBorder';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
-import LocalStorage from '@/utils/LocalStorage';
+import { loadPersistedList, savePersistedList } from '@/utils/usePersistedState';
 import { tokens } from '@/styles/theme';
 
 export interface SavedView {
@@ -28,10 +28,7 @@ export interface SavedView {
 const STORAGE_KEY = 'metricsSavedViews';
 const MAX_VIEWS = 20;
 
-const loadViews = (): SavedView[] => {
-  const stored = LocalStorage.getItem(STORAGE_KEY);
-  return Array.isArray(stored) ? (stored as SavedView[]) : [];
-};
+const loadViews = (): SavedView[] => loadPersistedList<SavedView>(STORAGE_KEY);
 
 interface Props {
   currentParams: string;
@@ -50,7 +47,7 @@ const SavedViews = ({ currentParams, onApply }: Props) => {
 
   const persist = (next: SavedView[]) => {
     setViews(next);
-    LocalStorage.setItem(STORAGE_KEY, next);
+    savePersistedList(STORAGE_KEY, next);
   };
 
   const save = () => {

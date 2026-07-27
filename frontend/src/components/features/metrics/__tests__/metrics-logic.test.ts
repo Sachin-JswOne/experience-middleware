@@ -12,7 +12,7 @@ import {
   mergeServerConfig,
   toServerConfig,
   type AlertThresholds,
-} from '../AlertSettings';
+} from '../alerts';
 import { computeMovers } from '../TopMoversPanel';
 import { computeApdex } from '../SloCard';
 import { rowBand } from '../LatencyHeatmap';

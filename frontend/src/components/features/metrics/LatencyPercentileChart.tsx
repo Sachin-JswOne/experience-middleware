@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import {
   LineChart,
   Line,
@@ -126,4 +127,4 @@ const LatencyPercentileChart = ({ data, loading, bucketIntervalMs, utc, onZoom }
   );
 };
 
-export default LatencyPercentileChart;
+export default memo(LatencyPercentileChart);

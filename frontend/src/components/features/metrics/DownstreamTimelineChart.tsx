@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { memo, useMemo, useState  } from 'react';
 import { ToggleButton, ToggleButtonGroup } from '@mui/material';
 import {
   LineChart,
@@ -14,15 +14,8 @@ import {
 } from 'recharts';
 import type { DeployMarker, DownstreamTimeline } from '@/_types/metrics.interface';
 import { tokens } from '@/styles/theme';
-import ChartCard, {
-  CHART_COLORS,
-  CHART_TOOLTIP_LABEL_STYLE,
-  CHART_TOOLTIP_STYLE,
-  deployMarkerPositions,
-  formatBucketTs,
-  formatMs,
-  useDragZoom,
-} from './chartShared';
+import { formatMs } from '@/utils/format';
+import ChartCard, { CHART_COLORS, CHART_TOOLTIP_LABEL_STYLE, CHART_TOOLTIP_STYLE, deployMarkerPositions, formatBucketTs, useDragZoom } from './chartShared';
 
 interface Props {
   data: DownstreamTimeline[];
@@ -174,4 +167,4 @@ const DownstreamTimelineChart = ({
   );
 };
 
-export default DownstreamTimelineChart;
+export default memo(DownstreamTimelineChart);

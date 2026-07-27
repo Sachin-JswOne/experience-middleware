@@ -1,10 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Box, Chip, Tab, Tabs, Typography } from '@mui/material';
 
 import KeyBrowserPanel from '@/components/features/valkey/KeyBrowserPanel';
 import ClusterInfoPanel from '@/components/features/valkey/ClusterInfoPanel';
-import ValkeyAdminService from '@/services/ValkeyAdminService';
-import type { ValkeyStatus } from '@/_types/valkey.interface';
+import { useValkeyStatus } from '@/components/features/valkey/useValkeyQueries';
 import AppConfig from '@/configs/AppConfig';
 import { hasPermission } from '@/utils/permissions';
 import { tokens } from '@/styles/theme';
@@ -13,15 +12,11 @@ type TabValue = 'keys' | 'cluster';
 
 const ValkeyAdminPage = () => {
   const [tab, setTab] = useState<TabValue>('keys');
-  const [status, setStatus] = useState<ValkeyStatus | null>(null);
+  const { data: status } = useValkeyStatus();
 
+  // Hides write controls the user can't use. The backend enforces the same
+  // permission on the endpoints — this is presentation only.
   const canWrite = hasPermission(AppConfig.VALKEY_WRITE_PERMISSION);
-
-  useEffect(() => {
-    void ValkeyAdminService.getStatus().then((result) => {
-      if (result.data) setStatus(result.data);
-    });
-  }, []);
 
   return (
     <Box>

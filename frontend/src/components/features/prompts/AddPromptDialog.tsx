@@ -11,8 +11,7 @@ import {
 } from '@mui/material';
 
 import PromptService, { IPromptCreatePayload } from '@/services/PromptService';
-import LocalStorage from '@/utils/LocalStorage';
-import type { ILooseObject } from '@/_types/common.interface';
+import { readSession } from '@/utils/session';
 
 interface AddPromptDialogProps {
   open: boolean;
@@ -28,7 +27,7 @@ const AddPromptDialog = ({ open, promptType, onClose, onCreated }: AddPromptDial
   const [submitting, setSubmitting] = useState(false);
 
   const canSubmit = prompt.trim().length > 0 && description.trim().length > 0;
-  const userInfo: ILooseObject | undefined = LocalStorage.getItem('userInfo');
+  const userInfo = readSession();
   const isDirty = prompt.trim().length > 0 || description.trim().length > 0;
 
   const requestClose = () => {
@@ -53,7 +52,8 @@ const AddPromptDialog = ({ open, promptType, onClose, onCreated }: AddPromptDial
       promptType: promptType,
       prompt: prompt.trim(),
       description: description.trim(),
-      createdBy: userInfo?.email,
+      // Falls back to the username when UAM didn't return an email.
+      createdBy: userInfo?.email || userInfo?.username || 'unknown',
       activate: true
     };
     const result = await PromptService.createPrompt(promptType, payload);

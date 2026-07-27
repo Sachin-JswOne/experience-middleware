@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import {
   Autocomplete,
   Box,
@@ -16,263 +16,19 @@ import NotificationsNoneIcon from '@mui/icons-material/NotificationsNone';
 import NotificationsActiveIcon from '@mui/icons-material/NotificationsActive';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
-import type {
-  AlertConfig,
-  AlertHistoryRecord,
-  MetricsHealth,
-  MetricsSnapshot,
-  MetricsSummary,
-} from '@/_types/metrics.interface';
-import LocalStorage from '@/utils/LocalStorage';
+import type { AlertConfig, AlertHistoryRecord } from '@/_types/metrics.interface';
+import { formatTs } from '@/utils/format';
+import { useNow } from '@/utils/useNow';
 import { tokens } from '@/styles/theme';
-import { formatTs } from './chartShared';
-
-// Scoped rules: key is "<METHOD> <route>" / a downstream target name.
-export interface RouteAlertRule {
-  key: string;
-  errorRatePct: number | null;
-  p95Ms: number | null;
-}
-
-export interface TargetAlertRule {
-  target: string;
-  errorRatePct: number | null;
-  avgLatencyMs: number | null;
-}
-
-export interface AlertThresholds {
-  errorRatePct: number | null;
-  p99Ms: number | null;
-  // Blanket per-downstream-target error rate.
-  targetErrorRatePct: number | null;
-  // Total requests dropped by ≥ this % vs the previous window (traffic loss).
-  trafficDropPct: number | null;
-  // Availability SLO for the server-side burn-rate alert (webhook only —
-  // burn needs two windows, evaluated by the backend).
-  sloAvailabilityPct: number | null;
-  // Alert when traffic flatlines to zero while the previous window had it.
-  alertOnNoData: boolean;
-  // Epoch ms until which all alerting is muted (banner, notifications and
-  // the server webhook when shared).
-  snoozeUntil: number | null;
-  // Any pod's event-loop lag p99 at or above this (needs the health feed).
-  eventLoopLagP99Ms: number | null;
-  // Alert when the cluster store is enabled but unreachable.
-  valkeyUnavailable: boolean;
-  notify: boolean;
-  routeRules: RouteAlertRule[];
-  targetRules: TargetAlertRule[];
-}
-
-// Fields shared with the server-side webhook evaluator (stored in Valkey).
-// Browser-only signals (notify, loop lag, valkey) stay in localStorage.
-export const toServerConfig = (thresholds: AlertThresholds): AlertConfig => ({
-  errorRatePct: thresholds.errorRatePct,
-  p99Ms: thresholds.p99Ms,
-  targetErrorRatePct: thresholds.targetErrorRatePct,
-  trafficDropPct: thresholds.trafficDropPct,
-  sloAvailabilityPct: thresholds.sloAvailabilityPct,
-  alertOnNoData: thresholds.alertOnNoData,
-  snoozeUntil: thresholds.snoozeUntil,
-  routeRules: thresholds.routeRules,
-  targetRules: thresholds.targetRules,
-  updatedAt: 0,
-});
-
-export const mergeServerConfig = (base: AlertThresholds, config: AlertConfig): AlertThresholds => ({
-  ...base,
-  errorRatePct: config.errorRatePct,
-  p99Ms: config.p99Ms,
-  targetErrorRatePct: config.targetErrorRatePct,
-  trafficDropPct: config.trafficDropPct,
-  sloAvailabilityPct: config.sloAvailabilityPct,
-  alertOnNoData: config.alertOnNoData ?? false,
-  snoozeUntil: config.snoozeUntil ?? null,
-  routeRules: config.routeRules ?? [],
-  targetRules: config.targetRules ?? [],
-});
-
-const STORAGE_KEY = 'metricsAlertThresholds';
-const HISTORY_KEY = 'metricsAlertHistory';
-const HISTORY_MAX = 50;
-// Rate thresholds on a trickle of requests are noise.
-const MIN_SCOPED_REQUESTS = 5;
-const MIN_TRAFFIC_BASELINE = 30;
-
-export const defaultThresholds: AlertThresholds = {
-  errorRatePct: null,
-  p99Ms: null,
-  targetErrorRatePct: null,
-  trafficDropPct: null,
-  sloAvailabilityPct: null,
-  alertOnNoData: false,
-  snoozeUntil: null,
-  eventLoopLagP99Ms: null,
-  valkeyUnavailable: false,
-  notify: false,
-  routeRules: [],
-  targetRules: [],
-};
-
-export const loadThresholds = (): AlertThresholds => {
-  const stored = LocalStorage.getItem(STORAGE_KEY);
-  if (stored && typeof stored === 'object') {
-    // Older saves lack the newer fields — defaults fill them in.
-    return { ...defaultThresholds, ...(stored as Partial<AlertThresholds>) };
-  }
-  return defaultThresholds;
-};
-
-export interface AlertContext {
-  previous?: MetricsSummary;
-  health?: MetricsHealth;
-}
-
-export const evaluateAlerts = (
-  snapshot: MetricsSnapshot,
-  thresholds: AlertThresholds,
-  context: AlertContext = {},
-): string[] => {
-  // Snoozed: nothing breaches until the mute expires.
-  if (thresholds.snoozeUntil !== null && Date.now() < thresholds.snoozeUntil) return [];
-  const breaches: string[] = [];
-  const { summary } = snapshot;
-
-  if (
-    thresholds.alertOnNoData &&
-    summary.totalRequests === 0 &&
-    context.previous &&
-    context.previous.totalRequests >= MIN_TRAFFIC_BASELINE
-  ) {
-    breaches.push(
-      `No traffic in this window (previous window had ${context.previous.totalRequests} requests)`,
-    );
-  }
-
-  if (summary.totalRequests > 0) {
-    if (thresholds.errorRatePct !== null && summary.errorRate >= thresholds.errorRatePct) {
-      breaches.push(`Error rate ${summary.errorRate.toFixed(1)}% ≥ ${thresholds.errorRatePct}%`);
-    }
-    if (thresholds.p99Ms !== null && summary.p99LatencyMs >= thresholds.p99Ms) {
-      breaches.push(`P99 latency ${Math.round(summary.p99LatencyMs)}ms ≥ ${thresholds.p99Ms}ms`);
-    }
-
-    if (thresholds.targetErrorRatePct !== null) {
-      for (const target of snapshot.downstream) {
-        if (target.requestCount < MIN_SCOPED_REQUESTS) continue;
-        const rate = (target.errorCount / target.requestCount) * 100;
-        if (rate >= thresholds.targetErrorRatePct) {
-          breaches.push(
-            `${target.target} error rate ${rate.toFixed(1)}% ≥ ${thresholds.targetErrorRatePct}%`,
-          );
-        }
-      }
-    }
-
-    for (const rule of thresholds.routeRules) {
-      const route = snapshot.routeBreakdown.find((r) => `${r.method} ${r.route}` === rule.key);
-      if (!route || route.requestCount < MIN_SCOPED_REQUESTS) continue;
-      const rate = (route.errorCount / route.requestCount) * 100;
-      if (rule.errorRatePct !== null && rate >= rule.errorRatePct) {
-        breaches.push(`${rule.key} error rate ${rate.toFixed(1)}% ≥ ${rule.errorRatePct}%`);
-      }
-      if (
-        rule.p95Ms !== null &&
-        route.p95LatencyMs !== undefined &&
-        route.p95LatencyMs >= rule.p95Ms
-      ) {
-        breaches.push(`${rule.key} p95 ${Math.round(route.p95LatencyMs)}ms ≥ ${rule.p95Ms}ms`);
-      }
-    }
-
-    for (const rule of thresholds.targetRules) {
-      const target = snapshot.downstream.find((d) => d.target === rule.target);
-      if (!target || target.requestCount < MIN_SCOPED_REQUESTS) continue;
-      const rate = (target.errorCount / target.requestCount) * 100;
-      if (rule.errorRatePct !== null && rate >= rule.errorRatePct) {
-        breaches.push(`${rule.target} error rate ${rate.toFixed(1)}% ≥ ${rule.errorRatePct}%`);
-      }
-      if (rule.avgLatencyMs !== null && target.avgLatencyMs >= rule.avgLatencyMs) {
-        breaches.push(
-          `${rule.target} avg latency ${Math.round(target.avgLatencyMs)}ms ≥ ${rule.avgLatencyMs}ms`,
-        );
-      }
-    }
-  }
-
-  if (
-    thresholds.trafficDropPct !== null &&
-    context.previous &&
-    context.previous.totalRequests >= MIN_TRAFFIC_BASELINE
-  ) {
-    const drop =
-      ((context.previous.totalRequests - summary.totalRequests) / context.previous.totalRequests) *
-      100;
-    if (drop >= thresholds.trafficDropPct) {
-      breaches.push(
-        `Traffic dropped ${drop.toFixed(0)}% vs previous window (${summary.totalRequests} vs ${context.previous.totalRequests})`,
-      );
-    }
-  }
-
-  if (thresholds.eventLoopLagP99Ms !== null && context.health) {
-    for (const pod of context.health.cluster.length > 0
-      ? context.health.cluster
-      : [context.health.pod]) {
-      if (pod.eventLoopLagP99Ms >= thresholds.eventLoopLagP99Ms) {
-        breaches.push(
-          `${pod.pod} event-loop lag p99 ${pod.eventLoopLagP99Ms}ms ≥ ${thresholds.eventLoopLagP99Ms}ms`,
-        );
-      }
-    }
-  }
-
-  if (thresholds.valkeyUnavailable && context.health?.valkey === 'unavailable') {
-    breaches.push('Valkey unavailable — metrics degraded to per-pod view');
-  }
-
-  return breaches;
-};
-
-// --- Breach history (localStorage ring) --------------------------------
-
-export interface AlertHistoryEntry {
-  ts: number;
-  breaches: string[];
-}
-
-export const loadAlertHistory = (): AlertHistoryEntry[] => {
-  const stored = LocalStorage.getItem(HISTORY_KEY);
-  return Array.isArray(stored) ? (stored as AlertHistoryEntry[]) : [];
-};
-
-const appendAlertHistory = (breaches: string[]): void => {
-  const history = [{ ts: Date.now(), breaches }, ...loadAlertHistory()].slice(0, HISTORY_MAX);
-  LocalStorage.setItem(HISTORY_KEY, history);
-};
-
-const clearAlertHistory = (): void => {
-  LocalStorage.setItem(HISTORY_KEY, []);
-};
-
-// Fires a browser notification (and records history) when a breach appears
-// that wasn't present on the previous snapshot (edge-triggered, not on every
-// poll).
-export const useAlertNotifications = (breaches: string[], thresholds: AlertThresholds) => {
-  const previous = useRef<string>('');
-  useEffect(() => {
-    const signature = breaches.join('|');
-    const isNew = signature && signature !== previous.current;
-    previous.current = signature;
-    if (!isNew) return;
-    appendAlertHistory(breaches);
-    if (!thresholds.notify) return;
-    if (typeof Notification === 'undefined' || Notification.permission !== 'granted') return;
-    new Notification('Observability alert', { body: breaches.join('\n') });
-  }, [breaches, thresholds.notify]);
-};
-
-// --- Settings UI --------------------------------------------------------
+import NumberField from './NumberField';
+import { hasActiveRules } from './evaluate';
+import {
+  clearAlertHistory,
+  loadAlertHistory,
+  saveThresholds,
+  toServerConfig,
+} from './storage';
+import type { AlertHistoryEntry, AlertThresholds, RouteAlertRule, TargetAlertRule } from './types';
 
 interface Props {
   thresholds: AlertThresholds;
@@ -290,33 +46,7 @@ interface Props {
   serverHistory?: AlertHistoryRecord[] | null;
 }
 
-const numberOrNull = (raw: string): number | null => {
-  if (raw.trim() === '') return null;
-  const value = Number(raw);
-  return isNaN(value) || value <= 0 ? null : value;
-};
-
-const NumberField = ({
-  label,
-  value,
-  onChange,
-  width,
-}: {
-  label: string;
-  value: number | null;
-  onChange: (value: number | null) => void;
-  width?: number;
-}) => (
-  <TextField
-    label={label}
-    type="number"
-    size="small"
-    fullWidth={width === undefined}
-    value={value ?? ''}
-    onChange={(e) => onChange(numberOrNull(e.target.value))}
-    sx={width !== undefined ? { width } : undefined}
-  />
-);
+const SNOOZE_OPTIONS_HOURS = [1, 4, 24];
 
 const AlertSettings = ({
   thresholds,
@@ -331,10 +61,12 @@ const AlertSettings = ({
 }: Props) => {
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const [history, setHistory] = useState<AlertHistoryEntry[]>([]);
+  // Ticks so an expiring snooze flips the icon back without a page refresh.
+  const now = useNow(30_000);
 
   const update = (next: AlertThresholds) => {
     onChange(next);
-    LocalStorage.setItem(STORAGE_KEY, next);
+    saveThresholds(next);
     if (shared && onPersistServer) onPersistServer(toServerConfig(next));
   };
 
@@ -360,16 +92,9 @@ const AlertSettings = ({
     update({ ...thresholds, targetRules });
   };
 
-  const snoozed = thresholds.snoozeUntil !== null && Date.now() < thresholds.snoozeUntil;
-
-  const active =
-    thresholds.errorRatePct !== null ||
-    thresholds.p99Ms !== null ||
-    thresholds.trafficDropPct !== null ||
-    thresholds.eventLoopLagP99Ms !== null ||
-    thresholds.valkeyUnavailable ||
-    thresholds.routeRules.length > 0 ||
-    thresholds.targetRules.length > 0;
+  const snoozed = thresholds.snoozeUntil !== null && now < thresholds.snoozeUntil;
+  const active = hasActiveRules(thresholds);
+  const showServerHistory = Boolean(serverHistory && serverHistory.length > 0);
 
   return (
     <>
@@ -468,10 +193,10 @@ const AlertSettings = ({
             <Typography variant="body2" sx={{ fontWeight: 600, mr: 0.5 }}>
               Snooze
             </Typography>
-            {snoozed ? (
+            {snoozed && thresholds.snoozeUntil !== null ? (
               <>
                 <Typography variant="caption" sx={{ color: tokens.warning }}>
-                  Muted until {formatTs(thresholds.snoozeUntil!, 'DD MMM HH:mm', utc)}
+                  Muted until {formatTs(thresholds.snoozeUntil, 'DD MMM HH:mm', utc)}
                 </Typography>
                 <Button
                   size="small"
@@ -482,7 +207,7 @@ const AlertSettings = ({
                 </Button>
               </>
             ) : (
-              [1, 4, 24].map((hours) => (
+              SNOOZE_OPTIONS_HOURS.map((hours) => (
                 <Button
                   key={hours}
                   size="small"
@@ -500,10 +225,7 @@ const AlertSettings = ({
             Snoozing mutes the banner, notifications{shared ? ' and the server webhook' : ''} until
             it expires.
           </Typography>
-          <Typography
-            variant="caption"
-            sx={{ color: tokens.textSubtlest, display: 'block', mb: 1 }}
-          >
+          <Typography variant="caption" sx={{ color: tokens.textSubtlest, display: 'block', mb: 1 }}>
             Loop-lag and Valkey checks use the health feed and are evaluated alongside every metrics
             refresh. SLO burn is evaluated server-side (webhook) only.
             {shared
@@ -512,9 +234,7 @@ const AlertSettings = ({
           </Typography>
 
           <Divider sx={{ my: 1.5 }} />
-          <Box
-            sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}
-          >
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
             <Typography variant="body2" sx={{ fontWeight: 600 }}>
               Per-route rules
             </Typography>
@@ -572,9 +292,7 @@ const AlertSettings = ({
             </Box>
           ))}
 
-          <Box
-            sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}
-          >
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
             <Typography variant="body2" sx={{ fontWeight: 600 }}>
               Per-target rules
             </Typography>
@@ -653,11 +371,9 @@ const AlertSettings = ({
             sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 0.5 }}
           >
             <Typography variant="body2" sx={{ fontWeight: 600 }}>
-              {serverHistory && serverHistory.length > 0
-                ? 'Recent breaches (server, webhook-posted)'
-                : 'Recent breaches'}
+              {showServerHistory ? 'Recent breaches (server, webhook-posted)' : 'Recent breaches'}
             </Typography>
-            {!(serverHistory && serverHistory.length > 0) && history.length > 0 && (
+            {!showServerHistory && history.length > 0 && (
               <Button
                 size="small"
                 onClick={() => {
@@ -670,8 +386,8 @@ const AlertSettings = ({
               </Button>
             )}
           </Box>
-          {serverHistory && serverHistory.length > 0 ? (
-            serverHistory.slice(0, 8).map((entry) => (
+          {showServerHistory ? (
+            serverHistory!.slice(0, 8).map((entry) => (
               <Box key={`${entry.ts}-${entry.kind}`} sx={{ mb: 0.75 }}>
                 <Typography variant="caption" sx={{ color: tokens.textSubtle, fontWeight: 600 }}>
                   {formatTs(entry.ts, 'DD MMM HH:mm:ss', utc)} · {entry.pod}

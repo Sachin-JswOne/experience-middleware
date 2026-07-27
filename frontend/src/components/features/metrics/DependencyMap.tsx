@@ -1,8 +1,9 @@
-import { useMemo, useState } from 'react';
+import { memo, useMemo, useState  } from 'react';
 import { Box, Typography } from '@mui/material';
 import type { RouteDownstreamPair } from '@/_types/metrics.interface';
 import { tokens } from '@/styles/theme';
-import ChartCard, { formatNumber } from './chartShared';
+import { formatNumber } from '@/utils/format';
+import ChartCard from './chartShared';
 
 interface Props {
   pairs: RouteDownstreamPair[] | undefined;
@@ -235,4 +236,4 @@ const DependencyMap = ({ pairs, loading, onSelectRoute }: Props) => {
   );
 };
 
-export default DependencyMap;
+export default memo(DependencyMap);

@@ -46,18 +46,24 @@ const useMetricsQuery = (range: MetricsRange, refreshInterval: RefreshInterval) 
 // The window immediately before the selected one, for delta chips on the
 // summary cards. Relative windows recompute from/to at fetch time so the
 // comparison slides along with auto-refresh.
-export const usePreviousMetricsQuery = (range: MetricsRange, refreshInterval: RefreshInterval) =>
+export const usePreviousMetricsQuery = (
+  range: MetricsRange,
+  refreshInterval: RefreshInterval,
+  // An extra full snapshot per tick — only fetch it where it is rendered.
+  enabled = true,
+) =>
   useQuery<MetricsSnapshot>({
     queryKey: ['metrics-previous', range],
     queryFn: async () => {
       const span = rangeSpanMs(range);
       const to = range.type === 'relative' ? Date.now() - span : range.from;
       const result = await MetricsService.getMetrics({ from: to - span, to });
-      if (!result.data || result.error?.code) {
-        throw new Error(result.error?.message || 'Failed to load metrics');
+      if (!result.data || result.error.code) {
+        throw new Error(result.error.message || 'Failed to load metrics');
       }
       return result.data;
     },
+    enabled,
     refetchInterval: range.type === 'relative' ? refreshInterval : false,
     placeholderData: keepPreviousData,
   });
@@ -66,16 +72,20 @@ export const usePreviousMetricsQuery = (range: MetricsRange, refreshInterval: Re
 // user picks "Live". Relative windows only; reconnects with backoff and
 // reports `connected` so the page can fall back to polling while down.
 export const useMetricsStream = (range: MetricsRange, enabled: boolean) => {
-  const [snapshot, setSnapshot] = useState<MetricsSnapshot | null>(null);
-  const [connected, setConnected] = useState(false);
   const window = range.type === 'relative' ? range.window : null;
+  // Stream identity. Stored alongside the data so switching windows discards
+  // the previous stream's snapshot by comparison rather than by a synchronous
+  // reset inside the effect (which would cascade an extra render).
+  const streamKey = enabled && window ? window : null;
+
+  const [state, setState] = useState<{
+    key: string | null;
+    snapshot: MetricsSnapshot | null;
+    connected: boolean;
+  }>({ key: streamKey, snapshot: null, connected: false });
 
   useEffect(() => {
-    setSnapshot(null);
-    if (!enabled || !window) {
-      setConnected(false);
-      return;
-    }
+    if (!enabled || !window) return;
     const controller = new AbortController();
     let retryTimer: ReturnType<typeof setTimeout> | undefined;
     let attempts = 0;
@@ -85,15 +95,14 @@ export const useMetricsStream = (range: MetricsRange, enabled: boolean) => {
         window,
         (next) => {
           attempts = 0;
-          setConnected(true);
-          setSnapshot(next);
+          setState({ key: window, snapshot: next, connected: true });
         },
         controller.signal,
       )
         .catch(() => undefined)
         .finally(() => {
           if (controller.signal.aborted) return;
-          setConnected(false);
+          setState((prev) => ({ ...prev, key: window, connected: false }));
           attempts += 1;
           retryTimer = setTimeout(connect, Math.min(30_000, 2_000 * 2 ** attempts));
         });
@@ -103,11 +112,13 @@ export const useMetricsStream = (range: MetricsRange, enabled: boolean) => {
     return () => {
       controller.abort();
       if (retryTimer) clearTimeout(retryTimer);
-      setConnected(false);
     };
   }, [enabled, window]);
 
-  return { snapshot, connected };
+  // A snapshot from a previous window (or from before the stream was enabled)
+  // must not leak into the current view.
+  const current = state.key === streamKey ? state : null;
+  return { snapshot: current?.snapshot ?? null, connected: current?.connected ?? false };
 };
 
 // Same range shifted back one week — the anomaly baseline on the request

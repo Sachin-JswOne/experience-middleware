@@ -1,8 +1,8 @@
-import { useMemo } from 'react';
+import { memo, useMemo  } from 'react';
 import { Box, Card, Skeleton, Tooltip, Typography } from '@mui/material';
 import type { RouteBreakdown } from '@/_types/metrics.interface';
 import { tokens } from '@/styles/theme';
-import { formatNumber, formatPercent } from './chartShared';
+import { formatNumber, formatPercent } from '@/utils/format';
 
 interface Props {
   data: RouteBreakdown[];
@@ -101,4 +101,4 @@ const CacheOpportunitiesPanel = ({ data, loading }: Props) => {
   );
 };
 
-export default CacheOpportunitiesPanel;
+export default memo(CacheOpportunitiesPanel);

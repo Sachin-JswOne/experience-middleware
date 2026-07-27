@@ -1,10 +1,10 @@
-import { useMemo } from 'react';
+import { memo, useMemo  } from 'react';
 import { Box, Card, Chip, Skeleton, Tooltip, Typography } from '@mui/material';
 import ArrowDropUpIcon from '@mui/icons-material/ArrowDropUp';
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 import type { RouteBreakdown } from '@/_types/metrics.interface';
 import { tokens } from '@/styles/theme';
-import { formatMs } from './chartShared';
+import { formatMs } from '@/utils/format';
 
 interface Props {
   current: RouteBreakdown[];
@@ -207,4 +207,4 @@ const TopMoversPanel = ({ current, previous, loading, onSelect }: Props) => {
   );
 };
 
-export default TopMoversPanel;
+export default memo(TopMoversPanel);

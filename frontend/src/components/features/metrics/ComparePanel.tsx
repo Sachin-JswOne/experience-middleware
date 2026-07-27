@@ -14,7 +14,7 @@ import {
 import CloseIcon from '@mui/icons-material/Close';
 import type { MetricsSnapshot, RouteBreakdown } from '@/_types/metrics.interface';
 import { tokens } from '@/styles/theme';
-import { formatMs, formatNumber, formatPercent } from './chartShared';
+import { formatMs, formatNumber, formatPercent } from '@/utils/format';
 
 interface Props {
   open: boolean;

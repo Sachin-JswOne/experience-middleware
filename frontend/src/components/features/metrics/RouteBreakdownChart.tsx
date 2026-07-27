@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { Typography, Box } from '@mui/material';
 import {
   BarChart,
@@ -11,7 +12,8 @@ import {
 } from 'recharts';
 import type { RouteBreakdown } from '@/_types/metrics.interface';
 import { tokens } from '@/styles/theme';
-import ChartCard, { CHART_COLORS, formatMs, formatPercent } from './chartShared';
+import { formatMs, formatPercent } from '@/utils/format';
+import ChartCard, { CHART_COLORS } from './chartShared';
 
 interface Props {
   data: RouteBreakdown[];
@@ -146,4 +148,4 @@ const RouteBreakdownChart = ({ data, loading }: Props) => {
   );
 };
 
-export default RouteBreakdownChart;
+export default memo(RouteBreakdownChart);

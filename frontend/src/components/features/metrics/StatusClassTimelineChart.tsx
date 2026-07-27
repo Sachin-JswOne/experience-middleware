@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import {
   AreaChart,
   Area,
@@ -114,4 +115,4 @@ const StatusClassTimelineChart = ({
   );
 };
 
-export default StatusClassTimelineChart;
+export default memo(StatusClassTimelineChart);

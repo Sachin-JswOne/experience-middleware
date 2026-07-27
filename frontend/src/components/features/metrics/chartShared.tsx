@@ -2,12 +2,9 @@ import { useRef, useState, type ReactNode } from 'react';
 import { Box, Card, IconButton, Skeleton, Tooltip, Typography } from '@mui/material';
 import DownloadIcon from '@mui/icons-material/Download';
 import FullscreenIcon from '@mui/icons-material/Fullscreen';
-import dayjs from 'dayjs';
-import utcPlugin from 'dayjs/plugin/utc';
 import { LATENCY_HISTOGRAM_BOUNDS } from '@/_types/metrics.interface';
+import { formatTs } from '@/utils/format';
 import { tokens } from '@/styles/theme';
-
-dayjs.extend(utcPlugin);
 
 // Tooltips of the Overview timeline charts move together when they share
 // this id (they render the same buckets).
@@ -33,13 +30,14 @@ export const CHART_COLORS = [
   '#964AC0',
   '#42B2D7',
   '#BD5B00',
-];
+] as const;
 
 // Single-hue semantic chart colors (DESIGN.md §4 Chart colors) for series that
 // need a distinct hue outside the categorical palette above.
 export const CHART_BRAND = '#357DE8'; // chart-brand
 export const CHART_PURPLE = '#BF63F3'; // chart-purple-bold
 export const CHART_WARNING = '#F68909'; // chart-warning
+export const CHART_DANGER = '#E2483D'; // chart-danger
 
 // Colors for HTTP status classes, shared by every status-class chart.
 export const STATUS_CLASS_COLORS = {
@@ -55,19 +53,6 @@ export const STATUS_CLASS_LABELS = {
   c4xx: '4xx',
   c5xx: '5xx',
 } as const;
-
-export const formatNumber = (value: number): string => {
-  if (Math.abs(value) >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}M`;
-  if (Math.abs(value) >= 10_000) return `${(value / 1_000).toFixed(1)}k`;
-  return String(Math.round(value));
-};
-
-export const formatMs = (value: number): string => {
-  if (value >= 1000) return `${(value / 1000).toFixed(1)} s`;
-  return `${Math.round(value)} ms`;
-};
-
-export const formatPercent = (value: number): string => `${value.toFixed(1)}%`;
 
 // Estimate a percentile from a bucket's latency histogram ('25'…'30000',
 // 'inf') via linear interpolation — mirrors the backend estimator so
@@ -141,11 +126,6 @@ export const CHART_TOOLTIP_STYLE = {
 };
 
 export const CHART_TOOLTIP_LABEL_STYLE = { color: tokens.textInverse };
-
-// All chart/time labels go through this so the dashboard's UTC toggle
-// affects every timestamp consistently.
-export const formatTs = (ts: number, template: string, utc = false): string =>
-  (utc ? dayjs(ts).utc() : dayjs(ts)).format(template);
 
 // Hour-or-coarser buckets span days — include the date in the axis label.
 export const formatBucketTs = (ts: number, bucketIntervalMs?: number, utc = false): string =>

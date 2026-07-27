@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { memo, useMemo, useState  } from 'react';
 import {
   Box,
   Card,
@@ -18,7 +18,8 @@ import DownloadIcon from '@mui/icons-material/Download';
 import AccountTreeIcon from '@mui/icons-material/AccountTree';
 import type { RouteBreakdown } from '@/_types/metrics.interface';
 import { tokens } from '@/styles/theme';
-import { formatMs, formatNumber, formatPercent } from './chartShared';
+import { PILL_STYLES, type PillTone } from './statusPill';
+import { formatMs, formatNumber, formatPercent } from '@/utils/format';
 
 interface Props {
   data: RouteBreakdown[];
@@ -63,9 +64,8 @@ export const routeHealthScore = (r: RouteBreakdown): number => {
 };
 
 const healthGrade = (score: number): { label: string; color: string; bg: string } => {
-  if (score >= 90) return { label: String(score), color: '#37471F', bg: '#D3F1A7' };
-  if (score >= 70) return { label: String(score), color: '#693200', bg: '#FCE4A6' };
-  return { label: String(score), color: '#5D1F1A', bg: '#FFD5D2' };
+  const tone: PillTone = score >= 90 ? 'success' : score >= 70 ? 'warning' : 'danger';
+  return { label: String(score), color: PILL_STYLES[tone].text, bg: PILL_STYLES[tone].bg };
 };
 
 const sortValue = (r: RouteBreakdown, key: SortKey): number => {
@@ -291,4 +291,4 @@ const RoutesTable = ({ data, loading, onRowClick, onDrill }: Props) => {
   );
 };
 
-export default RoutesTable;
+export default memo(RoutesTable);

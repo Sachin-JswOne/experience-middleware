@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import {
   BarChart,
   Bar,
@@ -10,13 +11,8 @@ import {
 } from 'recharts';
 import type { DownstreamBreakdown } from '@/_types/metrics.interface';
 import { tokens } from '@/styles/theme';
-import ChartCard, {
-  CHART_BRAND,
-  CHART_PURPLE,
-  CHART_TOOLTIP_LABEL_STYLE,
-  CHART_TOOLTIP_STYLE,
-  formatMs,
-} from './chartShared';
+import { formatMs } from '@/utils/format';
+import ChartCard, { CHART_BRAND, CHART_PURPLE, CHART_TOOLTIP_LABEL_STYLE, CHART_TOOLTIP_STYLE } from './chartShared';
 
 interface Props {
   data: DownstreamBreakdown[];
@@ -79,4 +75,4 @@ const DownstreamLatencyChart = ({ data, loading }: Props) => {
   );
 };
 
-export default DownstreamLatencyChart;
+export default memo(DownstreamLatencyChart);

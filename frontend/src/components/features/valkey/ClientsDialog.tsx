@@ -1,4 +1,3 @@
-import { useEffect, useState } from 'react';
 import {
   Box,
   Button,
@@ -17,8 +16,7 @@ import {
   Typography,
 } from '@mui/material';
 
-import ValkeyAdminService from '@/services/ValkeyAdminService';
-import type { ValkeyClients } from '@/_types/valkey.interface';
+import { useValkeyClients } from './useValkeyQueries';
 
 interface ClientsDialogProps {
   open: boolean;
@@ -33,23 +31,9 @@ const formatSeconds = (seconds: number): string => {
 };
 
 const ClientsDialog = ({ open, onClose }: ClientsDialogProps) => {
-  const [clients, setClients] = useState<ValkeyClients | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-
-  useEffect(() => {
-    if (!open) return;
-    setLoading(true);
-    setError('');
-    void ValkeyAdminService.getClients().then((result) => {
-      if (result.error.message || result.error.code) {
-        setError(result.error.message || 'Failed to load connected clients');
-      } else {
-        setClients(result.data);
-      }
-      setLoading(false);
-    });
-  }, [open]);
+  // Only fetched while the dialog is open; the result is cached between opens.
+  const { data: clients, isFetching: loading, error } = useValkeyClients(open);
+  const errorMessage = error instanceof Error ? error.message : '';
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="lg" fullWidth>
@@ -60,13 +44,13 @@ const ClientsDialog = ({ open, onClose }: ClientsDialogProps) => {
             <CircularProgress />
           </Box>
         )}
-        {!loading && error && (
+        {!loading && errorMessage && (
           <Typography color="error" sx={{ py: 2 }}>
-            {error}
+            {errorMessage}
           </Typography>
         )}
         {!loading &&
-          !error &&
+          !errorMessage &&
           clients?.nodes.map(({ node, clients: nodeClients }) => (
             <Box key={node} sx={{ mb: 3 }}>
               <Typography variant="subtitle2" sx={{ mb: 1 }}>

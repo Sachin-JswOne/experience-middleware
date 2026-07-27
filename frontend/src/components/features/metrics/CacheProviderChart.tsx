@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import {
   BarChart,
   Bar,
@@ -54,4 +55,4 @@ const CacheProviderChart = ({ data, loading }: Props) => {
   );
 };
 
-export default CacheProviderChart;
+export default memo(CacheProviderChart);

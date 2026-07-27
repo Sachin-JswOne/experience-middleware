@@ -1,58 +1,50 @@
-import ApiClient, { IApiClientResponse } from '@/services/ApiClient';
-import { ILooseObject } from '@/_types/common.interface';
+import ApiClient, { type IResult } from '@/services/ApiClient';
+import { API_ROUTES } from '@/configs/ApiRoutes';
+import type { SessionProfile } from '@/utils/session';
 
-export type GetUserInfoResultType = {
-  data: ILooseObject;
-  error: IApiClientResponse['error'];
-};
+/**
+ * Session handshake response.
+ *
+ * `token` is present only while the server runs in legacy mode. In cookie
+ * mode it is absent — the token was set as an httpOnly cookie and the SPA
+ * never sees it.
+ */
+export interface SessionExchangeResponse {
+  profile: SessionProfile;
+  token?: string;
+}
 
 abstract class UserService {
-  static async getAuth2AccessToken(
-    authId: string
-  ): Promise<GetUserInfoResultType> {
-    const result: GetUserInfoResultType = {
-      data: {},
-      error: {
-        code: 0,
-        message: ''
-      }
-    };
-
-    const response: IApiClientResponse = await ApiClient.makeRequest({
-      url: `/xp-mi/public/v1/auth/retrieve-access-token?auth-id=${authId}`,
-      method: 'GET'
+  /** Exchanges the one-time auth-id from the OAuth redirect for a session. */
+  static exchangeAuthId(authId: string): Promise<IResult<SessionExchangeResponse>> {
+    return ApiClient.makeRequest<SessionExchangeResponse>({
+      url: API_ROUTES.AUTH.SESSION_EXCHANGE(authId),
+      method: 'GET',
+      // No session exists yet at this point in the handshake.
+      skipAuth: true,
     });
-
-    if (response.data) {
-      result.data = { ...response.data };
-    } else {
-      result.error = { ...response.error };
-    }
-    return result;
   }
 
-  static async getUAMUserInfo(token: string): Promise<GetUserInfoResultType> {
-    const result: GetUserInfoResultType = {
-      data: {},
-      error: {
-        code: 0,
-        message: ''
-      }
-    };
-    const response: IApiClientResponse = await ApiClient.makeRequest({
-      url: '/xp-mi/public/v1/auth/user/me',
+  /**
+   * Server-side "am I signed in?". The only way to test a cookie session,
+   * since an httpOnly cookie is invisible to JS.
+   */
+  static getSession(): Promise<IResult<{ profile: SessionProfile }>> {
+    return ApiClient.makeRequest<{ profile: SessionProfile }>({
+      url: API_ROUTES.AUTH.SESSION,
       method: 'GET',
-      headers: {
-        authorization: `Bearer ${token}`
-      }
+      // A 401 here is the expected "signed out" answer, not a session expiry.
+      suppressAuthExpiry: true,
     });
-    if (response.data?.data) {
-      delete response.data.data.password;
-      result.data = { ...response.data.data, token };
-    } else {
-      result.error = { ...response.error };
-    }
-    return result;
+  }
+
+  /** Clears the httpOnly cookie. A no-op in legacy mode, and harmless. */
+  static logout(): Promise<IResult<{ ok: boolean }>> {
+    return ApiClient.makeRequest<{ ok: boolean }>({
+      url: API_ROUTES.AUTH.SESSION_LOGOUT,
+      method: 'POST',
+      suppressAuthExpiry: true,
+    });
   }
 }
 

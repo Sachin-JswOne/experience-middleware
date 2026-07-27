@@ -1,5 +1,4 @@
-import { useEffect, useState } from 'react';
-import { useSnackbar } from 'notistack';
+import { useState } from 'react';
 import {
   Alert,
   Button,
@@ -11,7 +10,7 @@ import {
   TextField,
 } from '@mui/material';
 
-import ValkeyAdminService from '@/services/ValkeyAdminService';
+import { useFlush } from './useValkeyQueries';
 
 interface FlushConfirmDialogProps {
   scope: 'db' | 'all' | null;
@@ -19,29 +18,24 @@ interface FlushConfirmDialogProps {
   onFlushed: () => void;
 }
 
+const CONFIRM_WORD = 'FLUSH';
+
 const FlushConfirmDialog = ({ scope, onClose, onFlushed }: FlushConfirmDialogProps) => {
-  const { enqueueSnackbar } = useSnackbar();
   const [confirmText, setConfirmText] = useState('');
-  const [submitting, setSubmitting] = useState(false);
-
-  useEffect(() => {
+  // Clears the typed confirmation whenever a new flush is requested, so the
+  // destructive button never starts out already armed.
+  const [lastScope, setLastScope] = useState(scope);
+  if (scope !== lastScope) {
+    setLastScope(scope);
     if (scope) setConfirmText('');
-  }, [scope]);
+  }
 
-  const handleFlush = async () => {
-    if (!scope || confirmText !== 'FLUSH') return;
-    setSubmitting(true);
-    const result = await ValkeyAdminService.flush(scope, confirmText);
-    if (result.error.message || result.error.code) {
-      enqueueSnackbar(result.error.message || 'Flush failed', { variant: 'error' });
-    } else {
-      enqueueSnackbar(
-        `Flushed ${scope === 'all' ? 'all databases' : 'current database'} on ${result.data?.nodes ?? 0} node(s)`,
-        { variant: 'success' },
-      );
-      onFlushed();
-    }
-    setSubmitting(false);
+  const flushMutation = useFlush(onFlushed);
+  const submitting = flushMutation.isPending;
+
+  const handleFlush = () => {
+    if (!scope || confirmText !== CONFIRM_WORD) return;
+    flushMutation.mutate({ scope, confirm: confirmText });
   };
 
   return (
@@ -75,7 +69,7 @@ const FlushConfirmDialog = ({ scope, onClose, onFlushed }: FlushConfirmDialogPro
           onClick={handleFlush}
           color="error"
           variant="contained"
-          disabled={confirmText !== 'FLUSH' || submitting}
+          disabled={confirmText !== CONFIRM_WORD || submitting}
         >
           {submitting ? 'Flushing…' : 'Flush'}
         </Button>

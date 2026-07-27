@@ -1,32 +1,66 @@
 import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Alert, Box, Card, Typography } from '@mui/material';
-import type { ILooseObject } from '@/_types/common.interface';
 import Login from '@/components/features/login/Login';
-import LocalStorage from '@/utils/LocalStorage';
 import AppConfig from '@/configs/AppConfig';
+import { clearSession, readSession, safeRedirectPath, writeSession } from '@/utils/session';
+import UserService from '@/services/UserService';
 import { tokens } from '@/styles/theme';
+
+interface LoginRouteState {
+  authError?: string;
+}
+
+// A session from an incompatible app version is discarded up front, during the
+// initial state computation, so the effect below never has to set state.
+const staleVersionNotice = (): string | null => {
+  const session = readSession();
+  if (session && session.compatibleVersion !== AppConfig.COMPATIBLE_VERSION) {
+    clearSession();
+    return 'You were signed out — please sign in again.';
+  }
+  return null;
+};
 
 const LoginPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [notice, setNotice] = useState<string | null>(
-    (location.state as ILooseObject | undefined)?.authError ?? null
+    () => (location.state as LoginRouteState | undefined)?.authError ?? staleVersionNotice(),
   );
 
   useEffect(() => {
-    const userInfo: ILooseObject | undefined =
-      LocalStorage.getItem('userInfo');
+    let cancelled = false;
+    const target = safeRedirectPath(new URLSearchParams(location.search).get('redirectTo'));
 
-    if (userInfo?.token) {
-      if (userInfo.compatibleVersion !== AppConfig.COMPATIBLE_VERSION) {
-        LocalStorage.removeItem('userInfo');
-        setNotice('You were signed out — please sign in again.');
-        return;
-      }
-      navigate('/', { replace: true });
+    // Still signed in (and compatible) — skip the login screen.
+    if (readSession()) {
+      navigate(target, { replace: true });
+      return;
     }
-  }, [navigate]);
+
+    // In cookie mode the credential is invisible to JS, so a live cookie with
+    // no local profile (cleared storage, another tab's logout, a fresh device
+    // profile) still means "signed in". Ask the server before showing the
+    // login button. A 401 here is the normal signed-out answer.
+    void UserService.getSession().then((result) => {
+      if (cancelled || !result.data) return;
+      const { profile } = result.data;
+      writeSession({
+        compatibleVersion: AppConfig.COMPATIBLE_VERSION,
+        name: profile.name,
+        email: profile.email,
+        username: profile.username,
+        permissions: profile.permissions,
+        organizations: profile.organizations,
+      });
+      navigate(target, { replace: true });
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [navigate, location.search]);
 
   return (
     <Box

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { memo, useMemo, useState  } from 'react';
 import {
   Box,
   Card,
@@ -26,24 +26,14 @@ import {
   type TimelineBucket,
 } from '@/_types/metrics.interface';
 import LocalStorage from '@/utils/LocalStorage';
+import { loadPersisted } from '@/utils/usePersistedState';
 import { tokens } from '@/styles/theme';
-import { formatMs } from './chartShared';
+import { formatMs } from '@/utils/format';
 
-// Bordered lozenge status pill per DESIGN.md (bg-subtler + border + bolder text).
-type PillTone = 'success' | 'danger' | 'warning';
-const PILL_STYLES: Record<PillTone, { bg: string; border: string; text: string }> = {
-  success: { bg: '#D3F1A7', border: '#6A9A23', text: '#37471F' },
-  danger: { bg: '#FFD5D2', border: '#E2483D', text: '#5D1F1A' },
-  warning: { bg: '#FCE4A6', border: '#E06C00', text: '#693200' },
-};
-const pillSx = (tone: PillTone) => ({
-  height: 18,
-  fontSize: 12,
-  fontWeight: tokens.weightBold,
-  color: PILL_STYLES[tone].text,
-  bgcolor: PILL_STYLES[tone].bg,
-  border: `1px solid ${PILL_STYLES[tone].border}`,
-});
+import { pillSx as basePillSx, type PillTone } from './statusPill';
+
+// SLO chips use the shorter lozenge variant.
+const pillSx = (tone: PillTone) => basePillSx(tone, 18);
 
 export interface SloConfig {
   availabilityTargetPct: number | null;
@@ -61,12 +51,10 @@ const defaultSloConfig: SloConfig = {
   apdexTargetMs: null,
 };
 
-export const loadSloConfig = (): SloConfig => {
-  const stored = LocalStorage.getItem(STORAGE_KEY);
-  if (stored && typeof stored === 'object') {
-    return { ...defaultSloConfig, ...(stored as Partial<SloConfig>) };
-  }
-  return defaultSloConfig;
+export const loadSloConfig = (): SloConfig => loadPersisted(STORAGE_KEY, defaultSloConfig);
+
+export const saveSloConfig = (config: SloConfig): void => {
+  LocalStorage.setItem(STORAGE_KEY, config);
 };
 
 // Apdex over the window's latency histograms. T is snapped to a histogram
@@ -144,7 +132,7 @@ const SloCard = ({ summary, timeline, loading, config, onConfigChange }: Props) 
 
   const update = (next: SloConfig) => {
     onConfigChange(next);
-    LocalStorage.setItem(STORAGE_KEY, next);
+    saveSloConfig(next);
   };
 
   const apdex = useMemo(
@@ -376,4 +364,4 @@ const SloCard = ({ summary, timeline, loading, config, onConfigChange }: Props) 
   );
 };
 
-export default SloCard;
+export default memo(SloCard);

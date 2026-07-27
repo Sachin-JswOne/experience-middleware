@@ -1,9 +1,10 @@
+import { memo } from 'react';
 import { Box, Card, Chip, Skeleton, Tooltip, Typography } from '@mui/material';
 import ArrowDropUpIcon from '@mui/icons-material/ArrowDropUp';
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 import type { MetricsSummary } from '@/_types/metrics.interface';
 import { tokens } from '@/styles/theme';
-import { formatMs, formatNumber } from './chartShared';
+import { formatMs, formatNumber } from '@/utils/format';
 
 interface SummaryCardsProps {
   summary: MetricsSummary;
@@ -224,4 +225,4 @@ const SummaryCards = ({ summary, loading, previous, rps }: SummaryCardsProps) =>
   );
 };
 
-export default SummaryCards;
+export default memo(SummaryCards);

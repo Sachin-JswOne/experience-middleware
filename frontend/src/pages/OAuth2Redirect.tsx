@@ -1,12 +1,16 @@
 import { useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import type { ILooseObject } from '@/_types/common.interface';
 import LoginLoading from '@/components/features/oauth/LoginLoading';
 import UserService from '@/services/UserService';
-import LocalStorage from '@/utils/LocalStorage';
 import AppConfig from '@/configs/AppConfig';
-import { processUamAuthorities } from '@/utils/auth';
+import { safeRedirectPath, writeSession, type SessionUser } from '@/utils/session';
 
+/**
+ * Lands here from the IdP with a one-time `auth-id`. The server exchanges it
+ * for a token and — in cookie mode — keeps the token in an httpOnly cookie,
+ * returning only the profile. Either shape is accepted: whether `token` comes
+ * back decides what gets stored locally.
+ */
 const OAuth2Redirect = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -18,8 +22,8 @@ const OAuth2Redirect = () => {
       processedRef.current = true;
 
       const authId = searchParams.get('auth-id');
-
-      const redirectTo = searchParams.get('redirectTo') || '/';
+      // Never navigate to an off-origin destination supplied in the URL.
+      const redirectTo = safeRedirectPath(searchParams.get('redirectTo'));
 
       if (!authId) {
         navigate('/login', {
@@ -29,61 +33,35 @@ const OAuth2Redirect = () => {
         return;
       }
 
-      try {
-        // Step 1: Exchange auth-id for access token (fatal if fails)
-        const tokenResponse = await UserService.getAuth2AccessToken(authId);
-        const accessToken: string | undefined = tokenResponse?.data?.token;
-
-        if (!accessToken) {
-          navigate('/login', {
-            replace: true,
-            state: { authError: 'Sign-in failed: no access token was returned. Please try again.' },
-          });
-          return;
-        }
-
-        // Step 2: Build base userInfo with just the token
-        const userInfo: ILooseObject = {
-          token: accessToken,
-          compatibleVersion: AppConfig.COMPATIBLE_VERSION,
-          permissions: [],
-          name: '',
-          email: '',
-          username: '',
-          organizations: [],
-        };
-
-        // Step 3: Fetch UAM user info (non-fatal — best-effort)
-        try {
-          const userResponse = await UserService.getUAMUserInfo(accessToken);
-          const uamUserInfo: ILooseObject | undefined = userResponse?.data;
-          if (uamUserInfo?.name) {
-            const uamPermissions = processUamAuthorities(uamUserInfo, AppConfig.UAMApplications);
-            userInfo.username = uamUserInfo.name ?? '';
-            userInfo.email = uamUserInfo.email_id ?? '';
-            userInfo.name = uamUserInfo.name;
-            // UAM permission names plus flat role names (some deployments
-            // grant admin actions via role name).
-            userInfo.permissions = [...new Set([...uamPermissions, ...(uamUserInfo.roles ?? [])])];
-            userInfo.organizations = uamUserInfo.uamAuthorities?.organizations ?? [];
-          }
-        } catch (uamError) {
-          console.warn('UAM fetch failed, proceeding with token only:', uamError);
-        }
-
-        // Step 4: Persist and redirect
-        LocalStorage.setItem('userInfo', userInfo);
-        navigate(redirectTo, { replace: true });
-      } catch (error) {
-        console.error('OAuth2 authentication failed:', error);
+      const result = await UserService.exchangeAuthId(authId);
+      if (!result.data) {
         navigate('/login', {
           replace: true,
-          state: { authError: 'Sign-in failed. Please try again.' },
+          state: {
+            authError:
+              result.error.message || 'Sign-in failed. Please try again.',
+          },
         });
+        return;
       }
+
+      const { profile, token } = result.data;
+      const session: SessionUser = {
+        compatibleVersion: AppConfig.COMPATIBLE_VERSION,
+        name: profile.name,
+        email: profile.email,
+        username: profile.username,
+        permissions: profile.permissions,
+        organizations: profile.organizations,
+        // Absent in cookie mode — the browser holds the credential instead.
+        ...(token ? { token } : {}),
+      };
+
+      writeSession(session);
+      navigate(redirectTo, { replace: true });
     };
 
-    handleAuth();
+    void handleAuth();
   }, [navigate, searchParams]);
 
   return <LoginLoading />;

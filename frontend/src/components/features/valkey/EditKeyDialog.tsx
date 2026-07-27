@@ -1,5 +1,4 @@
-import { useEffect, useState } from 'react';
-import { useSnackbar } from 'notistack';
+import { useState } from 'react';
 import {
   Box,
   Button,
@@ -10,7 +9,7 @@ import {
   TextField,
 } from '@mui/material';
 
-import ValkeyAdminService from '@/services/ValkeyAdminService';
+import { useSetKey } from './useValkeyQueries';
 
 interface EditKeyDialogProps {
   open: boolean;
@@ -22,35 +21,32 @@ interface EditKeyDialogProps {
 }
 
 const EditKeyDialog = ({ open, editKey, initialValue, onClose, onSaved }: EditKeyDialogProps) => {
-  const { enqueueSnackbar } = useSnackbar();
-  const [key, setKey] = useState('');
-  const [value, setValue] = useState('');
+  const [key, setKey] = useState(editKey ?? '');
+  const [value, setValue] = useState(initialValue ?? '');
   const [ttl, setTtl] = useState('');
-  const [submitting, setSubmitting] = useState(false);
-
-  useEffect(() => {
+  // Seeds the form when the dialog opens. Adjusting state during render (the
+  // documented alternative to a reset effect) avoids the extra render pass an
+  // effect-then-setState would cause.
+  const [wasOpen, setWasOpen] = useState(open);
+  if (open !== wasOpen) {
+    setWasOpen(open);
     if (open) {
       setKey(editKey ?? '');
       setValue(initialValue ?? '');
       setTtl('');
     }
-  }, [open, editKey, initialValue]);
+  }
+
+  const saveMutation = useSetKey(onSaved);
+  const submitting = saveMutation.isPending;
 
   const ttlNumber = ttl.trim() ? Number(ttl.trim()) : undefined;
   const ttlValid = ttlNumber === undefined || (Number.isInteger(ttlNumber) && ttlNumber >= 0);
   const canSubmit = key.trim().length > 0 && ttlValid;
 
-  const handleSubmit = async () => {
+  const handleSubmit = () => {
     if (!canSubmit) return;
-    setSubmitting(true);
-    const result = await ValkeyAdminService.setKey(key.trim(), value, ttlNumber);
-    if (result.error.message || result.error.code) {
-      enqueueSnackbar(result.error.message || 'Failed to save key', { variant: 'error' });
-    } else {
-      enqueueSnackbar(`Key '${key.trim()}' saved`, { variant: 'success' });
-      onSaved();
-    }
-    setSubmitting(false);
+    saveMutation.mutate({ key: key.trim(), value, ttlSeconds: ttlNumber });
   };
 
   return (

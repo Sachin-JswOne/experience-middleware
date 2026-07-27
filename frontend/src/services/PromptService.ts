@@ -1,6 +1,5 @@
-import ApiClient, { IApiClientResponse } from '@/services/ApiClient';
+import ApiClient, { type IResult } from '@/services/ApiClient';
 import { API_ROUTES } from '@/configs/ApiRoutes';
-import { ILooseObject } from '@/_types/common.interface';
 
 export interface IPromptVersion {
   id: number | string;
@@ -23,82 +22,47 @@ export interface IPromptCreatePayload {
   activate: boolean;
 }
 
-export interface IPromptVersionsResult {
-  data: IPromptVersion[];
-  error: IApiClientResponse['error'];
-}
-
-export interface IPromptMutationResult {
-  data: ILooseObject;
-  error: IApiClientResponse['error'];
-}
+export type IPromptVersionsResult = IResult<IPromptVersion[]>;
+export type IPromptMutationResult = IResult<unknown>;
 
 abstract class PromptService {
   static async getVersions(promptType: string): Promise<IPromptVersionsResult> {
-    const result: IPromptVersionsResult = {
-      data: [],
-      error: { code: 0, message: '' },
-    };
-
-    const response: IApiClientResponse = await ApiClient.makeRequest({
+    // Defensive envelope unwrapping: backend may return { data: [...] } or the
+    // array directly.
+    const response = await ApiClient.makeRequest<
+      IPromptVersion[] | { data?: IPromptVersion[] }
+    >({
       url: API_ROUTES.PROMPTS.VERSIONS(promptType),
       method: 'GET',
-      // headers: getAccessTokenHeader()
     });
 
-    if (response.data) {
-      // Defensive envelope unwrapping: backend may return { data: [...] } or the array directly
-      result.data = (response.data?.data ?? response.data) as IPromptVersion[];
-    } else {
-      result.error = { ...response.error };
+    if (response.error.code || !response.data) {
+      return { data: null, error: response.error };
     }
-    return result;
+    const payload = response.data;
+    const versions = Array.isArray(payload) ? payload : (payload.data ?? []);
+    return { data: versions, error: response.error };
   }
 
-  static async createPrompt(
+  static createPrompt(
     promptType: string,
     payload: IPromptCreatePayload,
   ): Promise<IPromptMutationResult> {
-    const result: IPromptMutationResult = {
-      data: {},
-      error: { code: 0, message: '' },
-    };
-
-    // TODO confirm base64 encoding with backend curl before switching from plain text
-    const response: IApiClientResponse = await ApiClient.makeRequest({
+    return ApiClient.makeRequest({
       url: API_ROUTES.PROMPTS.CREATE(promptType),
       method: 'POST',
-      body: payload as ILooseObject,
+      body: payload,
     });
-
-    if (response.data) {
-      result.data = { ...response.data };
-    } else {
-      result.error = { ...response.error };
-    }
-    return result;
   }
 
-  static async activateVersion(
+  static activateVersion(
     promptType: string,
     version: number | string,
   ): Promise<IPromptMutationResult> {
-    const result: IPromptMutationResult = {
-      data: {},
-      error: { code: 0, message: '' },
-    };
-
-    const response: IApiClientResponse = await ApiClient.makeRequest({
+    return ApiClient.makeRequest({
       url: API_ROUTES.PROMPTS.ACTIVATE(promptType, version),
       method: 'PUT',
     });
-
-    if (response.data) {
-      result.data = { ...response.data };
-    } else {
-      result.error = { ...response.error };
-    }
-    return result;
   }
 
   static decodePrompt(item: IPromptVersion): string {

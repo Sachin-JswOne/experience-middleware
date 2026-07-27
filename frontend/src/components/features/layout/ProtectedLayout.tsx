@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import {
   AppBar,
@@ -12,10 +12,10 @@ import {
   useTheme,
 } from '@mui/material';
 import { Logout as LogoutIcon, Menu as MenuIcon } from '@mui/icons-material';
-import type { ILooseObject } from '@/_types/common.interface';
 import Sidebar, { SIDEBAR_WIDTH } from './Sidebar';
 import AppConfig from '@/configs/AppConfig';
-import LocalStorage from '@/utils/LocalStorage';
+import { clearSession, onAuthExpired, readSession } from '@/utils/session';
+import UserService from '@/services/UserService';
 import { tokens } from '@/styles/theme';
 
 const ProtectedLayout = () => {
@@ -24,19 +24,35 @@ const ProtectedLayout = () => {
   const theme = useTheme();
   const isDesktop = useMediaQuery(theme.breakpoints.up('md'));
   const [mobileOpen, setMobileOpen] = useState(false);
+  // Session lives in state so an expiry (401 elsewhere in the app) re-renders
+  // this guard instead of leaving the user on a dead page.
+  const [userInfo, setUserInfo] = useState(readSession);
 
-  const stored: ILooseObject | undefined = LocalStorage.getItem('userInfo');
-  const hasToken = Boolean(stored?.token);
+  const signOut = useCallback(() => {
+    clearSession();
+    setUserInfo(null);
+    navigate(`/login?redirectTo=${encodeURIComponent(location.pathname + location.search)}`, {
+      replace: true,
+    });
+    // location is read at click time; re-subscribing on every navigation is
+    // unnecessary, so only the stable pieces are dependencies.
+  }, [navigate, location.pathname, location.search]);
+
+  // ApiClient fires this when the server rejects our token.
+  useEffect(() => onAuthExpired(signOut), [signOut]);
+
   const isOAuth2Route = location.pathname === '/oauth2';
 
-  if (!hasToken && !isOAuth2Route) {
+  if (!userInfo && !isOAuth2Route) {
     return <Navigate to="/login" replace />;
   }
 
-  const userInfo = hasToken ? stored ?? null : null;
-
   const handleLogout = () => {
-    LocalStorage.removeItem('userInfo');
+    // Clears the httpOnly cookie server-side; a no-op in legacy mode. Local
+    // state is dropped immediately rather than waiting on the round-trip.
+    void UserService.logout();
+    clearSession();
+    setUserInfo(null);
     navigate('/login', { replace: true });
   };
 

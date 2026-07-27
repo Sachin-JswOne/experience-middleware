@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSnackbar } from 'notistack';
 import {
   Box,
@@ -42,49 +43,54 @@ const cellEllipsis = {
   whiteSpace: 'nowrap',
 } as const;
 
+const versionNumber = (version: IPromptVersion['version']): number =>
+  typeof version === 'number' ? version : parseInt(String(version), 10) || 0;
+
 const PromptVersionsPanel = ({ promptType }: PromptVersionsPanelProps) => {
   const { enqueueSnackbar } = useSnackbar();
-  const [versions, setVersions] = useState<IPromptVersion[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const queryClient = useQueryClient();
   const [viewItem, setViewItem] = useState<IPromptVersion | null>(null);
   const [addOpen, setAddOpen] = useState(false);
   const [activateItem, setActivateItem] = useState<IPromptVersion | null>(null);
-  const [activating, setActivating] = useState(false);
 
-  const fetchVersions = async () => {
-    setLoading(true);
-    setError('');
-    const result = await PromptService.getVersions(promptType);
-    if (result.error.message || result.error.code) {
-      setError(result.error.message || 'Failed to load prompt versions');
-    } else {
-      const sorted = [...result.data].sort((a, b) => {
-        const av = typeof a.version === 'number' ? a.version : parseInt(String(a.version), 10) || 0;
-        const bv = typeof b.version === 'number' ? b.version : parseInt(String(b.version), 10) || 0;
-        return bv - av;
-      });
-      setVersions(sorted);
-    }
-    setLoading(false);
-  };
+  const queryKey = ['prompts', promptType, 'versions'];
 
-  useEffect(() => {
-    fetchVersions();
-  }, [promptType]);
+  const versionsQuery = useQuery({
+    queryKey,
+    queryFn: async () => {
+      const result = await PromptService.getVersions(promptType);
+      if (result.error.message || result.error.code || !result.data) {
+        throw new Error(result.error.message || 'Failed to load prompt versions');
+      }
+      // Newest version first.
+      return [...result.data].sort((a, b) => versionNumber(b.version) - versionNumber(a.version));
+    },
+  });
 
-  const handleActivate = async () => {
-    if (!activateItem) return;
-    setActivating(true);
-    const result = await PromptService.activateVersion(promptType, activateItem.version);
-    if (result.error.message || result.error.code) {
-      enqueueSnackbar(result.error.message || 'Activation failed', { variant: 'error' });
-    } else {
+  const versions = versionsQuery.data ?? [];
+  const loading = versionsQuery.isFetching;
+  const error = versionsQuery.error instanceof Error ? versionsQuery.error.message : '';
+  const fetchVersions = () => void versionsQuery.refetch();
+
+  const activateMutation = useMutation({
+    mutationFn: async (item: IPromptVersion) => {
+      const result = await PromptService.activateVersion(promptType, item.version);
+      if (result.error.message || result.error.code) {
+        throw new Error(result.error.message || 'Activation failed');
+      }
+    },
+    onSuccess: () => {
       enqueueSnackbar('Version activated successfully', { variant: 'success' });
       setActivateItem(null);
-      await fetchVersions();
-    }
-    setActivating(false);
+      void queryClient.invalidateQueries({ queryKey });
+    },
+    onError: (mutationError: Error) =>
+      enqueueSnackbar(mutationError.message, { variant: 'error' }),
+  });
+  const activating = activateMutation.isPending;
+
+  const handleActivate = () => {
+    if (activateItem) activateMutation.mutate(activateItem);
   };
 
   const renderTable = () => {

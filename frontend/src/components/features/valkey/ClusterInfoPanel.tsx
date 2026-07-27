@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import {
   Box,
   Button,
@@ -19,30 +19,15 @@ import {
 import DeleteSweepIcon from '@mui/icons-material/DeleteSweep';
 import RefreshIcon from '@mui/icons-material/Refresh';
 
-import ValkeyAdminService from '@/services/ValkeyAdminService';
-import type { ValkeyClusterNodes, ValkeyInfo } from '@/_types/valkey.interface';
+import { formatBytes, formatUptime } from '@/utils/format';
 import { tokens } from '@/styles/theme';
 import ClientsDialog from './ClientsDialog';
 import FlushConfirmDialog from './FlushConfirmDialog';
+import { useValkeyClusterNodes, useValkeyInfo } from './useValkeyQueries';
 
 interface ClusterInfoPanelProps {
   canWrite: boolean;
 }
-
-const formatBytes = (bytes: number): string => {
-  if (bytes >= 1024 ** 3) return `${(bytes / 1024 ** 3).toFixed(2)} GB`;
-  if (bytes >= 1024 ** 2) return `${(bytes / 1024 ** 2).toFixed(2)} MB`;
-  if (bytes >= 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  return `${bytes} B`;
-};
-
-const formatUptime = (seconds: number): string => {
-  const days = Math.floor(seconds / 86400);
-  const hours = Math.floor((seconds % 86400) / 3600);
-  if (days > 0) return `${days}d ${hours}h`;
-  const minutes = Math.floor((seconds % 3600) / 60);
-  return hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`;
-};
 
 const StatCard = ({
   label,
@@ -80,35 +65,23 @@ const StatCard = ({
 );
 
 const ClusterInfoPanel = ({ canWrite }: ClusterInfoPanelProps) => {
-  const [info, setInfo] = useState<ValkeyInfo | null>(null);
-  const [clusterNodes, setClusterNodes] = useState<ValkeyClusterNodes | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
   const [flushScope, setFlushScope] = useState<'db' | 'all' | null>(null);
   const [clientsOpen, setClientsOpen] = useState(false);
 
-  const fetchAll = async () => {
-    setLoading(true);
-    setError('');
-    const [infoResult, nodesResult] = await Promise.all([
-      ValkeyAdminService.getInfo(),
-      ValkeyAdminService.getClusterNodes(),
-    ]);
-    if (infoResult.error.message || infoResult.error.code) {
-      setError(infoResult.error.message || 'Failed to load cluster info');
-    } else {
-      setInfo(infoResult.data);
-      setClusterNodes(nodesResult.data);
-    }
-    setLoading(false);
+  const infoQuery = useValkeyInfo();
+  const nodesQuery = useValkeyClusterNodes();
+
+  const info = infoQuery.data;
+  const clusterNodes = nodesQuery.data;
+  const loading = infoQuery.isFetching || nodesQuery.isFetching;
+  const error = infoQuery.error instanceof Error ? infoQuery.error.message : '';
+
+  const fetchAll = () => {
+    void infoQuery.refetch();
+    void nodesQuery.refetch();
   };
 
-  useEffect(() => {
-    void fetchAll();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  if (loading && !info) {
+  if (infoQuery.isPending && !info) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
         <CircularProgress />
@@ -285,10 +258,9 @@ const ClusterInfoPanel = ({ canWrite }: ClusterInfoPanelProps) => {
       <FlushConfirmDialog
         scope={flushScope}
         onClose={() => setFlushScope(null)}
-        onFlushed={async () => {
-          setFlushScope(null);
-          await fetchAll();
-        }}
+        // The flush mutation already invalidates the valkey queries; this just
+        // dismisses the dialog.
+        onFlushed={() => setFlushScope(null)}
       />
     </Box>
   );

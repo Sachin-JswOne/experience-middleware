@@ -1,6 +1,5 @@
-import ApiClient, { IApiClientResponse } from '@/services/ApiClient';
+import ApiClient, { type IResult } from '@/services/ApiClient';
 import { API_ROUTES } from '@/configs/ApiRoutes';
-import LocalStorage from '@/utils/LocalStorage';
 import type {
   ValkeyClients,
   ValkeyClusterNodes,
@@ -11,113 +10,75 @@ import type {
   ValkeyStatus,
 } from '@/_types/valkey.interface';
 
-interface IResult<T> {
-  data: T | null;
-  error: IApiClientResponse['error'];
-}
-
-// Cache admin endpoints are guarded in prod — send the logged-in user's token.
-const authHeaders = (): Record<string, string> => {
-  const userInfo = LocalStorage.getItem('userInfo');
-  return userInfo?.token ? { authorization: `Bearer ${userInfo.token}` } : {};
-};
-
-// ApiClient leaves `error` undefined on success — normalize so callers can
-// always read error.code/error.message.
-const toResult = <T>(response: IApiClientResponse): IResult<T> => ({
-  data: (response.data as T) ?? null,
-  error: response.error ?? { code: 0, message: '' },
-});
-
+// Cache admin endpoints are guarded in prod; ApiClient attaches the session
+// token to every request, so nothing to do here.
 const ValkeyAdminService = {
-  async getStatus(): Promise<IResult<ValkeyStatus>> {
-    const response = await ApiClient.makeRequest({
+  getStatus(): Promise<IResult<ValkeyStatus>> {
+    return ApiClient.makeRequest<ValkeyStatus>({
       url: API_ROUTES.VALKEY_ADMIN.STATUS,
       method: 'GET',
-      headers: authHeaders(),
     });
-    return toResult<ValkeyStatus>(response);
   },
 
-  async getInfo(): Promise<IResult<ValkeyInfo>> {
-    const response = await ApiClient.makeRequest({
+  getInfo(): Promise<IResult<ValkeyInfo>> {
+    return ApiClient.makeRequest<ValkeyInfo>({
       url: API_ROUTES.VALKEY_ADMIN.INFO,
       method: 'GET',
-      headers: authHeaders(),
     });
-    return toResult<ValkeyInfo>(response);
   },
 
-  async getClusterNodes(): Promise<IResult<ValkeyClusterNodes>> {
-    const response = await ApiClient.makeRequest({
+  getClusterNodes(): Promise<IResult<ValkeyClusterNodes>> {
+    return ApiClient.makeRequest<ValkeyClusterNodes>({
       url: API_ROUTES.VALKEY_ADMIN.CLUSTER_NODES,
       method: 'GET',
-      headers: authHeaders(),
     });
-    return toResult<ValkeyClusterNodes>(response);
   },
 
-  async getClients(): Promise<IResult<ValkeyClients>> {
-    const response = await ApiClient.makeRequest({
+  getClients(): Promise<IResult<ValkeyClients>> {
+    return ApiClient.makeRequest<ValkeyClients>({
       url: API_ROUTES.VALKEY_ADMIN.CLIENTS,
       method: 'GET',
-      headers: authHeaders(),
     });
-    return toResult<ValkeyClients>(response);
   },
 
-  async scanKeys(
-    pattern: string,
-    cursor?: string,
-    count = 100,
-  ): Promise<IResult<ValkeyScanResult>> {
+  scanKeys(pattern: string, cursor?: string, count = 100): Promise<IResult<ValkeyScanResult>> {
     const query = new URLSearchParams({ pattern: pattern || '*', count: String(count) });
     if (cursor) query.set('cursor', cursor);
-    const response = await ApiClient.makeRequest({
+    return ApiClient.makeRequest<ValkeyScanResult>({
       url: `${API_ROUTES.VALKEY_ADMIN.KEYS}?${query.toString()}`,
       method: 'GET',
-      headers: authHeaders(),
     });
-    return toResult<ValkeyScanResult>(response);
   },
 
-  async getKeyDetail(key: string): Promise<IResult<ValkeyKeyDetail>> {
-    const response = await ApiClient.makeRequest({
+  getKeyDetail(key: string): Promise<IResult<ValkeyKeyDetail>> {
+    return ApiClient.makeRequest<ValkeyKeyDetail>({
       url: API_ROUTES.VALKEY_ADMIN.KEY_DETAIL(key),
       method: 'GET',
-      headers: authHeaders(),
     });
-    return toResult<ValkeyKeyDetail>(response);
   },
 
-  async setKey(key: string, value: string, ttlSeconds?: number): Promise<IResult<{ ok: boolean }>> {
-    const response = await ApiClient.makeRequest({
+  setKey(key: string, value: string, ttlSeconds?: number): Promise<IResult<{ ok: boolean }>> {
+    return ApiClient.makeRequest<{ ok: boolean }>({
       url: API_ROUTES.VALKEY_ADMIN.KEYS,
       method: 'PUT',
-      headers: authHeaders(),
       body: { key, value, ...(ttlSeconds && ttlSeconds > 0 ? { ttlSeconds } : {}) },
     });
-    return toResult<{ ok: boolean }>(response);
   },
 
-  async deleteKeys(keys: string[]): Promise<IResult<{ deleted: number }>> {
-    const response = await ApiClient.makeRequest({
+  deleteKeys(keys: string[]): Promise<IResult<{ deleted: number }>> {
+    return ApiClient.makeRequest<{ deleted: number }>({
       url: API_ROUTES.VALKEY_ADMIN.KEYS_DELETE,
       method: 'POST',
-      headers: authHeaders(),
       body: { keys },
     });
-    return toResult<{ deleted: number }>(response);
   },
 
-  async flush(scope: 'db' | 'all', confirm: string): Promise<IResult<ValkeyFlushResult>> {
-    const response = await ApiClient.makeRequest({
+  flush(scope: 'db' | 'all', confirm: string): Promise<IResult<ValkeyFlushResult>> {
+    return ApiClient.makeRequest<ValkeyFlushResult>({
       url: API_ROUTES.VALKEY_ADMIN.FLUSH,
       method: 'POST',
-      headers: authHeaders(),
       body: { scope, confirm },
     });
-    return toResult<ValkeyFlushResult>(response);
   },
 };
 
