@@ -202,11 +202,8 @@ export function transformAddress(addressList) {
   );
 
   return filteredAddressList.map((address) => {
-    let isUnderApproval = false;
-    if (address.approvalStatus === 'Awaiting Approval') {
-      isUnderApproval = true;
-    }
-    if (address.approvalStatus === 'Approved' || address.approvalStatus === '') {
+    let isUnderApproval = true;
+    if (address.approvalStatus === 'Approved' || address.approvalStatus === 'Active') {
       isUnderApproval = false;
     }
     return {
