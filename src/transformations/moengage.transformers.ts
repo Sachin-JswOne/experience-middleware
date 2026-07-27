@@ -1,8 +1,9 @@
 import { BaseRequest } from 'src/models/base-request.model';
 import { MOENGAGE_HUBSPOT } from 'src/config/moengage.config';
+import { CustomError } from 'src/utils/CustomError';
 
 /**
- * HubSpot -> MoEngage event transformers.
+ * HubSpot -> MoEngage event transformer (single generic endpoint).
  *
  * HubSpot's native webhook action can only build a FLAT body. MoEngage's Data
  * API ("Track Event") expects a NESTED payload:
@@ -12,7 +13,7 @@ import { MOENGAGE_HUBSPOT } from 'src/config/moengage.config';
  *     "customer_id": "abc@example.com",        // email — the identity anchor
  *     "actions": [
  *       {
- *         "action": "Lead Created",             // the event name
+ *         "action": "Lead Created",             // the event name (from $.event_name)
  *         "attributes": { ... },                // event properties
  *         "platform": "web",
  *         "user_time": "2026-07-26T10:15:00Z",  // ISO-8601
@@ -24,11 +25,11 @@ import { MOENGAGE_HUBSPOT } from 'src/config/moengage.config';
  * This is the endpoint verified to actually STORE events (the
  * `/partner/hubspot-crm/...` connector 200s but does not persist).
  *
- * These transformers receive the flat HubSpot body, pick out the customer_id and
- * event time, fold every remaining flat field into `attributes`, and wrap it in
- * the `actions[]` envelope. One thin wrapper per event type (each stamps its own
- * `action` name) sits over a shared builder, so HubSpot can point three separate
- * workflows at three routes.
+ * ONE generic route handles ALL event types. HubSpot decides which event this is
+ * by sending an **`event_name`** field (a string, e.g. "Payment Update"). The
+ * transformer uses that as the MoEngage `action`, sets `customer_id` from the
+ * email, normalises the timestamp to ISO-8601, and folds every remaining flat
+ * field into `attributes`.
  */
 
 // Flat fields that identify the lead — used as customer_id, never as attributes.
@@ -129,14 +130,21 @@ function buildMoengageEventRequest(request: BaseRequest, action: string): BaseRe
   return { ...request, url, body: moengageBody, headers };
 }
 
-export function hubspotLeadCreatedToMoengage(request: BaseRequest): BaseRequest {
-  return buildMoengageEventRequest(request, 'Lead Created');
-}
+/**
+ * Single generic entry point. The event type comes from the flat `event_name`
+ * field sent by HubSpot (always a string, e.g. "Lead Created", "Payment Update").
+ * If it is missing/empty we reject with 400 rather than store an unnamed event.
+ */
+export function hubspotEventToMoengage(request: BaseRequest): BaseRequest {
+  const body = (request.body || {}) as Record<string, any>;
+  const action = firstNonEmpty(body, ['event_name']);
 
-export function hubspotProjectStatusUpdatedToMoengage(request: BaseRequest): BaseRequest {
-  return buildMoengageEventRequest(request, 'Project Status Updated');
-}
+  if (action === undefined) {
+    throw new CustomError(
+      "Missing required field 'event_name' (the event type as a string, e.g. 'Payment Update').",
+      400,
+    );
+  }
 
-export function hubspotPaymentUpdateToMoengage(request: BaseRequest): BaseRequest {
-  return buildMoengageEventRequest(request, 'Payment Update');
+  return buildMoengageEventRequest(request, String(action).trim());
 }

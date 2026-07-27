@@ -5246,12 +5246,12 @@
     }
   },
   {
-    "path": "/xp-mi/public/v1/hubspot/moengage/lead-created",
+    "path": "/xp-mi/public/v1/hubspot/moengage/event",
     "method": "POST",
     "routeHandler": "TRANSFORM",
     "isCacheRequired": false,
     "target": {
-      "name": "moengage-hubspot-lead-created",
+      "name": "moengage-hubspot-event",
       "url": "https://api-03.moengage.com/v1/event/4311B84VU6UTCNRSAT5JZ3RV_DEBUG",
       "method": "POST",
       "timeout": {
@@ -5261,45 +5261,7 @@
       "staticHeaders": {
         "Content-Type": "application/json"
       },
-      "reqTransform": "moengage.transformers.hubspotLeadCreatedToMoengage"
-    }
-  },
-  {
-    "path": "/xp-mi/public/v1/hubspot/moengage/project-status-updated",
-    "method": "POST",
-    "routeHandler": "TRANSFORM",
-    "isCacheRequired": false,
-    "target": {
-      "name": "moengage-hubspot-project-status-updated",
-      "url": "https://api-03.moengage.com/v1/event/4311B84VU6UTCNRSAT5JZ3RV_DEBUG",
-      "method": "POST",
-      "timeout": {
-        "request": 20000,
-        "socket": 1000
-      },
-      "staticHeaders": {
-        "Content-Type": "application/json"
-      },
-      "reqTransform": "moengage.transformers.hubspotProjectStatusUpdatedToMoengage"
-    }
-  },
-  {
-    "path": "/xp-mi/public/v1/hubspot/moengage/payment-update",
-    "method": "POST",
-    "routeHandler": "TRANSFORM",
-    "isCacheRequired": false,
-    "target": {
-      "name": "moengage-hubspot-payment-update",
-      "url": "https://api-03.moengage.com/v1/event/4311B84VU6UTCNRSAT5JZ3RV_DEBUG",
-      "method": "POST",
-      "timeout": {
-        "request": 20000,
-        "socket": 1000
-      },
-      "staticHeaders": {
-        "Content-Type": "application/json"
-      },
-      "reqTransform": "moengage.transformers.hubspotPaymentUpdateToMoengage"
+      "reqTransform": "moengage.transformers.hubspotEventToMoengage"
     }
   }
 ]
