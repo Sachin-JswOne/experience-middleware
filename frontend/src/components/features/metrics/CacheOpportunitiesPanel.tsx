@@ -38,7 +38,9 @@ const CacheOpportunitiesPanel = ({ data, loading }: Props) => {
     <Card sx={{ p: 2, height: '100%' }}>
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
         <Typography variant="h5">Cache Opportunities</Typography>
-        <Tooltip title={`GET routes with ≥${MIN_REQUESTS} requests and <${MAX_HIT_RATE_PCT}% cache hit rate, ranked by uncached volume.`}>
+        <Tooltip
+          title={`GET routes with ≥${MIN_REQUESTS} requests and <${MAX_HIT_RATE_PCT}% cache hit rate, ranked by uncached volume.`}
+        >
           <Typography variant="caption" sx={{ color: tokens.textSubtlest, cursor: 'default' }}>
             worst first
           </Typography>
@@ -85,7 +87,10 @@ const CacheOpportunitiesPanel = ({ data, loading }: Props) => {
               >
                 {formatPercent(route.cacheHitRate)} hit
               </Typography>
-              <Typography variant="body2" sx={{ color: tokens.textSubtle, minWidth: 88, textAlign: 'right' }}>
+              <Typography
+                variant="body2"
+                sx={{ color: tokens.textSubtle, minWidth: 88, textAlign: 'right' }}
+              >
                 {formatNumber(misses)} uncached
               </Typography>
             </Box>

@@ -98,7 +98,10 @@ const SavedViews = ({ currentParams, onApply }: Props) => {
               Save
             </Button>
           </Box>
-          <Typography variant="caption" sx={{ color: tokens.textSubtlest, display: 'block', mb: 1 }}>
+          <Typography
+            variant="caption"
+            sx={{ color: tokens.textSubtlest, display: 'block', mb: 1 }}
+          >
             Captures tab, time range, filters and refresh — stored in this browser.
           </Typography>
           {views.length > 0 && <Divider sx={{ mb: 0.5 }} />}

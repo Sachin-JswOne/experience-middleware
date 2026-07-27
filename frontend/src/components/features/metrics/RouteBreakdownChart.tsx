@@ -23,8 +23,7 @@ const truncate = (value: string, max = 28) =>
 
 // Compact axis label like the downstream charts' target names — strip the
 // common gateway prefix and API version; the tooltip shows the full route.
-const shortRouteName = (route: string) =>
-  route.replace(/^\/xp-mi\/public\/(v\d+\/)?/, '');
+const shortRouteName = (route: string) => route.replace(/^\/xp-mi\/public\/(v\d+\/)?/, '');
 
 interface RouteTooltipPayload {
   name?: string;
@@ -60,14 +59,30 @@ const RouteTooltip = ({ active, payload }: RouteTooltipProps) => {
         {p.fullName ?? p.name}
       </Typography>
       <Box sx={{ display: 'grid', gridTemplateColumns: 'auto auto', columnGap: 1.5, rowGap: 0.25 }}>
-        <Typography variant="body2" sx={{ color: tokens.textInverse, opacity: 0.7 }}>Avg latency</Typography>
-        <Typography variant="body2" sx={{ color: 'inherit' }}>{formatMs(p.avgLatencyMs)}</Typography>
-        <Typography variant="body2" sx={{ color: tokens.textInverse, opacity: 0.7 }}>Requests</Typography>
-        <Typography variant="body2" sx={{ color: 'inherit' }}>{p.requestCount}</Typography>
-        <Typography variant="body2" sx={{ color: tokens.textInverse, opacity: 0.7 }}>Errors</Typography>
-        <Typography variant="body2" sx={{ color: 'inherit' }}>{p.errorCount}</Typography>
-        <Typography variant="body2" sx={{ color: tokens.textInverse, opacity: 0.7 }}>Cache hit</Typography>
-        <Typography variant="body2" sx={{ color: 'inherit' }}>{formatPercent(p.cacheHitRate)}</Typography>
+        <Typography variant="body2" sx={{ color: tokens.textInverse, opacity: 0.7 }}>
+          Avg latency
+        </Typography>
+        <Typography variant="body2" sx={{ color: 'inherit' }}>
+          {formatMs(p.avgLatencyMs)}
+        </Typography>
+        <Typography variant="body2" sx={{ color: tokens.textInverse, opacity: 0.7 }}>
+          Requests
+        </Typography>
+        <Typography variant="body2" sx={{ color: 'inherit' }}>
+          {p.requestCount}
+        </Typography>
+        <Typography variant="body2" sx={{ color: tokens.textInverse, opacity: 0.7 }}>
+          Errors
+        </Typography>
+        <Typography variant="body2" sx={{ color: 'inherit' }}>
+          {p.errorCount}
+        </Typography>
+        <Typography variant="body2" sx={{ color: tokens.textInverse, opacity: 0.7 }}>
+          Cache hit
+        </Typography>
+        <Typography variant="body2" sx={{ color: 'inherit' }}>
+          {formatPercent(p.cacheHitRate)}
+        </Typography>
       </Box>
     </Box>
   );
@@ -98,7 +113,11 @@ const RouteBreakdownChart = ({ data, loading }: Props) => {
       emptyMessage={`No routes above ${MIN_AVG_LATENCY_MS} ms avg latency`}
     >
       <ResponsiveContainer width="100%" height={Math.max(240, chartData.length * 36 + 40)}>
-        <BarChart data={chartData} layout="vertical" margin={{ top: 4, right: 16, left: 0, bottom: 0 }}>
+        <BarChart
+          data={chartData}
+          layout="vertical"
+          margin={{ top: 4, right: 16, left: 0, bottom: 0 }}
+        >
           <CartesianGrid stroke={tokens.border} strokeDasharray="3 3" />
           <XAxis
             type="number"

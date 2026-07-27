@@ -71,18 +71,8 @@ const DownstreamLatencyChart = ({ data, loading }: Props) => {
             yAxisId="latency"
             fill={CHART_BRAND}
           />
-          <Bar
-            dataKey="p95LatencyMs"
-            name="P95 (ms)"
-            yAxisId="latency"
-            fill={CHART_PURPLE}
-          />
-          <Bar
-            dataKey="errorCount"
-            name="Errors"
-            yAxisId="count"
-            fill={tokens.danger}
-          />
+          <Bar dataKey="p95LatencyMs" name="P95 (ms)" yAxisId="latency" fill={CHART_PURPLE} />
+          <Bar dataKey="errorCount" name="Errors" yAxisId="count" fill={tokens.danger} />
         </BarChart>
       </ResponsiveContainer>
     </ChartCard>

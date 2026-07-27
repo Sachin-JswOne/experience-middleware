@@ -52,7 +52,12 @@ const LatencyStageChart = ({ data, loading }: Props) => {
           <XAxis dataKey="name" tick={{ fontSize: 12, fill: tokens.textSubtle }} />
           <YAxis
             tick={{ fontSize: 12, fill: tokens.textSubtle }}
-            label={{ value: 'ms', angle: -90, position: 'insideLeft', style: { fontSize: 12, fill: tokens.textSubtle } }}
+            label={{
+              value: 'ms',
+              angle: -90,
+              position: 'insideLeft',
+              style: { fontSize: 12, fill: tokens.textSubtle },
+            }}
           />
           <Tooltip
             contentStyle={CHART_TOOLTIP_STYLE}

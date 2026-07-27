@@ -1,4 +1,11 @@
-import { Autocomplete, Box, TextField, ToggleButton, ToggleButtonGroup, Typography } from '@mui/material';
+import {
+  Autocomplete,
+  Box,
+  TextField,
+  ToggleButton,
+  ToggleButtonGroup,
+  Typography,
+} from '@mui/material';
 import { tokens } from '@/styles/theme';
 
 export interface MetricsFilter {
@@ -23,7 +30,9 @@ const MetricsFilterBar = ({ routeOptions, methodOptions, filter, onChange }: Pro
       options={routeOptions}
       value={filter.routes}
       onChange={(_, routes) => onChange({ ...filter, routes })}
-      renderInput={(params) => <TextField {...params} label="Filter routes" placeholder="All routes" />}
+      renderInput={(params) => (
+        <TextField {...params} label="Filter routes" placeholder="All routes" />
+      )}
       sx={{ minWidth: 280, flex: '1 1 320px', maxWidth: 480 }}
     />
     <ToggleButtonGroup

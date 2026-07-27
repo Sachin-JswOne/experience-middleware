@@ -50,6 +50,11 @@ export interface AlertThresholds {
   // Availability SLO for the server-side burn-rate alert (webhook only —
   // burn needs two windows, evaluated by the backend).
   sloAvailabilityPct: number | null;
+  // Alert when traffic flatlines to zero while the previous window had it.
+  alertOnNoData: boolean;
+  // Epoch ms until which all alerting is muted (banner, notifications and
+  // the server webhook when shared).
+  snoozeUntil: number | null;
   // Any pod's event-loop lag p99 at or above this (needs the health feed).
   eventLoopLagP99Ms: number | null;
   // Alert when the cluster store is enabled but unreachable.
@@ -67,21 +72,22 @@ export const toServerConfig = (thresholds: AlertThresholds): AlertConfig => ({
   targetErrorRatePct: thresholds.targetErrorRatePct,
   trafficDropPct: thresholds.trafficDropPct,
   sloAvailabilityPct: thresholds.sloAvailabilityPct,
+  alertOnNoData: thresholds.alertOnNoData,
+  snoozeUntil: thresholds.snoozeUntil,
   routeRules: thresholds.routeRules,
   targetRules: thresholds.targetRules,
   updatedAt: 0,
 });
 
-export const mergeServerConfig = (
-  base: AlertThresholds,
-  config: AlertConfig,
-): AlertThresholds => ({
+export const mergeServerConfig = (base: AlertThresholds, config: AlertConfig): AlertThresholds => ({
   ...base,
   errorRatePct: config.errorRatePct,
   p99Ms: config.p99Ms,
   targetErrorRatePct: config.targetErrorRatePct,
   trafficDropPct: config.trafficDropPct,
   sloAvailabilityPct: config.sloAvailabilityPct,
+  alertOnNoData: config.alertOnNoData ?? false,
+  snoozeUntil: config.snoozeUntil ?? null,
   routeRules: config.routeRules ?? [],
   targetRules: config.targetRules ?? [],
 });
@@ -99,6 +105,8 @@ export const defaultThresholds: AlertThresholds = {
   targetErrorRatePct: null,
   trafficDropPct: null,
   sloAvailabilityPct: null,
+  alertOnNoData: false,
+  snoozeUntil: null,
   eventLoopLagP99Ms: null,
   valkeyUnavailable: false,
   notify: false,
@@ -125,17 +133,28 @@ export const evaluateAlerts = (
   thresholds: AlertThresholds,
   context: AlertContext = {},
 ): string[] => {
+  // Snoozed: nothing breaches until the mute expires.
+  if (thresholds.snoozeUntil !== null && Date.now() < thresholds.snoozeUntil) return [];
   const breaches: string[] = [];
   const { summary } = snapshot;
+
+  if (
+    thresholds.alertOnNoData &&
+    summary.totalRequests === 0 &&
+    context.previous &&
+    context.previous.totalRequests >= MIN_TRAFFIC_BASELINE
+  ) {
+    breaches.push(
+      `No traffic in this window (previous window had ${context.previous.totalRequests} requests)`,
+    );
+  }
 
   if (summary.totalRequests > 0) {
     if (thresholds.errorRatePct !== null && summary.errorRate >= thresholds.errorRatePct) {
       breaches.push(`Error rate ${summary.errorRate.toFixed(1)}% ≥ ${thresholds.errorRatePct}%`);
     }
     if (thresholds.p99Ms !== null && summary.p99LatencyMs >= thresholds.p99Ms) {
-      breaches.push(
-        `P99 latency ${Math.round(summary.p99LatencyMs)}ms ≥ ${thresholds.p99Ms}ms`,
-      );
+      breaches.push(`P99 latency ${Math.round(summary.p99LatencyMs)}ms ≥ ${thresholds.p99Ms}ms`);
     }
 
     if (thresholds.targetErrorRatePct !== null) {
@@ -187,8 +206,7 @@ export const evaluateAlerts = (
     context.previous.totalRequests >= MIN_TRAFFIC_BASELINE
   ) {
     const drop =
-      ((context.previous.totalRequests - summary.totalRequests) /
-        context.previous.totalRequests) *
+      ((context.previous.totalRequests - summary.totalRequests) / context.previous.totalRequests) *
       100;
     if (drop >= thresholds.trafficDropPct) {
       breaches.push(
@@ -342,6 +360,8 @@ const AlertSettings = ({
     update({ ...thresholds, targetRules });
   };
 
+  const snoozed = thresholds.snoozeUntil !== null && Date.now() < thresholds.snoozeUntil;
+
   const active =
     thresholds.errorRatePct !== null ||
     thresholds.p99Ms !== null ||
@@ -353,12 +373,20 @@ const AlertSettings = ({
 
   return (
     <>
-      <Tooltip title="Alert thresholds">
+      <Tooltip title={snoozed ? 'Alerts snoozed' : 'Alert thresholds'}>
         <IconButton
           size="small"
           onClick={open}
           aria-label="Configure alert thresholds"
-          sx={{ color: breached ? tokens.danger : active ? tokens.brand : undefined }}
+          sx={{
+            color: snoozed
+              ? tokens.warning
+              : breached
+                ? tokens.danger
+                : active
+                  ? tokens.brand
+                  : undefined,
+          }}
         >
           {active ? (
             <NotificationsActiveIcon sx={{ fontSize: 20 }} />
@@ -424,16 +452,69 @@ const AlertSettings = ({
             }
             label={<Typography variant="body2">Alert when Valkey is unavailable</Typography>}
           />
-          <Typography variant="caption" sx={{ color: tokens.textSubtlest, display: 'block', mb: 1 }}>
-            Loop-lag and Valkey checks use the health feed and are evaluated alongside every
-            metrics refresh. SLO burn is evaluated server-side (webhook) only.
+          <FormControlLabel
+            control={
+              <Checkbox
+                size="small"
+                checked={thresholds.alertOnNoData}
+                onChange={(e) => update({ ...thresholds, alertOnNoData: e.target.checked })}
+              />
+            }
+            label={<Typography variant="body2">Alert when traffic flatlines to zero</Typography>}
+          />
+
+          <Divider sx={{ my: 1.5 }} />
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+            <Typography variant="body2" sx={{ fontWeight: 600, mr: 0.5 }}>
+              Snooze
+            </Typography>
+            {snoozed ? (
+              <>
+                <Typography variant="caption" sx={{ color: tokens.warning }}>
+                  Muted until {formatTs(thresholds.snoozeUntil!, 'DD MMM HH:mm', utc)}
+                </Typography>
+                <Button
+                  size="small"
+                  onClick={() => update({ ...thresholds, snoozeUntil: null })}
+                  sx={{ fontSize: 12 }}
+                >
+                  Resume
+                </Button>
+              </>
+            ) : (
+              [1, 4, 24].map((hours) => (
+                <Button
+                  key={hours}
+                  size="small"
+                  onClick={() =>
+                    update({ ...thresholds, snoozeUntil: Date.now() + hours * 60 * 60 * 1000 })
+                  }
+                  sx={{ fontSize: 12 }}
+                >
+                  {hours}h
+                </Button>
+              ))
+            )}
+          </Box>
+          <Typography variant="caption" sx={{ color: tokens.textSubtlest, display: 'block' }}>
+            Snoozing mutes the banner, notifications{shared ? ' and the server webhook' : ''} until
+            it expires.
+          </Typography>
+          <Typography
+            variant="caption"
+            sx={{ color: tokens.textSubtlest, display: 'block', mb: 1 }}
+          >
+            Loop-lag and Valkey checks use the health feed and are evaluated alongside every metrics
+            refresh. SLO burn is evaluated server-side (webhook) only.
             {shared
               ? ' Thresholds are shared — the server webhook uses the same rules.'
               : ' Cluster mode off — thresholds live in this browser only.'}
           </Typography>
 
           <Divider sx={{ my: 1.5 }} />
-          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
+          <Box
+            sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}
+          >
             <Typography variant="body2" sx={{ fontWeight: 600 }}>
               Per-route rules
             </Typography>
@@ -491,7 +572,9 @@ const AlertSettings = ({
             </Box>
           ))}
 
-          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
+          <Box
+            sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}
+          >
             <Typography variant="body2" sx={{ fontWeight: 600 }}>
               Per-target rules
             </Typography>
@@ -561,12 +644,14 @@ const AlertSettings = ({
             label={<Typography variant="body2">Browser notification on breach</Typography>}
           />
           <Typography variant="caption" sx={{ color: tokens.textSubtlest, display: 'block' }}>
-            Leave a field empty to disable that check. Evaluated on every refresh of the
-            selected window.
+            Leave a field empty to disable that check. Evaluated on every refresh of the selected
+            window.
           </Typography>
 
           <Divider sx={{ my: 1.5 }} />
-          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 0.5 }}>
+          <Box
+            sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 0.5 }}
+          >
             <Typography variant="body2" sx={{ fontWeight: 600 }}>
               {serverHistory && serverHistory.length > 0
                 ? 'Recent breaches (server, webhook-posted)'
@@ -607,7 +692,11 @@ const AlertSettings = ({
                   {formatTs(entry.ts, 'DD MMM HH:mm:ss', utc)}
                 </Typography>
                 {entry.breaches.map((b, i) => (
-                  <Typography key={i} variant="caption" sx={{ display: 'block', color: tokens.textSubtlest }}>
+                  <Typography
+                    key={i}
+                    variant="caption"
+                    sx={{ display: 'block', color: tokens.textSubtlest }}
+                  >
                     {b}
                   </Typography>
                 ))}

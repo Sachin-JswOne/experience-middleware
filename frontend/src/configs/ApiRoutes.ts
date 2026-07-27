@@ -8,6 +8,7 @@ export const API_ROUTES = {
       `${PROMPTS_BASE}/${type}/versions/${v}/activate`,
   },
   METRICS: '/xp-mi/metrics',
+  METRICS_STREAM: '/xp-mi/metrics/stream',
   METRICS_SAMPLES: '/xp-mi/metrics/samples',
   METRICS_HEALTH: '/xp-mi/metrics/health',
   METRICS_ROUTE_TIMELINE: '/xp-mi/metrics/route-timeline',

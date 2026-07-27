@@ -5,6 +5,7 @@ import { MetricsAggregator } from './metrics.aggregator';
 import { MetricsPublisher } from './metrics.publisher';
 import { MetricsSampleStore } from './metrics.sample-store';
 import { CacheServedBy, DownstreamRecord, RequestRecord } from './metrics.types';
+import { podName } from './metrics.cluster.shared';
 import { Request, Response } from 'express';
 
 @Injectable()
@@ -87,6 +88,7 @@ export class MetricsInterceptor implements NestInterceptor {
             statusCode,
             durationMs,
             url: req.originalUrl || req.url,
+            pod: podName(),
             requestId,
             requestHeaders: MetricsSampleStore.sanitizeHeaders(req.headers as Record<string, unknown>),
             requestBody: MetricsSampleStore.sanitizeBody(
@@ -100,6 +102,7 @@ export class MetricsInterceptor implements NestInterceptor {
               durationMs: d.durationMs,
               statusCode: d.statusCode,
               success: d.success,
+              stages: d.stages,
               requestUrl: d.requestUrl,
               requestHeaders: MetricsSampleStore.sanitizeHeaders(d.requestHeaders),
               requestBody: MetricsSampleStore.sanitizeBody(d.requestBody),

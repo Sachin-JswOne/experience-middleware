@@ -39,7 +39,11 @@ const DownstreamStatusChart = ({ data, loading }: Props) => {
     }))
     .sort(
       (a, b) =>
-        b.c2xx + b.c3xx + b.c4xx + b.c5xx + b.network -
+        b.c2xx +
+        b.c3xx +
+        b.c4xx +
+        b.c5xx +
+        b.network -
         (a.c2xx + a.c3xx + a.c4xx + a.c5xx + a.network),
     )
     .slice(0, MAX_TARGETS);
@@ -51,9 +55,17 @@ const DownstreamStatusChart = ({ data, loading }: Props) => {
       empty={!hasStatusData || chartData.length === 0}
     >
       <ResponsiveContainer width="100%" height={Math.max(240, chartData.length * 44 + 60)}>
-        <BarChart data={chartData} layout="vertical" margin={{ top: 4, right: 16, left: 0, bottom: 0 }}>
+        <BarChart
+          data={chartData}
+          layout="vertical"
+          margin={{ top: 4, right: 16, left: 0, bottom: 0 }}
+        >
           <CartesianGrid stroke={tokens.border} strokeDasharray="3 3" />
-          <XAxis type="number" tick={{ fontSize: 12, fill: tokens.textSubtle }} allowDecimals={false} />
+          <XAxis
+            type="number"
+            tick={{ fontSize: 12, fill: tokens.textSubtle }}
+            allowDecimals={false}
+          />
           <YAxis
             type="category"
             dataKey="name"

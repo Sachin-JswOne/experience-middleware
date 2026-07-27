@@ -1,10 +1,4 @@
-import {
-  PieChart,
-  Pie,
-  Cell,
-  Tooltip,
-  ResponsiveContainer,
-} from 'recharts';
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
 import type { RouteBreakdown } from '@/_types/metrics.interface';
 import { tokens } from '@/styles/theme';
 import ChartCard, { CHART_COLORS, formatPercent } from './chartShared';
@@ -40,7 +34,9 @@ const CacheTooltip = ({ active, payload }: CacheTooltipProps) => {
       }}
     >
       <strong>{p.name}</strong>
-      <div>{p.cacheHits} hits ({formatPercent(p.cacheHitRate)})</div>
+      <div>
+        {p.cacheHits} hits ({formatPercent(p.cacheHitRate)})
+      </div>
     </div>
   );
 };
@@ -49,7 +45,7 @@ const CacheHitPieChart = ({ data, loading }: Props) => {
   const chartData: CacheSlice[] = data
     .map((r) => ({
       name: `${r.method} ${r.route}`,
-      cacheHits: Math.round(r.requestCount * r.cacheHitRate / 100),
+      cacheHits: Math.round((r.requestCount * r.cacheHitRate) / 100),
       cacheHitRate: r.cacheHitRate,
     }))
     .filter((r) => r.cacheHits > 0);

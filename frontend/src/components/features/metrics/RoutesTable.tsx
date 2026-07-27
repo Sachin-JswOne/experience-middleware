@@ -35,9 +35,11 @@ type SortKey =
   | 'errorCount'
   | 'c4xx'
   | 'c5xx'
-  | 'cacheHitRate';
+  | 'cacheHitRate'
+  | 'health';
 
 const COLUMNS: Array<{ key: SortKey; label: string }> = [
+  { key: 'health', label: 'Health' },
   { key: 'requestCount', label: 'Requests' },
   { key: 'avgLatencyMs', label: 'Avg latency' },
   { key: 'p95LatencyMs', label: 'P95' },
@@ -46,7 +48,28 @@ const COLUMNS: Array<{ key: SortKey; label: string }> = [
   { key: 'cacheHitRate', label: 'Cache hit' },
 ];
 
+// Single sortable 0–100 health score per route: error rate dominates (5xx
+// weighted double vs 4xx), latency drags via p95 (fallback avg). Purely a
+// triage aid — the raw columns stay authoritative.
+export const routeHealthScore = (r: RouteBreakdown): number => {
+  if (r.requestCount === 0) return 100;
+  const c5xx = r.statusClasses?.c5xx ?? 0;
+  const c4xx = r.statusClasses?.c4xx ?? Math.max(0, r.errorCount - c5xx);
+  const errorPenalty = ((c5xx * 2 + c4xx) / r.requestCount) * 100 * 2;
+  const latencyMs = r.p95LatencyMs ?? r.avgLatencyMs;
+  // 0 penalty at ≤200ms, full 30 at ≥3s.
+  const latencyPenalty = Math.min(30, Math.max(0, ((latencyMs - 200) / 2800) * 30));
+  return Math.max(0, Math.round(100 - errorPenalty - latencyPenalty));
+};
+
+const healthGrade = (score: number): { label: string; color: string; bg: string } => {
+  if (score >= 90) return { label: String(score), color: '#37471F', bg: '#D3F1A7' };
+  if (score >= 70) return { label: String(score), color: '#693200', bg: '#FCE4A6' };
+  return { label: String(score), color: '#5D1F1A', bg: '#FFD5D2' };
+};
+
 const sortValue = (r: RouteBreakdown, key: SortKey): number => {
+  if (key === 'health') return routeHealthScore(r);
   if (key === 'c4xx') return r.statusClasses?.c4xx ?? 0;
   if (key === 'c5xx') return r.statusClasses?.c5xx ?? 0;
   if (key === 'p95LatencyMs') return r.p95LatencyMs ?? 0;
@@ -55,11 +78,13 @@ const sortValue = (r: RouteBreakdown, key: SortKey): number => {
 };
 
 const exportCsv = (rows: RouteBreakdown[]) => {
-  const header = 'method,route,requestCount,avgLatencyMs,p95LatencyMs,errors4xx,errors5xx,cacheHitRate';
+  const header =
+    'method,route,health,requestCount,avgLatencyMs,p95LatencyMs,errors4xx,errors5xx,cacheHitRate';
   const lines = rows.map((r) =>
     [
       r.method,
       `"${r.route}"`,
+      routeHealthScore(r),
       r.requestCount,
       Math.round(r.avgLatencyMs),
       r.p95LatencyMs !== undefined ? Math.round(r.p95LatencyMs) : '',
@@ -103,7 +128,9 @@ const RoutesTable = ({ data, loading, onRowClick, onDrill }: Props) => {
   return (
     <Card sx={{ p: 2, height: '100%' }}>
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1.5 }}>
-        <Typography variant="h5" component="h2">Routes</Typography>
+        <Typography variant="h5" component="h2">
+          Routes
+        </Typography>
         <Tooltip title="Export CSV">
           <span>
             <IconButton
@@ -170,10 +197,21 @@ const RoutesTable = ({ data, loading, onRowClick, onDrill }: Props) => {
                       : undefined,
                   }}
                 >
-                  <TableCell sx={{ maxWidth: 320, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <TableCell
+                    sx={{
+                      maxWidth: 320,
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
                     <Tooltip title={`${r.method} ${r.route}`}>
                       <Box component="span">
-                        <Typography component="span" variant="body2" sx={{ fontWeight: tokens.weightBold, mr: 0.75 }}>
+                        <Typography
+                          component="span"
+                          variant="body2"
+                          sx={{ fontWeight: tokens.weightBold, mr: 0.75 }}
+                        >
                           {r.method}
                         </Typography>
                         <Typography component="span" variant="body2">
@@ -181,6 +219,31 @@ const RoutesTable = ({ data, loading, onRowClick, onDrill }: Props) => {
                         </Typography>
                       </Box>
                     </Tooltip>
+                  </TableCell>
+                  <TableCell align="right">
+                    {(() => {
+                      const score = routeHealthScore(r);
+                      const grade = healthGrade(score);
+                      return (
+                        <Tooltip title="Health score: 100 minus error-rate and latency penalties (5xx weigh double)">
+                          <Box
+                            component="span"
+                            sx={{
+                              display: 'inline-block',
+                              px: 0.75,
+                              py: 0.1,
+                              borderRadius: 1,
+                              fontSize: 12,
+                              fontWeight: tokens.weightBold,
+                              color: grade.color,
+                              bgcolor: grade.bg,
+                            }}
+                          >
+                            {grade.label}
+                          </Box>
+                        </Tooltip>
+                      );
+                    })()}
                   </TableCell>
                   <TableCell align="right">{formatNumber(r.requestCount)}</TableCell>
                   <TableCell align="right">{formatMs(r.avgLatencyMs)}</TableCell>

@@ -166,7 +166,13 @@ const PodsTable = ({ pods, utc }: { pods: PodHealth[]; utc?: boolean }) => (
               <TableCell align="right">
                 {p.gcCount !== undefined ? (
                   <Tooltip title="GC runs / pause time since the previous heartbeat">
-                    <span>{`${p.gcCount} · ${p.gcPauseMs ?? 0}ms`}</span>
+                    <Box component="span" sx={{ display: 'inline-block' }}>
+                      <TrendCell
+                        value={`${p.gcCount} · ${p.gcPauseMs ?? 0}ms`}
+                        values={history.map((h) => h.gcPauseMs ?? 0)}
+                        color={(p.gcPauseMs ?? 0) >= 100 ? tokens.warning : undefined}
+                      />
+                    </Box>
                   </Tooltip>
                 ) : (
                   '—'
@@ -217,9 +223,21 @@ const SystemPanel = ({ data, loading, utc }: Props) => {
           mb: 3,
         }}
       >
-        <StatCard label="CPU (of one core)" value={local.cpuPct !== undefined ? String(local.cpuPct) : '—'} unit="%" />
-        <StatCard label="Event loop lag (avg / p99)" value={`${local.eventLoopLagMs} / ${local.eventLoopLagP99Ms}`} unit="ms" />
-        <StatCard label="Heap used" value={`${local.heapUsedMb}`} unit={`/ ${local.heapTotalMb} MB`} />
+        <StatCard
+          label="CPU (of one core)"
+          value={local.cpuPct !== undefined ? String(local.cpuPct) : '—'}
+          unit="%"
+        />
+        <StatCard
+          label="Event loop lag (avg / p99)"
+          value={`${local.eventLoopLagMs} / ${local.eventLoopLagP99Ms}`}
+          unit="ms"
+        />
+        <StatCard
+          label="Heap used"
+          value={`${local.heapUsedMb}`}
+          unit={`/ ${local.heapTotalMb} MB`}
+        />
         <StatCard label="RSS" value={`${local.rssMb}`} unit="MB" />
         <StatCard
           label="GC (since last sample)"

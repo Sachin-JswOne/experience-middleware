@@ -13,6 +13,14 @@ import {
 } from '@mui/material';
 import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
 import {
+  Area,
+  AreaChart,
+  ReferenceLine,
+  ResponsiveContainer,
+  Tooltip as ChartTooltip,
+  YAxis,
+} from 'recharts';
+import {
   LATENCY_HISTOGRAM_BOUNDS,
   type MetricsSummary,
   type TimelineBucket,
@@ -93,6 +101,28 @@ export const computeApdex = (
   };
 };
 
+// Cumulative error-budget consumption per timeline bucket: at each point,
+// errors so far as a % of the errors the SLO allows for the traffic so far.
+// A flat line = healthy; a steepening curve = burning budget right now.
+export const computeBurnSeries = (
+  timeline: TimelineBucket[],
+  availabilityTargetPct: number,
+): Array<{ bucketTs: number; consumedPct: number }> => {
+  const budgetFraction = (100 - availabilityTargetPct) / 100;
+  if (budgetFraction <= 0) return [];
+  let cumErrors = 0;
+  let cumRequests = 0;
+  return timeline.map((b) => {
+    cumErrors += b.errorCount;
+    cumRequests += b.requestCount;
+    const allowed = cumRequests * budgetFraction;
+    return {
+      bucketTs: b.bucketTs,
+      consumedPct: allowed > 0 ? Math.min(200, (cumErrors / allowed) * 100) : 0,
+    };
+  });
+};
+
 const numberOrNull = (raw: string): number | null => {
   if (raw.trim() === '') return null;
   const value = Number(raw);
@@ -122,14 +152,25 @@ const SloCard = ({ summary, timeline, loading, config, onConfigChange }: Props) 
     [timeline, config.apdexTargetMs],
   );
 
+  const burnSeries = useMemo(
+    () =>
+      config.availabilityTargetPct !== null
+        ? computeBurnSeries(timeline, config.availabilityTargetPct)
+        : [],
+    [timeline, config.availabilityTargetPct],
+  );
+
   const configured =
     config.availabilityTargetPct !== null ||
     config.p99TargetMs !== null ||
     config.apdexTargetMs !== null;
   const availability = 100 - summary.errorRate;
-  const budgetPct = config.availabilityTargetPct !== null ? 100 - config.availabilityTargetPct : null;
+  const budgetPct =
+    config.availabilityTargetPct !== null ? 100 - config.availabilityTargetPct : null;
   const budgetConsumedPct =
-    budgetPct !== null && budgetPct > 0 ? Math.min(200, (summary.errorRate / budgetPct) * 100) : null;
+    budgetPct !== null && budgetPct > 0
+      ? Math.min(200, (summary.errorRate / budgetPct) * 100)
+      : null;
   const availabilityOk =
     config.availabilityTargetPct !== null && availability >= config.availabilityTargetPct;
   const latencyOk = config.p99TargetMs !== null && summary.p99LatencyMs < config.p99TargetMs;
@@ -174,7 +215,13 @@ const SloCard = ({ summary, timeline, loading, config, onConfigChange }: Props) 
           {config.availabilityTargetPct !== null && (
             <Box sx={{ mb: 1 }}>
               <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1 }}>
-                <Typography variant="h5" sx={{ fontWeight: tokens.weightBold, color: availabilityOk ? tokens.text : tokens.danger }}>
+                <Typography
+                  variant="h5"
+                  sx={{
+                    fontWeight: tokens.weightBold,
+                    color: availabilityOk ? tokens.text : tokens.danger,
+                  }}
+                >
                   {availability.toFixed(2)}%
                 </Typography>
                 <Typography variant="caption" sx={{ color: tokens.textSubtle }}>
@@ -207,6 +254,36 @@ const SloCard = ({ summary, timeline, loading, config, onConfigChange }: Props) 
                   </Box>
                 </Tooltip>
               )}
+              {burnSeries.length > 1 && (
+                <Box sx={{ mt: 0.75 }}>
+                  <Typography variant="caption" sx={{ color: tokens.textSubtlest }}>
+                    Budget consumption over the window
+                  </Typography>
+                  <ResponsiveContainer width="100%" height={64}>
+                    <AreaChart data={burnSeries} margin={{ top: 2, right: 0, left: 0, bottom: 0 }}>
+                      <YAxis hide domain={[0, (dataMax: number) => Math.max(110, dataMax)]} />
+                      <ChartTooltip
+                        contentStyle={{ fontSize: 12, borderRadius: tokens.radiusSmall }}
+                        formatter={(value) => [
+                          `${Math.round(Number(value ?? 0))}% consumed`,
+                          'Budget',
+                        ]}
+                        labelFormatter={() => ''}
+                      />
+                      <ReferenceLine y={100} stroke={tokens.danger} strokeDasharray="3 3" />
+                      <Area
+                        type="monotone"
+                        dataKey="consumedPct"
+                        stroke={budgetColor}
+                        fill={budgetColor}
+                        fillOpacity={0.18}
+                        strokeWidth={1.5}
+                        isAnimationActive={false}
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </Box>
+              )}
             </Box>
           )}
           {config.p99TargetMs !== null && (
@@ -231,9 +308,19 @@ const SloCard = ({ summary, timeline, loading, config, onConfigChange }: Props) 
                 </Typography>
               </Tooltip>
               <Chip
-                label={apdex.score >= 0.94 ? 'excellent' : apdex.score >= 0.85 ? 'good' : apdex.score >= 0.7 ? 'fair' : 'poor'}
+                label={
+                  apdex.score >= 0.94
+                    ? 'excellent'
+                    : apdex.score >= 0.85
+                      ? 'good'
+                      : apdex.score >= 0.7
+                        ? 'fair'
+                        : 'poor'
+                }
                 size="small"
-                sx={pillSx(apdex.score >= 0.85 ? 'success' : apdex.score >= 0.7 ? 'warning' : 'danger')}
+                sx={pillSx(
+                  apdex.score >= 0.85 ? 'success' : apdex.score >= 0.7 ? 'warning' : 'danger',
+                )}
               />
             </Box>
           )}
@@ -280,8 +367,8 @@ const SloCard = ({ summary, timeline, loading, config, onConfigChange }: Props) 
             sx={{ mb: 1 }}
           />
           <Typography variant="caption" sx={{ color: tokens.textSubtlest }}>
-            e.g. 99.5% availability, 800ms p99, T=500ms apdex. Evaluated over the selected
-            time window.
+            e.g. 99.5% availability, 800ms p99, T=500ms apdex. Evaluated over the selected time
+            window.
           </Typography>
         </Box>
       </Popover>

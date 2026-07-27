@@ -21,6 +21,8 @@ export interface IRouteSamplesResult {
     slowThresholdMs?: number;
     source?: 'cluster' | 'local';
     samples: RouteErrorSample[];
+    // Total matching samples before the limit — drives the "view all" button.
+    totalMatched?: number;
   } | null;
   error: IApiClientResponse['error'];
 }
@@ -78,8 +80,53 @@ const MetricsService = {
     };
   },
 
-  async getRouteSamples(method: string, route: string): Promise<IRouteSamplesResult> {
-    const url = `${API_ROUTES.METRICS_SAMPLES}?method=${encodeURIComponent(method)}&route=${encodeURIComponent(route)}`;
+  // Live snapshots over SSE. EventSource can't send an Authorization header,
+  // so this reads the stream via fetch and hand-parses the `data:` frames.
+  // Resolves when the server closes the stream; rejects on network/auth
+  // failure so the caller can fall back to polling.
+  async streamMetrics(
+    window: string,
+    onSnapshot: (snapshot: MetricsSnapshot) => void,
+    signal: AbortSignal,
+  ): Promise<void> {
+    const response = await fetch(
+      `${API_ROUTES.METRICS_STREAM}?window=${encodeURIComponent(window)}`,
+      {
+        headers: { accept: 'text/event-stream', ...authHeaders() },
+        signal,
+      },
+    );
+    if (!response.ok || !response.body) {
+      throw new Error(`Metrics stream failed (${response.status})`);
+    }
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) return;
+      buffer += decoder.decode(value, { stream: true });
+      // SSE frames are separated by a blank line; keep the trailing partial.
+      const frames = buffer.split('\n\n');
+      buffer = frames.pop() ?? '';
+      for (const frame of frames) {
+        const dataLines = frame
+          .split('\n')
+          .filter((line) => line.startsWith('data:'))
+          .map((line) => line.slice(5).trim());
+        if (dataLines.length === 0) continue;
+        try {
+          onSnapshot(JSON.parse(dataLines.join('')) as MetricsSnapshot);
+        } catch {
+          // Skip malformed frames — the next tick replaces them anyway.
+        }
+      }
+    }
+  },
+
+  async getRouteSamples(method: string, route: string, limit?: number): Promise<IRouteSamplesResult> {
+    let url = `${API_ROUTES.METRICS_SAMPLES}?method=${encodeURIComponent(method)}&route=${encodeURIComponent(route)}`;
+    if (limit !== undefined) url += `&limit=${limit}`;
     const response = await ApiClient.makeRequest({
       url,
       method: 'GET',
@@ -98,10 +145,12 @@ const MetricsService = {
     to: number;
     minMs?: number;
     maxMs?: number;
+    limit?: number;
   }): Promise<IRouteSamplesResult> {
     const query = new URLSearchParams({ from: String(params.from), to: String(params.to) });
     if (params.minMs !== undefined) query.set('minMs', String(params.minMs));
     if (params.maxMs !== undefined) query.set('maxMs', String(params.maxMs));
+    if (params.limit !== undefined) query.set('limit', String(params.limit));
     const response = await ApiClient.makeRequest({
       url: `${API_ROUTES.METRICS_SAMPLES}?${query.toString()}`,
       method: 'GET',

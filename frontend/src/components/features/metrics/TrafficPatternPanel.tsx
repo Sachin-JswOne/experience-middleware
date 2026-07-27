@@ -29,7 +29,10 @@ const TrafficPatternPanel = ({ data, loading, bucketIntervalMs, windowMs, utc }:
   const { grid, cols, colHours, maxCount, hasData } = useMemo(() => {
     // Column width follows bucket granularity: 1h buckets → 24 cols,
     // 6h rollups → 4 cols.
-    const colHrs = Math.max(1, Math.min(6, Math.round((bucketIntervalMs ?? 3_600_000) / 3_600_000)));
+    const colHrs = Math.max(
+      1,
+      Math.min(6, Math.round((bucketIntervalMs ?? 3_600_000) / 3_600_000)),
+    );
     const colCount = Math.ceil(24 / colHrs);
     const cells: number[][] = Array.from({ length: 7 }, () => Array(colCount).fill(0));
     let max = 0;
@@ -55,9 +58,7 @@ const TrafficPatternPanel = ({ data, loading, bucketIntervalMs, windowMs, utc }:
       loading={loading}
       empty={tooNarrow || !hasData}
       emptyMessage={
-        tooNarrow
-          ? 'Select a 7d+ range to see the weekly pattern'
-          : 'No traffic in this window'
+        tooNarrow ? 'Select a 7d+ range to see the weekly pattern' : 'No traffic in this window'
       }
       height={190}
     >
@@ -68,7 +69,13 @@ const TrafficPatternPanel = ({ data, loading, bucketIntervalMs, windowMs, utc }:
               <Typography
                 key={label}
                 variant="caption"
-                sx={{ height: 20, lineHeight: '20px', color: tokens.textSubtlest, fontSize: 12, minWidth: 28 }}
+                sx={{
+                  height: 20,
+                  lineHeight: '20px',
+                  color: tokens.textSubtlest,
+                  fontSize: 12,
+                  minWidth: 28,
+                }}
               >
                 {label}
               </Typography>
@@ -102,9 +109,10 @@ const TrafficPatternPanel = ({ data, loading, bucketIntervalMs, windowMs, utc }:
                         bgcolor: count > 0 ? tokens.brand : tokens.surfaceSunken,
                         opacity: count > 0 ? intensity : 1,
                         borderRadius: '2px',
-                        '&:focus-visible': count > 0
-                          ? { outline: `2px solid ${tokens.borderFocused}`, outlineOffset: 1 }
-                          : undefined,
+                        '&:focus-visible':
+                          count > 0
+                            ? { outline: `2px solid ${tokens.borderFocused}`, outlineOffset: 1 }
+                            : undefined,
                       }}
                     />
                   );

@@ -1,7 +1,10 @@
-import { useState, type ReactNode } from 'react';
-import { Box, Card, Skeleton, Typography } from '@mui/material';
+import { useRef, useState, type ReactNode } from 'react';
+import { Box, Card, IconButton, Skeleton, Tooltip, Typography } from '@mui/material';
+import DownloadIcon from '@mui/icons-material/Download';
+import FullscreenIcon from '@mui/icons-material/Fullscreen';
 import dayjs from 'dayjs';
 import utcPlugin from 'dayjs/plugin/utc';
+import { LATENCY_HISTOGRAM_BOUNDS } from '@/_types/metrics.interface';
 import { tokens } from '@/styles/theme';
 
 dayjs.extend(utcPlugin);
@@ -66,6 +69,67 @@ export const formatMs = (value: number): string => {
 
 export const formatPercent = (value: number): string => `${value.toFixed(1)}%`;
 
+// Estimate a percentile from a bucket's latency histogram ('25'…'30000',
+// 'inf') via linear interpolation — mirrors the backend estimator so
+// client-derived percentiles (p50 per bucket) line up with server ones.
+export const estimatePercentileFromHistogram = (
+  histogram: Record<string, number>,
+  p: number,
+): number | undefined => {
+  const total = Object.values(histogram).reduce((a, b) => a + b, 0);
+  if (total === 0) return undefined;
+  const targetRank = Math.ceil((p / 100) * total);
+  let cumulative = 0;
+  let prevBound = 0;
+  for (const bound of LATENCY_HISTOGRAM_BOUNDS) {
+    const count = histogram[String(bound)] || 0;
+    if (count > 0 && cumulative + count >= targetRank) {
+      const positionInBucket = targetRank - cumulative;
+      return prevBound + ((bound - prevBound) * positionInBucket) / count;
+    }
+    cumulative += count;
+    prevBound = bound;
+  }
+  return prevBound;
+};
+
+// Rasterize the first SVG inside a container to a downloaded PNG. Recharts
+// renders pure inline SVG, so serialize → draw on canvas → toBlob.
+export const exportChartPng = (container: HTMLElement | null, filename: string): void => {
+  const svg = container?.querySelector('svg');
+  if (!svg) return;
+  const rect = svg.getBoundingClientRect();
+  const clone = svg.cloneNode(true) as SVGSVGElement;
+  clone.setAttribute('width', String(rect.width));
+  clone.setAttribute('height', String(rect.height));
+  const source = new XMLSerializer().serializeToString(clone);
+  const blobUrl = URL.createObjectURL(new Blob([source], { type: 'image/svg+xml;charset=utf-8' }));
+  const img = new Image();
+  img.onload = () => {
+    const scale = 2; // crisp on retina / slide decks
+    const canvas = document.createElement('canvas');
+    canvas.width = rect.width * scale;
+    canvas.height = rect.height * scale;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return URL.revokeObjectURL(blobUrl);
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.scale(scale, scale);
+    ctx.drawImage(img, 0, 0);
+    URL.revokeObjectURL(blobUrl);
+    canvas.toBlob((blob) => {
+      if (!blob) return;
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `${filename}.png`;
+      a.click();
+      URL.revokeObjectURL(a.href);
+    });
+  };
+  img.onerror = () => URL.revokeObjectURL(blobUrl);
+  img.src = blobUrl;
+};
+
 // Recharts tooltips render light by default; align chart tooltip chrome to
 // the app's dark inverted MuiTooltip style (see theme.ts) across every chart.
 export const CHART_TOOLTIP_STYLE = {
@@ -103,7 +167,10 @@ export const deployMarkerPositions = (
       (b) => marker.ts >= b.bucketTs && marker.ts < b.bucketTs + interval,
     );
     if (bucket) {
-      out.push({ x: formatBucketTs(bucket.bucketTs, bucketIntervalMs, utc), version: marker.version });
+      out.push({
+        x: formatBucketTs(bucket.bucketTs, bucketIntervalMs, utc),
+        version: marker.version,
+      });
     }
   }
   return out;
@@ -163,7 +230,8 @@ export const useDragZoom = (
   };
 
   // ReferenceArea props while a drag is live (labels for the category axis).
-  const refArea = start && end && start.label !== end.label ? { x1: start.label, x2: end.label } : null;
+  const refArea =
+    start && end && start.label !== end.label ? { x1: start.label, x2: end.label } : null;
 
   return { onMouseDown, onMouseMove, onMouseUp, refArea, zoomEnabled: Boolean(onZoom) };
 };
@@ -187,7 +255,10 @@ export const Sparkline = ({
   const span = max - min || 1;
   const step = width / (values.length - 1);
   const points = values
-    .map((v, i) => `${(i * step).toFixed(1)},${(height - 2 - ((v - min) / span) * (height - 4)).toFixed(1)}`)
+    .map(
+      (v, i) =>
+        `${(i * step).toFixed(1)},${(height - 2 - ((v - min) / span) * (height - 4)).toFixed(1)}`,
+    )
     .join(' ');
   return (
     <svg width={width} height={height} style={{ display: 'block' }} aria-hidden>
@@ -214,24 +285,58 @@ const ChartCard = ({
   height = 240,
   action,
   children,
-}: ChartCardProps) => (
-  <Card sx={{ p: 2, height: '100%' }}>
-    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1.5 }}>
-      <Typography variant="h5">{title}</Typography>
-      {action}
-    </Box>
-    {loading ? (
-      <Skeleton variant="rounded" height={height} />
-    ) : empty ? (
-      <Box sx={{ height, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <Typography variant="body2" sx={{ color: tokens.textSubtle }}>
-          {emptyMessage}
-        </Typography>
+}: ChartCardProps) => {
+  const cardRef = useRef<HTMLDivElement | null>(null);
+  const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+
+  const toggleFullscreen = () => {
+    if (document.fullscreenElement) void document.exitFullscreen();
+    else void cardRef.current?.requestFullscreen?.();
+  };
+
+  return (
+    <Card ref={cardRef} sx={{ p: 2, height: '100%', '&:fullscreen': { overflow: 'auto' } }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1.5 }}>
+        <Typography variant="h5">{title}</Typography>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+          {action}
+          {!loading && !empty && (
+            <>
+              <Tooltip title="Download as PNG">
+                <IconButton
+                  size="small"
+                  aria-label={`Download ${title} as PNG`}
+                  onClick={() => exportChartPng(cardRef.current, slug)}
+                >
+                  <DownloadIcon sx={{ fontSize: 16 }} />
+                </IconButton>
+              </Tooltip>
+              <Tooltip title="Fullscreen">
+                <IconButton
+                  size="small"
+                  aria-label={`View ${title} fullscreen`}
+                  onClick={toggleFullscreen}
+                >
+                  <FullscreenIcon sx={{ fontSize: 16 }} />
+                </IconButton>
+              </Tooltip>
+            </>
+          )}
+        </Box>
       </Box>
-    ) : (
-      children
-    )}
-  </Card>
-);
+      {loading ? (
+        <Skeleton variant="rounded" height={height} />
+      ) : empty ? (
+        <Box sx={{ height, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <Typography variant="body2" sx={{ color: tokens.textSubtle }}>
+            {emptyMessage}
+          </Typography>
+        </Box>
+      ) : (
+        children
+      )}
+    </Card>
+  );
+};
 
 export default ChartCard;

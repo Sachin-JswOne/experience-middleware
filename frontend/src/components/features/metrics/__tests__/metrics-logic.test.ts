@@ -71,10 +71,7 @@ describe('evaluateAlerts', () => {
     const snapshot = makeSnapshot({
       summary: { ...makeSnapshot().summary, errorRate: 8, p99LatencyMs: 2500 },
     });
-    const breaches = evaluateAlerts(
-      snapshot,
-      thresholdsWith({ errorRatePct: 5, p99Ms: 2000 }),
-    );
+    const breaches = evaluateAlerts(snapshot, thresholdsWith({ errorRatePct: 5, p99Ms: 2000 }));
     expect(breaches).toHaveLength(2);
   });
 

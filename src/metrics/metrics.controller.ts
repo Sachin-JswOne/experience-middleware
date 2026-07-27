@@ -3,10 +3,13 @@ import {
   Body,
   Controller,
   Get,
+  MessageEvent,
   Put,
   Query,
+  Sse,
   UseGuards,
 } from '@nestjs/common';
+import { Observable, concatMap, interval, startWith } from 'rxjs';
 import { MetricsAggregator } from './metrics.aggregator';
 import { MetricsAlertsService } from './metrics.alerts.service';
 import { MetricsClusterStore } from './metrics.cluster-store';
@@ -37,7 +40,8 @@ const WINDOW_PRESETS: Record<string, number> = {
   '30d': 30 * 24 * 60 * 60 * 1000,
 };
 
-const MAX_SAMPLES_RETURNED = 50;
+const DEFAULT_SAMPLES_RETURNED = 50;
+const MAX_SAMPLES_RETURNED = 500;
 
 @Controller()
 @UseGuards(MetricsAuthGuard)
@@ -58,6 +62,7 @@ export class MetricsController {
     @Query('to') to?: string,
     @Query('minMs') minMs?: string,
     @Query('maxMs') maxMs?: string,
+    @Query('limit') limit?: string,
   ): Promise<{
     enabled: boolean;
     slowThresholdMs: number;
@@ -65,7 +70,14 @@ export class MetricsController {
     // every pod); 'local' when only this pod's store answered.
     source: 'cluster' | 'local';
     samples: RouteErrorSample[];
+    // How many samples matched before the limit was applied — lets the UI
+    // offer "view all" when the response is truncated.
+    totalMatched: number;
   }> {
+    const effectiveLimit = Math.min(
+      Math.max(parseInt(limit ?? '', 10) || DEFAULT_SAMPLES_RETURNED, 1),
+      MAX_SAMPLES_RETURNED,
+    );
     const base = {
       enabled: this.sampleStore.isEnabled(),
       slowThresholdMs: this.sampleStore.getSlowThresholdMs(),
@@ -79,7 +91,12 @@ export class MetricsController {
       const methodUpper = method.toUpperCase();
       const local = this.sampleStore.getSamples(methodUpper, route);
       if (!clusterSamples) {
-        return { ...base, source: 'local', samples: local.slice(0, MAX_SAMPLES_RETURNED) };
+        return {
+          ...base,
+          source: 'local',
+          samples: local.slice(0, effectiveLimit),
+          totalMatched: local.length,
+        };
       }
       // Cluster ring carries errors+slow from every pod; successes only
       // exist per-pod. Merge and dedupe (own pod's entries are in both).
@@ -87,7 +104,12 @@ export class MetricsController {
         (s) => s.method === methodUpper && s.route === route,
       );
       const merged = dedupeSamples([...clusterForRoute, ...local]);
-      return { ...base, source: 'cluster', samples: merged.slice(0, MAX_SAMPLES_RETURNED) };
+      return {
+        ...base,
+        source: 'cluster',
+        samples: merged.slice(0, effectiveLimit),
+        totalMatched: merged.length,
+      };
     }
 
     // Band mode (heatmap drill-through): all routes, time window + latency band.
@@ -118,12 +140,23 @@ export class MetricsController {
       toTs,
       minDurationMs,
       maxDurationMs,
+      limit: MAX_SAMPLES_RETURNED,
     });
     if (!clusterSamples) {
-      return { ...base, source: 'local', samples: local.slice(0, MAX_SAMPLES_RETURNED) };
+      return {
+        ...base,
+        source: 'local',
+        samples: local.slice(0, effectiveLimit),
+        totalMatched: local.length,
+      };
     }
     const merged = dedupeSamples([...clusterSamples.filter(inBand), ...local]);
-    return { ...base, source: 'cluster', samples: merged.slice(0, MAX_SAMPLES_RETURNED) };
+    return {
+      ...base,
+      source: 'cluster',
+      samples: merged.slice(0, effectiveLimit),
+      totalMatched: merged.length,
+    };
   }
 
   // One route's traffic over time (trend chart in the samples drawer).
@@ -189,7 +222,32 @@ export class MetricsController {
     @Query('to') to?: string,
   ): Promise<MetricsSnapshot> {
     const { fromTs, toTs } = this.resolveRange(window, from, to);
+    return this.buildSnapshot(fromTs, toTs);
+  }
 
+  // Live snapshots over SSE — same payload as GET /metrics, pushed every
+  // few seconds so the dashboard doesn't have to poll. Relative windows
+  // only: the range is re-resolved on every tick so it slides with time.
+  @Sse('metrics/stream')
+  streamMetrics(
+    @Query('window') window?: string,
+    @Query('intervalMs') intervalMsRaw?: string,
+  ): Observable<MessageEvent> {
+    // Validate the window up front so a bad request fails immediately
+    // instead of erroring inside the stream.
+    this.resolveRange(window);
+    const parsed = intervalMsRaw !== undefined ? parseInt(intervalMsRaw, 10) : NaN;
+    const intervalMs = isNaN(parsed) ? 10_000 : Math.min(Math.max(parsed, 2_000), 60_000);
+    return interval(intervalMs).pipe(
+      startWith(0),
+      concatMap(async () => {
+        const { fromTs, toTs } = this.resolveRange(window);
+        return { data: await this.buildSnapshot(fromTs, toTs) };
+      }),
+    );
+  }
+
+  private async buildSnapshot(fromTs: number, toTs: number): Promise<MetricsSnapshot> {
     const localSnapshot = this.aggregator.getSnapshotRange(fromTs, toTs);
     let snapshot = localSnapshot;
 

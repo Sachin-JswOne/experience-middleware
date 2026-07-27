@@ -35,7 +35,14 @@ interface Props {
 
 type LatencyMode = 'avg' | 'p95';
 
-const DownstreamTimelineChart = ({ data, loading, bucketIntervalMs, deployMarkers, utc, onZoom }: Props) => {
+const DownstreamTimelineChart = ({
+  data,
+  loading,
+  bucketIntervalMs,
+  deployMarkers,
+  utc,
+  onZoom,
+}: Props) => {
   const [mode, setMode] = useState<LatencyMode>('avg');
   const hasP95 = useMemo(
     () => data.some((series) => series.points.some((p) => p.p95LatencyMs !== undefined)),
@@ -50,11 +57,14 @@ const DownstreamTimelineChart = ({ data, loading, bucketIntervalMs, deployMarker
       for (const point of series.points) {
         let row = rows.get(point.bucketTs);
         if (!row) {
-          row = { bucketTs: point.bucketTs, time: formatBucketTs(point.bucketTs, bucketIntervalMs, utc) };
+          row = {
+            bucketTs: point.bucketTs,
+            time: formatBucketTs(point.bucketTs, bucketIntervalMs, utc),
+          };
           rows.set(point.bucketTs, row);
         }
         const value =
-          effectiveMode === 'p95' ? point.p95LatencyMs ?? point.avgLatencyMs : point.avgLatencyMs;
+          effectiveMode === 'p95' ? (point.p95LatencyMs ?? point.avgLatencyMs) : point.avgLatencyMs;
         row[series.target] = Math.round(value);
       }
     }
@@ -113,7 +123,12 @@ const DownstreamTimelineChart = ({ data, loading, bucketIntervalMs, deployMarker
           <XAxis dataKey="time" tick={{ fontSize: 12, fill: tokens.textSubtle }} />
           <YAxis
             tick={{ fontSize: 12, fill: tokens.textSubtle }}
-            label={{ value: 'ms', angle: -90, position: 'insideLeft', style: { fontSize: 12, fill: tokens.textSubtle } }}
+            label={{
+              value: 'ms',
+              angle: -90,
+              position: 'insideLeft',
+              style: { fontSize: 12, fill: tokens.textSubtle },
+            }}
           />
           <Tooltip
             contentStyle={CHART_TOOLTIP_STYLE}

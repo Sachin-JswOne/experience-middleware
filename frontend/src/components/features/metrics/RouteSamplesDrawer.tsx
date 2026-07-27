@@ -4,6 +4,7 @@ import {
   AccordionDetails,
   AccordionSummary,
   Box,
+  Button,
   Chip,
   Drawer,
   IconButton,
@@ -29,7 +30,7 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import MetricsService from '@/services/MetricsService';
-import type { RouteErrorSample } from '@/_types/metrics.interface';
+import type { RouteErrorSample, SampleDownstream } from '@/_types/metrics.interface';
 import { tokens } from '@/styles/theme';
 import type { MetricsRange } from './useMetricsQuery';
 import { formatBucketTs, formatMs, formatTs, logUrlFor } from './chartShared';
@@ -57,13 +58,13 @@ const CHART_PURPLE_BOLD = '#BF63F3';
 export type SamplesQuery =
   | { kind: 'route'; method: string; route: string }
   | {
-    kind: 'band';
-    fromTs: number;
-    toTs: number;
-    minMs: number;
-    maxMs: number | null;
-    label: string;
-  };
+      kind: 'band';
+      fromTs: number;
+      toTs: number;
+      minMs: number;
+      maxMs: number | null;
+      label: string;
+    };
 
 interface Props {
   query: SamplesQuery | null;
@@ -134,9 +135,136 @@ const exportSamplesCsv = (samples: RouteErrorSample[]) => {
   URL.revokeObjectURL(url);
 };
 
+// --- Downstream waterfall -----------------------------------------------
+// One row per downstream call: a horizontal bar split into the four proxy
+// stages, scaled against the whole request's duration — "where did 2s go"
+// at a glance. Calls without stage data render a single solid segment.
+
+const STAGE_META: Array<{
+  key: keyof NonNullable<SampleDownstream['stages']>;
+  label: string;
+  color: string;
+}> = [
+  { key: 'buildRequestMs', label: 'build request', color: '#42B2D7' },
+  { key: 'createClientMs', label: 'create client', color: '#BF63F3' },
+  { key: 'downstreamMs', label: 'downstream', color: '#357DE8' },
+  { key: 'resTransformMs', label: 'transform', color: '#82B536' },
+];
+
+const SampleWaterfall = ({ sample }: { sample: RouteErrorSample }) => {
+  if (sample.downstream.length === 0) return null;
+  const maxMs = Math.max(sample.durationMs, ...sample.downstream.map((d) => d.durationMs)) || 1;
+  const gatewayOverheadMs = Math.max(
+    0,
+    sample.durationMs - sample.downstream.reduce((sum, d) => sum + d.durationMs, 0),
+  );
+
+  const row = (
+    key: string,
+    label: string,
+    durationMs: number,
+    segments: Array<{ ms: number; color: string; title: string }>,
+  ) => (
+    <Box key={key} sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+      <Typography
+        variant="caption"
+        sx={{
+          width: 180,
+          flexShrink: 0,
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap',
+          color: tokens.textSubtle,
+        }}
+      >
+        {label}
+      </Typography>
+      <Box
+        sx={{
+          flex: 1,
+          display: 'flex',
+          height: 10,
+          bgcolor: tokens.surfaceSunken,
+          borderRadius: 1,
+          overflow: 'hidden',
+        }}
+      >
+        {segments.map((seg, i) => (
+          <Tooltip key={i} title={`${seg.title}: ${formatMs(seg.ms)}`}>
+            <Box
+              sx={{
+                width: `${(seg.ms / maxMs) * 100}%`,
+                bgcolor: seg.color,
+                minWidth: seg.ms > 0 ? 2 : 0,
+              }}
+            />
+          </Tooltip>
+        ))}
+      </Box>
+      <Typography
+        variant="caption"
+        sx={{ width: 56, textAlign: 'right', color: tokens.textSubtle }}
+      >
+        {formatMs(durationMs)}
+      </Typography>
+    </Box>
+  );
+
+  return (
+    <Box sx={{ mb: 1.5 }}>
+      <Typography
+        variant="body2"
+        sx={{ color: tokens.textSubtle, mb: 0.5, fontWeight: tokens.weightBold }}
+      >
+        Time breakdown
+      </Typography>
+      {row('__total', 'total request', sample.durationMs, [
+        { ms: sample.durationMs, color: tokens.textSubtlest, title: 'total' },
+      ])}
+      {sample.downstream.map((d, idx) =>
+        row(
+          `${d.target}-${idx}`,
+          d.target,
+          d.durationMs,
+          d.stages
+            ? STAGE_META.map((s) => ({ ms: d.stages![s.key] ?? 0, color: s.color, title: s.label }))
+            : [
+                {
+                  ms: d.durationMs,
+                  color: d.success ? '#357DE8' : '#E2483D',
+                  title: 'downstream call',
+                },
+              ],
+        ),
+      )}
+      {gatewayOverheadMs > 0 &&
+        row('__overhead', 'gateway overhead', gatewayOverheadMs, [
+          {
+            ms: gatewayOverheadMs,
+            color: '#F68909',
+            title: 'gateway (auth, routing, serialization)',
+          },
+        ])}
+      <Box sx={{ display: 'flex', gap: 1.5, mt: 0.5, flexWrap: 'wrap' }}>
+        {STAGE_META.map((s) => (
+          <Box key={s.key} sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+            <Box sx={{ width: 8, height: 8, borderRadius: '2px', bgcolor: s.color }} />
+            <Typography variant="caption" sx={{ color: tokens.textSubtlest }}>
+              {s.label}
+            </Typography>
+          </Box>
+        ))}
+      </Box>
+    </Box>
+  );
+};
+
 const CodeBlock = ({ label, value }: { label: string; value?: string }) => (
   <Box sx={{ mb: 1.5 }}>
-    <Typography variant="body2" sx={{ color: tokens.textSubtle, mb: 0.5, fontWeight: tokens.weightBold }}>
+    <Typography
+      variant="body2"
+      sx={{ color: tokens.textSubtle, mb: 0.5, fontWeight: tokens.weightBold }}
+    >
       {label}
     </Typography>
     <Box
@@ -172,7 +300,16 @@ const SampleAccordion = ({
   showRoute?: boolean;
   utc?: boolean;
 }) => (
-  <Accordion disableGutters elevation={0} sx={{ border: `1px solid ${tokens.border}`, borderRadius: 1, '&:before': { display: 'none' }, mb: 1 }}>
+  <Accordion
+    disableGutters
+    elevation={0}
+    sx={{
+      border: `1px solid ${tokens.border}`,
+      borderRadius: 1,
+      '&:before': { display: 'none' },
+      mb: 1,
+    }}
+  >
     <AccordionSummary expandIcon={<ExpandMoreIcon />}>
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flex: 1, minWidth: 0 }}>
         <Chip
@@ -198,7 +335,11 @@ const SampleAccordion = ({
           sx={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
         >
           {showRoute ? (
-            <Typography component="span" variant="body2" sx={{ fontWeight: tokens.weightBold, mr: 0.75 }}>
+            <Typography
+              component="span"
+              variant="body2"
+              sx={{ fontWeight: tokens.weightBold, mr: 0.75 }}
+            >
               {`${sample.method} ${sample.route}`}
             </Typography>
           ) : null}
@@ -207,6 +348,16 @@ const SampleAccordion = ({
         <Typography variant="body2" sx={{ color: tokens.textSubtle }}>
           {formatMs(sample.durationMs)}
         </Typography>
+        {sample.pod && (
+          <Tooltip title={`Served by pod ${sample.pod}`}>
+            <Chip
+              label={sample.pod}
+              size="small"
+              variant="outlined"
+              sx={{ height: 18, fontSize: 12, maxWidth: 110, color: tokens.textSubtle }}
+            />
+          </Tooltip>
+        )}
         {sample.requestId && (
           <Tooltip
             title={
@@ -221,19 +372,19 @@ const SampleAccordion = ({
               variant="outlined"
               {...(logUrlFor(sample.requestId)
                 ? {
-                  component: 'a' as const,
-                  href: logUrlFor(sample.requestId)!,
-                  target: '_blank',
-                  rel: 'noopener',
-                  clickable: true,
-                  onClick: (e: React.MouseEvent) => e.stopPropagation(),
-                }
+                    component: 'a' as const,
+                    href: logUrlFor(sample.requestId)!,
+                    target: '_blank',
+                    rel: 'noopener',
+                    clickable: true,
+                    onClick: (e: React.MouseEvent) => e.stopPropagation(),
+                  }
                 : {
-                  onClick: (e: React.MouseEvent) => {
-                    e.stopPropagation();
-                    void copyText(sample.requestId!, 'Request id copied');
-                  },
-                })}
+                    onClick: (e: React.MouseEvent) => {
+                      e.stopPropagation();
+                      void copyText(sample.requestId!, 'Request id copied');
+                    },
+                  })}
               sx={{ height: 18, fontSize: 12, fontFamily: 'monospace', color: tokens.textSubtle }}
             />
           </Tooltip>
@@ -254,16 +405,26 @@ const SampleAccordion = ({
     </AccordionSummary>
     <AccordionDetails>
       {sample.requestId && (
-        <Typography variant="body2" sx={{ mb: 1, color: tokens.textSubtle, fontFamily: 'monospace' }}>
+        <Typography
+          variant="body2"
+          sx={{ mb: 1, color: tokens.textSubtle, fontFamily: 'monospace' }}
+        >
           request-id: {sample.requestId}
         </Typography>
       )}
+      <SampleWaterfall sample={sample} />
       <CodeBlock label="Request headers" value={JSON.stringify(sample.requestHeaders)} />
-      <CodeBlock label={sample.method === 'GET' ? 'Query params' : 'Request body'} value={sample.requestBody} />
+      <CodeBlock
+        label={sample.method === 'GET' ? 'Query params' : 'Request body'}
+        value={sample.requestBody}
+      />
       <CodeBlock label="Response body" value={sample.responseBody} />
       {sample.downstream.length > 0 && (
         <Box>
-          <Typography variant="body2" sx={{ color: tokens.textSubtle, mb: 0.5, fontWeight: tokens.weightBold }}>
+          <Typography
+            variant="body2"
+            sx={{ color: tokens.textSubtle, mb: 0.5, fontWeight: tokens.weightBold }}
+          >
             Downstream calls
           </Typography>
           {sample.downstream.map((d, idx) => (
@@ -271,7 +432,12 @@ const SampleAccordion = ({
               key={idx}
               disableGutters
               elevation={0}
-              sx={{ border: `1px solid ${tokens.border}`, borderRadius: 1, '&:before': { display: 'none' }, mb: 0.5 }}
+              sx={{
+                border: `1px solid ${tokens.border}`,
+                borderRadius: 1,
+                '&:before': { display: 'none' },
+                mb: 0.5,
+              }}
             >
               <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={{ minHeight: 36 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flex: 1, minWidth: 0 }}>
@@ -286,7 +452,15 @@ const SampleAccordion = ({
                       borderColor: d.success ? tokens.success : tokens.danger,
                     }}
                   />
-                  <Typography variant="body2" sx={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      flex: 1,
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
                     {d.target}
                   </Typography>
                   <Typography variant="body2" sx={{ color: tokens.textSubtle }}>
@@ -296,7 +470,10 @@ const SampleAccordion = ({
               </AccordionSummary>
               <AccordionDetails>
                 {d.requestUrl && (
-                  <Typography variant="body2" sx={{ mb: 1, wordBreak: 'break-all', color: tokens.textSubtle }}>
+                  <Typography
+                    variant="body2"
+                    sx={{ mb: 1, wordBreak: 'break-all', color: tokens.textSubtle }}
+                  >
                     {d.requestUrl}
                   </Typography>
                 )}
@@ -378,13 +555,39 @@ const RouteTrendChart = ({
       </Box>
       <ResponsiveContainer width="100%" height={110}>
         <ComposedChart data={chartData} margin={{ top: 4, right: 4, left: -18, bottom: 0 }}>
-          <XAxis dataKey="time" tick={{ fontSize: 12, fill: tokens.textSubtlest }} interval="preserveStartEnd" />
-          <YAxis yAxisId="count" tick={{ fontSize: 12, fill: tokens.textSubtlest }} allowDecimals={false} />
-          <YAxis yAxisId="ms" orientation="right" tick={{ fontSize: 12, fill: tokens.textSubtlest }} width={40} />
+          <XAxis
+            dataKey="time"
+            tick={{ fontSize: 12, fill: tokens.textSubtlest }}
+            interval="preserveStartEnd"
+          />
+          <YAxis
+            yAxisId="count"
+            tick={{ fontSize: 12, fill: tokens.textSubtlest }}
+            allowDecimals={false}
+          />
+          <YAxis
+            yAxisId="ms"
+            orientation="right"
+            tick={{ fontSize: 12, fill: tokens.textSubtlest }}
+            width={40}
+          />
           <ChartTooltip contentStyle={{ fontSize: 12, borderRadius: tokens.radiusSmall }} />
-          <Bar yAxisId="count" dataKey="requests" name="Requests" fill={tokens.brand} fillOpacity={0.45} />
+          <Bar
+            yAxisId="count"
+            dataKey="requests"
+            name="Requests"
+            fill={tokens.brand}
+            fillOpacity={0.45}
+          />
           <Bar yAxisId="count" dataKey="errors" name="Errors" fill={tokens.danger} />
-          <Line yAxisId="ms" dataKey="p95" name="P95 (ms)" stroke={CHART_PURPLE_BOLD} strokeWidth={1.5} dot={false} />
+          <Line
+            yAxisId="ms"
+            dataKey="p95"
+            name="P95 (ms)"
+            stroke={CHART_PURPLE_BOLD}
+            strokeWidth={1.5}
+            dot={false}
+          />
         </ComposedChart>
       </ResponsiveContainer>
     </Box>
@@ -394,23 +597,31 @@ const RouteTrendChart = ({
 const RouteSamplesDrawer = ({ query, onClose, utc, range }: Props) => {
   const open = query !== null;
   const [kind, setKind] = useState<SampleKind>('all');
+  const [podFilter, setPodFilter] = useState<string | null>(null);
+  const [showAll, setShowAll] = useState(false);
   const [lastQuery, setLastQuery] = useState<SamplesQuery | null>(null);
   // Keep the last query while the drawer animates closed.
-  if (query && query !== lastQuery) setLastQuery(query);
+  if (query && query !== lastQuery) {
+    setLastQuery(query);
+    setShowAll(false);
+  }
   const active = query ?? lastQuery;
+  // Backend caps responses at 500 — "view all" asks for that maximum.
+  const limit = showAll ? 500 : undefined;
 
   const { data, isPending } = useQuery({
-    queryKey: ['metrics-samples', active],
+    queryKey: ['metrics-samples', active, showAll],
     queryFn: async () => {
       const result =
         active!.kind === 'route'
-          ? await MetricsService.getRouteSamples(active!.method, active!.route)
+          ? await MetricsService.getRouteSamples(active!.method, active!.route, limit)
           : await MetricsService.getSamplesInBand({
-            from: active!.fromTs,
-            to: active!.toTs,
-            minMs: active!.minMs > 0 ? active!.minMs : undefined,
-            maxMs: active!.maxMs ?? undefined,
-          });
+              from: active!.fromTs,
+              to: active!.toTs,
+              minMs: active!.minMs > 0 ? active!.minMs : undefined,
+              maxMs: active!.maxMs ?? undefined,
+              limit,
+            });
       if (!result.data || result.error?.code) {
         throw new Error(result.error?.message || 'Failed to load samples');
       }
@@ -422,16 +633,30 @@ const RouteSamplesDrawer = ({ query, onClose, utc, range }: Props) => {
 
   const slowThresholdMs = data?.slowThresholdMs ?? 3000;
   const isSlow = (s: RouteErrorSample) => s.statusCode < 400 && s.durationMs >= slowThresholdMs;
+  const podOptions = Array.from(
+    new Set((data?.samples ?? []).map((s) => s.pod).filter(Boolean) as string[]),
+  ).sort();
   const filtered = (data?.samples ?? []).filter((s) => {
+    if (podFilter && s.pod !== podFilter) return false;
     if (kind === 'errors') return s.statusCode >= 400;
     if (kind === 'slow') return isSlow(s);
     return true;
   });
+  // Older backends don't send totalMatched — fall back so the button hides.
+  const totalMatched = data?.totalMatched ?? data?.samples.length ?? 0;
+  const truncated = !showAll && data !== undefined && totalMatched > (data?.samples.length ?? 0);
 
   return (
     <Drawer anchor="right" open={open} onClose={onClose}>
       <Box sx={{ width: { xs: '100vw', md: '80vw' }, p: 2.5 }}>
-        <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', mb: 0.5 }}>
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'flex-start',
+            justifyContent: 'space-between',
+            mb: 0.5,
+          }}
+        >
           <Box sx={{ minWidth: 0 }}>
             <Typography variant="h5" component="h2" sx={{ wordBreak: 'break-all' }}>
               {active ? queryTitle(active, utc) : ''}
@@ -444,6 +669,9 @@ const RouteSamplesDrawer = ({ query, onClose, utc, range }: Props) => {
                 : data?.source === 'cluster'
                   ? 'Errors & slow cluster-wide, successes from this pod — newest first'
                   : 'Request samples (last few on this pod, newest first)'}
+              {data && data.samples.length > 0
+                ? ` — showing ${data.samples.length} of ${totalMatched}`
+                : ''}
             </Typography>
           </Box>
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
@@ -467,22 +695,47 @@ const RouteSamplesDrawer = ({ query, onClose, utc, range }: Props) => {
         {active?.kind === 'route' && (
           <RouteTrendChart method={active.method} route={active.route} range={range} utc={utc} />
         )}
-        <ToggleButtonGroup
-          value={kind}
-          exclusive
-          size="small"
-          onChange={(_, next: SampleKind | null) => {
-            if (next) setKind(next);
-          }}
-          sx={{ mt: 1.5 }}
-          aria-label="Sample filter"
-        >
-          <ToggleButton value="all" aria-label="All samples">All</ToggleButton>
-          <ToggleButton value="errors" aria-label="Error samples only">Errors</ToggleButton>
-          <ToggleButton value="slow" aria-label="Slow samples only">
-            {`Slow (≥${formatMs(slowThresholdMs)})`}
-          </ToggleButton>
-        </ToggleButtonGroup>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mt: 1.5, flexWrap: 'wrap' }}>
+          <ToggleButtonGroup
+            value={kind}
+            exclusive
+            size="small"
+            onChange={(_, next: SampleKind | null) => {
+              if (next) setKind(next);
+            }}
+            aria-label="Sample filter"
+          >
+            <ToggleButton value="all" aria-label="All samples">
+              All
+            </ToggleButton>
+            <ToggleButton value="errors" aria-label="Error samples only">
+              Errors
+            </ToggleButton>
+            <ToggleButton value="slow" aria-label="Slow samples only">
+              {`Slow (≥${formatMs(slowThresholdMs)})`}
+            </ToggleButton>
+          </ToggleButtonGroup>
+          {podOptions.length > 1 && (
+            <ToggleButtonGroup
+              value={podFilter}
+              exclusive
+              size="small"
+              onChange={(_, next: string | null) => setPodFilter(next)}
+              aria-label="Pod filter"
+            >
+              {podOptions.map((pod) => (
+                <ToggleButton
+                  key={pod}
+                  value={pod}
+                  aria-label={`Only pod ${pod}`}
+                  sx={{ fontFamily: 'monospace', textTransform: 'none' }}
+                >
+                  {pod}
+                </ToggleButton>
+              ))}
+            </ToggleButtonGroup>
+          )}
+        </Box>
         <Box sx={{ mt: 2 }}>
           {(() => {
             if (isPending) return <Skeleton variant="rounded" height={160} />;
@@ -496,9 +749,9 @@ const RouteSamplesDrawer = ({ query, onClose, utc, range }: Props) => {
             if (filtered.length === 0) {
               return (
                 <Typography variant="body2" sx={{ color: tokens.textSubtle }}>
-                  No {kind === 'errors' ? 'error ' : kind === 'slow' ? 'slow ' : ''}samples
-                  captured {active?.kind === 'band' ? 'in this band' : 'for this route'} yet
-                  (kept in memory since the pod started).
+                  No {kind === 'errors' ? 'error ' : kind === 'slow' ? 'slow ' : ''}samples captured{' '}
+                  {active?.kind === 'band' ? 'in this band' : 'for this route'} yet (kept in memory
+                  since the pod started).
                 </Typography>
               );
             }
@@ -512,6 +765,13 @@ const RouteSamplesDrawer = ({ query, onClose, utc, range }: Props) => {
               />
             ));
           })()}
+          {truncated && (
+            <Box sx={{ display: 'flex', justifyContent: 'center', mt: 1 }}>
+              <Button size="small" variant="text" onClick={() => setShowAll(true)}>
+                {`View all ${totalMatched} captured hits`}
+              </Button>
+            </Box>
+          )}
         </Box>
       </Box>
     </Drawer>

@@ -34,7 +34,14 @@ interface Props {
   // Previous window of the same length — rendered as a ghost line so a
   // regression is visible at a glance. Aligned bucket-by-bucket.
   previousData?: TimelineBucket[];
+  // Same range one week earlier — the seasonality baseline. Buckets whose
+  // traffic deviates hard from it get an anomaly dot.
+  baselineData?: TimelineBucket[];
 }
+
+// A bucket is anomalous when it moves ≥60% away from a meaningful baseline.
+const ANOMALY_DEVIATION = 0.6;
+const ANOMALY_MIN_BASELINE = 20;
 
 const RequestTimelineChart = ({
   data,
@@ -44,15 +51,25 @@ const RequestTimelineChart = ({
   utc,
   onZoom,
   previousData,
+  baselineData,
 }: Props) => {
-  const chartData = data.map((b, idx) => ({
-    ...b,
-    avgLatencyMs: Math.round(b.avgLatencyMs),
-    p90LatencyMs: b.p90LatencyMs !== undefined ? Math.round(b.p90LatencyMs) : undefined,
-    p99LatencyMs: b.p99LatencyMs !== undefined ? Math.round(b.p99LatencyMs) : undefined,
-    time: formatBucketTs(b.bucketTs, bucketIntervalMs, utc),
-    prevRequestCount: previousData?.[idx]?.requestCount,
-  }));
+  const chartData = data.map((b, idx) => {
+    const baseline = baselineData?.[idx]?.requestCount;
+    const anomalous =
+      baseline !== undefined &&
+      baseline >= ANOMALY_MIN_BASELINE &&
+      Math.abs(b.requestCount - baseline) / baseline >= ANOMALY_DEVIATION;
+    return {
+      ...b,
+      avgLatencyMs: Math.round(b.avgLatencyMs),
+      p90LatencyMs: b.p90LatencyMs !== undefined ? Math.round(b.p90LatencyMs) : undefined,
+      p99LatencyMs: b.p99LatencyMs !== undefined ? Math.round(b.p99LatencyMs) : undefined,
+      time: formatBucketTs(b.bucketTs, bucketIntervalMs, utc),
+      prevRequestCount: previousData?.[idx]?.requestCount,
+      baselineRequestCount: baseline,
+      anomaly: anomalous ? b.requestCount : undefined,
+    };
+  });
   const markers = deployMarkerPositions(deployMarkers, data, bucketIntervalMs, utc);
   const zoom = useDragZoom(onZoom, bucketIntervalMs);
 
@@ -73,18 +90,25 @@ const RequestTimelineChart = ({
           <YAxis
             yAxisId="left"
             tick={{ fontSize: 12, fill: tokens.textSubtle }}
-            label={{ value: 'Requests', angle: -90, position: 'insideLeft', style: { fontSize: 12, fill: tokens.textSubtle } }}
+            label={{
+              value: 'Requests',
+              angle: -90,
+              position: 'insideLeft',
+              style: { fontSize: 12, fill: tokens.textSubtle },
+            }}
           />
           <YAxis
             yAxisId="right"
             orientation="right"
             tick={{ fontSize: 12, fill: tokens.textSubtle }}
-            label={{ value: 'ms', angle: 90, position: 'insideRight', style: { fontSize: 12, fill: tokens.textSubtle } }}
+            label={{
+              value: 'ms',
+              angle: 90,
+              position: 'insideRight',
+              style: { fontSize: 12, fill: tokens.textSubtle },
+            }}
           />
-          <Tooltip
-            contentStyle={CHART_TOOLTIP_STYLE}
-            labelStyle={CHART_TOOLTIP_LABEL_STYLE}
-          />
+          <Tooltip contentStyle={CHART_TOOLTIP_STYLE} labelStyle={CHART_TOOLTIP_LABEL_STYLE} />
           <Legend />
           {markers.map((m) => (
             <ReferenceLine
@@ -110,6 +134,18 @@ const RequestTimelineChart = ({
             name="Requests (prev window)"
             dot={false}
           />
+          {baselineData && baselineData.length > 0 && (
+            <Line
+              yAxisId="left"
+              type="monotone"
+              dataKey="baselineRequestCount"
+              stroke={CHART_PURPLE}
+              strokeWidth={1}
+              strokeDasharray="2 4"
+              name="Requests (last week)"
+              dot={false}
+            />
+          )}
           <Line
             yAxisId="left"
             type="monotone"
@@ -119,6 +155,18 @@ const RequestTimelineChart = ({
             name="Requests"
             dot={false}
           />
+          {baselineData && baselineData.length > 0 && (
+            <Line
+              yAxisId="left"
+              type="monotone"
+              dataKey="anomaly"
+              stroke="none"
+              name="Anomaly vs last week"
+              dot={{ r: 4, fill: tokens.danger, strokeWidth: 0 }}
+              legendType="circle"
+              isAnimationActive={false}
+            />
+          )}
           <Line
             yAxisId="right"
             type="monotone"

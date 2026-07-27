@@ -175,6 +175,7 @@ export class MetricsHealthService implements OnModuleInit, OnModuleDestroy {
       eventLoopLagP99Ms: health.eventLoopLagP99Ms,
       requestsLastMin: health.requestsLastMin,
       cpuPct: health.cpuPct ?? 0,
+      gcPauseMs: health.gcPauseMs ?? 0,
     });
     if (this.history.length > HISTORY_MAX_POINTS) {
       this.history.splice(0, this.history.length - HISTORY_MAX_POINTS);

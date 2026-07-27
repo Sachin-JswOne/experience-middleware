@@ -18,6 +18,7 @@ import {
 } from '@mui/material';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import ZoomOutIcon from '@mui/icons-material/ZoomOut';
+import CompareArrowsIcon from '@mui/icons-material/CompareArrows';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import type {
   AlertConfig,
@@ -32,6 +33,8 @@ import { tokens } from '@/styles/theme';
 import useMetricsQuery, {
   WINDOW_MS,
   rangeSpanMs,
+  useBaselineMetricsQuery,
+  useMetricsStream,
   usePreviousMetricsQuery,
   useMetricsHealthQuery,
   type MetricsRange,
@@ -40,6 +43,8 @@ import useMetricsQuery, {
 import TimeRangePicker from '@/components/features/metrics/TimeRangePicker';
 import SummaryCards from '@/components/features/metrics/SummaryCards';
 import RequestTimelineChart from '@/components/features/metrics/RequestTimelineChart';
+import LatencyPercentileChart from '@/components/features/metrics/LatencyPercentileChart';
+import ComparePanel from '@/components/features/metrics/ComparePanel';
 import StatusClassTimelineChart from '@/components/features/metrics/StatusClassTimelineChart';
 import LatencyHeatmap from '@/components/features/metrics/LatencyHeatmap';
 import RouteBreakdownChart from '@/components/features/metrics/RouteBreakdownChart';
@@ -76,7 +81,15 @@ import { formatTs } from '@/components/features/metrics/chartShared';
 const emptySnapshot: MetricsSnapshot = {
   timestamp: Date.now(),
   windowMs: 300_000,
-  summary: { totalRequests: 0, errorRate: 0, avgLatencyMs: 0, cacheHitRate: 0, p50LatencyMs: 0, p90LatencyMs: 0, p99LatencyMs: 0 },
+  summary: {
+    totalRequests: 0,
+    errorRate: 0,
+    avgLatencyMs: 0,
+    cacheHitRate: 0,
+    p50LatencyMs: 0,
+    p90LatencyMs: 0,
+    p99LatencyMs: 0,
+  },
   timeline: [],
   routeBreakdown: [],
   downstream: [],
@@ -84,6 +97,7 @@ const emptySnapshot: MetricsSnapshot = {
 
 const REFRESH_OPTIONS = [
   { value: 0, label: 'Refresh: Off' },
+  { value: -1, label: 'Live (SSE)' },
   { value: 10_000, label: 'Refresh: 10s' },
   { value: 30_000, label: 'Refresh: 30s' },
   { value: 60_000, label: 'Refresh: 60s' },
@@ -133,7 +147,9 @@ const DashboardPage = () => {
     routes: parseList(searchParams, 'routes'),
     method: searchParams.get('method'),
   }));
-  const [targetFilter, setTargetFilter] = useState<string[]>(() => parseList(searchParams, 'targets'));
+  const [targetFilter, setTargetFilter] = useState<string[]>(() =>
+    parseList(searchParams, 'targets'),
+  );
   const [utc, setUtc] = useState(() => searchParams.get('utc') === '1');
   const [refreshMs, setRefreshMs] = useState<number>(() => {
     const fromUrl = searchParams.get('refresh');
@@ -144,6 +160,7 @@ const DashboardPage = () => {
   const [thresholds, setThresholds] = useState<AlertThresholds>(loadThresholds);
   const [sloConfig, setSloConfig] = useState<SloConfig>(loadSloConfig);
   const [drawerQuery, setDrawerQuery] = useState<SamplesQuery | null>(null);
+  const [compareOpen, setCompareOpen] = useState(false);
   // Ranges we zoomed away from — the reset chip walks back through them.
   const [zoomStack, setZoomStack] = useState<MetricsRange[]>([]);
 
@@ -226,17 +243,34 @@ const DashboardPage = () => {
     if (refresh !== null && !isNaN(Number(refresh))) setRefreshMs(Number(refresh));
   }, []);
 
-  const { data, isPending, isFetching, isError, refetch } = useMetricsQuery(
+  // Live (SSE) mode pushes snapshots; the poll query then only serves as the
+  // fallback while the stream is down.
+  const live = refreshMs === -1 && range.type === 'relative';
+  const stream = useMetricsStream(range, live);
+  const pollInterval = live
+    ? stream.connected
+      ? false
+      : 10_000
+    : refreshMs > 0
+      ? refreshMs
+      : false;
+
+  const { data, isPending, isFetching, isError, refetch } = useMetricsQuery(range, pollInterval);
+  const previousQuery = usePreviousMetricsQuery(
     range,
-    refreshMs > 0 ? refreshMs : false,
+    live ? 30_000 : refreshMs > 0 ? refreshMs : false,
   );
-  const previousQuery = usePreviousMetricsQuery(range, refreshMs > 0 ? refreshMs : false);
+  // Week-ago baseline for the anomaly overlay (Overview only, spans ≤ 24h).
+  const baselineQuery = useBaselineMetricsQuery(
+    range,
+    live ? 60_000 : refreshMs > 0 ? refreshMs : false,
+    tab === 0,
+  );
   // The health feed also powers loop-lag / Valkey / pod alerts, so keep it
   // polling whenever such a rule is configured — not just on the System tab.
-  const healthRulesActive =
-    thresholds.eventLoopLagP99Ms !== null || thresholds.valkeyUnavailable;
+  const healthRulesActive = thresholds.eventLoopLagP99Ms !== null || thresholds.valkeyUnavailable;
   const healthQuery = useMetricsHealthQuery(tab === 3 || healthRulesActive);
-  const snapshot = data ?? emptySnapshot;
+  const snapshot = (live ? stream.snapshot : null) ?? data ?? emptySnapshot;
 
   const breaches = useMemo(
     () =>
@@ -361,6 +395,29 @@ const DashboardPage = () => {
     setRange(next);
   }, []);
 
+  // Keyboard shortcuts: r refresh, 1–4 tabs, u UTC. Skipped while typing.
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      const target = e.target as HTMLElement | null;
+      if (
+        target &&
+        (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)
+      ) {
+        return;
+      }
+      if (e.key === 'r') {
+        void refetch();
+      } else if (e.key === 'u') {
+        setUtc((prev) => !prev);
+      } else if (['1', '2', '3', '4'].includes(e.key)) {
+        setTab(Number(e.key) - 1);
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [refetch]);
+
   // Breach count in the browser tab so alerts are visible from other tabs.
   useEffect(() => {
     const original = document.title;
@@ -401,6 +458,7 @@ const DashboardPage = () => {
             <Typography variant="body2" sx={{ color: tokens.textSubtle, mt: 0.5 }}>
               Last updated {formatTs(snapshot.timestamp, 'HH:mm:ss', utc)}
               {utc ? ' UTC' : ''}
+              {live ? (stream.connected ? ' · live' : ' · live (reconnecting, polling)') : ''}
               {snapshot.source === 'cluster' ? ' · cluster-wide' : ''}
               {snapshot.windowCoverageMs && snapshot.windowCoverageMs < snapshot.windowMs
                 ? ` · showing last ${Math.round(snapshot.windowCoverageMs / 60_000)} min only (local data)`
@@ -446,6 +504,15 @@ const DashboardPage = () => {
                 </MenuItem>
               ))}
             </Select>
+            <Tooltip title="Compare this window with the previous one">
+              <IconButton
+                size="small"
+                aria-label="Compare with previous window"
+                onClick={() => setCompareOpen(true)}
+              >
+                <CompareArrowsIcon sx={{ fontSize: 20 }} />
+              </IconButton>
+            </Tooltip>
             <SavedViews currentParams={searchParams.toString()} onApply={applyViewParams} />
             <AlertSettings
               thresholds={thresholds}
@@ -489,7 +556,11 @@ const DashboardPage = () => {
           </Alert>
         )}
 
-        <Tabs value={tab} onChange={(_, next) => setTab(next)} sx={{ mb: 2, borderBottom: `1px solid ${tokens.border}` }}>
+        <Tabs
+          value={tab}
+          onChange={(_, next) => setTab(next)}
+          sx={{ mb: 2, borderBottom: `1px solid ${tokens.border}` }}
+        >
           <Tab label="Overview" />
           <Tab label="Routes" />
           <Tab label="Downstream" />
@@ -520,6 +591,16 @@ const DashboardPage = () => {
                   utc={utc}
                   onZoom={handleZoom}
                   previousData={previousQuery.data?.timeline}
+                  baselineData={baselineQuery.data?.timeline}
+                />
+              </Box>
+              <Box sx={{ gridColumn: { xs: '1', lg: '1 / -1' } }}>
+                <LatencyPercentileChart
+                  data={snapshot.timeline}
+                  loading={isPending}
+                  bucketIntervalMs={snapshot.bucketIntervalMs}
+                  utc={utc}
+                  onZoom={handleZoom}
                 />
               </Box>
               <Box sx={{ gridColumn: { xs: '1', lg: '1 / -1' } }}>
@@ -676,6 +757,12 @@ const DashboardPage = () => {
           onClose={() => setDrawerQuery(null)}
           utc={utc}
           range={range}
+        />
+        <ComparePanel
+          open={compareOpen}
+          onClose={() => setCompareOpen(false)}
+          current={snapshot}
+          previous={previousQuery.data}
         />
       </Box>
     </Box>

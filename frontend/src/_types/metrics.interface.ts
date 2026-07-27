@@ -130,6 +130,10 @@ export interface AlertConfig {
   targetErrorRatePct: number | null;
   trafficDropPct: number | null;
   sloAvailabilityPct: number | null;
+  // Alert when traffic flatlines to zero while the previous window had it.
+  alertOnNoData: boolean;
+  // Epoch ms until which all alerting is muted (webhook + dashboard banner).
+  snoozeUntil: number | null;
   routeRules: AlertConfigRouteRule[];
   targetRules: AlertConfigTargetRule[];
   updatedAt: number;
@@ -172,6 +176,8 @@ export interface PodHealthPoint {
   eventLoopLagP99Ms: number;
   requestsLastMin: number;
   cpuPct: number;
+  // Optional: heartbeats written before this field shipped lack it.
+  gcPauseMs?: number;
 }
 
 export interface PodHealth {
@@ -203,6 +209,8 @@ export interface SampleDownstream {
   durationMs: number;
   statusCode?: number;
   success: boolean;
+  // Per-stage split of durationMs — powers the waterfall in the samples drawer.
+  stages?: StageTimings;
   requestUrl?: string;
   requestHeaders?: Record<string, string>;
   requestBody?: string;
@@ -216,6 +224,8 @@ export interface RouteErrorSample {
   statusCode: number;
   durationMs: number;
   url: string;
+  // Pod that served the request (cluster samples mix pods).
+  pod?: string;
   requestId?: string;
   requestHeaders: Record<string, string>;
   requestBody?: string;

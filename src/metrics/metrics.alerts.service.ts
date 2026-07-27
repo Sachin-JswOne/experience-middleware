@@ -35,6 +35,8 @@ export const emptyAlertConfig = (): AlertConfig => ({
   targetErrorRatePct: null,
   trafficDropPct: null,
   sloAvailabilityPct: null,
+  alertOnNoData: false,
+  snoozeUntil: null,
   routeRules: [],
   targetRules: [],
   updatedAt: 0,
@@ -242,6 +244,20 @@ export class MetricsAlertsService implements OnModuleInit, OnModuleDestroy {
       }
     }
 
+    // Zero traffic where the previous window had plenty: a dead ingress or a
+    // broken rollout reports "no errors" — the absence itself is the alert.
+    if (
+      config.alertOnNoData &&
+      summary.totalRequests === 0 &&
+      previous &&
+      previous.summary.totalRequests >= this.minRequests * 3
+    ) {
+      breaches.push({
+        kind: 'no-data',
+        message: `No traffic in the last window (previous window had ${previous.summary.totalRequests} requests)`,
+      });
+    }
+
     if (
       config.trafficDropPct !== null &&
       previous &&
@@ -287,11 +303,13 @@ export class MetricsAlertsService implements OnModuleInit, OnModuleDestroy {
   private async evaluate(): Promise<void> {
     try {
       const config = await this.effectiveConfig();
+      // Snoozed: evaluate nothing so cooldowns don't burn while muted.
+      if (config.snoozeUntil !== null && Date.now() < config.snoozeUntil) return;
       const snapshot = await this.getSnapshot(this.windowMs);
       if (!snapshot) return;
 
       let previous: MetricsSnapshot | undefined;
-      if (config.trafficDropPct !== null) {
+      if (config.trafficDropPct !== null || config.alertOnNoData) {
         previous = (await this.getPreviousSnapshot(this.windowMs)) ?? undefined;
       }
 
@@ -375,8 +393,12 @@ export class MetricsAlertsService implements OnModuleInit, OnModuleDestroy {
 
   private async post(text: string): Promise<void> {
     if (!this.webhookUrl) return;
+    // Slack and Teams both render `{ text }`; a dashboard link (when
+    // configured) turns the ping into one click to the graphs.
+    const dashboardUrl = process.env.METRICS_DASHBOARD_URL;
+    const body = dashboardUrl ? `${text}\n${dashboardUrl}` : text;
     try {
-      await axios.post(this.webhookUrl, { text }, { timeout: 5_000 });
+      await axios.post(this.webhookUrl, { text: body }, { timeout: 5_000 });
       this.logger.log(`Alert posted: ${text}`);
     } catch (error) {
       this.logger.warn(`Alert webhook failed: ${(error as Error).message}`);

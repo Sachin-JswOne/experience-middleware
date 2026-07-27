@@ -158,6 +158,11 @@ export interface AlertConfig {
   trafficDropPct: number | null;
   // Availability SLO for multiwindow burn-rate alerts (e.g. 99.5).
   sloAvailabilityPct: number | null;
+  // Alert when traffic flatlines to zero while the previous window had it —
+  // a dead ingress/broken rollout looks like "no errors" otherwise.
+  alertOnNoData: boolean;
+  // Epoch ms until which all alerting (webhook + dashboard banner) is muted.
+  snoozeUntil: number | null;
   routeRules: AlertConfigRouteRule[];
   targetRules: AlertConfigTargetRule[];
   updatedAt: number;
@@ -200,6 +205,8 @@ export interface PodHealthPoint {
   eventLoopLagP99Ms: number;
   requestsLastMin: number;
   cpuPct: number;
+  // Optional: heartbeats written before this field shipped lack it.
+  gcPauseMs?: number;
 }
 
 export interface PodHealth {
@@ -234,6 +241,9 @@ export interface SampleDownstream {
   durationMs: number;
   statusCode?: number;
   success: boolean;
+  // Per-stage split of durationMs — powers the waterfall in the samples
+  // drawer.
+  stages?: StageTimings;
   requestUrl?: string;
   requestHeaders?: Record<string, string>;
   requestBody?: string;
@@ -247,6 +257,9 @@ export interface RouteErrorSample {
   statusCode: number;
   durationMs: number;
   url: string;
+  // Pod that served the request — lets the drawer isolate one bad pod when
+  // the cluster ring mixes samples from every pod.
+  pod?: string;
   requestId?: string;
   requestHeaders: Record<string, string>;
   requestBody?: string;

@@ -34,7 +34,14 @@ interface Props {
 
 const CLASS_KEYS = ['c2xx', 'c3xx', 'c4xx', 'c5xx'] as const;
 
-const StatusClassTimelineChart = ({ data, loading, bucketIntervalMs, deployMarkers, utc, onZoom }: Props) => {
+const StatusClassTimelineChart = ({
+  data,
+  loading,
+  bucketIntervalMs,
+  deployMarkers,
+  utc,
+  onZoom,
+}: Props) => {
   const hasStatusData = data.some((b) => b.statusClasses);
   const chartData = data.map((b) => ({
     bucketTs: b.bucketTs,

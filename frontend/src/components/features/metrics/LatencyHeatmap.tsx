@@ -10,7 +10,12 @@ interface Props {
   bucketIntervalMs?: number;
   utc?: boolean;
   // Click a cell to inspect the samples inside that time + latency band.
-  onCellClick?: (band: { fromTs: number; toTs: number; minMs: number; maxMs: number | null }) => void;
+  onCellClick?: (band: {
+    fromTs: number;
+    toTs: number;
+    minMs: number;
+    maxMs: number | null;
+  }) => void;
 }
 
 const boundLabel = (bound: number | 'inf'): string => {
@@ -23,7 +28,10 @@ const boundLabel = (bound: number | 'inf'): string => {
 // this bucket's bound]. 'inf' is open-ended.
 export const rowBand = (row: number | 'inf'): { minMs: number; maxMs: number | null } => {
   if (row === 'inf') {
-    return { minMs: LATENCY_HISTOGRAM_BOUNDS[LATENCY_HISTOGRAM_BOUNDS.length - 1] ?? 0, maxMs: null };
+    return {
+      minMs: LATENCY_HISTOGRAM_BOUNDS[LATENCY_HISTOGRAM_BOUNDS.length - 1] ?? 0,
+      maxMs: null,
+    };
   }
   const idx = LATENCY_HISTOGRAM_BOUNDS.indexOf(row as (typeof LATENCY_HISTOGRAM_BOUNDS)[number]);
   return { minMs: idx > 0 ? (LATENCY_HISTOGRAM_BOUNDS[idx - 1] ?? 0) : 0, maxMs: row };
@@ -149,7 +157,9 @@ const LatencyHeatmap = ({ data, loading, bucketIntervalMs, utc, onCellClick }: P
                     overflow: 'visible',
                   }}
                 >
-                  {idx % labelEvery === 0 ? formatBucketTs(col.bucketTs, bucketIntervalMs, utc) : ''}
+                  {idx % labelEvery === 0
+                    ? formatBucketTs(col.bucketTs, bucketIntervalMs, utc)
+                    : ''}
                 </Typography>
               ))}
             </Box>

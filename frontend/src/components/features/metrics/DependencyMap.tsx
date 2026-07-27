@@ -105,8 +105,7 @@ const DependencyMap = ({ pairs, loading, onSelectRoute }: Props) => {
   const routeY = new Map(routes.map((n) => [n.key, n.y]));
   const targetY = new Map(targets.map((n) => [n.key, n.y]));
 
-  const isDimmed = (edge: Edge) =>
-    hovered !== null && edge.from !== hovered && edge.to !== hovered;
+  const isDimmed = (edge: Edge) => hovered !== null && edge.from !== hovered && edge.to !== hovered;
 
   return (
     <ChartCard
@@ -170,7 +169,12 @@ const DependencyMap = ({ pairs, loading, onSelectRoute }: Props) => {
               style={{ cursor: onSelectRoute ? 'pointer' : 'default' }}
             >
               <title>{`${node.label} · ${formatNumber(node.requests)} downstream calls`}</title>
-              <circle cx={NODE_W - 6} cy={0} r={3.5} fill={edgeColor(node.requests > 0 ? (node.errors / node.requests) * 100 : 0)} />
+              <circle
+                cx={NODE_W - 6}
+                cy={0}
+                r={3.5}
+                fill={edgeColor(node.requests > 0 ? (node.errors / node.requests) * 100 : 0)}
+              />
               <text
                 x={NODE_W - 14}
                 y={3.5}
@@ -191,7 +195,12 @@ const DependencyMap = ({ pairs, loading, onSelectRoute }: Props) => {
               onMouseLeave={() => setHovered(null)}
             >
               <title>{`${node.label} · ${formatNumber(node.requests)} calls`}</title>
-              <circle cx={6} cy={0} r={3.5} fill={edgeColor(node.requests > 0 ? (node.errors / node.requests) * 100 : 0)} />
+              <circle
+                cx={6}
+                cy={0}
+                r={3.5}
+                fill={edgeColor(node.requests > 0 ? (node.errors / node.requests) * 100 : 0)}
+              />
               <text
                 x={14}
                 y={3.5}

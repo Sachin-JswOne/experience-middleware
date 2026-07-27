@@ -53,7 +53,14 @@ const DeltaChip = ({
       <Chip
         label={label}
         size="small"
-        sx={{ height: 18, fontSize: 12, fontWeight: tokens.weightBold, color, bgcolor: 'transparent', border: `1px solid ${color}` }}
+        sx={{
+          height: 18,
+          fontSize: 12,
+          fontWeight: tokens.weightBold,
+          color,
+          bgcolor: 'transparent',
+          border: `1px solid ${color}`,
+        }}
       />
     </Tooltip>
   );
@@ -173,7 +180,12 @@ const SummaryCards = ({ summary, loading, previous, rps }: SummaryCardsProps) =>
             Latency percentiles
           </Typography>
           {!loading && estimated && (
-            <Chip label="estimated" size="small" variant="outlined" sx={{ height: 18, fontSize: 12 }} />
+            <Chip
+              label="estimated"
+              size="small"
+              variant="outlined"
+              sx={{ height: 18, fontSize: 12 }}
+            />
           )}
           {!loading && (
             <DeltaChip
@@ -187,12 +199,24 @@ const SummaryCards = ({ summary, loading, previous, rps }: SummaryCardsProps) =>
           <Skeleton variant="text" sx={{ fontSize: '1.25rem' }} width={160} />
         ) : (
           <Box sx={{ display: 'flex', alignItems: 'baseline', flexWrap: 'wrap', gap: 1 }}>
-            <Typography variant="body2" sx={{ color: tokens.textSubtle }}>P50</Typography>
-            <Typography variant="h6" sx={{ fontWeight: tokens.weightBold }}>{formatMs(summary.p50LatencyMs)}</Typography>
-            <Typography variant="body2" sx={{ color: tokens.textSubtle }}>P90</Typography>
-            <Typography variant="h6" sx={{ fontWeight: tokens.weightBold }}>{formatMs(summary.p90LatencyMs)}</Typography>
-            <Typography variant="body2" sx={{ color: tokens.textSubtle }}>P99</Typography>
-            <Typography variant="h6" sx={{ fontWeight: tokens.weightBold }}>{formatMs(summary.p99LatencyMs)}</Typography>
+            <Typography variant="body2" sx={{ color: tokens.textSubtle }}>
+              P50
+            </Typography>
+            <Typography variant="h6" sx={{ fontWeight: tokens.weightBold }}>
+              {formatMs(summary.p50LatencyMs)}
+            </Typography>
+            <Typography variant="body2" sx={{ color: tokens.textSubtle }}>
+              P90
+            </Typography>
+            <Typography variant="h6" sx={{ fontWeight: tokens.weightBold }}>
+              {formatMs(summary.p90LatencyMs)}
+            </Typography>
+            <Typography variant="body2" sx={{ color: tokens.textSubtle }}>
+              P99
+            </Typography>
+            <Typography variant="h6" sx={{ fontWeight: tokens.weightBold }}>
+              {formatMs(summary.p99LatencyMs)}
+            </Typography>
           </Box>
         )}
       </Card>

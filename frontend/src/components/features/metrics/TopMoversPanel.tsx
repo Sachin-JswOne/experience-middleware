@@ -49,7 +49,8 @@ export const computeMovers = (current: RouteBreakdown[], previous: RouteBreakdow
     const latencyDeltaPct = prevLat > 0 ? ((currLat - prevLat) / prevLat) * 100 : null;
     const errorDeltaPp = errorRate(route) - errorRate(prev);
 
-    const latSignificant = latencyDeltaPct !== null && Math.abs(latencyDeltaPct) >= MIN_LATENCY_DELTA_PCT;
+    const latSignificant =
+      latencyDeltaPct !== null && Math.abs(latencyDeltaPct) >= MIN_LATENCY_DELTA_PCT;
     const errSignificant = Math.abs(errorDeltaPp) >= MIN_ERROR_DELTA_PP;
     if (!latSignificant && !errSignificant) continue;
 
@@ -70,7 +71,11 @@ const DeltaChip = ({ up, label, worse }: { up: boolean; label: string; worse: bo
   <Chip
     label={
       <Box component="span" sx={{ display: 'flex', alignItems: 'center' }}>
-        {up ? <ArrowDropUpIcon sx={{ fontSize: 14 }} /> : <ArrowDropDownIcon sx={{ fontSize: 14 }} />}
+        {up ? (
+          <ArrowDropUpIcon sx={{ fontSize: 14 }} />
+        ) : (
+          <ArrowDropDownIcon sx={{ fontSize: 14 }} />
+        )}
         {label}
       </Box>
     }
@@ -97,7 +102,9 @@ const TopMoversPanel = ({ current, previous, loading, onSelect }: Props) => {
   return (
     <Card sx={{ p: 2, height: '100%' }}>
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
-        <Typography variant="h5" component="h2">Top movers</Typography>
+        <Typography variant="h5" component="h2">
+          Top movers
+        </Typography>
         <Tooltip title="Routes whose p95 latency or error rate changed most vs the previous window of the same length. Low-traffic routes are excluded.">
           <Typography variant="caption" sx={{ color: tokens.textSubtlest, cursor: 'default' }}>
             vs previous window
@@ -120,7 +127,9 @@ const TopMoversPanel = ({ current, previous, loading, onSelect }: Props) => {
               onClick={onSelect ? () => onSelect(m.route) : undefined}
               role={onSelect ? 'button' : undefined}
               tabIndex={onSelect ? 0 : undefined}
-              aria-label={onSelect ? `View samples for ${m.route.method} ${m.route.route}` : undefined}
+              aria-label={
+                onSelect ? `View samples for ${m.route.method} ${m.route.route}` : undefined
+              }
               onKeyDown={
                 onSelect
                   ? (e) => {
@@ -147,9 +156,18 @@ const TopMoversPanel = ({ current, previous, loading, onSelect }: Props) => {
               <Tooltip title={`${m.route.method} ${m.route.route}`}>
                 <Typography
                   variant="body2"
-                  sx={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+                  sx={{
+                    flex: 1,
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                  }}
                 >
-                  <Typography component="span" variant="body2" sx={{ fontWeight: tokens.weightBold, mr: 0.75 }}>
+                  <Typography
+                    component="span"
+                    variant="body2"
+                    sx={{ fontWeight: tokens.weightBold, mr: 0.75 }}
+                  >
                     {m.route.method}
                   </Typography>
                   {m.route.route}
