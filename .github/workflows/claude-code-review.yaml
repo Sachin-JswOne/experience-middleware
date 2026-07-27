@@ -1,0 +1,134 @@
+name: Claude Code Review
+
+on:
+  # Fire automatically ONCE when a PR becomes ready for review:
+  #   - ready_for_review → a draft PR is promoted to "ready"
+  #   - opened           → a PR created directly as ready (guarded as non-draft below)
+  pull_request:
+    types: [opened, ready_for_review]
+  # Still allow an on-demand (re-)review by commenting "@claude review" on the PR.
+  issue_comment:
+    types: [created]
+
+# Never stack overlapping reviews for the same PR — cancel the older run.
+# The suffix keeps this group scoped to triggers that actually start a review
+# (a PR event, or a comment containing the trigger phrase). Other comments on
+# the same PR (e.g. bots like Atlantis commenting on every PR) get their own
+# per-comment group via comment.id, so they can't cancel a real review that's
+# already in flight just by sharing the PR number.
+concurrency:
+  group: >-
+    claude-review-${{ github.event.pull_request.number || github.event.issue.number }}-${{
+    (github.event_name == 'pull_request' || contains(github.event.comment.body, '@claude review'))
+    && 'active' || github.event.comment.id }}
+  cancel-in-progress: true
+
+jobs:
+  claude-review:
+    # Run when EITHER:
+    #  A) the PR just became ready for review (and is not a draft), OR
+    #  B) someone commented "@claude review" on a PR (manual re-review).
+    if: |
+      (github.event_name == 'pull_request' && github.event.pull_request.draft == false) ||
+      (github.event_name == 'issue_comment' &&
+       github.event.issue.pull_request != null &&
+       contains(github.event.comment.body, '@claude review'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: read
+      id-token: write
+      actions: write
+    steps:
+      - name: Get PR head ref
+        id: pr
+        uses: actions/github-script@v7
+        with:
+          script: |
+            // context.issue.number resolves to the PR number for BOTH
+            // issue_comment and pull_request events, so this works either way.
+            const pr = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number,
+            });
+            core.setOutput('number', pr.data.number);
+            core.setOutput('head_sha', pr.data.head.sha);
+            core.setOutput('head_ref', pr.data.head.ref);
+
+      - name: Checkout PR head branch
+        uses: actions/checkout@v4
+        with:
+          # Check out the PR's actual head commit directly.
+          # This is where .github/reviews/<branch-name>/jira.md and testcases.md
+          # live, committed by whoever prepared the review context. Keying by
+          # branch name (not PR number) lets contributors add these files while
+          # still on the feature branch, before a PR number even exists.
+          ref: ${{ steps.pr.outputs.head_sha }}
+          fetch-depth: 1
+
+      - name: Debug review context files
+        run: |
+          echo "Event: ${{ github.event_name }}"
+          echo "PR number: ${{ steps.pr.outputs.number }}"
+          echo "Head ref: ${{ steps.pr.outputs.head_ref }}"
+          ls -la ".github/reviews/${{ steps.pr.outputs.head_ref }}/" 2>/dev/null \
+            || echo "No .github/reviews/${{ steps.pr.outputs.head_ref }}/ directory found on head branch"
+
+      - name: Run Claude Code Review
+        id: claude-review
+        uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          plugin_marketplaces: "https://github.com/anthropics/claude-code.git"
+          plugins: "code-review@claude-code-plugins"
+          # Providing a custom `prompt` makes claude-code-action auto-detect
+          # "agent" mode, which runs the review but does NOT post a PR
+          # comment on its own. track_progress forces tag-mode-style tracking
+          # comments so the review result actually shows up on the PR.
+          track_progress: true
+          prompt: |
+            Before starting the review, gather context by reading these local files:
+            1. Read `review.md` in the repository root — it contains code style guidelines,
+               review instructions, and a checklist to apply during the review.
+            2. Check if `.github/reviews/${{ steps.pr.outputs.head_ref }}/jira.md` exists
+               (context files are keyed by branch name, not PR number, so they can be
+               committed on the feature branch before a PR even exists).
+               - If it exists, read it for the Jira ticket details and acceptance criteria.
+               - If jira.md contains a link/URL to a Jira issue (an Atlassian browse URL, or
+                 an issue key such as PROJ-1234), fetch that issue LIVE from Jira using your
+                 Atlassian/Jira tools and treat the fetched description and acceptance
+                 criteria as the source of truth (prefer it over any stale copy pasted into
+                 jira.md). Record which issue key you fetched.
+               - If jira.md does not exist, explicitly say so at the start of your review.
+            3. Check if `.github/reviews/${{ steps.pr.outputs.head_ref }}/testcases.md` exists.
+               If it does, read it for the expected test cases and scenarios.
+               If it does not exist, explicitly say so at the start of your review comment.
+
+            At the start of your review comment, state explicitly whether jira.md and
+            testcases.md were found and read, and whether a Jira issue was fetched live
+            (include the issue key), so this is auditable from the PR thread itself.
+
+            Then perform a thorough code review:
+            /code-review:code-review ${{ github.repository }}/pull/${{ steps.pr.outputs.number }}
+
+            Apply the guidelines from `review.md` throughout. Where Jira context is
+            available, verify the implementation satisfies the acceptance criteria.
+
+            Test-coverage analysis — do this by actually reading the code, not by trusting
+            file names or the mere presence of test files:
+            - Build the list of behaviours/scenarios that must be covered from the
+              acceptance criteria (Jira / jira.md) and from testcases.md.
+            - Read the production code paths this PR adds or changes (branches, error
+              handling, edge cases, boundary conditions) and enumerate them.
+            - Read the test files in the PR and map each required scenario and each code
+              path to the specific test(s) that exercise it.
+            - Output a coverage table with columns: Scenario / code path | Covered?
+              (Yes / Partial / No) | Test name or gap.
+            - Explicitly call out any scenario or code path with no or weak test coverage,
+              and propose concrete test cases (with names and the assertions they should
+              make) to close each gap.
+          # See https://github.com/anthropics/claude-code-action/blob/main/docs/usage.md
+          # or https://code.claude.com/docs/en/cli-reference for available options.

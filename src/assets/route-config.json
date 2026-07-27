@@ -5527,5 +5527,24 @@
       ],
       "reqTransform": "vijai.transformers.transformVijaiMarkNotificationRequest"
     }
+  },
+  {
+    "path": "/xp-mi/public/v1/hubspot/moengage/event",
+    "method": "POST",
+    "routeHandler": "TRANSFORM",
+    "isCacheRequired": false,
+    "target": {
+      "name": "moengage-hubspot-event",
+      "url": "https://api-03.moengage.com/v1/event/4311B84VU6UTCNRSAT5JZ3RV_DEBUG",
+      "method": "POST",
+      "timeout": {
+        "request": 20000,
+        "socket": 1000
+      },
+      "staticHeaders": {
+        "Content-Type": "application/json"
+      },
+      "reqTransform": "moengage.transformers.hubspotEventToMoengage"
+    }
   }
 ]
