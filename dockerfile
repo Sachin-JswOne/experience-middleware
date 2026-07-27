@@ -1,7 +1,11 @@
 # --------------------
 # Build stage
 # --------------------
-FROM node:20-alpine AS builder
+# Node 22: the frontend toolchain (jsdom 30 and its whatwg-url/undici tree,
+# @testing-library/jest-dom 7) declares engines of ^22.22 or newer. On Node 20
+# these installed with EBADENGINE warnings; matching the CI runner keeps the
+# build quiet and stops a future engine-strict npm from breaking the image.
+FROM node:22-alpine AS builder
 
 # Set working directory
 WORKDIR /app
@@ -22,7 +26,7 @@ RUN npm run build
 # --------------------
 # Production stage
 # --------------------
-FROM node:20-alpine
+FROM node:22-alpine
 
 # Set NODE_ENV to production
 ENV NODE_ENV=production
