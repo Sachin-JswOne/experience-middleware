@@ -6,12 +6,40 @@ import { AllExceptionsFilter } from './filters/http-exception.filter';
 import { WinstonModule } from 'nest-winston';
 import { winstonConfig } from './logger/winston.config';
 import * as express from 'express';
+import helmet from 'helmet';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
     logger: WinstonModule.createLogger(winstonConfig),
     bodyParser: false,
   });
+
+  // Security headers, including a CSP for the admin SPA this process serves
+  // out of dist-frontend. The bundle loads only same-origin ES modules, so
+  // scripts stay locked to 'self'; MUI/Emotion inject <style> tags at runtime,
+  // which is why styles need 'unsafe-inline'.
+  app.use(
+    helmet({
+      contentSecurityPolicy: {
+        directives: {
+          defaultSrc: ["'self'"],
+          scriptSrc: ["'self'"],
+          styleSrc: ["'self'", "'unsafe-inline'"],
+          imgSrc: ["'self'", 'data:', 'blob:'],
+          fontSrc: ["'self'", 'data:'],
+          // Same-origin XHR + the metrics SSE stream.
+          connectSrc: ["'self'"],
+          objectSrc: ["'none'"],
+          frameAncestors: ["'none'"],
+          baseUri: ["'self'"],
+          formAction: ["'self'"],
+        },
+      },
+      // The SPA reads no cross-origin isolated resources; enabling COEP would
+      // only break embedded images/fonts.
+      crossOriginEmbedderPolicy: false,
+    }),
+  );
 
   app.use(express.json({ limit: '50mb' }));
   app.use(express.urlencoded({ limit: '50mb', extended: true }));

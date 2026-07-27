@@ -9,6 +9,8 @@ import { WinstonModule } from 'nest-winston';
 import { winstonConfig } from './logger/winston.config';
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { RequestContextMiddleware } from './utils/request-context.middleware';
+import { SessionCookieMiddleware } from './auth/session-cookie.middleware';
+import { AuthSessionController } from './auth/auth-session.controller';
 import { APP_ENV } from './config/app.config';
 import { CacheService } from './cache/cache.service';
 import { CacheModule } from './cache/cache.module';
@@ -38,12 +40,17 @@ const hasFrontendDist = existsSync(FRONTEND_DIST_PATH);
       isGlobal: true,
     }),
   ],
-  controllers: [ProxyController],
+  // AuthSessionController first: its concrete /public/v1/auth/session* paths
+  // must match ahead of ProxyController's `@All('public/*path')` wildcard.
+  controllers: [AuthSessionController, ProxyController],
   providers: [AppService, ProxyService],
   exports: [AppService],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
-    consumer.apply(RequestContextMiddleware).forRoutes('*');
+    // SessionCookieMiddleware runs first so every downstream guard, proxy rule
+    // and interceptor sees a normal Authorization header regardless of whether
+    // the token arrived in a header or the session cookie.
+    consumer.apply(SessionCookieMiddleware, RequestContextMiddleware).forRoutes('*');
   }
 }

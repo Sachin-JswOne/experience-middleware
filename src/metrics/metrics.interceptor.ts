@@ -3,7 +3,7 @@ import { Observable, throwError } from 'rxjs';
 import { catchError, finalize, tap } from 'rxjs/operators';
 import { MetricsAggregator } from './metrics.aggregator';
 import { MetricsPublisher } from './metrics.publisher';
-import { MetricsSampleStore } from './metrics.sample-store';
+import { MetricsSampleStore, maskUrlQuery } from './metrics.sample-store';
 import { CacheServedBy, DownstreamRecord, RequestRecord } from './metrics.types';
 import { podName } from './metrics.cluster.shared';
 import { Request, Response } from 'express';
@@ -87,7 +87,7 @@ export class MetricsInterceptor implements NestInterceptor {
             method,
             statusCode,
             durationMs,
-            url: req.originalUrl || req.url,
+            url: maskUrlQuery(req.originalUrl || req.url),
             pod: podName(),
             requestId,
             requestHeaders: MetricsSampleStore.sanitizeHeaders(req.headers as Record<string, unknown>),

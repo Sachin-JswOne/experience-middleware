@@ -9,8 +9,58 @@ const DEFAULT_SLOW_THRESHOLD_MS = 3000;
 const MAX_BODY_CHARS = 4096;
 const MASKED = '***masked***';
 
-const SENSITIVE_HEADERS = ['authorization', 'access_token', 'cookie', 'set-cookie', 'x-api-key'];
-const SENSITIVE_BODY_FIELDS = ['password', 'token', 'accessToken', 'refreshToken', 'otp'];
+const SENSITIVE_HEADERS = [
+  'authorization',
+  'access_token',
+  'cookie',
+  'set-cookie',
+  'x-api-key',
+  'x-auth-token',
+  'proxy-authorization',
+];
+
+/**
+ * Matched case-insensitively as substrings (ignoring - and _), so
+ * `clientSecret`, `X-PASSWORD` and `refresh_token` are all covered by the
+ * short entries below. Exact lowercase matching previously let `Password`
+ * and `access_token` through unmasked.
+ */
+const SENSITIVE_BODY_FIELDS = [
+  'password',
+  'passwd',
+  'token',
+  'secret',
+  'otp',
+  'apikey',
+  'authorization',
+  'credential',
+];
+
+const isSensitiveField = (key: string): boolean => {
+  const normalized = key.toLowerCase().replace(/[-_]/g, '');
+  return SENSITIVE_BODY_FIELDS.some((field) => normalized.includes(field));
+};
+
+/**
+ * Masks credentials carried in the query string. The dashboard renders
+ * `sample.url` verbatim and offers copy-as-cURL, so a token in the query
+ * would otherwise be readable by anyone with dashboard access.
+ */
+export const maskUrlQuery = (url: string): string => {
+  const queryStart = url.indexOf('?');
+  if (queryStart === -1) return url;
+  const path = url.slice(0, queryStart);
+  const params = url
+    .slice(queryStart + 1)
+    .split('&')
+    .map((pair) => {
+      const eq = pair.indexOf('=');
+      if (eq === -1) return pair;
+      const key = pair.slice(0, eq);
+      return isSensitiveField(decodeURIComponent(key)) ? `${key}=${MASKED}` : pair;
+    });
+  return `${path}?${params.join('&')}`;
+};
 
 // Cluster copies travel through a shared Valkey ring read on every drawer
 // poll — trim bodies harder than the local store does.
@@ -210,9 +260,7 @@ export class MetricsSampleStore {
     if (Array.isArray(value)) return value.map((v) => MetricsSampleStore.maskFields(v, depth + 1));
     const out: Record<string, unknown> = {};
     for (const [key, v] of Object.entries(value as Record<string, unknown>)) {
-      out[key] = SENSITIVE_BODY_FIELDS.includes(key)
-        ? MASKED
-        : MetricsSampleStore.maskFields(v, depth + 1);
+      out[key] = isSensitiveField(key) ? MASKED : MetricsSampleStore.maskFields(v, depth + 1);
     }
     return out;
   }
