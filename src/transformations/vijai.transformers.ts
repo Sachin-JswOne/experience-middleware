@@ -31,7 +31,7 @@ export function transformVijaiUserListRequest(request: any) {
        Met_with_Contact__c, Met_with_Contact__r.LastName,
        Site__c, CreatedDate, Site__r.name, Site__r.Google_Maps_Coordinates__c,
        Site__r.Project_Address__c, Site__r.pin_code__c, Site__r.auto_state__c,
-       Site__r.auto_district__c, Site__r.City__c,Site__r.RecordType.Name
+       Site__r.auto_district__c, Site__r.City__c,Site__r.RecordType.Name, Status__c
 FROM CheckIn_CMV__Visit__c
 WHERE OwnerId = '${ownerId}'
 ORDER BY CheckIn_CMV__Check_in_Date_Time__c DESC`
