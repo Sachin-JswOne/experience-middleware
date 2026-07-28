@@ -1152,17 +1152,6 @@
           "request": 5000,
           "socket": 1000
         }
-      },
-      {
-        "name": "cmsFeatureFlag",
-        "url": "${CMS_MSME_URL}/ccp-feature-flags",
-        "method": "GET",
-        "timeout": {
-          "request": "${TIMEOUTS.REQUEST}",
-          "socket": "${TIMEOUTS.SOCKET}"
-        },
-        "reqTransform": "category.transformers.addFeatureFlagQueryParams",
-        "resTransform": "cms.transformers.replaceUriPrefix"
       }
     ],
     "resTransform": "category.transformers.mergeWebGlobalResponse"
@@ -1227,9 +1216,11 @@
   },
   {
     "path": "/xp-mi/public/v1/web-about-us",
+    "isCacheRequired": true,
+    "cacheProvider": "AUTO",
+    "cacheTTLSeconds": 300,
     "method": "POST",
     "routeHandler": "TRANSFORM",
-    "isCacheRequired": false,
     "target": {
       "name": "webAboutUs",
       "url": "${CMS_MSME_URL}/web-about-us-page",
@@ -1257,6 +1248,57 @@
       },
       "reqTransform": "general.transformers.moveBodyToQueryParams",
       "resTransform": "cms.transformers.replaceUriPrefix"
+    }
+  },
+  {
+    "path": "/xp-mi/public/v1/web-accounts-page",
+    "method": "POST",
+    "routeHandler": "TRANSFORM",
+    "isCacheRequired": false,
+    "target": {
+      "name": "accountsPage",
+      "url": "${CMS_MSME_URL}/web-accounts-page",
+      "method": "GET",
+      "timeout": {
+        "request": "${TIMEOUTS.REQUEST}",
+        "socket": "${TIMEOUTS.SOCKET}"
+      },
+      "reqTransform": "general.transformers.moveBodyToQueryParams",
+      "resTransform": "cms.transformers.replaceUriPrefix"
+    }
+  },
+  {
+    "path": "${PATH_URL}/v1/web-legal-page",
+    "method": "POST",
+    "routeHandler": "TRANSFORM",
+    "isCacheRequired": false,
+    "target": {
+      "name": "webLegalPage",
+      "url": "${CMS_MSME_URL}/jsw-legal-pages",
+      "method": "GET",
+      "timeout": {
+        "request": "${TIMEOUTS.REQUEST}",
+        "socket": "${TIMEOUTS.SOCKET}"
+      },
+      "reqTransform": "general.transformers.moveBodyToQueryParams",
+      "resTransform": "legal.transformers.transformLegalPage"
+    }
+  },
+  {
+    "path": "${PATH_URL}/v1/web-help-support-faqs",
+    "method": "POST",
+    "routeHandler": "TRANSFORM",
+    "isCacheRequired": false,
+    "target": {
+      "name": "webHelpSupportFaqs",
+      "url": "${CMS_MSME_URL}/faqss",
+      "method": "GET",
+      "timeout": {
+        "request": "${TIMEOUTS.REQUEST}",
+        "socket": "${TIMEOUTS.SOCKET}"
+      },
+      "reqTransform": "general.transformers.moveBodyToQueryParams",
+      "resTransform": "legal.transformers.transformFaqsList"
     }
   },
   {
@@ -1615,6 +1657,9 @@
   {
     "path": "/xp-mi/public/v1/web-search-page",
     "method": "POST",
+    "isCacheRequired": true,
+    "cacheProvider": "AUTO",
+    "cacheTTLSeconds": 300,
     "routeHandler": "AGGREGATE",
     "aggregationType": "SEQUENTIAL_THEN_PARALLEL",
     "targets": [
@@ -1938,6 +1983,10 @@
         {
           "source": "access_token",
           "destination": "access_token"
+        },
+        {
+          "source": "jsw_session_id",
+          "destination": "jsw_session_id"
         }
       ],
       "requiredParams": ["*"]
@@ -2013,6 +2062,9 @@
   {
     "path": "/xp-mi/public/v1/central_commerce/trending-search",
     "method": "GET",
+    "isCacheRequired": true,
+    "cacheProvider": "AUTO",
+    "cacheTTLSeconds": 300,
     "routeHandler": "TRANSFORM",
     "target": {
       "name": "get-trending-search",
@@ -2122,17 +2174,6 @@
           "request": 5000,
           "socket": 1000
         }
-      },
-      {
-        "name": "cmsFeatureFlag",
-        "url": "${CMS_MSME_URL}/ccp-feature-flags",
-        "method": "GET",
-        "timeout": {
-          "request": "${TIMEOUTS.REQUEST}",
-          "socket": "${TIMEOUTS.SOCKET}"
-        },
-        "reqTransform": "category.transformers.addFeatureFlagQueryParams",
-        "resTransform": "cms.transformers.replaceUriPrefix"
       }
     ],
     "resTransform": "category.transformers.mergeCategoryResponses"
@@ -2182,57 +2223,25 @@
   {
     "path": "/xp-mi/public/v1/central_commerce/product/slug/*slugId",
     "method": "POST",
-    "routeHandler": "AGGREGATE",
-    "aggregationType": "PARALLEL",
-    "targets": [
-      {
-        "name": "cmsFeatureFlag",
-        "url": "${CMS_MSME_URL}/ccp-feature-flags",
-        "method": "GET",
-        "timeout": {
-          "request": 10000,
-          "socket": 1000
-        },
-        "reqTransform": "category.transformers.addFeatureFlagQueryParams",
-        "resTransform": "cms.transformers.replaceUriPrefix"
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "product-by-slug-v2",
+      "url": "${MSME_BASE_URL}/central_commerce/product/slug/*slugId",
+      "method": "GET",
+      "reqTransform": "general.transformers.convertToGetRequest",
+      "timeout": {
+        "request": 10000,
+        "socket": 1000
       },
-      {
-        "name": "product-by-slug-old",
-        "url": "${MSME_BASE_URL}/product/v2/slug/*slugId",
-        "method": "GET",
-        "reqTransform": "product.transformers.buildProductSlugV2Request",
-        "timeout": {
-          "request": 10000,
-          "socket": 1000
-        },
-        "headersToPass": [
-          {
-            "source": "access_token",
-            "destination": "access_token"
-          }
-        ],
-        "requiredPathParams": ["slugId"]
-      },
-      {
-        "name": "product-by-slug-v2",
-        "url": "${MSME_BASE_URL}/central_commerce/product/slug/*slugId",
-        "method": "GET",
-        "reqTransform": "general.transformers.convertToGetRequest",
-        "timeout": {
-          "request": 10000,
-          "socket": 1000
-        },
-        "headersToPass": [
-          {
-            "source": "access_token",
-            "destination": "access_token"
-          }
-        ],
-        "requiredParams": ["*"],
-        "requiredPathParams": ["slugId"]
-      }
-    ],
-    "resTransform": "product.transformers.selectSlugProductResponse"
+      "headersToPass": [
+        {
+          "source": "access_token",
+          "destination": "access_token"
+        }
+      ],
+      "requiredParams": ["*"],
+      "requiredPathParams": ["slugId"]
+    }
   },
   {
     "path": "/xp-mi/public/v1/mweb-cart-page",
@@ -2353,17 +2362,6 @@
             "destination": "access_token"
           }
         ]
-      },
-      {
-        "name": "cmsFeatureFlag",
-        "url": "${CMS_MSME_URL}/ccp-feature-flags",
-        "method": "GET",
-        "timeout": {
-          "request": "${TIMEOUTS.REQUEST}",
-          "socket": "${TIMEOUTS.SOCKET}"
-        },
-        "reqTransform": "category.transformers.addFeatureFlagQueryParams",
-        "resTransform": "cms.transformers.replaceUriPrefix"
       }
     ],
     "resTransform": "category.transformers.mergeMainMenuResponses"
@@ -2406,6 +2404,34 @@
       }
     ],
     "resTransform": "customer.transformers.mergeCustomerProfile"
+  },
+  {
+    "path": "/xp-mi/public/v3/customer-profile",
+    "method": "GET",
+    "routeHandler": "TRANSFORM",
+    "isCacheRequired": false,
+    "target": {
+      "name": "central-commerce-customer-profile",
+      "url": "${MSME_BASE_URL}/central_commerce/customer/v1/profile",
+      "method": "GET",
+      "timeout": {
+        "request": 10000,
+        "socket": 1000
+      },
+      "headersToPass": [
+        {
+          "source": "access_token",
+          "destination": "access_token"
+        },
+        {
+          "source": "authorization",
+          "destination": "access_token"
+        }
+      ],
+      "staticHeaders": {
+        "Accept": "application/json"
+      }
+    }
   },
   {
     "path": "/xp-mi/public/v1/central_commerce/graphql",
@@ -2479,10 +2505,6 @@
             "destination": "access_token"
           },
           {
-            "source": "x-user-state",
-            "destination": "x-user-state"
-          },
-          {
             "source": "user-type",
             "destination": "user-type"
           }
@@ -2512,10 +2534,6 @@
           {
             "source": "access_token",
             "destination": "access_token"
-          },
-          {
-            "source": "x-user-state",
-            "destination": "x-user-state"
           },
           {
             "source": "user-type",
@@ -2567,10 +2585,6 @@
           {
             "source": "access_token",
             "destination": "access_token"
-          },
-          {
-            "source": "x-user-state",
-            "destination": "x-user-state"
           }
         ]
       }
@@ -2738,10 +2752,6 @@
           {
             "source": "access_token",
             "destination": "access_token"
-          },
-          {
-            "source": "x-user-state",
-            "destination": "x-user-state"
           },
           {
             "source": "user-type",
@@ -3549,62 +3559,27 @@
   {
     "path": "/xp-mi/public/v1/uom-convert",
     "method": "POST",
-    "routeHandler": "AGGREGATE",
-    "aggregationType": "PARALLEL",
-    "targets": [
-      {
-        "name": "cmsFeatureFlag",
-        "url": "${CMS_MSME_URL}/ccp-feature-flags",
-        "method": "GET",
-        "timeout": {
-          "request": "${TIMEOUTS.REQUEST}",
-          "socket": "${TIMEOUTS.SOCKET}"
-        },
-        "reqTransform": "category.transformers.addFeatureFlagQueryParams",
-        "resTransform": "cms.transformers.replaceUriPrefix"
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "uom-convert-v2",
+      "url": "${MSME_BASE_URL}/central_commerce/uom-convert",
+      "method": "POST",
+      "timeout": {
+        "request": "${TIMEOUTS.REQUEST}",
+        "socket": "${TIMEOUTS.SOCKET}"
       },
-      {
-        "name": "uom-convert-legacy",
-        "url": "${MSME_BASE_URL}/measurement-service/unit-of-measure/convert",
-        "method": "POST",
-        "timeout": {
-          "request": "${TIMEOUTS.REQUEST}",
-          "socket": "${TIMEOUTS.SOCKET}"
+      "reqTransform": "category.transformers.transformLegacyUomConvertRequest",
+      "headersToPass": [
+        {
+          "source": "authorization",
+          "destination": "access_token"
         },
-        "reqTransform": "category.transformers.transformV2UomConvertRequest",
-        "headersToPass": [
-          {
-            "source": "authorization",
-            "destination": "access_token"
-          },
-          {
-            "source": "access_token",
-            "destination": "access_token"
-          }
-        ]
-      },
-      {
-        "name": "uom-convert-v2",
-        "url": "${MSME_BASE_URL}/central_commerce/uom-convert",
-        "method": "POST",
-        "timeout": {
-          "request": "${TIMEOUTS.REQUEST}",
-          "socket": "${TIMEOUTS.SOCKET}"
-        },
-        "reqTransform": "category.transformers.transformLegacyUomConvertRequest",
-        "headersToPass": [
-          {
-            "source": "authorization",
-            "destination": "access_token"
-          },
-          {
-            "source": "access_token",
-            "destination": "access_token"
-          }
-        ]
-      }
-    ],
-    "resTransform": "category.transformers.selectUomConvertResponse"
+        {
+          "source": "access_token",
+          "destination": "access_token"
+        }
+      ]
+    }
   },
   {
     "path": "/xp-mi/public/v1/one-helix-enquiry",
@@ -5243,6 +5218,331 @@
         "Content-Type": "application/json"
       },
       "reqTransform": "appRegistration.transformers.transformRegisterUserValidationRequest"
+    }
+  },
+  {
+    "path": "/xp-mi/public/v1/token",
+    "method": "POST",
+    "routeHandler": "CONDITIONAL",
+    "conditionTransform": "salesapp.transformers.selectAccessTokenTarget",
+    "targets": [
+      {
+        "name": "access-token",
+        "url": "${EXPERIENCE_MIDDLEWARE_URL}/xp-mi/public/v1/token/access-token",
+        "method": "POST",
+        "timeout": {
+          "request": 50000,
+          "socket": 1000
+        },
+        "staticHeaders": {
+          "Content-Type": "application/x-www-form-urlencoded"
+        },
+        "requiredParams": ["*"]
+      },
+      {
+        "name": "refresh-token",
+        "url": "${EXPERIENCE_MIDDLEWARE_URL}/xp-mi/public/v1/token/refresh-token",
+        "method": "POST",
+        "timeout": {
+          "request": 50000,
+          "socket": 1000
+        },
+        "staticHeaders": {
+          "Content-Type": "application/x-www-form-urlencoded"
+        },
+        "requiredParams": ["*"]
+      }
+    ]
+  },
+  {
+    "path": "/xp-mi/public/v1/token/access-token",
+    "method": "POST",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "access-token",
+      "url": "${SF_BASE_URI}/services/oauth2/token",
+      "method": "POST",
+      "timeout": {
+        "request": 50000,
+        "socket": 1000
+      },
+      "staticHeaders": {
+        "Content-Type": "application/x-www-form-urlencoded"
+      },
+      "requiredParams": ["*"],
+      "reqTransform": "salesapp.transformers.transformAccessTokenRequest"
+    }
+  },
+  {
+    "path": "/xp-mi/public/v1/token/refresh-token",
+    "method": "POST",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "refresh-token",
+      "url": "${SF_BASE_URI}/services/oauth2/token",
+      "method": "POST",
+      "timeout": {
+        "request": 50000,
+        "socket": 1000
+      },
+      "staticHeaders": {
+        "Content-Type": "application/x-www-form-urlencoded"
+      },
+      "requiredParams": ["*"],
+      "reqTransform": "salesapp.transformers.transformRefreshTokenRequest"
+    }
+  },
+  {
+    "path": "/xp-mi/public/v1/register-user-validation",
+    "routeHandler": "TRANSFORM",
+    "method": "POST",
+    "isCacheRequired": false,
+    "target": {
+      "name": "register-user-validation",
+      "url": "${MSME_BASE_URL}/customer/validate/registration-details",
+      "method": "POST",
+      "timeout": {
+        "request": 20000,
+        "socket": 1000
+      },
+      "staticHeaders": {
+        "Content-Type": "application/json"
+      },
+      "reqTransform": "appRegistration.transformers.transformRegisterUserValidationRequest"
+    }
+  },
+  {
+    "path": "/xp-mi/public/v1/vijai/user-detail",
+    "method": "GET",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "vijai-user-details",
+      "url": "${SF_BASE_URI}/services/data/v59.0/chatter/users/me",
+      "method": "GET",
+      "timeout": {
+        "request": "${TIMEOUTS.REQUEST}",
+        "socket": 5000
+      },
+      "headersToPass": [
+        {
+          "source": "Authorization",
+          "destination": "Authorization"
+        }
+      ]
+    }
+  },
+  {
+    "path": "/xp-mi/public/v1/vijai/user/notification",
+    "method": "GET",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "vijai-user-notifications",
+      "url": "${SF_BASE_URI}/services/data/v59.0/connect/notifications?size=10000",
+      "method": "GET",
+      "timeout": {
+        "request": "${TIMEOUTS.REQUEST}",
+        "socket": 5000
+      },
+      "headersToPass": [
+        {
+          "source": "Authorization",
+          "destination": "Authorization"
+        }
+      ]
+    }
+  },
+  {
+    "path": "/xp-mi/public/v1/vijai/user/list",
+    "method": "GET",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "vijai-user-list",
+      "url": "${SF_BASE_URI}/services/data/v59.0/query",
+      "method": "GET",
+      "timeout": {
+        "request": "${TIMEOUTS.REQUEST}",
+        "socket": 5000
+      },
+      "headersToPass": [
+        {
+          "source": "Authorization",
+          "destination": "Authorization"
+        }
+      ],
+      "reqTransform": "vijai.transformers.transformVijaiUserListRequest",
+      "requiredParams": ["*"]
+    }
+  },
+  {
+    "path": "/xp-mi/public/v1/vijai/user/event-update/:eventId",
+    "method": "PATCH",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "vijai-user-event-update",
+      "url": "${SF_BASE_URI}/services/data/v65.0/sobjects/Event/{eventId}",
+      "method": "PATCH",
+      "timeout": {
+        "request": "${TIMEOUTS.REQUEST}",
+        "socket": 5000
+      },
+      "headersToPass": [
+        {
+          "source": "Authorization",
+          "destination": "Authorization"
+        }
+      ],
+      "requiredParams": ["*"]
+    }
+  },
+  {
+    "path": "/xp-mi/public/v1/app/orders-pending-payments",
+    "method": "GET",
+    "routeHandler": "AGGREGATE",
+    "aggregationType": "PARALLEL",
+    "targets": [
+      {
+        "name": "orders-pending-payments",
+        "url": "${ERP_BASE_URL}/ledger/fetch-ledger-payment-summary",
+        "method": "GET",
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
+        "headersToPass": [
+          {
+            "source": "Authorization",
+            "destination": "access_token"
+          }
+        ],
+        "staticHeaders": {
+          "client_id": "${ERP_CLIENT_ID}",
+          "Authorization": "${X_API_KEY_FOR_ORDER_LISTING}"
+        },
+        "reqTransform": "paymentdue.transformers.transformOrdersPendingPaymentsRequest"
+      },
+      {
+        "name": "account-details",
+        "url": "${OMS_URL}/external-connector-inbound/api/external/v1/retail/fetch-sf-customer-details",
+        "method": "GET",
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
+        "headersToPass": [
+          {
+            "source": "Authorization",
+            "destination": "access_token"
+          }
+        ],
+        "staticHeaders": {
+          "client_id": "${ERP_CLIENT_ID}",
+          "Authorization": "${X_API_KEY_FOR_ORDER_LISTING}"
+        },
+        "reqTransform": "paymentdue.transformers.transformAccountDetailsRequest"
+      }
+    ],
+    "resTransform": "paymentdue.transformers.mergePaymentDueAndAccountDetails"
+  },
+  {
+    "path": "/xp-mi/public/v1/vijai/fetch-credit-info",
+    "method": "GET",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "vijai-fetch-credit-info",
+      "url": "${OMS_URL}/external-connector-inbound/api/internal/v1/customer/fetch-credit-info-by-pan",
+      "method": "GET",
+      "timeout": {
+        "request": "${TIMEOUTS.REQUEST}",
+        "socket": 5000
+      },
+      "staticHeaders": {
+        "client_id": "${OMS_CLIENT_ID_VIJAI}",
+        "Authorization": "${OMS_AUTH_FETCH_CREDIT_INFO_VIJAI}"
+      },
+      "requiredParams": ["pan"],
+      "reqTransform": "vijai.transformers.transformVijaiFetchCreditInfoRequest"
+    }
+  },
+  {
+    "path": "/xp-mi/public/v1/order-service/requirement/my-requirements",
+    "method": "GET",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "my-requirements",
+      "url": "${MSME_BASE_URL}/order-service/requirement/my-requirements",
+      "method": "GET",
+      "timeout": {
+        "request": 5000,
+        "socket": 1000
+      },
+      "headersToPass": [
+        {
+          "source": "authorization",
+          "destination": "access_token"
+        }
+      ],
+      "requiredParams": ["*"]
+    }
+  },
+  {
+    "path": "/xp-mi/public/v1/vijai/user/resolveRecordType/:targetId",
+    "method": "GET",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "vijai-resolve-record-type",
+      "url": "${SF_BASE_URI}/services/data/v59.0/ui-api/records/{targetId}",
+      "method": "GET",
+      "timeout": {
+        "request": "${TIMEOUTS.REQUEST}",
+        "socket": 5000
+      },
+      "headersToPass": [
+        {
+          "source": "Authorization",
+          "destination": "Authorization"
+        }
+      ],
+      "reqTransform": "vijai.transformers.transformVijaiResolveRecordTypeRequest"
+    }
+  },
+  {
+    "path": "/xp-mi/public/v1/vijai/user/markNotification/:notificationId",
+    "method": "PATCH",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "vijai-mark-notification",
+      "url": "${SF_BASE_URI}/services/data/v59.0/connect/notifications/{notificationId}",
+      "method": "PATCH",
+      "timeout": {
+        "request": "${TIMEOUTS.REQUEST}",
+        "socket": 5000
+      },
+      "headersToPass": [
+        {
+          "source": "Authorization",
+          "destination": "Authorization"
+        }
+      ],
+      "reqTransform": "vijai.transformers.transformVijaiMarkNotificationRequest"
+    }
+  },
+  {
+    "path": "/xp-mi/public/v1/hubspot/moengage/event",
+    "method": "POST",
+    "routeHandler": "TRANSFORM",
+    "isCacheRequired": false,
+    "target": {
+      "name": "moengage-hubspot-event",
+      "url": "https://api-03.moengage.com/v1/event/4311B84VU6UTCNRSAT5JZ3RV_DEBUG",
+      "method": "POST",
+      "timeout": {
+        "request": 20000,
+        "socket": 1000
+      },
+      "staticHeaders": {
+        "Content-Type": "application/json"
+      },
+      "reqTransform": "moengage.transformers.hubspotEventToMoengage"
     }
   }
 ]
