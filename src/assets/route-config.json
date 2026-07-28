@@ -5339,7 +5339,7 @@
     "routeHandler": "TRANSFORM",
     "target": {
       "name": "vijai-user-notifications",
-      "url": "${SF_BASE_URI}/services/data/v59.0/connect/notifications?size=10000",
+      "url": "${SF_BASE_URI}/services/data/v59.0/connect/notifications",
       "method": "GET",
       "timeout": {
         "request": "${TIMEOUTS.REQUEST}",
@@ -5350,7 +5350,8 @@
           "source": "Authorization",
           "destination": "Authorization"
         }
-      ]
+      ],
+      "requiredParams": ["*"]
     }
   },
   {
