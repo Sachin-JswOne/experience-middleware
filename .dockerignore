@@ -5,13 +5,10 @@ dist-frontend
 coverage
 .git
 .gitignore
+Dockerfile
 README.md
 .env
 .env.*
-# Lowercase on disk; the capitalised form only matched on case-insensitive
-# filesystems, so the build context still carried it on Linux CI.
-dockerfile
-.dockerignore
 # Test sources and fixtures are not needed to build the image.
 test
 test-results
