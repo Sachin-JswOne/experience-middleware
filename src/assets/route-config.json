@@ -5184,8 +5184,8 @@
         "stopOnError": true
       },
       {
-        "name": "sf-customer",
-        "url": "${OMS_URL}/external-connector-inbound/api/external/v1/retail/fetch-sf-customer-details",
+        "name": "customer-profile",
+        "url": "${MSME_BASE_URL}/central_commerce/whatsapp/v1/customer",
         "method": "GET",
         "timeout": {
           "request": "${TIMEOUTS.REQUEST}",
@@ -5194,8 +5194,7 @@
         "reqTransform": "customer.transformers.injectGstinFromTmsProfile",
         "stopOnError": true,
         "staticHeaders": {
-          "Authorization": "${X_API_KEY_FOR_ORDER_LISTING}",
-          "client_id": "${ERP_CLIENT_ID}"
+          "x-api-key": "${X_API_KEY_FOR_PROFILE}"
         }
       }
     ],

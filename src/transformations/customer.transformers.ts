@@ -231,7 +231,7 @@ export function injectGstinFromTmsProfile(
   }
 
   request.url.search = '';
-  request.url.searchParams.set('gstin', gstin);
+  request.url.searchParams.set('gstIn', gstin);
   return request;
 }
 
@@ -245,26 +245,36 @@ export function mergeWhatsappCustomerDetails(aggregatedResponses: AggregatedResp
   );
 
   const tmsResp = responses['tms-profile'];
-  const sfResp = responses['sf-customer'];
+  const customerProfile = responses['customer-profile'];
 
   if (!tmsResp?.success) {
     throw new CustomError('Failed to fetch TMS customer profile', tmsResp?.httpStatus ?? 500);
   }
 
   const tmsData = tmsResp.data?.data;
-  const sfCustomerDetails = sfResp?.data?.data?.customerDetails?.[0];
+  const customerDetails = customerProfile?.data?.data;
+
+  const fullName = [customerDetails?.firstName, customerDetails?.lastName]
+    .filter(Boolean)
+    .join(' ');
+  const customerName = customerDetails?.companyName || fullName || null;
+
+  const primaryAddress = customerDetails?.addresses?.find(
+    (address: any) => address?.custom?.fields?.isPrimaryAddress === true,
+  );
+  const state = primaryAddress?.state ?? customerDetails?.addresses?.[0]?.state ?? null;
 
   return {
     registered: true,
-    gstin: tmsData?.gst ?? null,
-    pan: tmsData?.pan ?? null,
+    gstin: customerDetails?.gstIn ?? tmsData?.gst ?? null,
+    pan: customerDetails?.pan ?? tmsData?.pan ?? null,
     userType: 'Primary',
-    sfId: tmsData?.sfId ?? sfCustomerDetails?.salesforceId ?? null,
-    isCreditCustomer: true, // Assuming all customers are credit customers for now
-    isTransacting: tmsData?.isTransacting ?? true,
-    customerName: sfCustomerDetails?.customerName ?? null,
-    customerType: tmsData?.customerType ?? null,
-    state: sfCustomerDetails?.stateName ?? null,
+    sfId: customerDetails?.sfAccountId ?? tmsData?.sfId ?? null,
+    isCreditCustomer: customerDetails.isCreditEnabled ?? false,
+    isTransacting: customerDetails?.isTransacting ?? true,
+    customerName,
+    customerType: customerDetails?.customerType ?? tmsData?.customerType ?? null,
+    state,
   };
 }
 

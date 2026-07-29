@@ -23,5 +23,8 @@
   "SF_SALES_APP_CLIENT_SECRET": "E0202764C5665178CC8CD6E669E20E353FEE6EE1F3B15537376FD515F15EF583",
   "SF_SALES_APP_REDIRECT_URI": "com.jswsales.app://oauth/callback",
   "OMS_AUTH_FETCH_CREDIT_INFO_VIJAI": "SalesForce.Connector.oSyMktm",
-  "OMS_CLIENT_ID_VIJAI": "CLIEX1"
+  "OMS_CLIENT_ID_VIJAI": "CLIEX1",
+  "X_API_KEY_FOR_PROFILE": "CommerceServiceWeb-v1-9xblf2tjw6h5y7k3vd0qpoamz48srnycluej8dgw9mf12vhz5tocqk7xpyl3b6fd",
+  "TMS_AUTH_TOKEN_ORDER_LISTING": "Zoho.Connector.Yrt664kT",
+  "ERP_BASE_URL": "https://qa-ssr.msme.jswone.in"
 }
