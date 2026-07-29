@@ -23,5 +23,6 @@
   "OMS_AUTH_FETCH_CREDIT_INFO_VIJAI": "SalesForce.Connector.$2b$12$h2GjJBKa9JyCUQZmvzZOouxzKWI4DIC0T9yBBOdXKb9NUj5pMCppG",
   "OMS_CLIENT_ID_VIJAI": "CLIEX1",
   "AUTH2_SERVICE_BASE_URL": "https://oms.jswonemsme.com/auth2-service",
-  "CATALOGUE_ADMIN_API_BASE_URL": "https://auth.jsw1msme.com/auth_service"
+  "CATALOGUE_ADMIN_API_BASE_URL": "https://auth.jsw1msme.com/auth_service",
+  "X_API_KEY_FOR_PROFILE": "CommerceServiceWeb-v1-9xblf2tjw6h5y7k3vd0qpoamz48srnycluej8dgw9mf12vhz5tocqk7xpyl3b6fd"
 }

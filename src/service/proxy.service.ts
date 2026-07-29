@@ -24,7 +24,7 @@ import { match } from 'path-to-regexp';
 import { CacheService } from '../cache/cache.service';
 import { CacheProvider } from 'src/cache/cache-provider.type';
 import axios from 'axios';
-import { createHash } from 'crypto'
+import { createHash } from 'crypto';
 
 @Injectable()
 export class ProxyService {
@@ -34,60 +34,51 @@ export class ProxyService {
   // constructor() { }
   // constructor() { }
 
-    private getCacheUserIdentifier(req: Request): string {
-      const authorization = this.getHeaderValue(req.headers.authorization);
-      const accessToken = this.getHeaderValue(req.headers.access_token);
-      const rawToken = accessToken || authorization;
+  private getCacheUserIdentifier(req: Request): string {
+    const authorization = this.getHeaderValue(req.headers.authorization);
+    const accessToken = this.getHeaderValue(req.headers.access_token);
+    const rawToken = accessToken || authorization;
 
-      if (rawToken) {
-        const token = rawToken.replace(/^Bearer\s+/i, '').trim();
-        if (token) {
-          // Use a short, collision-resistant hash instead of a suffix
-          return createHash('sha256').update(token).digest('hex').slice(0, 16);
-        }
+    if (rawToken) {
+      const token = rawToken.replace(/^Bearer\s+/i, '').trim();
+      if (token) {
+        // Use a short, collision-resistant hash instead of a suffix
+        return createHash('sha256').update(token).digest('hex').slice(0, 16);
       }
-
-      const directSessionId = this.getHeaderValue(req.headers['jsw_session_id']);
-      if (directSessionId) {
-        return createHash('sha256').update(directSessionId).digest('hex').slice(0, 16);
-      }
-
-      const cookieSessionId = this.extractCookie(req.headers.cookie, 'jsw_session_id');
-      if (cookieSessionId) {
-        return createHash('sha256').update(cookieSessionId).digest('hex').slice(0, 16);
-      }
-      // NOTE: 'anonymous' cache partition is shared across ALL unauthenticated
-      // requests. Only use VALKEY/AUTO caching for endpoints that return
-      // identical responses for all unauthenticated users.
-      return 'anonymous';
     }
+
+    const directSessionId = this.getHeaderValue(req.headers['jsw_session_id']);
+    if (directSessionId) {
+      return createHash('sha256').update(directSessionId).digest('hex').slice(0, 16);
+    }
+
+    const cookieSessionId = this.extractCookie(req.headers.cookie, 'jsw_session_id');
+    if (cookieSessionId) {
+      return createHash('sha256').update(cookieSessionId).digest('hex').slice(0, 16);
+    }
+    // NOTE: 'anonymous' cache partition is shared across ALL unauthenticated
+    // requests. Only use VALKEY/AUTO caching for endpoints that return
+    // identical responses for all unauthenticated users.
+    return 'anonymous';
+  }
 
   private getCacheKey(req: Request): string {
     const env =
-      process.env.CACHE_PROFILE ||
-      process.env.VALKEY_PROFILE ||
-      process.env.NODE_ENV ||
-      'local';
+      process.env.CACHE_PROFILE || process.env.VALKEY_PROFILE || process.env.NODE_ENV || 'local';
 
-    const apiEndpoint = req.path
-      .replace(/^\/xp-mi\/public\//, '')
-      .replace(/\//g, ':');
+    const apiEndpoint = req.path.replace(/^\/xp-mi\/public\//, '').replace(/\//g, ':');
 
     const userIdentifier = this.getCacheUserIdentifier(req);
 
     return `${env}:experience-middleware:${apiEndpoint}:${userIdentifier}`;
   }
 
-  private getHeaderValue(
-    value: string | string[] | undefined,
-  ): string | null {
+  private getHeaderValue(value: string | string[] | undefined): string | null {
     if (Array.isArray(value)) {
       return value[0]?.trim() || null;
     }
 
-    return typeof value === 'string' && value.trim()
-      ? value.trim()
-      : null;
+    return typeof value === 'string' && value.trim() ? value.trim() : null;
   }
 
   private lastCharacters(value: string, length: number): string {
@@ -146,12 +137,13 @@ export class ProxyService {
       throw new Error('Route config not found');
     }
 
-    const cacheTtlSeconds = Number((route as any).cache?.ttlSeconds ?? process.env.CACHE_TTL_SECONDS ?? 1800);
-
+    // const cacheTtlSeconds = Number((route as any).cache?.ttlSeconds ?? process.env.CACHE_TTL_SECONDS ?? 1800);
+    const cacheTtlSeconds = Number(
+      (route as any).cache?.ttlSeconds ?? process.env.CACHE_TTL_SECONDS ?? 1800,
+    );
     // Expose the matched config route template so metrics report per-route
     // instead of the controller's catch-all path (public/*path).
     (req as any)._metricsRoute = route.path;
-
 
     const activeSpan = trace.getSpan(context.active());
     const spanContext = activeSpan?.spanContext();
@@ -170,16 +162,12 @@ export class ProxyService {
 
     const isCacheRequired = (route as any).isCacheRequired === true;
 
-    const cacheProvider = (
-      (route as any).cacheProvider ||
+    const cacheProvider = ((route as any).cacheProvider ||
       process.env.CACHE_PROVIDER ||
-      'AUTO'
-    ) as CacheProvider;
+      'AUTO') as CacheProvider;
 
     const ttlSeconds = Number(
-      (route as any).cacheTTLSeconds ||
-      process.env.CACHE_TTL_SECONDS ||
-      300,
+      (route as any).cacheTTLSeconds || process.env.CACHE_TTL_SECONDS || 300,
     );
 
     let cacheKey: string | null = null;
@@ -200,8 +188,8 @@ export class ProxyService {
           this.logger.warn(`Corrupt cache value evicted key=${cacheKey}`);
         }
       }
-        this.logger.log(`Cache MISS key=${cacheKey} provider=${cacheProvider}`);
-      }
+      this.logger.log(`Cache MISS key=${cacheKey} provider=${cacheProvider}`);
+    }
 
     let data: any;
 
@@ -222,7 +210,12 @@ export class ProxyService {
         throw new Error('Unsupported route handler');
     }
 
-    if (isCacheRequired && cacheKey && cacheProvider !== 'NONE' && process.env.CACHE_ENABLED === 'true') {
+    if (
+      isCacheRequired &&
+      cacheKey &&
+      cacheProvider !== 'NONE' &&
+      process.env.CACHE_ENABLED === 'true'
+    ) {
       await this.cacheService.set(cacheKey, JSON.stringify(data), ttlSeconds, cacheProvider);
     }
 
