@@ -31,7 +31,7 @@ export function transformVijaiUserListRequest(request: any) {
        Met_with_Contact__c, Met_with_Contact__r.LastName,
        Site__c, CreatedDate, Site__r.name, Site__r.Google_Maps_Coordinates__c,
        Site__r.Project_Address__c, Site__r.pin_code__c, Site__r.auto_state__c,
-       Site__r.auto_district__c, Site__r.City__c,Site__r.RecordType.Name
+       Site__r.auto_district__c, Site__r.City__c,Site__r.RecordType.Name, Status__c
 FROM CheckIn_CMV__Visit__c
 WHERE OwnerId = '${ownerId}'
 ORDER BY CheckIn_CMV__Check_in_Date_Time__c DESC`
@@ -47,8 +47,8 @@ ORDER BY CheckIn_CMV__Check_in_Date_Time__c DESC`
        Sales_SPOC__r.Name, JOTS_Owner__r.Name, Opportunity_History_String__c, Total_revised_quantity__c,
        Rejection_remarks__c, Success_Marked_Time__c,
        (SELECT Id, Name, Attributes_to_Display__c, Attributes__c,
-               Final_Distributor_Quote__c, SKU_Subtotal__c,
-               Primary_Revised_Quantity__c
+               Final_Distributor_Quote__c, SKU_Subtotal__c, Limit_approved__c, 
+               Primary_Revised_Quantity__c, Credit_program__c
         FROM Enquiry_Line_items__r), 
        (SELECT Id, Stage_name__c, Cumulative_stage_age__c, 
         Current_stage_age__c, Opportunity__c, Stage_entry_time__c, 
