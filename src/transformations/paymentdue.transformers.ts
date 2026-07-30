@@ -1,6 +1,10 @@
 import { Logger } from '@nestjs/common';
 import { safeDebug } from 'src/utils/common-functions.util';
 import { AxiosResponse } from 'axios';
+import * as jwt from 'jsonwebtoken';
+import { CustomError } from 'src/utils/CustomError';
+import { AggregatedResponse } from 'src/models/aggregated-response.model';
+import { JWT_SECRET } from 'src/config/app.config';
 
 interface AmountDetails {
   centAmount: number;
@@ -65,5 +69,117 @@ export function getPaymentDueDetails(
       exception: (error as Error)?.message,
       httpStatus: response?.status,
     };
+  }
+}
+
+export function transformOrdersPendingPaymentsRequest(request): any {
+  const accessToken =
+    request.headers.access_token ||
+    request.headers.Access_Token ||
+    request.headers.authorization ||
+    request.headers.Authorization;
+
+  if (!JWT_SECRET) {
+    throw new Error('Server misconfiguration: JWT_SECRET is not set');
+  }
+
+  const decoded = jwt.verify(accessToken, JWT_SECRET);
+  const gstin = (decoded as any).gstIn ?? null;
+
+  request.url.searchParams.set('gstin', gstin);
+  return request;
+}
+
+export function transformAccountDetailsRequest(request) {
+  const accessToken =
+    request.headers.access_token ||
+    request.headers.Access_Token ||
+    request.headers.authorization ||
+    request.headers.Authorization;
+
+  const decoded = jwt.decode(accessToken);
+  const gstin = (decoded as any).gstIn ?? null;
+
+  request.url.searchParams.set('gstin', gstin);
+  return request;
+}
+
+export function mergePaymentDueAndAccountDetails(aggregatedResponses: AggregatedResponse[]) {
+  const responses = aggregatedResponses.reduce(
+    (acc, response) => {
+      acc[response.target] = response;
+      return acc;
+    },
+    {} as Record<string, AggregatedResponse>,
+  );
+  const paymentDueResult = responses['orders-pending-payments']?.data;
+  const accountDetailsResult = responses['account-details']?.data;
+  if (paymentDueResult?.responseCode !== '200') {
+    throw new CustomError(`Fetch payments due ERP APIs failed`, 400);
+  }
+
+  const data = paymentDueResult?.data;
+  if (data) {
+    return {
+      totalAmountDue: 0.0,
+      netPaymentDue: roundUp(data.netPaymentDue, 2) || 0,
+      accountDetails: getCustomerDetails(accountDetailsResult),
+      totalPaymentDue: roundUp(data.totalPaymentDue, 2) || 0,
+      overDueAmount: roundUp(data.paymentOverDueDetails.overDueAmount, 2) || 0,
+      dueStatus: data.paymentOverDueDetails.dueStatusDays,
+      dueToday: roundUp(data.dueToday, 2) || 0,
+      dueLaterAmount: roundUp(data.dueLaterAmount, 2) || 0,
+      listOfOrderDues: [],
+    };
+  } else throw new CustomError('No details found', 404);
+}
+
+export function roundUp(number: number, decimalPlaces: number): number {
+  const multiplier = Math.pow(10, decimalPlaces);
+  const roundedNumber = Math.ceil(number * multiplier) / multiplier;
+
+  const integerPart = Math.floor(roundedNumber);
+  const fractionalPart = roundedNumber - integerPart;
+
+  if (fractionalPart === 0) {
+    return integerPart;
+  } else {
+    return parseFloat(roundedNumber.toFixed(decimalPlaces));
+  }
+}
+
+export function getCustomerDetails(accountDetailsResult) {
+  const customerDetails = accountDetailsResult;
+  const customerBankDetail = customerDetails?.data.customerDetails;
+  if (
+    customerDetails?.data === undefined ||
+    customerDetails?.data === null ||
+    customerDetails.responseCode != 200
+  ) {
+    safeDebug(
+      Logger,
+      () => `Payment Due API → Error from SF call: ${JSON.stringify(customerDetails.error)}`,
+    );
+    return {
+      beneficiaryName: '',
+      accountNumber: '',
+      IFSCCode: '',
+      bankName: '',
+    };
+  } else {
+    if (customerBankDetail[0]?.payTo === 'JOPL Nodal' || customerBankDetail[0]?.payTo === null) {
+      return {
+        beneficiaryName: customerBankDetail[0]?.nodalBeneficiaryName ?? '',
+        accountNumber: customerBankDetail[0]?.nodalVanId ?? '',
+        IFSCCode: customerBankDetail[0]?.nodalIfscCode ?? '',
+        bankName: customerBankDetail[0]?.nodalBankName ?? '',
+      };
+    } else if (customerBankDetail[0]?.payTo === 'JODL')
+      return {
+        beneficiaryName: customerBankDetail[0]?.nonNodalBeneficiaryName ?? '',
+        accountNumber: customerBankDetail[0]?.nonNodalVanId ?? '',
+        IFSCCode: customerBankDetail[0]?.nonNodalIfscCode ?? '',
+        bankName: customerBankDetail[0]?.nonNodalBankName ?? '',
+      };
   }
 }

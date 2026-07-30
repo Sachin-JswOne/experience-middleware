@@ -211,8 +211,6 @@ export function transformFetchUserRequest(request: BaseRequest): BaseRequest {
   // Default false, true only when explicitly true
   request.url.searchParams.set('includePermission', String(includePermission));
 
-  const isInvitationAcceptanceFlow = Boolean(contactSfId) && !hasAccessToken;
-
   return addCustomerApiKeyIfNoAuth({
     ...request,
     body: undefined,
@@ -231,40 +229,38 @@ export function injectGstinFromTmsProfile(
   }
 
   request.url.search = '';
-  request.url.searchParams.set('gstin', gstin);
+  request.url.searchParams.set('gstIn', gstin);
   return request;
 }
 
-export function mergeWhatsappCustomerDetails(aggregatedResponses: AggregatedResponse[]): any {
-  const responses = aggregatedResponses.reduce(
-    (acc, response) => {
-      acc[response.target] = response;
-      return acc;
-    },
-    {} as Record<string, AggregatedResponse>,
-  );
-
-  const tmsResp = responses['tms-profile'];
-  const sfResp = responses['sf-customer'];
-
-  if (!tmsResp?.success) {
-    throw new CustomError('Failed to fetch TMS customer profile', tmsResp?.httpStatus ?? 500);
+export function transformWhatsappCustomerDetails(response: any): any {
+  if (!response?.success) {
+    return response;
   }
 
-  const tmsData = tmsResp.data?.data;
-  const sfCustomerDetails = sfResp?.data?.data?.customerDetails?.[0];
+  const customerDetails = response?.data;
+
+  const fullName = [customerDetails?.firstName, customerDetails?.lastName]
+    .filter(Boolean)
+    .join(' ');
+  const customerName = customerDetails?.companyName || fullName || null;
+
+  const primaryAddress = customerDetails?.addresses?.find(
+    (address: any) => address?.custom?.fields?.isPrimaryAddress === true,
+  );
+  const state = primaryAddress?.state ?? customerDetails?.addresses?.[0]?.state ?? null;
 
   return {
     registered: true,
-    gstin: tmsData?.gst ?? null,
-    pan: tmsData?.pan ?? null,
-    userType: 'Primary',
-    sfId: tmsData?.sfId ?? sfCustomerDetails?.salesforceId ?? null,
-    isCreditCustomer: true, // Assuming all customers are credit customers for now
-    isTransacting: tmsData?.isTransacting ?? true,
-    customerName: sfCustomerDetails?.customerName ?? null,
-    customerType: tmsData?.customerType ?? null,
-    state: sfCustomerDetails?.stateName ?? null,
+    gstin: customerDetails?.gstIn ?? null,
+    pan: customerDetails?.pan ?? null,
+    userType: customerDetails?.contactType ?? null,
+    sfId: customerDetails?.sfAccountId ?? null,
+    isCreditCustomer: customerDetails?.isCreditEnabled ?? false,
+    isTransacting: customerDetails?.isTransacting ?? true,
+    customerName,
+    customerType: customerDetails?.customerType ?? null,
+    state,
   };
 }
 
