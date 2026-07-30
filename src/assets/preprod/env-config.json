@@ -22,5 +22,5 @@
   "OMS_AUTH_FETCH_CREDIT_INFO_VIJAI": "SalesForce.Connector.oSyMktm",
   "OMS_CLIENT_ID_VIJAI": "CLIEX1",
   "X_API_KEY_FOR_PROFILE": "CommerceServiceWeb-v1-9xblf2tjw6h5y7k3vd0qpoamz48srnycluej8dgw9mf12vhz5tocqk7xpyl3b6fd",
-  "ERP_BASE_URL": "https://qa-ssr.msme.jswone.in"
+  "ERP_BASE_URL": "https://oms.preprod.jswonemsme.com/external-connector-inbound/api/external/v1"
 }

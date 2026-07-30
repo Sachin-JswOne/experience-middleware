@@ -4,6 +4,7 @@ import { AxiosResponse } from 'axios';
 import * as jwt from 'jsonwebtoken';
 import { CustomError } from 'src/utils/CustomError';
 import { AggregatedResponse } from 'src/models/aggregated-response.model';
+import { JWT_SECRET } from 'src/config/app.config';
 
 interface AmountDetails {
   centAmount: number;
@@ -78,7 +79,11 @@ export function transformOrdersPendingPaymentsRequest(request): any {
     request.headers.authorization ||
     request.headers.Authorization;
 
-  const decoded = jwt.decode(accessToken);
+  if (!JWT_SECRET) {
+    throw new Error('Server misconfiguration: JWT_SECRET is not set');
+  }
+
+  const decoded = jwt.verify(accessToken, JWT_SECRET);
   const gstin = (decoded as any).gstIn ?? null;
 
   request.url.searchParams.set('gstin', gstin);
