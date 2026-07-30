@@ -211,8 +211,6 @@ export function transformFetchUserRequest(request: BaseRequest): BaseRequest {
   // Default false, true only when explicitly true
   request.url.searchParams.set('includePermission', String(includePermission));
 
-  const isInvitationAcceptanceFlow = Boolean(contactSfId) && !hasAccessToken;
-
   return addCustomerApiKeyIfNoAuth({
     ...request,
     body: undefined,
@@ -235,24 +233,12 @@ export function injectGstinFromTmsProfile(
   return request;
 }
 
-export function mergeWhatsappCustomerDetails(aggregatedResponses: AggregatedResponse[]): any {
-  const responses = aggregatedResponses.reduce(
-    (acc, response) => {
-      acc[response.target] = response;
-      return acc;
-    },
-    {} as Record<string, AggregatedResponse>,
-  );
-
-  const tmsResp = responses['tms-profile'];
-  const customerProfile = responses['customer-profile'];
-
-  if (!tmsResp?.success) {
-    throw new CustomError('Failed to fetch TMS customer profile', tmsResp?.httpStatus ?? 500);
+export function transformWhatsappCustomerDetails(response: any): any {
+  if (!response?.success) {
+    return response;
   }
 
-  const tmsData = tmsResp.data?.data;
-  const customerDetails = customerProfile?.data?.data;
+  const customerDetails = response?.data;
 
   const fullName = [customerDetails?.firstName, customerDetails?.lastName]
     .filter(Boolean)
@@ -266,14 +252,14 @@ export function mergeWhatsappCustomerDetails(aggregatedResponses: AggregatedResp
 
   return {
     registered: true,
-    gstin: customerDetails?.gstIn ?? tmsData?.gst ?? null,
-    pan: customerDetails?.pan ?? tmsData?.pan ?? null,
-    userType: 'Primary',
-    sfId: customerDetails?.sfAccountId ?? tmsData?.sfId ?? null,
-    isCreditCustomer: customerDetails.isCreditEnabled ?? false,
+    gstin: customerDetails?.gstIn ?? null,
+    pan: customerDetails?.pan ?? null,
+    userType: customerDetails?.contactType ?? null,
+    sfId: customerDetails?.sfAccountId ?? null,
+    isCreditCustomer: customerDetails?.isCreditEnabled ?? false,
     isTransacting: customerDetails?.isTransacting ?? true,
     customerName,
-    customerType: customerDetails?.customerType ?? tmsData?.customerType ?? null,
+    customerType: customerDetails?.customerType ?? null,
     state,
   };
 }
