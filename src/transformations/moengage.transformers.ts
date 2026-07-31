@@ -1,5 +1,4 @@
 import { BaseRequest } from 'src/models/base-request.model';
-import { MOENGAGE_HUBSPOT } from 'src/config/moengage.config';
 import { CustomError } from 'src/utils/CustomError';
 
 /**
@@ -116,18 +115,11 @@ function buildMoengageEventRequest(request: BaseRequest, action: string): BaseRe
     ],
   };
 
-  // The Data API URL carries the workspace id in its path (no query string), so
-  // we simply point the request at it. (The proxy clears the route-config target
-  // URL's query before this transform runs, which is fine — there is none here.)
-  const url = new URL(MOENGAGE_HUBSPOT.dataApiUrl);
-
-  const headers: Record<string, any> = {
-    'content-type': 'application/json',
-    accept: 'application/json',
-  };
-  if (MOENGAGE_HUBSPOT.authHeader) headers.authorization = MOENGAGE_HUBSPOT.authHeader;
-
-  return { ...request, url, body: moengageBody, headers };
+  // URL (`${MOENGAGE_DATA_API_URL}`, workspace id in the path) and the Basic auth
+  // header (`${MOENGAGE_HUBSPOT_AUTH}`) come from the route's target config, which
+  // resolves them per environment from `assets/{env}/env-config.json`. Only the
+  // body shape is this transformer's concern.
+  return { ...request, body: moengageBody };
 }
 
 /**
