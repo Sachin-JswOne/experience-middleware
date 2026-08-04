@@ -1,4 +1,49 @@
+import { HttpStatus } from '@nestjs/common';
 import { BaseRequest } from 'src/models/base-request.model';
+import { CustomError } from 'src/utils/CustomError';
+
+// Salesforce record Ids are either 15 (case-sensitive) or 18 (case-insensitive)
+// character alphanumeric strings.
+const SALESFORCE_ID_REGEX = /^[a-zA-Z0-9]{15}(?:[a-zA-Z0-9]{3})?$/;
+
+// Allow-list of known RecordType DeveloperName values used by the Sales App
+// opportunity queries. `getDeveloperName` in orderListing.transformers.ts emits
+// `MSME` / `PrivateBrand`, and the credit flow uses `Credit`.
+const ALLOWED_RECORD_TYPE_DEVELOPER_NAMES = new Set(['Credit', 'MSME', 'PrivateBrand']);
+
+function assertValidSalesforceId(value: string, field: string): string {
+  if (!value || !SALESFORCE_ID_REGEX.test(value)) {
+    throw new CustomError(`Invalid ${field}`, HttpStatus.BAD_REQUEST);
+  }
+  return value;
+}
+
+function assertValidDeveloperName(value: string): string {
+  if (!value || !ALLOWED_RECORD_TYPE_DEVELOPER_NAMES.has(value)) {
+    throw new CustomError('Invalid developerName', HttpStatus.BAD_REQUEST);
+  }
+  return value;
+}
+
+// Parse the comma-separated `accountIds` param, validate each entry as a
+// Salesforce Id, and rebuild a safely quoted list for the SOQL `IN` clause.
+function buildSafeAccountIdInClause(rawAccountIds: string): string {
+  const ids = rawAccountIds
+    .split(',')
+    .map((id) =>
+      id
+        .trim()
+        .replace(/^['"]|['"]$/g, '')
+        .trim(),
+    )
+    .filter((id) => id.length > 0);
+
+  if (ids.length === 0) {
+    throw new CustomError('Invalid accountIds', HttpStatus.BAD_REQUEST);
+  }
+
+  return ids.map((id) => `'${assertValidSalesforceId(id, 'accountIds')}'`).join(', ');
+}
 
 export function transformVijaiUserListRequest(request: any) {
   const finalTransformedRequest: BaseRequest = {
@@ -15,6 +60,12 @@ export function transformVijaiUserListRequest(request: any) {
   const accountIds = request.url.searchParams.get('accountIds');
   const developerName = request.url.searchParams.get('developerName');
   const nextRecordsUrl = request.url.searchParams.get('nextRecordsUrl');
+
+  // Validate the owner/opportunity Id before it is interpolated into any SOQL
+  // WHERE clause below.
+  if (ownerId) {
+    assertValidSalesforceId(ownerId, 'id');
+  }
 
   let soql = '';
 
@@ -39,6 +90,7 @@ ORDER BY CheckIn_CMV__Check_in_Date_Time__c DESC`
   }
 
   if (isOpportunityList === 'true' && ownerId) {
+    assertValidDeveloperName(developerName);
     if (developerName === 'Credit') {
       soql = `SELECT Id, Name, StageName, RecordType.DeveloperName, CreatedDate, 
        Credit_limit_requested__c, Credit_tenure_request_days__c, 
@@ -121,6 +173,7 @@ ORDER BY CreatedDate DESC`
   }
 
   if (isAccountById === 'true' && accountIds) {
+    const safeAccountIdInClause = buildSafeAccountIdInClause(accountIds);
     soql = `SELECT Account_tag__c, Registered__c, Account_History_String__c, Opportunity_History_String__c, Last_Opportunity_Create_Date__c,
     AccountNumber, GST__c, PAN__c, Id, Name, Nodal_Bank_Account__c, isJodl__c, Pay_to__c, JSW_NodalBankVAN__c, JSW_NonNodalBankVAN__c,
     Non_Nodal_Bank_Account__c, Segment__c, Sub_Segment__c, RecordType.Name, Customer_Type_Account__c, Account_Status__c, Business_Division__c,
@@ -136,7 +189,7 @@ ORDER BY CreatedDate DESC`
     )
     FROM Account
     WHERE Id IN (
-    ${accountIds}
+    ${safeAccountIdInClause}
     )`;
   }
 
