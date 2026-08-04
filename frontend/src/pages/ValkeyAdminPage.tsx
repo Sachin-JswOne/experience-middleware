@@ -4,8 +4,8 @@ import { Box, Chip, Tab, Tabs, Typography } from '@mui/material';
 import KeyBrowserPanel from '@/components/features/valkey/KeyBrowserPanel';
 import ClusterInfoPanel from '@/components/features/valkey/ClusterInfoPanel';
 import { useValkeyStatus } from '@/components/features/valkey/useValkeyQueries';
-import AppConfig from '@/configs/AppConfig';
-import { hasPermission } from '@/utils/permissions';
+// import AppConfig from '@/configs/AppConfig';
+// import { hasPermission } from '@/utils/permissions';
 import { tokens } from '@/styles/theme';
 
 type TabValue = 'keys' | 'cluster';
