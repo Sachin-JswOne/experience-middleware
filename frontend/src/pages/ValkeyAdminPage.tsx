@@ -16,7 +16,8 @@ const ValkeyAdminPage = () => {
 
   // Hides write controls the user can't use. The backend enforces the same
   // permission on the endpoints — this is presentation only.
-  const canWrite = hasPermission(AppConfig.VALKEY_WRITE_PERMISSION);
+  // const canWrite = hasPermission(AppConfig.VALKEY_WRITE_PERMISSION);
+  const canWrite = true;
 
   return (
     <Box>
