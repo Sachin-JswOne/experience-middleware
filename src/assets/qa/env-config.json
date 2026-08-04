@@ -26,5 +26,7 @@
   "OMS_AUTH_FETCH_CREDIT_INFO_VIJAI": "SalesForce.Connector.oSyMktm",
   "OMS_CLIENT_ID_VIJAI": "CLIEX1",
   "X_API_KEY_FOR_PROFILE": "CommerceServiceWeb-v1-9xblf2tjw6h5y7k3vd0qpoamz48srnycluej8dgw9mf12vhz5tocqk7xpyl3b6fd",
-  "TMS_AUTH_TOKEN_ORDER_LISTING": "Zoho.Connector.Yrt664kT"
+  "TMS_AUTH_TOKEN_ORDER_LISTING": "Zoho.Connector.Yrt664kT",
+  "MOENGAGE_DATA_API_URL": "https://api-03.moengage.com/v1/event/4311B84VU6UTCNRSAT5JZ3RV_DEBUG",
+  "MOENGAGE_HUBSPOT_AUTH": "Basic NDMxMUI4NFZVNlVUQ05SU0FUNUpaM1JWX0RFQlVHOkxMYjFAVzN5WHJjSjZzS1VRSGpQUXF0Xw=="
 }

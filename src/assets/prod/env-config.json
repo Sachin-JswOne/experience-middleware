@@ -23,5 +23,10 @@
   "ERP_BASE_URL": "https://oms.jswonemsme.com/external-connector-inbound/api/external/v1",
   "OMS_AUTH_FETCH_CREDIT_INFO_VIJAI": "SalesForce.Connector.$2b$12$h2GjJBKa9JyCUQZmvzZOouxzKWI4DIC0T9yBBOdXKb9NUj5pMCppG",
   "OMS_CLIENT_ID_VIJAI": "CLIEX1",
-  "X_API_KEY_FOR_PROFILE": "CommerceServiceWeb-v1-9xblf2tjw6h5y7k3vd0qpoamz48srnycluej8dgw9mf12vhz5tocqk7xpyl3b6fd8340ff"
+  "X_API_KEY_FOR_PROFILE": "CommerceServiceWeb-v1-9xblf2tjw6h5y7k3vd0qpoamz48srnycluej8dgw9mf12vhz5tocqk7xpyl3b6fd8340ff",
+  "MOENGAGE_DATA_API_URL": "https://api-XX.moengage.com/v1/event/REPLACE_WITH_PROD_WORKSPACE_ID",
+  "MOENGAGE_HUBSPOT_AUTH": "Basic REPLACE_WITH_PROD_BASIC_AUTH",
+  "SF_SALES_APP_CLIENT_ID": "3MVG9fe4g9fhX0E6.68Z80U.6CjEPYWdsOl8psleCg9W9UUs0MPeQs4UOQuyqWMi6iLC3Z1XJ5vDtCh9QsnK3",
+  "SF_SALES_APP_CLIENT_SECRET": "BC9C6D1945DD6843323CC3587B7A7886A4FF3CB56EC1A68ABBA002AA301F8499",
+  "SF_SALES_APP_REDIRECT_URI": "com.jswone.vijai://oauth/callback"
 }
