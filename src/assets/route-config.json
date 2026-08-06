@@ -162,8 +162,8 @@
       "url": "${MSME_BASE_URL}/cart/g/checkout/:cartId",
       "method": "POST",
       "timeout": {
-        "request": "${TIMEOUTS.REQUEST}",
-        "socket": "${TIMEOUTS.SOCKET}"
+        "request": 10000,
+        "socket": 1000
       }
     }
   },
