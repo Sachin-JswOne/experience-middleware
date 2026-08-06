@@ -684,7 +684,7 @@
     "routeHandler": "TRANSFORM",
     "target": {
       "name": "app-verify-mobile-number-with-otp",
-      "url": "${MSME_BASE_URL}/otp/verify",
+      "url": "${MSME_BASE_URL}/auth/api/v1/construct/otp/verify",
       "method": "POST",
       "staticHeaders": {
         "X-API-KEY": "${X_API_KEY_FOR_LOGIN}"
