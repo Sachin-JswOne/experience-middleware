@@ -5426,5 +5426,26 @@
       ],
       "reqTransform": "vijai.transformers.transformVijaiMarkNotificationRequest"
     }
+  },
+  {
+    "path": "/xp-mi/public/v1/order-service/requirement/my-requirements",
+    "method": "GET",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "my-requirements",
+      "url": "${MSME_BASE_URL}/order-service/requirement/my-requirements",
+      "method": "GET",
+      "timeout": {
+        "request": 5000,
+        "socket": 1000
+      },
+      "headersToPass": [
+        {
+          "source": "authorization",
+          "destination": "access_token"
+        }
+      ],
+      "requiredParams": ["*"]
+    }
   }
 ]
