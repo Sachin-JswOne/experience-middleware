@@ -143,7 +143,10 @@ export function mergeRegisterUserAndAccessTokenResponse(
         accessToken?.httpStatus ? accessToken?.httpStatus : HttpStatus.BAD_REQUEST,
       );
     }
-    return accessToken?.data;
+    return {
+      accessToken: accessToken?.data.jwtToken,
+      refreshToken: accessToken?.data.refreshToken,
+    };
   } catch (error) {
     Logger.error('Error merging register user and access token response:', error);
     throw new CustomError('Something went wrong. Please try again later.', HttpStatus.BAD_REQUEST);

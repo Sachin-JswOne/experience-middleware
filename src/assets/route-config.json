@@ -684,7 +684,7 @@
     "routeHandler": "TRANSFORM",
     "target": {
       "name": "app-verify-mobile-number-with-otp",
-      "url": "${MSME_BASE_URL}/otp/verify",
+      "url": "${MSME_BASE_URL}/auth/api/v1/construct/otp/verify",
       "method": "POST",
       "staticHeaders": {
         "X-API-KEY": "${X_API_KEY_FOR_LOGIN}"
@@ -5212,73 +5212,75 @@
     }
   },
   {
-    "path": "/xp-mi/public/v1/app/orders-pending-payments",
-    "method": "GET",
-    "routeHandler": "AGGREGATE",
-    "aggregationType": "PARALLEL",
+    "path": "/xp-mi/public/v1/token",
+    "method": "POST",
+    "routeHandler": "CONDITIONAL",
+    "conditionTransform": "vijai.transformers.selectAccessTokenTarget",
     "targets": [
       {
-        "name": "orders-pending-payments",
-        "url": "${ERP_BASE_URL}/ledger/fetch-ledger-payment-summary",
-        "method": "GET",
+        "name": "access-token",
+        "url": "${EXPERIENCE_MIDDLEWARE_URL}/xp-mi/public/v1/token/access-token",
+        "method": "POST",
         "timeout": {
-          "request": 5000,
+          "request": 50000,
           "socket": 1000
         },
-        "headersToPass": [
-          {
-            "source": "Authorization",
-            "destination": "access_token"
-          }
-        ],
         "staticHeaders": {
-          "client_id": "${ERP_CLIENT_ID}",
-          "Authorization": "${X_API_KEY_FOR_ORDER_LISTING}"
+          "Content-Type": "application/x-www-form-urlencoded"
         },
-        "reqTransform": "paymentdue.transformers.transformOrdersPendingPaymentsRequest"
+        "requiredParams": ["*"]
       },
       {
-        "name": "account-details",
-        "url": "${OMS_URL}/external-connector-inbound/api/external/v1/retail/fetch-sf-customer-details",
-        "method": "GET",
+        "name": "refresh-token",
+        "url": "${EXPERIENCE_MIDDLEWARE_URL}/xp-mi/public/v1/token/refresh-token",
+        "method": "POST",
         "timeout": {
-          "request": 5000,
+          "request": 50000,
           "socket": 1000
         },
-        "headersToPass": [
-          {
-            "source": "Authorization",
-            "destination": "access_token"
-          }
-        ],
         "staticHeaders": {
-          "client_id": "${ERP_CLIENT_ID}",
-          "Authorization": "${X_API_KEY_FOR_ORDER_LISTING}"
+          "Content-Type": "application/x-www-form-urlencoded"
         },
-        "reqTransform": "paymentdue.transformers.transformAccountDetailsRequest"
+        "requiredParams": ["*"]
       }
-    ],
-    "resTransform": "paymentdue.transformers.mergePaymentDueAndAccountDetails"
+    ]
   },
   {
-    "path": "/xp-mi/public/v1/hubspot/moengage/event",
+    "path": "/xp-mi/public/v1/token/access-token",
     "method": "POST",
     "routeHandler": "TRANSFORM",
-    "isCacheRequired": false,
     "target": {
-      "name": "moengage-hubspot-event",
-      "url": "${MOENGAGE_DATA_API_URL}",
+      "name": "access-token",
+      "url": "${SF_BASE_URI}/services/oauth2/token",
       "method": "POST",
       "timeout": {
-        "request": 20000,
+        "request": 50000,
         "socket": 1000
       },
       "staticHeaders": {
-        "Content-Type": "application/json",
-        "Accept": "application/json",
-        "Authorization": "${MOENGAGE_HUBSPOT_AUTH}"
+        "Content-Type": "application/x-www-form-urlencoded"
       },
-      "reqTransform": "moengage.transformers.hubspotEventToMoengage"
+      "requiredParams": ["*"],
+      "reqTransform": "vijai.transformers.transformAccessTokenRequest"
+    }
+  },
+  {
+    "path": "/xp-mi/public/v1/token/refresh-token",
+    "method": "POST",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "refresh-token",
+      "url": "${SF_BASE_URI}/services/oauth2/token",
+      "method": "POST",
+      "timeout": {
+        "request": 50000,
+        "socket": 1000
+      },
+      "staticHeaders": {
+        "Content-Type": "application/x-www-form-urlencoded"
+      },
+      "requiredParams": ["*"],
+      "reqTransform": "vijai.transformers.transformRefreshTokenRequest"
     }
   },
   {
@@ -5425,6 +5427,76 @@
         }
       ],
       "reqTransform": "vijai.transformers.transformVijaiMarkNotificationRequest"
+    }
+  },
+  {
+    "path": "/xp-mi/public/v1/app/orders-pending-payments",
+    "method": "GET",
+    "routeHandler": "AGGREGATE",
+    "aggregationType": "PARALLEL",
+    "targets": [
+      {
+        "name": "orders-pending-payments",
+        "url": "${ERP_BASE_URL}/ledger/fetch-ledger-payment-summary",
+        "method": "GET",
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
+        "headersToPass": [
+          {
+            "source": "Authorization",
+            "destination": "access_token"
+          }
+        ],
+        "staticHeaders": {
+          "client_id": "${ERP_CLIENT_ID}",
+          "Authorization": "${X_API_KEY_FOR_ORDER_LISTING}"
+        },
+        "reqTransform": "paymentdue.transformers.transformOrdersPendingPaymentsRequest"
+      },
+      {
+        "name": "account-details",
+        "url": "${OMS_URL}/external-connector-inbound/api/external/v1/retail/fetch-sf-customer-details",
+        "method": "GET",
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
+        "headersToPass": [
+          {
+            "source": "Authorization",
+            "destination": "access_token"
+          }
+        ],
+        "staticHeaders": {
+          "client_id": "${ERP_CLIENT_ID}",
+          "Authorization": "${X_API_KEY_FOR_ORDER_LISTING}"
+        },
+        "reqTransform": "paymentdue.transformers.transformAccountDetailsRequest"
+      }
+    ],
+    "resTransform": "paymentdue.transformers.mergePaymentDueAndAccountDetails"
+  },
+  {
+    "path": "/xp-mi/public/v1/hubspot/moengage/event",
+    "method": "POST",
+    "routeHandler": "TRANSFORM",
+    "isCacheRequired": false,
+    "target": {
+      "name": "moengage-hubspot-event",
+      "url": "${MOENGAGE_DATA_API_URL}",
+      "method": "POST",
+      "timeout": {
+        "request": 20000,
+        "socket": 1000
+      },
+      "staticHeaders": {
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+        "Authorization": "${MOENGAGE_HUBSPOT_AUTH}"
+      },
+      "reqTransform": "moengage.transformers.hubspotEventToMoengage"
     }
   }
 ]
