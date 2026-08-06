@@ -144,8 +144,8 @@ export function mergeRegisterUserAndAccessTokenResponse(
       );
     }
     return {
-      accessToken: accessToken?.data.jwtToken,
-      refreshToken: accessToken?.data.refreshToken,
+      accessToken: accessToken?.data?.jwtToken,
+      refreshToken: accessToken?.data?.refreshToken,
     };
   } catch (error) {
     Logger.error('Error merging register user and access token response:', error);
