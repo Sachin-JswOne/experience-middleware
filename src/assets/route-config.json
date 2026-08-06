@@ -5246,7 +5246,7 @@
     "path": "/xp-mi/public/v1/token",
     "method": "POST",
     "routeHandler": "CONDITIONAL",
-    "conditionTransform": "salesapp.transformers.selectAccessTokenTarget",
+    "conditionTransform": "vijai.transformers.selectAccessTokenTarget",
     "targets": [
       {
         "name": "access-token",
@@ -5292,7 +5292,7 @@
         "Content-Type": "application/x-www-form-urlencoded"
       },
       "requiredParams": ["*"],
-      "reqTransform": "salesapp.transformers.transformAccessTokenRequest"
+      "reqTransform": "vijai.transformers.transformAccessTokenRequest"
     }
   },
   {
@@ -5311,7 +5311,7 @@
         "Content-Type": "application/x-www-form-urlencoded"
       },
       "requiredParams": ["*"],
-      "reqTransform": "salesapp.transformers.transformRefreshTokenRequest"
+      "reqTransform": "vijai.transformers.transformRefreshTokenRequest"
     }
   },
   {
