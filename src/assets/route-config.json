@@ -162,8 +162,8 @@
       "url": "${MSME_BASE_URL}/cart/g/checkout/:cartId",
       "method": "POST",
       "timeout": {
-        "request": "${TIMEOUTS.REQUEST}",
-        "socket": "${TIMEOUTS.SOCKET}"
+        "request": 10000,
+        "socket": 1000
       }
     }
   },
@@ -5248,7 +5248,7 @@
     "path": "/xp-mi/public/v1/token",
     "method": "POST",
     "routeHandler": "CONDITIONAL",
-    "conditionTransform": "salesapp.transformers.selectAccessTokenTarget",
+    "conditionTransform": "vijai.transformers.selectAccessTokenTarget",
     "targets": [
       {
         "name": "access-token",
@@ -5294,7 +5294,7 @@
         "Content-Type": "application/x-www-form-urlencoded"
       },
       "requiredParams": ["*"],
-      "reqTransform": "salesapp.transformers.transformAccessTokenRequest"
+      "reqTransform": "vijai.transformers.transformAccessTokenRequest"
     }
   },
   {
@@ -5313,7 +5313,7 @@
         "Content-Type": "application/x-www-form-urlencoded"
       },
       "requiredParams": ["*"],
-      "reqTransform": "salesapp.transformers.transformRefreshTokenRequest"
+      "reqTransform": "vijai.transformers.transformRefreshTokenRequest"
     }
   },
   {
