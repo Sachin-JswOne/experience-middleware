@@ -72,29 +72,17 @@ export function getPaymentDueDetails(
 }
 
 export function transformOrdersPendingPaymentsRequest(request): any {
-  const accessToken =
-    request.headers.access_token ||
-    request.headers.Access_Token ||
-    request.headers.authorization ||
-    request.headers.Authorization;
 
-  const decoded = jwt.decode(accessToken);
-  const gstin = (decoded as any).gstIn ?? null;
-
+  const gstin = request.url.searchParams.get('gstin');
+  console.log("gstin", gstin)
   request.url.searchParams.set('gstin', gstin);
+  console.log("request", request)
   return request;
 }
 
 export function transformAccountDetailsRequest(request) {
-  const accessToken =
-    request.headers.access_token ||
-    request.headers.Access_Token ||
-    request.headers.authorization ||
-    request.headers.Authorization;
-
-  const decoded = jwt.decode(accessToken);
-  const gstin = (decoded as any).gstIn ?? null;
-
+  const gstin = request.url.searchParams.get('gstin');
+ 
   request.url.searchParams.set('gstin', gstin);
   return request;
 }
@@ -179,4 +167,10 @@ export function getCustomerDetails(accountDetailsResult) {
         bankName: customerBankDetail[0]?.nonNodalBankName ?? '',
       };
   }
+}
+
+export function transformOrderSummaryRequest(request) {
+  const orderNumber = request.url.searchParams.get('orderNumber');
+  request.url.searchParams.set('orderNumber', orderNumber);
+  return request;
 }
