@@ -4697,6 +4697,16 @@
         "resTransform": "cms.transformers.replaceUriPrefix"
       },
       {
+        "name": "raise-browse-faqs",
+        "url": "${EXPERIENCE_MIDDLEWARE_URL}/xp-mi/public/v1/web-help-support-faqs",
+        "method": "POST",
+        "timeout": {
+          "request": 10000,
+          "socket": 1000
+        },
+        "reqTransform": "cms.transformers.raiseBrowseFaqsQueryParams"
+      },
+      {
         "name": "raise-browse-topics",
         "url": "${CMS_MSME_URL}/raise-browse-topics",
         "method": "GET",

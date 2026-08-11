@@ -119,6 +119,24 @@ export function raiseBrowseTopicsQueryParams(request: BaseRequest): BaseRequest 
     body: request.body?.browseTopicsQuery ?? {},
   });
 }
+export function raiseBrowseFaqsQueryParams(request: BaseRequest): BaseRequest {
+  const browseFaqsQuery = request.body?.browseFaqsQuery ?? {};
+  const defaultPopulate = {
+    images: true,
+    steps: true,
+    topic: {
+      populate: '*',
+    },
+  };
+
+  return {
+    ...request,
+    body: {
+      populate: defaultPopulate,
+      ...browseFaqsQuery,
+    },
+  };
+}
 
 export function mergeRaiseIssueHelpResponse(
   aggregatedResponses: AggregatedResponse[],
@@ -133,11 +151,19 @@ export function mergeRaiseIssueHelpResponse(
 
   const issueTypesResponse = responses['raise-issue-types'];
   const browseTopicsResponse = responses['raise-browse-topics'];
+  const browseFaqsResponse = responses['raise-browse-faqs'];
 
   if (!issueTypesResponse?.success) {
     throw new CustomError(
       issueTypesResponse?.error || 'raise-issue-types API failed',
       issueTypesResponse?.httpStatus ?? 500,
+    );
+  }
+
+  if (!browseFaqsResponse?.success) {
+    throw new CustomError(
+      browseFaqsResponse?.error || 'raise-browse-faqs API failed',
+      browseFaqsResponse?.httpStatus ?? 500,
     );
   }
 
@@ -150,6 +176,7 @@ export function mergeRaiseIssueHelpResponse(
 
   return {
     raiseIssueTypes: removeEmptyArraysDeep(issueTypesResponse.data.data ?? []),
-    raiseBrowseTopics: browseTopicsResponse.data.data ?? []
+    raiseBrowseTopics: browseTopicsResponse.data.data ?? [],
+    raiseBrowseFaqs: browseFaqsResponse.data?.data ?? browseFaqsResponse.data ?? [],
   };
 }
