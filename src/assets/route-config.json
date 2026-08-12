@@ -3934,6 +3934,7 @@
           "request": 20000,
           "socket": 1000
         },
+        "requiredParams": ["*"],
         "headersToPass": [
           {
             "source": "authorization",
@@ -4213,6 +4214,7 @@
             "destination": "access_token"
           }
         ],
+        "requiredParams": ["*"],
         "reqTransform": "app.transformers.transformInTransitRequest"
       },
       {
@@ -4279,7 +4281,7 @@
           }
         ]
       }
-    ],
+    ],    
     "resTransform": "appHomePage.transformers.mergeAppHomePageResponseV4"
   },
   {

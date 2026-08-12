@@ -344,6 +344,9 @@ export function transformInTransitRequest(request) {
     ...request,
     body: null,
   };
+  const isPbRetailer = request.url.searchParams.get('isPbRetailer');
+ 
   finalTransformedRequest.url.search = `?page=1&size=10&cursorTimestamp=0`;
+  finalTransformedRequest.url.searchParams.set('isPbRetailer', isPbRetailer || 'false');
   return finalTransformedRequest;
 }
