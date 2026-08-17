@@ -344,6 +344,24 @@ export function transformInTransitRequest(request) {
     ...request,
     body: null,
   };
+  const customerTypes = request.body.filters.$and
+  .find(condition =>
+    condition.$or?.some(item => item.customer_types)
+  )
+  ?.$or
+  ?.map(item => item.customer_types?.type?.$eqi?.trim().toLowerCase())
+  .filter(Boolean) ?? [];
+
+  let isPbRetailer = "false";
+
+  if (
+    customerTypes.includes("retailer pb") ||
+    customerTypes.includes("influencer")
+  ) {
+    isPbRetailer = "true";
+  }
+ 
   finalTransformedRequest.url.search = `?page=1&size=10&cursorTimestamp=0`;
+  finalTransformedRequest.url.searchParams.set('isPbRetailer', isPbRetailer);
   return finalTransformedRequest;
 }
