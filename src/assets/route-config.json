@@ -3680,7 +3680,7 @@
       },
       {
         "name": "one-helix-task",
-        "url": "${OMS_URL}/jswone/subject/task",
+        "url": "${TMS_BASE_URI}/jswone/subject/task",
         "method": "POST",
         "timeout": {
           "request": 10000,
@@ -3702,7 +3702,7 @@
     "isCacheRequired": false,
     "target": {
       "name": "one-helix-task",
-      "url": "${OMS_URL}/jswone/subject/task",
+      "url": "${TMS_BASE_URI}/jswone/subject/task",
       "method": "POST",
       "timeout": {
         "request": 10000,
