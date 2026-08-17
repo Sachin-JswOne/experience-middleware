@@ -181,3 +181,17 @@ export function mergeRaiseIssueHelpResponse(
     raiseBrowseFaqs: browseFaqsResponse.data?.data ?? browseFaqsResponse.data ?? [],
   };
 }
+
+export function extractLandingParams(request: BaseRequest): BaseRequest {
+  return moveBodyToQueryParams({
+    ...request,
+    body: request.body?.landingParams ?? {},
+  });
+}
+
+export function extractFaqsParams(request: BaseRequest): BaseRequest {
+  return moveBodyToQueryParams({
+    ...request,
+    body: request.body?.faqsParams ?? {},
+  });
+}

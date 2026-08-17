@@ -5579,5 +5579,36 @@
       "requiredParams": ["orderNumber"],
       "reqTransform": "paymentdue.transformers.transformOrderSummaryRequest"
     }
+  },
+  {
+    "path": "/xp-mi/public/v1/web-credit-page",
+    "method": "GET",
+    "routeHandler": "AGGREGATE",
+    "aggregationType": "PARALLEL",
+    "isCacheRequired": false,
+    "targets": [
+      {
+        "name": "credit-landing-page",
+        "url": "${CMS_MSME_URL}/web-credit-landing-page",
+        "method": "GET",
+        "timeout": {
+          "request": "${TIMEOUTS.REQUEST}",
+          "socket": "${TIMEOUTS.SOCKET}"
+        },
+        "reqTransform": "cms.transformers.extractLandingParams",
+        "resTransform": "cms.transformers.replaceUriPrefix"
+      },
+      {
+        "name": "credit-faqs",
+        "url": "${CMS_MSME_URL}/faqss",
+        "method": "GET",
+        "timeout": {
+          "request": "${TIMEOUTS.REQUEST}",
+          "socket": "${TIMEOUTS.SOCKET}"
+        },
+        "reqTransform": "cms.transformers.extractFaqsParams",
+        "resTransform": "cms.transformers.replaceUriPrefix"
+      }
+    ]
   }
 ]
