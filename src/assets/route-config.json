@@ -5582,7 +5582,7 @@
   },
   {
     "path": "/xp-mi/public/v1/web-credit-page",
-    "method": "GET",
+    "method": "POST",
     "routeHandler": "AGGREGATE",
     "aggregationType": "PARALLEL",
     "isCacheRequired": false,
