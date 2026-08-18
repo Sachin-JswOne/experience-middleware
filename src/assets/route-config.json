@@ -5636,5 +5636,26 @@
       ],
       "requiredParams": ["offset", "limit", "type"]
     }
+  },
+  {
+    "path": "/xp-mi/public/v1/customer/credit-instrument",
+    "method": "GET",
+    "routeHandler": "TRANSFORM",
+    "isCacheRequired": false,
+    "target": {
+      "name": "credit-instrument",
+      "url": "${MSME_BASE_URL}/customer/credit-instrument",
+      "method": "GET",
+      "timeout": {
+        "request": "${TIMEOUTS.REQUEST}",
+        "socket": "${TIMEOUTS.SOCKET}"
+      },
+      "headersToPass": [
+        {
+          "source": "authorization",
+          "destination": "access_token"
+        }
+      ]
+    }
   }
 ]
