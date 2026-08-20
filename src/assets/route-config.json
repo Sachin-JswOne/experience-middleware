@@ -4254,6 +4254,7 @@
             "destination": "access_token"
           }
         ],
+        "requiredParams": ["*"],
         "reqTransform": "app.transformers.transformInTransitRequest"
       },
       {
@@ -5509,22 +5510,17 @@
     "targets": [
       {
         "name": "orders-pending-payments",
-        "url": "${ERP_BASE_URL}/ledger/fetch-ledger-payment-summary",
+        "url": "${OMS_URL}/external-connector-inbound/api/external/v1/ledger/fetch-ledger-payment-summary",
         "method": "GET",
         "timeout": {
           "request": 5000,
           "socket": 1000
         },
-        "headersToPass": [
-          {
-            "source": "Authorization",
-            "destination": "access_token"
-          }
-        ],
         "staticHeaders": {
           "client_id": "${ERP_CLIENT_ID}",
           "Authorization": "${X_API_KEY_FOR_ORDER_LISTING}"
         },
+        "requiredParams": ["gstin"],
         "reqTransform": "paymentdue.transformers.transformOrdersPendingPaymentsRequest"
       },
       {
@@ -5535,16 +5531,11 @@
           "request": 5000,
           "socket": 1000
         },
-        "headersToPass": [
-          {
-            "source": "Authorization",
-            "destination": "access_token"
-          }
-        ],
         "staticHeaders": {
           "client_id": "${ERP_CLIENT_ID}",
           "Authorization": "${X_API_KEY_FOR_ORDER_LISTING}"
         },
+        "requiredParams": ["gstin"],
         "reqTransform": "paymentdue.transformers.transformAccountDetailsRequest"
       }
     ],
@@ -5590,6 +5581,27 @@
         }
       ],
       "requiredParams": ["*"]
+    }
+  },
+  {
+    "path": "/xp-mi/public/v1/app/download-order-summary",
+    "method": "GET",
+    "routeHandler": "TRANSFORM",
+    "isCacheRequired": false,
+    "target": {
+      "name": "seller-download-order-summary",
+      "url": "${OMS_URL}/external-connector-inbound/api/internal/v1/retail/fetch-order-summary-pdf",
+      "method": "GET",
+      "timeout": {
+        "request": 20000,
+        "socket": 1000
+      },
+      "staticHeaders": {
+        "client_id": "${ERP_CLIENT_ID}",
+        "Authorization": "${X_API_KEY_FOR_ORDER_LISTING}"
+      },
+      "requiredParams": ["orderNumber"],
+      "reqTransform": "paymentdue.transformers.transformOrderSummaryRequest"
     }
   }
 ]
