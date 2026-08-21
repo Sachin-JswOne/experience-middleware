@@ -5789,5 +5789,26 @@
       ],
       "reqTransform": "general.transformers.moveBodyToQueryParams"
     }
+  },
+  {
+  "path": "/xp-mi/public/v1/customer/ledger/v2/creditDetails",
+  "method": "GET",
+  "routeHandler": "TRANSFORM",
+  "isCacheRequired": false,
+  "target": {
+    "name": "getCreditDetails",
+    "url": "${MSME_BASE_URL}/customer/ledger/v2/creditDetails",
+    "method": "GET",
+    "timeout": {
+      "request": "${TIMEOUTS.REQUEST}",
+      "socket": "${TIMEOUTS.SOCKET}"
+    },
+    "headersToPass": [
+      {
+        "source": "access_token",
+        "destination": "access_token"
+      }
+    ]
+  }
   }
 ]
