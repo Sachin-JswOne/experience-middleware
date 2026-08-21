@@ -5612,6 +5612,23 @@
     ]
   },
   {
+    "path": "/xp-mi/public/v1/web-credit-banner-configs",
+    "method": "POST",
+    "routeHandler": "TRANSFORM",
+    "isCacheRequired": false,
+    "target": {
+      "name": "webCreditBannerConfigs",
+      "url": "${CMS_MSME_URL}/web-credit-banner-configs",
+      "method": "GET",
+      "timeout": {
+        "request": "${TIMEOUTS.REQUEST}",
+        "socket": "${TIMEOUTS.SOCKET}"
+      },
+      "reqTransform": "general.transformers.moveBodyToQueryParams",
+      "resTransform": "cms.transformers.replaceUriPrefix"
+    }
+  },
+  {
     "path": "/xp-mi/public/v1/order-service/order/my-orders",
     "method": "GET",
     "routeHandler": "TRANSFORM",
