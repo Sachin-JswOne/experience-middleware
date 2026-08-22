@@ -1980,23 +1980,99 @@
   {
     "path": "/xp-mi/public/v1/central_commerce/products/listing",
     "method": "POST",
-    "routeHandler": "TRANSFORM",
-    "target": {
-      "name": "products-listing",
-      "url": "${MSME_BASE_URL}/central_commerce/products/listing",
-      "method": "POST",
-      "timeout": {
-        "request": 5000,
-        "socket": 1000
+    "routeHandler": "CONDITIONAL",
+    "isCacheRequired": false,
+    "conditionTransform": "plp.transformers.selectProductsListingTarget",
+    "targets": [
+      {
+        "name": "products-listing-plain",
+        "url": "${MSME_BASE_URL}/central_commerce/products/listing",
+        "method": "POST",
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
+        "headersToPass": [
+          {
+            "source": "access_token",
+            "destination": "access_token"
+          }
+        ],
+        "requiredParams": ["*"]
       },
-      "headersToPass": [
-        {
-          "source": "access_token",
-          "destination": "access_token"
-        }
-      ],
-      "requiredParams": ["*"]
-    }
+      {
+        "name": "products-listing-seo",
+        "url": "${EXPERIENCE_MIDDLEWARE_URL}/xp-mi/public/v1/central_commerce/products/listing/programmatic-seo",
+        "method": "POST",
+        "timeout": {
+          "request": 15000,
+          "socket": 1000
+        },
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "access_token"
+          },
+          {
+            "source": "access_token",
+            "destination": "access_token"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "path": "/xp-mi/public/v1/central_commerce/products/listing/programmatic-seo",
+    "method": "POST",
+    "routeHandler": "AGGREGATE",
+    "aggregationType": "SEQUENTIAL_THEN_PARALLEL",
+    "isCacheRequired": false,
+    "targets": [
+      {
+        "name": "programmatic-seo-page",
+        "url": "${MSME_BASE_URL}/central_commerce/api/v1/seo/programmatic-pages/placeholder-slug",
+        "method": "GET",
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
+        "reqTransform": "plp.transformers.buildProgrammaticSeoPageRequest",
+        "headersToPass": [
+          {
+            "source": "access_token",
+            "destination": "access_token"
+          }
+        ]
+      },
+      {
+        "name": "cms-plp-programmatic-seo-template",
+        "url": "${CMS_MSME_URL}/plp-programmatic-seo-templates",
+        "method": "GET",
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
+        "reqTransform": "plp.transformers.buildCmsProgrammaticSeoTemplateRequest",
+        "resTransform": "cms.transformers.replaceUriPrefix"
+      },
+      {
+        "name": "products-listing",
+        "url": "${MSME_BASE_URL}/central_commerce/products/listing",
+        "method": "POST",
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
+        "reqTransform": "plp.transformers.transformProgrammaticSeoProductsListingRequest",
+        "headersToPass": [
+          {
+            "source": "access_token",
+            "destination": "access_token"
+          }
+        ]
+      }
+    ],
+    "resTransform": "plp.transformers.mergeProgrammaticSeoListingResponse"
   },
   {
     "path": "/xp-mi/public/v1/central_commerce/recent-search",
