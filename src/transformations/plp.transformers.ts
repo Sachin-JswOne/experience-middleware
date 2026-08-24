@@ -120,6 +120,7 @@ export function transformProgrammaticSeoProductsListingRequest(
     slug,
     storefront,
     filterConditions: Array.isArray(body.filterConditions) ? body.filterConditions : [],
+    isSeo: true,
   };
 
   if (typeof body.text === 'string' && body.text !== '') {
