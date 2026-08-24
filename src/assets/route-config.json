@@ -138,6 +138,36 @@
     }
   },
   {
+    "path": "/xp-mi/public/v1/guest-cart-detail/:cartId",
+    "method": "GET",
+    "routeHandler": "TRANSFORM",
+    "isCacheRequired": false,
+    "target": {
+      "name": "guest-cart-detail",
+      "url": "${MSME_BASE_URL}/cart/g/:cartId",
+      "method": "GET",
+      "timeout": {
+        "request": "${TIMEOUTS.REQUEST_MIN}",
+        "socket": "${TIMEOUTS.SOCKET}"
+      }
+    }
+  },
+  {
+    "path": "/xp-mi/public/v1/guest-cart-detail/checkout/:cartId",
+    "method": "POST",
+    "routeHandler": "TRANSFORM",
+    "isCacheRequired": false,
+    "target": {
+      "name": "guest-cart-checkout",
+      "url": "${MSME_BASE_URL}/cart/g/checkout/:cartId",
+      "method": "POST",
+      "timeout": {
+        "request": "${TIMEOUTS.REQUEST}",
+        "socket": "${TIMEOUTS.SOCKET}"
+      }
+    }
+  },
+  {
     "path": "/xp-mi/public/v1/app-global",
     "method": "POST",
     "routeHandler": "TRANSFORM",
