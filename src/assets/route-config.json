@@ -5855,12 +5855,38 @@
         "request": 10000,
         "socket": "${TIMEOUTS.SOCKET}"
       },
-    "headersToPass": [
-      {
-        "source": "access_token",
-        "destination": "access_token"
-      }
+      "headersToPass": [
+        {
+          "source": "access_token",
+          "destination": "access_token"
+        }
       ]
+    }
+  },
+  {
+    "path": "/xp-mi/public/v1/order-service/order/my-orders",
+    "method": "GET",
+    "routeHandler": "TRANSFORM",
+    "isCacheRequired": false,
+    "target": {
+      "name": "web-my-orders",
+      "url": "${MSME_BASE_URL}/order-service/order/my-orders",
+      "method": "GET",
+      "timeout": {
+        "request": 10000,
+        "socket": 1000
+      },
+      "headersToPass": [
+        {
+          "source": "authorization",
+          "destination": "access_token"
+        },
+        {
+          "source": "access_token",
+          "destination": "access_token"
+        }
+      ],
+      "requiredParams": ["offset", "limit", "type"]
     }
   }
 ]
