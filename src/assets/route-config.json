@@ -5720,7 +5720,7 @@
       "url": "${MSME_BASE_URL}/customer/payment/v2/summary",
       "method": "GET",
       "timeout": {
-        "request": "${TIMEOUTS.REQUEST}",
+        "request": 10000,
         "socket": "${TIMEOUTS.SOCKET}"
       },
       "headersToPass": [
@@ -5742,7 +5742,7 @@
       "url": "${MSME_BASE_URL}/customer/payment/v2/payment-due",
       "method": "GET",
       "timeout": {
-        "request": "${TIMEOUTS.REQUEST}",
+        "request": 10000,
         "socket": "${TIMEOUTS.SOCKET}"
       },
       "headersToPass": [
@@ -5764,7 +5764,7 @@
       "url": "${MSME_BASE_URL}/order-service/order/ledger/v2/details",
       "method": "GET",
       "timeout": {
-        "request": "${TIMEOUTS.REQUEST}",
+        "request": 10000,
         "socket": "${TIMEOUTS.SOCKET}"
       },
       "headersToPass": [
@@ -5786,7 +5786,7 @@
       "url": "${MSME_BASE_URL}/customer/ledger/v2/transaction",
       "method": "GET",
       "timeout": {
-        "request": "${TIMEOUTS.REQUEST}",
+        "request": 10000,
         "socket": "${TIMEOUTS.SOCKET}"
       },
       "headersToPass": [
@@ -5808,7 +5808,7 @@
       "url": "${MSME_BASE_URL}/customer/ledger/v2/download-ledger-summary-details",
       "method": "GET",
       "timeout": {
-        "request": "${TIMEOUTS.REQUEST}",
+        "request": 30000,
         "socket": "${TIMEOUTS.SOCKET}"
       },
       "headersToPass": [
@@ -5830,7 +5830,7 @@
       "url": "${MSME_BASE_URL}/customer/ledger/v2/download-ledger-transaction-document",
       "method": "GET",
       "timeout": {
-        "request": "${TIMEOUTS.REQUEST}",
+        "request": 30000,
         "socket": "${TIMEOUTS.SOCKET}"
       },
       "headersToPass": [
@@ -5852,7 +5852,7 @@
       "url": "${MSME_BASE_URL}/customer/ledger/v2/creditDetails",
       "method": "GET",
       "timeout": {
-        "request": "${TIMEOUTS.REQUEST}",
+        "request": 10000,
         "socket": "${TIMEOUTS.SOCKET}"
       },
     "headersToPass": [
