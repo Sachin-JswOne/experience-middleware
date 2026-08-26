@@ -14,6 +14,14 @@ function getRequiredSlug(body: any): string {
   return slug;
 }
 
+// `categorySeoSlug` can be an n-level hierarchical path (e.g. "mild-steel/hot-rolled-steel",
+// "mild-steel/hot-rolled/hot-rolled-steel", or just "hot-rolled-steel") — the listing API only
+// understands the leaf category slug, so take the last non-empty segment.
+function lastPathSegment(path: string): string {
+  const segments = path.split('/').filter(Boolean);
+  return segments[segments.length - 1] ?? '';
+}
+
 function getNormalizedPagination(body: any) {
   const offsetRaw = body?.offset ?? body?.offSet ?? 0;
   const limitRaw = body?.limit ?? 20;
@@ -108,11 +116,14 @@ export function transformProgrammaticSeoProductsListingRequest(
 
   // The programmatic page's own slug (e.g. "mild-steel-in-maharashtra") isn't a real
   // category slug the listing API understands. Its `categorySeoSlug` is the resolved,
-  // listing-API-compatible category slug — fall back to the request slug if the SEO page
+  // listing-API-compatible category slug — but it can be an n-level hierarchical path
+  // ("mild-steel/hot-rolled-steel", "mild-steel/hot-rolled/hot-rolled-steel", etc.), and the
+  // listing API only wants the leaf segment. Fall back to the request slug if the SEO page
   // lookup failed. Do NOT spread the rest of seoPageData: /central_commerce/products/listing
   // validates its body strictly and 400s on unrecognized fields (pageId, h1, metaTitle, etc.
   // are for seoPageData in the merged response, not for this downstream call).
-  const slug = String(seoPageData?.categorySeoSlug ?? '').trim() || getRequiredSlug(body);
+  const rawCategorySeoSlug = String(seoPageData?.categorySeoSlug ?? '').trim();
+  const slug = (rawCategorySeoSlug && lastPathSegment(rawCategorySeoSlug)) || getRequiredSlug(body);
 
   const mergedBody: Record<string, unknown> = {
     offSet: offset,
