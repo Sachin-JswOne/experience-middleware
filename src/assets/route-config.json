@@ -5709,5 +5709,158 @@
       "requiredParams": ["orderNumber"],
       "reqTransform": "paymentdue.transformers.transformOrderSummaryRequest"
     }
+  },
+  {
+    "path": "/xp-mi/public/v1/customer/payment/v2/summary",
+    "method": "POST",
+    "routeHandler": "TRANSFORM",
+    "isCacheRequired": false,
+    "target": {
+      "name": "paymentSummary",
+      "url": "${MSME_BASE_URL}/customer/payment/v2/summary",
+      "method": "GET",
+      "timeout": {
+        "request": 10000,
+        "socket": "${TIMEOUTS.SOCKET}"
+      },
+      "headersToPass": [
+        {
+          "source": "access_token",
+          "destination": "access_token"
+        }
+      ],
+      "reqTransform": "general.transformers.moveBodyToQueryParams"
+    }
+  },
+  {
+    "path": "/xp-mi/public/v1/customer/payment/v2/payment-due",
+    "method": "POST",
+    "routeHandler": "TRANSFORM",
+    "isCacheRequired": false,
+    "target": {
+      "name": "paymentDue",
+      "url": "${MSME_BASE_URL}/customer/payment/v2/payment-due",
+      "method": "GET",
+      "timeout": {
+        "request": 10000,
+        "socket": "${TIMEOUTS.SOCKET}"
+      },
+      "headersToPass": [
+        {
+          "source": "access_token",
+          "destination": "access_token"
+        }
+      ],
+      "reqTransform": "general.transformers.moveBodyToQueryParams"
+    }
+  },
+  {
+    "path": "/xp-mi/public/v1/order-service/order/ledger/v2/details",
+    "method": "POST",
+    "routeHandler": "TRANSFORM",
+    "isCacheRequired": false,
+    "target": {
+      "name": "usableLedgerDetails",
+      "url": "${MSME_BASE_URL}/order-service/order/ledger/v2/details",
+      "method": "GET",
+      "timeout": {
+        "request": 10000,
+        "socket": "${TIMEOUTS.SOCKET}"
+      },
+      "headersToPass": [
+        {
+          "source": "access_token",
+          "destination": "access_token"
+        }
+      ],
+      "reqTransform": "general.transformers.moveBodyToQueryParams"
+    }
+  },
+  {
+    "path": "/xp-mi/public/v1/customer/ledger/v2/transaction",
+    "method": "POST",
+    "routeHandler": "TRANSFORM",
+    "isCacheRequired": false,
+    "target": {
+      "name": "usableLedgerTransactions",
+      "url": "${MSME_BASE_URL}/customer/ledger/v2/transaction",
+      "method": "GET",
+      "timeout": {
+        "request": 10000,
+        "socket": "${TIMEOUTS.SOCKET}"
+      },
+      "headersToPass": [
+        {
+          "source": "access_token",
+          "destination": "access_token"
+        }
+      ],
+      "reqTransform": "general.transformers.moveBodyToQueryParams"
+    }
+  },
+  {
+    "path": "/xp-mi/public/v1/customer/ledger/v2/download-ledger-summary-details",
+    "method": "POST",
+    "routeHandler": "TRANSFORM",
+    "isCacheRequired": false,
+    "target": {
+      "name": "downloadLedgerSummaryDetails",
+      "url": "${MSME_BASE_URL}/customer/ledger/v2/download-ledger-summary-details",
+      "method": "GET",
+      "timeout": {
+        "request": 30000,
+        "socket": "${TIMEOUTS.SOCKET}"
+      },
+      "headersToPass": [
+        {
+          "source": "access_token",
+          "destination": "access_token"
+        }
+      ],
+      "reqTransform": "general.transformers.moveBodyToQueryParams"
+    }
+  },
+  {
+    "path": "/xp-mi/public/v1/customer/ledger/v2/download-ledger-transaction-document",
+    "method": "POST",
+    "routeHandler": "TRANSFORM",
+    "isCacheRequired": false,
+    "target": {
+      "name": "downloadLedgerTransactionDocument",
+      "url": "${MSME_BASE_URL}/customer/ledger/v2/download-ledger-transaction-document",
+      "method": "GET",
+      "timeout": {
+        "request": 30000,
+        "socket": "${TIMEOUTS.SOCKET}"
+      },
+      "headersToPass": [
+        {
+          "source": "access_token",
+          "destination": "access_token"
+        }
+      ],
+      "reqTransform": "general.transformers.moveBodyToQueryParams"
+    }
+  },
+  {
+    "path": "/xp-mi/public/v1/customer/ledger/v2/creditDetails",
+    "method": "GET",
+    "routeHandler": "TRANSFORM",
+    "isCacheRequired": false,
+    "target": {
+      "name": "getCreditDetails",
+      "url": "${MSME_BASE_URL}/customer/ledger/v2/creditDetails",
+      "method": "GET",
+      "timeout": {
+        "request": 10000,
+        "socket": "${TIMEOUTS.SOCKET}"
+      },
+    "headersToPass": [
+      {
+        "source": "access_token",
+        "destination": "access_token"
+      }
+      ]
+    }
   }
 ]
