@@ -2010,23 +2010,99 @@
   {
     "path": "/xp-mi/public/v1/central_commerce/products/listing",
     "method": "POST",
-    "routeHandler": "TRANSFORM",
-    "target": {
-      "name": "products-listing",
-      "url": "${MSME_BASE_URL}/central_commerce/products/listing",
-      "method": "POST",
-      "timeout": {
-        "request": 5000,
-        "socket": 1000
+    "routeHandler": "CONDITIONAL",
+    "isCacheRequired": false,
+    "conditionTransform": "plp.transformers.selectProductsListingTarget",
+    "targets": [
+      {
+        "name": "products-listing-plain",
+        "url": "${MSME_BASE_URL}/central_commerce/products/listing",
+        "method": "POST",
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
+        "headersToPass": [
+          {
+            "source": "access_token",
+            "destination": "access_token"
+          }
+        ],
+        "requiredParams": ["*"]
       },
-      "headersToPass": [
-        {
-          "source": "access_token",
-          "destination": "access_token"
-        }
-      ],
-      "requiredParams": ["*"]
-    }
+      {
+        "name": "products-listing-seo",
+        "url": "${EXPERIENCE_MIDDLEWARE_URL}/xp-mi/public/v1/central_commerce/products/listing/programmatic-seo",
+        "method": "POST",
+        "timeout": {
+          "request": 15000,
+          "socket": 1000
+        },
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "access_token"
+          },
+          {
+            "source": "access_token",
+            "destination": "access_token"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "path": "/xp-mi/public/v1/central_commerce/products/listing/programmatic-seo",
+    "method": "POST",
+    "routeHandler": "AGGREGATE",
+    "aggregationType": "SEQUENTIAL_THEN_PARALLEL",
+    "isCacheRequired": false,
+    "targets": [
+      {
+        "name": "programmatic-seo-page",
+        "url": "${MSME_BASE_URL}/central_commerce/api/v1/seo/programmatic-pages/placeholder-slug",
+        "method": "GET",
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
+        "reqTransform": "plp.transformers.buildProgrammaticSeoPageRequest",
+        "headersToPass": [
+          {
+            "source": "access_token",
+            "destination": "access_token"
+          }
+        ]
+      },
+      {
+        "name": "cms-plp-programmatic-seo-template",
+        "url": "${CMS_MSME_URL}/plp-programmatic-seo-templates",
+        "method": "GET",
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
+        "reqTransform": "plp.transformers.buildCmsProgrammaticSeoTemplateRequest",
+        "resTransform": "cms.transformers.replaceUriPrefix"
+      },
+      {
+        "name": "products-listing",
+        "url": "${MSME_BASE_URL}/central_commerce/products/listing",
+        "method": "POST",
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
+        "reqTransform": "plp.transformers.transformProgrammaticSeoProductsListingRequest",
+        "headersToPass": [
+          {
+            "source": "access_token",
+            "destination": "access_token"
+          }
+        ]
+      }
+    ],
+    "resTransform": "plp.transformers.mergeProgrammaticSeoListingResponse"
   },
   {
     "path": "/xp-mi/public/v1/central_commerce/recent-search",
@@ -5632,6 +5708,185 @@
       },
       "requiredParams": ["orderNumber"],
       "reqTransform": "paymentdue.transformers.transformOrderSummaryRequest"
+    }
+  },
+  {
+    "path": "/xp-mi/public/v1/customer/payment/v2/summary",
+    "method": "POST",
+    "routeHandler": "TRANSFORM",
+    "isCacheRequired": false,
+    "target": {
+      "name": "paymentSummary",
+      "url": "${MSME_BASE_URL}/customer/payment/v2/summary",
+      "method": "GET",
+      "timeout": {
+        "request": 10000,
+        "socket": "${TIMEOUTS.SOCKET}"
+      },
+      "headersToPass": [
+        {
+          "source": "access_token",
+          "destination": "access_token"
+        }
+      ],
+      "reqTransform": "general.transformers.moveBodyToQueryParams"
+    }
+  },
+  {
+    "path": "/xp-mi/public/v1/customer/payment/v2/payment-due",
+    "method": "POST",
+    "routeHandler": "TRANSFORM",
+    "isCacheRequired": false,
+    "target": {
+      "name": "paymentDue",
+      "url": "${MSME_BASE_URL}/customer/payment/v2/payment-due",
+      "method": "GET",
+      "timeout": {
+        "request": 10000,
+        "socket": "${TIMEOUTS.SOCKET}"
+      },
+      "headersToPass": [
+        {
+          "source": "access_token",
+          "destination": "access_token"
+        }
+      ],
+      "reqTransform": "general.transformers.moveBodyToQueryParams"
+    }
+  },
+  {
+    "path": "/xp-mi/public/v1/order-service/order/ledger/v2/details",
+    "method": "POST",
+    "routeHandler": "TRANSFORM",
+    "isCacheRequired": false,
+    "target": {
+      "name": "usableLedgerDetails",
+      "url": "${MSME_BASE_URL}/order-service/order/ledger/v2/details",
+      "method": "GET",
+      "timeout": {
+        "request": 10000,
+        "socket": "${TIMEOUTS.SOCKET}"
+      },
+      "headersToPass": [
+        {
+          "source": "access_token",
+          "destination": "access_token"
+        }
+      ],
+      "reqTransform": "general.transformers.moveBodyToQueryParams"
+    }
+  },
+  {
+    "path": "/xp-mi/public/v1/customer/ledger/v2/transaction",
+    "method": "POST",
+    "routeHandler": "TRANSFORM",
+    "isCacheRequired": false,
+    "target": {
+      "name": "usableLedgerTransactions",
+      "url": "${MSME_BASE_URL}/customer/ledger/v2/transaction",
+      "method": "GET",
+      "timeout": {
+        "request": 10000,
+        "socket": "${TIMEOUTS.SOCKET}"
+      },
+      "headersToPass": [
+        {
+          "source": "access_token",
+          "destination": "access_token"
+        }
+      ],
+      "reqTransform": "general.transformers.moveBodyToQueryParams"
+    }
+  },
+  {
+    "path": "/xp-mi/public/v1/customer/ledger/v2/download-ledger-summary-details",
+    "method": "POST",
+    "routeHandler": "TRANSFORM",
+    "isCacheRequired": false,
+    "target": {
+      "name": "downloadLedgerSummaryDetails",
+      "url": "${MSME_BASE_URL}/customer/ledger/v2/download-ledger-summary-details",
+      "method": "GET",
+      "timeout": {
+        "request": 30000,
+        "socket": "${TIMEOUTS.SOCKET}"
+      },
+      "headersToPass": [
+        {
+          "source": "access_token",
+          "destination": "access_token"
+        }
+      ],
+      "reqTransform": "general.transformers.moveBodyToQueryParams"
+    }
+  },
+  {
+    "path": "/xp-mi/public/v1/customer/ledger/v2/download-ledger-transaction-document",
+    "method": "POST",
+    "routeHandler": "TRANSFORM",
+    "isCacheRequired": false,
+    "target": {
+      "name": "downloadLedgerTransactionDocument",
+      "url": "${MSME_BASE_URL}/customer/ledger/v2/download-ledger-transaction-document",
+      "method": "GET",
+      "timeout": {
+        "request": 30000,
+        "socket": "${TIMEOUTS.SOCKET}"
+      },
+      "headersToPass": [
+        {
+          "source": "access_token",
+          "destination": "access_token"
+        }
+      ],
+      "reqTransform": "general.transformers.moveBodyToQueryParams"
+    }
+  },
+  {
+    "path": "/xp-mi/public/v1/customer/ledger/v2/creditDetails",
+    "method": "GET",
+    "routeHandler": "TRANSFORM",
+    "isCacheRequired": false,
+    "target": {
+      "name": "getCreditDetails",
+      "url": "${MSME_BASE_URL}/customer/ledger/v2/creditDetails",
+      "method": "GET",
+      "timeout": {
+        "request": 10000,
+        "socket": "${TIMEOUTS.SOCKET}"
+      },
+      "headersToPass": [
+        {
+          "source": "access_token",
+          "destination": "access_token"
+        }
+      ]
+    }
+  },
+  {
+    "path": "/xp-mi/public/v1/order-service/order/my-orders",
+    "method": "GET",
+    "routeHandler": "TRANSFORM",
+    "isCacheRequired": false,
+    "target": {
+      "name": "web-my-orders",
+      "url": "${MSME_BASE_URL}/order-service/order/my-orders",
+      "method": "GET",
+      "timeout": {
+        "request": 10000,
+        "socket": 1000
+      },
+      "headersToPass": [
+        {
+          "source": "authorization",
+          "destination": "access_token"
+        },
+        {
+          "source": "access_token",
+          "destination": "access_token"
+        }
+      ],
+      "requiredParams": ["offset", "limit", "type"]
     }
   }
 ]
