@@ -1158,7 +1158,7 @@
     "targets": [
       {
         "name": "webGlobalPage",
-        "url": "${CMS_MSME_URL}/app-global",
+        "url": "${CMS_MSME_URL}/app-global-v2",
         "method": "GET",
         "timeout": {
           "request": "${TIMEOUTS.REQUEST}",
