@@ -5942,24 +5942,153 @@
     }
   },
   {
-  "path": "/xp-mi/public/v1/customer/ledger/v2/creditDetails",
-  "method": "GET",
-  "routeHandler": "TRANSFORM",
-  "isCacheRequired": false,
-  "target": {
-    "name": "getCreditDetails",
-    "url": "${MSME_BASE_URL}/customer/ledger/v2/creditDetails",
+    "path": "/xp-mi/public/v1/customer/ledger/v2/creditDetails",
     "method": "GET",
-    "timeout": {
-      "request": "${TIMEOUTS.REQUEST}",
-      "socket": "${TIMEOUTS.SOCKET}"
-    },
-    "headersToPass": [
-      {
-        "source": "access_token",
-        "destination": "access_token"
-      }
-    ]
-  }
+    "routeHandler": "TRANSFORM",
+    "isCacheRequired": false,
+    "target": {
+      "name": "getCreditDetails",
+      "url": "${MSME_BASE_URL}/customer/ledger/v2/creditDetails",
+      "method": "GET",
+      "timeout": {
+        "request": "${TIMEOUTS.REQUEST}",
+        "socket": "${TIMEOUTS.SOCKET}"
+      },
+      "headersToPass": [
+        {
+          "source": "access_token",
+          "destination": "access_token"
+        }
+      ]
+    }
+  },
+  {
+    "path": "/xp-mi/public/v1/order-service/order/order-details",
+    "method": "GET",
+    "routeHandler": "TRANSFORM",
+    "isCacheRequired": false,
+    "target": {
+      "name": "web-order-details",
+      "url": "${MSME_BASE_URL}/order-service/order/order-details",
+      "method": "GET",
+      "timeout": {
+        "request": 10000,
+        "socket": 1000
+      },
+      "headersToPass": [
+        {
+          "source": "authorization",
+          "destination": "access_token"
+        },
+        {
+          "source": "access_token",
+          "destination": "access_token"
+        }
+      ],
+      "requiredParams": ["orderNumber"]
+    }
+  },
+  {
+    "path": "/xp-mi/public/v1/order-service/order/payment-summary",
+    "method": "GET",
+    "routeHandler": "TRANSFORM",
+    "isCacheRequired": false,
+    "target": {
+      "name": "web-order-payment-summary",
+      "url": "${MSME_BASE_URL}/order-service/order/payment-summary",
+      "method": "GET",
+      "timeout": {
+        "request": 10000,
+        "socket": 1000
+      },
+      "headersToPass": [
+        {
+          "source": "authorization",
+          "destination": "access_token"
+        },
+        {
+          "source": "access_token",
+          "destination": "access_token"
+        }
+      ],
+      "requiredParams": ["orderNumber"]
+    }
+  },
+  {
+    "path": "/xp-mi/public/v1/order-service/shipment/list/order-number/:orderNumber",
+    "method": "GET",
+    "routeHandler": "TRANSFORM",
+    "isCacheRequired": false,
+    "target": {
+      "name": "web-order-shipment-list",
+      "url": "${MSME_BASE_URL}/order-service/shipment/list/order-number/:orderNumber",
+      "method": "GET",
+      "timeout": {
+        "request": 10000,
+        "socket": 1000
+      },
+      "headersToPass": [
+        {
+          "source": "authorization",
+          "destination": "access_token"
+        },
+        {
+          "source": "access_token",
+          "destination": "access_token"
+        }
+      ]
+    }
+  },
+  {
+    "path": "/xp-mi/public/v1/order-service/purchase-order/fetch/by-order",
+    "method": "GET",
+    "routeHandler": "TRANSFORM",
+    "isCacheRequired": false,
+    "target": {
+      "name": "web-order-po-fetch",
+      "url": "${MSME_BASE_URL}/order-service/purchase-order/fetch/by-order",
+      "method": "GET",
+      "timeout": {
+        "request": 10000,
+        "socket": 1000
+      },
+      "headersToPass": [
+        {
+          "source": "authorization",
+          "destination": "access_token"
+        },
+        {
+          "source": "access_token",
+          "destination": "access_token"
+        }
+      ],
+      "requiredParams": ["orderNumber"]
+    }
+  },
+  {
+    "path": "/xp-mi/public/v1/order-service/order-summary/fetch/by-reference",
+    "method": "GET",
+    "routeHandler": "TRANSFORM",
+    "isCacheRequired": false,
+    "target": {
+      "name": "web-order-summary-pdf",
+      "url": "${MSME_BASE_URL}/order-service/order-summary/fetch/by-reference",
+      "method": "GET",
+      "timeout": {
+        "request": 15000,
+        "socket": 1000
+      },
+      "headersToPass": [
+        {
+          "source": "authorization",
+          "destination": "access_token"
+        },
+        {
+          "source": "access_token",
+          "destination": "access_token"
+        }
+      ],
+      "requiredParams": ["referenceType", "referenceId", "fileType"]
+    }
   }
 ]
