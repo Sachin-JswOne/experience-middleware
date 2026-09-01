@@ -972,12 +972,11 @@
       {
         "name": "ccp-buy-again-with-prices",
         "url": "${MSME_BASE_URL}/central_commerce/buy-again-list",
-        "method": "GET",
+        "method": "POST",
         "timeout": {
           "request": 5000,
           "socket": 1000
         },
-        "reqTransform": "general.transformers.convertToGetRequest",
         "headersToPass": [
           {
             "source": "authorization",
@@ -1746,12 +1745,11 @@
       {
         "name": "ccp-buy-again-with-prices",
         "url": "${MSME_BASE_URL}/central_commerce/buy-again-list",
-        "method": "GET",
+        "method": "POST",
         "timeout": {
           "request": 5000,
           "socket": 1000
         },
-        "reqTransform": "general.transformers.convertToGetRequest",
         "headersToPass": [
           {
             "source": "authorization",
@@ -1909,12 +1907,12 @@
   },
   {
     "path": "/xp-mi/public/v1/central_commerce/buy-again-list",
-    "method": "GET",
+    "method": "POST",
     "routeHandler": "TRANSFORM",
     "target": {
       "name": "msmeBuyAgainList",
       "url": "${MSME_BASE_URL}/central_commerce/buy-again-list",
-      "method": "GET",
+      "method": "POST",
       "timeout": {
         "request": "${TIMEOUTS.REQUEST}",
         "socket": "${TIMEOUTS.SOCKET}"
@@ -1928,8 +1926,7 @@
           "source": "access_token",
           "destination": "access_token"
         }
-      ],
-      "requiredParams": ["*"]
+      ]
     }
   },
   {
@@ -2877,12 +2874,12 @@
       {
         "name": "ccp-buy-again-with-prices",
         "url": "${MSME_BASE_URL}/central_commerce/buy-again-list",
-        "method": "GET",
+        "method": "POST",
         "timeout": {
           "request": 5000,
           "socket": 1000
         },
-        "reqTransform": "web.transformers.convertOriginalBodyToGetRequestFromParallelPayload",
+        "reqTransform": "web.transformers.transformWebHomePageBuyAgainRequestV3",
         "headersToPass": [
           {
             "source": "authorization",

@@ -41,6 +41,15 @@ export function convertOriginalBodyToGetRequestFromParallelPayload(
   });
 }
 
+export function transformWebHomePageBuyAgainRequestV3(
+  request: BaseRequest,
+): BaseRequest {
+  return {
+    ...request,
+    body: getParallelHelperOriginalBody(request) ?? {},
+  };
+}
+
 function buildSyntheticHomepageCmsPrevResponses(cmsResponse: any): AggregatedResponse[] {
   return [
     {
