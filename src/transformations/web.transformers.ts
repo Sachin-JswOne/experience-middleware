@@ -1018,22 +1018,33 @@ export function mergeWebIndustriesWithSegments(aggregatedResponses: AggregatedRe
 export function transformBuyAgainRequestFromParallelPayload(
   request: BaseRequest,
 ): BaseRequest {
-  const cmsPage = getParallelHelperCmsResponse(request);
-
-  const limit =
-    Number(cmsPage?.buy_again_component?.itemsToShow) || 50;
-
-  const body = {
-    offSet: 0,
-    limit,
-  };
-
-  Logger.log(
-    `[BUY_AGAIN_V3] CMS itemsToShow=${cmsPage?.buy_again_component?.itemsToShow} requestBody=${JSON.stringify(body)}`,
-  );
-
+  const originalBody = getParallelHelperOriginalBody(request);
+  console.log('originalBody', originalBody);
   return {
     ...request,
-    body,
+    body: {
+      offSet: originalBody?.offSet ?? 0,
+      limit: originalBody?.limit ?? 50,
+      ...(originalBody?.filterConditions && {
+        filterConditions: originalBody.filterConditions,
+      }),
+    },
+  };
+}
+
+export function transformBuyAgainRequestPayload(
+  request: BaseRequest,
+): BaseRequest {
+  const originalBody = request.body;
+  console.log('originalBody', originalBody);
+  return {
+    ...request,
+    body: {
+      offSet: originalBody?.offSet ?? 0,
+      limit: originalBody?.limit ?? 50,
+      ...(originalBody?.filterConditions && {
+        filterConditions: originalBody.filterConditions,
+      }),
+    },
   };
 }
