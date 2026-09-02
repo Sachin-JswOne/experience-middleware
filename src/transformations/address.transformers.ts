@@ -104,6 +104,7 @@ export function createAddress(
     district: requestBody?.district,
     state: requestBody?.state,
     pincode: requestBody?.pincode,
+    shiptoAddressTag: requestBody?.shiptoAddressTag,
   };
 
   const Body: any = { SiteAddressDataList: [reqBody] };
