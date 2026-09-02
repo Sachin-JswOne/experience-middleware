@@ -594,8 +594,10 @@ export function mergeAppHomePageResponseV4(aggregatedResponses: AggregatedRespon
     page.recently_viewed_component.removedMmids = removedMmids;
   }
 
-  const finalSortedResponse = sortResponseByOrder(mergedWrapper.data[0]);
-  mergedWrapper.data[0] = finalSortedResponse;
+  const finalSortedResponse = mergedWrapper.data.map(item =>
+    sortResponseByOrder(item)
+  );
+  mergedWrapper.data = finalSortedResponse;
   return mergedWrapper;
 }
 
