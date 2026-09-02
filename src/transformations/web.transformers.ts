@@ -624,7 +624,7 @@ export function mergeWebHomePageResponsesV3(aggregatedResponses: AggregatedRespo
    */
   if (buyAgainAgg?.success) {
     const rawData = buyAgainAgg.data?.data ?? buyAgainAgg.data ?? {};
-    const { listOfBuyAgainProducts, variantList, skuSize } = rawData;
+    const { listOfBuyAgainProducts, variantList, skuSize, filterConditions } = rawData;
 
     const products =
       listOfBuyAgainProducts ?? variantList ?? (Array.isArray(rawData) ? rawData : []);
@@ -633,6 +633,8 @@ export function mergeWebHomePageResponsesV3(aggregatedResponses: AggregatedRespo
       page.buy_again_component.listOfBuyAgainProducts = products;
       if (variantList) page.buy_again_component.variantList = variantList;
       if (skuSize != null) page.buy_again_component.skuSize = skuSize;
+      if (filterConditions) page.buy_again_component.filterConditions = filterConditions;
+
     }
   } else if (buyAgainAgg && !buyAgainAgg.success) {
     Logger.warn(
@@ -1010,5 +1012,28 @@ export function mergeWebIndustriesWithSegments(aggregatedResponses: AggregatedRe
           segmentId: segmentMap.get(normalize(industry.name)) ?? null,
         }))
       : industries,
+  };
+}
+
+export function transformBuyAgainRequestFromParallelPayload(
+  request: BaseRequest,
+): BaseRequest {
+  const cmsPage = getParallelHelperCmsResponse(request);
+
+  const limit =
+    Number(cmsPage?.buy_again_component?.itemsToShow) || 50;
+
+  const body = {
+    offSet: 0,
+    limit,
+  };
+
+  Logger.log(
+    `[BUY_AGAIN_V3] CMS itemsToShow=${cmsPage?.buy_again_component?.itemsToShow} requestBody=${JSON.stringify(body)}`,
+  );
+
+  return {
+    ...request,
+    body,
   };
 }

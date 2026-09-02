@@ -974,15 +974,23 @@
         "url": "${MSME_BASE_URL}/central_commerce/buy-again-list",
         "method": "POST",
         "timeout": {
-          "request": 5000,
-          "socket": 1000
+          "request": 10000,
+          "socket": 10000
         },
+        "reqTransform": "web.transformers.transformBuyAgainRequestFromParallelPayload",
         "headersToPass": [
           {
             "source": "authorization",
             "destination": "access_token"
+          },
+          {
+            "source": "access_token",
+            "destination": "access_token"
           }
-        ]
+        ],
+        "staticHeaders": {
+          "content-type": "application/json"
+        }
       },
       {
         "name": "pending-dispatch-quantity",
@@ -1747,9 +1755,10 @@
         "url": "${MSME_BASE_URL}/central_commerce/buy-again-list",
         "method": "POST",
         "timeout": {
-          "request": 5000,
-          "socket": 1000
+          "request": 10000,
+          "socket": 10000
         },
+        "reqTransform": "web.transformers.transformBuyAgainRequestFromParallelPayload",
         "headersToPass": [
           {
             "source": "authorization",
@@ -1758,8 +1767,15 @@
           {
             "source": "jsw_session_id",
             "destination": "jsw_session_id"
+          },
+          {
+            "source": "access_token",
+            "destination": "access_token"
           }
-        ]
+        ],
+        "staticHeaders": {
+          "content-type": "application/json"
+        }
       },
       {
         "name": "ccp-recent-search",
@@ -1910,24 +1926,28 @@
     "method": "POST",
     "routeHandler": "TRANSFORM",
     "target": {
-      "name": "msmeBuyAgainList",
-      "url": "${MSME_BASE_URL}/central_commerce/buy-again-list",
-      "method": "POST",
-      "timeout": {
-        "request": "${TIMEOUTS.REQUEST}",
-        "socket": "${TIMEOUTS.SOCKET}"
-      },
-      "headersToPass": [
-        {
-          "source": "authorization",
-          "destination": "access_token"
+        "name": "ccp-buy-again-with-prices",
+        "url": "${MSME_BASE_URL}/central_commerce/buy-again-list",
+        "method": "POST",
+        "timeout": {
+          "request": 10000,
+          "socket": 10000
         },
-        {
-          "source": "access_token",
-          "destination": "access_token"
+        "reqTransform": "web.transformers.transformBuyAgainRequestFromParallelPayload",
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "access_token"
+          },
+          {
+            "source": "access_token",
+            "destination": "access_token"
+          }
+        ],
+        "staticHeaders": {
+          "content-type": "application/json"
         }
-      ]
-    }
+      }
   },
   {
     "path": "/xp-mi/public/v1/customer/set-default-address",
@@ -2876,10 +2896,10 @@
         "url": "${MSME_BASE_URL}/central_commerce/buy-again-list",
         "method": "POST",
         "timeout": {
-          "request": 5000,
-          "socket": 1000
+          "request": 10000,
+          "socket": 10000
         },
-        "reqTransform": "web.transformers.transformWebHomePageBuyAgainRequestV3",
+        "reqTransform": "web.transformers.transformBuyAgainRequestFromParallelPayload",
         "headersToPass": [
           {
             "source": "authorization",
@@ -2889,7 +2909,10 @@
             "source": "access_token",
             "destination": "access_token"
           }
-        ]
+        ],
+        "staticHeaders": {
+          "content-type": "application/json"
+        }
       },
       {
         "name": "ccp-top-items-product-details",
