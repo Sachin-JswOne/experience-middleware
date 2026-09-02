@@ -3522,6 +3522,22 @@
     }
   },
   {
+    "path": "/xp-mi/public/v1/web-lp-listing",
+    "method": "POST",
+    "routeHandler": "TRANSFORM",
+    "isCacheRequired": false,
+    "target": {
+      "name": "webLpListing",
+      "url": "${CMS_MSME_URL}/layout-landing-pages",
+      "method": "GET",
+      "timeout": {
+        "request": "${TIMEOUTS.REQUEST}",
+        "socket": "${TIMEOUTS.SOCKET}"
+      },
+      "reqTransform": "general.transformers.moveBodyToQueryParams"
+    }
+  },
+  {
     "path": "/xp-mi/public/v1/blogs-listing",
     "method": "POST",
     "routeHandler": "CONDITIONAL",
