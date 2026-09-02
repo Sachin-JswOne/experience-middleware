@@ -977,7 +977,7 @@
           "request": 10000,
           "socket": 10000
         },
-        "reqTransform": "web.transformers.transformBuyAgainRequestFromParallelPayload",
+        "reqTransform": "web.transformers.transformBuyAgainRequestPayload",
         "headersToPass": [
           {
             "source": "authorization",
@@ -1694,7 +1694,7 @@
   {
     "path": "/xp-mi/public/v1/web-search-page",
     "method": "POST",
-    "isCacheRequired": true,
+    "isCacheRequired": false,
     "cacheProvider": "AUTO",
     "cacheTTLSeconds": 300,
     "routeHandler": "AGGREGATE",
@@ -1758,7 +1758,7 @@
           "request": 10000,
           "socket": 10000
         },
-        "reqTransform": "web.transformers.transformBuyAgainRequestFromParallelPayload",
+        "reqTransform": "web.transformers.transformBuyAgainRequestPayload",
         "headersToPass": [
           {
             "source": "authorization",
@@ -1933,7 +1933,7 @@
           "request": 10000,
           "socket": 10000
         },
-        "reqTransform": "web.transformers.transformBuyAgainRequestFromParallelPayload",
+        "reqTransform": "web.transformers.transformBuyAgainRequestPayload",
         "headersToPass": [
           {
             "source": "authorization",
@@ -2386,12 +2386,12 @@
       {
         "name": "cart-page-buy-again",
         "url": "${EXPERIENCE_MIDDLEWARE_URL}/xp-mi/public/v1/central_commerce/buy-again-list",
-        "method": "GET",
+        "method": "POST",
         "timeout": {
           "request": 5000,
           "socket": 1000
         },
-        "reqTransform": "general.transformers.convertToGetRequest",
+        "reqTransform": "web.transformers.transformBuyAgainRequestPayload",
         "headersToPass": [
           {
             "source": "authorization",
@@ -4238,12 +4238,12 @@
       {
         "name": "app-buy-again",
         "url": "${MSME_BASE_URL}/central_commerce/buy-again-list",
-        "method": "GET",
+        "method": "POST",
         "timeout": {
           "request": 15000,
           "socket": 1000
         },
-        "reqTransform": "general.transformers.convertToGetRequest",
+        "reqTransform": "web.transformers.transformBuyAgainRequestPayload",
         "headersToPass": [
           {
             "source": "authorization",
@@ -5024,12 +5024,12 @@
       {
         "name": "app-buy-again",
         "url": "${MSME_BASE_URL}/central_commerce/buy-again-list",
-        "method": "GET",
+        "method": "POST",
         "timeout": {
           "request": 15000,
           "socket": 1000
         },
-        "reqTransform": "general.transformers.convertToGetRequest",
+        "reqTransform": "web.transformers.transformBuyAgainRequestPayload",
         "headersToPass": [
           {
             "source": "authorization",
