@@ -453,7 +453,7 @@
     "method": "POST",
     "routeHandler": "AGGREGATE",
     "aggregationType": "PARALLEL",
-    "isCacheRequired": true,
+    "isCacheRequired": false,
     "targets": [
       {
         "name": "app-cart-page",
@@ -1253,7 +1253,7 @@
   },
   {
     "path": "/xp-mi/public/v1/web-about-us",
-    "isCacheRequired": true,
+    "isCacheRequired": false,
     "cacheProvider": "AUTO",
     "cacheTTLSeconds": 300,
     "method": "POST",
@@ -1996,7 +1996,7 @@
     "path": "/xp-mi/public/v1/categories/tree",
     "method": "GET",
     "routeHandler": "TRANSFORM",
-    "isCacheRequired": true,
+    "isCacheRequired": false,
     "target": {
       "name": "categories-tree",
       "url": "${MSME_BASE_URL}/central_commerce/categories/tree",
