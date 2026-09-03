@@ -6126,5 +6126,57 @@
       ],
       "requiredParams": ["referenceType", "referenceId", "fileType"]
     }
+  },
+  {
+    "path": "/xp-mi/public/v1/data-sync/ship-to/gst",
+    "method": "GET",
+    "routeHandler": "TRANSFORM",
+    "isCacheRequired": false,
+    "target": {
+      "name": "data-sync-ship-to-gst",
+      "url": "${MSME_BASE_URL}/data-sync/ship-to/gst",
+      "method": "GET",
+      "timeout": {
+        "request": "${TIMEOUTS.REQUEST}",
+        "socket": "${TIMEOUTS.SOCKET}"
+      },
+      "headersToPass": [
+        {
+          "source": "authorization",
+          "destination": "authorization"
+        },
+        {
+          "source": "access_token",
+          "destination": "access_token"
+        }
+      ],
+      "requiredParams": ["*"]
+    }
+  },
+  {
+    "path": "/xp-mi/public/v1/data-sync/ship-to/address",
+    "method": "GET",
+    "routeHandler": "TRANSFORM",
+    "isCacheRequired": false,
+    "target": {
+      "name": "data-sync-ship-to-address",
+      "url": "${MSME_BASE_URL}/data-sync/ship-to/address",
+      "method": "GET",
+      "timeout": {
+        "request": "${TIMEOUTS.REQUEST}",
+        "socket": "${TIMEOUTS.SOCKET}"
+      },
+      "headersToPass": [
+        {
+          "source": "authorization",
+          "destination": "authorization"
+        },
+        {
+          "source": "access_token",
+          "destination": "access_token"
+        }
+      ],
+      "requiredParams": ["*"]
+    }
   }
 ]
