@@ -2732,6 +2732,57 @@
         "resTransform": "cms.transformers.replaceUriPrefix"
       },
       {
+        "name": "app-categories",
+        "url": "${CMS_MSME_URL}/app-product-categories?fields[0]=displayName&fields[1]=webUrl&fields[2]=webCategoryId&fields[3]=itemsToShow",
+        "method": "GET"
+      },
+      {
+        "name": "catlouge-by-categories",
+        "url": "${MSME_BASE_URL}/product/v2/projections/filter/bulk",
+        "method": "POST",
+        "reqTransform": "web.transformers.catlougeByCategories"
+      },
+      {
+        "name": "web-homepage-products",
+        "url": "${EXPERIENCE_MIDDLEWARE_URL}/xp-mi/public/v1/web-products",
+        "method": "GET",
+        "timeout": {
+          "request": 10000,
+          "socket": 1000
+        },
+        "reqTransform": "web.transformers.convertOriginalBodyToGetRequestFromParallelPayload",
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "authorization"
+          },
+          {
+            "source": "access_token",
+            "destination": "authorization"
+          }
+        ]
+      },
+      {
+        "name": "products-listing",
+        "url": "${MSME_BASE_URL}/central_commerce/products/listing",
+        "method": "POST",
+        "timeout": {
+          "request": 5000,
+          "socket": 1000
+        },
+        "reqTransform": "web.transformers.extractProductListingSlugv3FromCmsBody",
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "access_token"
+          },
+          {
+            "source": "access_token",
+            "destination": "access_token"
+          }
+        ]
+      },
+      {
         "name": "web-central-catalogue-categories",
         "url": "${MSME_BASE_URL}/central_commerce/categories/tree/list",
         "method": "POST",
