@@ -14,6 +14,19 @@ function getRequiredSlug(body: any): string {
   return slug;
 }
 
+// The full multi-segment slug from the URL (e.g. "mild-steel/steel-wire-rods/steel-wire-rods-in-
+// dharwad"), as opposed to `slug` (leaf segment only) — this is what the programmatic-pages API
+// now expects verbatim as `pageSlug`.
+function getRequiredPageSlug(body: any): string {
+  const pageSlug = String(body?.pageSlug ?? '').trim();
+
+  if (!pageSlug) {
+    throw new CustomError('Bad Request: pageSlug is required', 400);
+  }
+
+  return pageSlug;
+}
+
 // `categorySeoSlug` can be an n-level hierarchical path (e.g. "mild-steel/hot-rolled-steel",
 // "mild-steel/hot-rolled/hot-rolled-steel", or just "hot-rolled-steel") — the listing API only
 // understands the leaf category slug, so take the last non-empty segment.
@@ -43,20 +56,15 @@ export function selectProductsListingTarget(req: any): string {
   return isSeo ? 'products-listing-seo' : 'products-listing-plain';
 }
 
-// Rewrites the configured placeholder URL's last path segment with the real slug from the
-// request body, so we don't need to know MSME_BASE_URL inside transformer code.
+// POSTs the full page slug (all URL segments, not just the leaf) to the programmatic-pages
+// lookup API as `{ pageSlug }` — the API used to be a GET with the leaf slug appended to the
+// URL path, now it's a POST that takes the full slug verbatim in the body.
 export function buildProgrammaticSeoPageRequest(request: BaseRequest): BaseRequest {
-  const slug = getRequiredSlug(request.body ?? {});
-
-  const newUrl = new URL(request.url.href);
-  const segments = newUrl.pathname.split('/');
-  segments[segments.length - 1] = encodeURIComponent(slug);
-  newUrl.pathname = segments.join('/');
+  const pageSlug = getRequiredPageSlug(request.body ?? {});
 
   return {
     ...request,
-    url: newUrl,
-    body: null,
+    body: { pageSlug },
   };
 }
 
