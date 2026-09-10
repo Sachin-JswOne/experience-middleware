@@ -2786,7 +2786,7 @@
         "url": "${MSME_BASE_URL}/central_commerce/products/listing",
         "method": "POST",
         "timeout": {
-          "request": 5000,
+          "request": 10000,
           "socket": 1000
         },
         "reqTransform": "web.transformers.extractProductListingSlugv3FromCmsBody",
@@ -2806,7 +2806,7 @@
         "url": "${MSME_BASE_URL}/central_commerce/categories/tree/list",
         "method": "POST",
         "timeout": {
-          "request": 5000,
+          "request": 10000,
           "socket": 1000
         },
         "reqTransform": "web.transformers.extractCentralCatalogueCategoryIdsv3FromCmsBody",
@@ -2826,7 +2826,7 @@
         "url": "${MSME_BASE_URL}/central_commerce/categories/tree/list",
         "method": "POST",
         "timeout": {
-          "request": 5000,
+          "request": 10000,
           "socket": 1000
         },
         "reqTransform": "web.transformers.extractBrandCategoryIdsv3FromCmsBody",
@@ -2846,7 +2846,7 @@
         "url": "${MSME_BASE_URL}/central_commerce/catalogue/product-details",
         "method": "POST",
         "timeout": {
-          "request": 5000,
+          "request": 10000,
           "socket": 1000
         },
         "reqTransform": "web.transformers.transformWebHomePageTopItemsMMIDRequestV3FromCmsBody",
@@ -2866,7 +2866,7 @@
         "url": "${MSME_BASE_URL}/central_commerce/recent-viewed/remove",
         "method": "GET",
         "timeout": {
-          "request": 5000,
+          "request": 10000,
           "socket": 1000
         },
         "reqTransform": "web.transformers.convertOriginalBodyToGetRequestFromParallelPayload",
@@ -2886,7 +2886,7 @@
         "url": "${MSME_BASE_URL}/central_commerce/catalogue/product-details",
         "method": "POST",
         "timeout": {
-          "request": 5000,
+          "request": 10000,
           "socket": 1000
         },
         "reqTransform": "web.transformers.transformRecentlyViewedMMIDsRequestFromParallelPayload",
