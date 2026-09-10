@@ -138,9 +138,7 @@ export function raiseBrowseFaqsQueryParams(request: BaseRequest): BaseRequest {
   };
 }
 
-export function mergeRaiseIssueHelpResponse(
-  aggregatedResponses: AggregatedResponse[],
-): any {
+export function mergeRaiseIssueHelpResponse(aggregatedResponses: AggregatedResponse[]): any {
   const responses = aggregatedResponses.reduce(
     (acc, response) => {
       acc[response.target] = response;
@@ -179,4 +177,18 @@ export function mergeRaiseIssueHelpResponse(
     raiseBrowseTopics: browseTopicsResponse.data.data ?? [],
     raiseBrowseFaqs: browseFaqsResponse.data?.data ?? browseFaqsResponse.data ?? [],
   };
+}
+
+export function extractLandingParams(request: BaseRequest): BaseRequest {
+  return moveBodyToQueryParams({
+    ...request,
+    body: request.body?.landingParams ?? {},
+  });
+}
+
+export function extractFaqsParams(request: BaseRequest): BaseRequest {
+  return moveBodyToQueryParams({
+    ...request,
+    body: request.body?.faqsParams ?? {},
+  });
 }

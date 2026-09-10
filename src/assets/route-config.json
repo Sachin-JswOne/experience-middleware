@@ -2806,7 +2806,7 @@
         "url": "${MSME_BASE_URL}/central_commerce/categories/tree/list",
         "method": "POST",
         "timeout": {
-          "request": 5000,
+          "request": 10000,
           "socket": 1000
         },
         "reqTransform": "web.transformers.extractCentralCatalogueCategoryIdsv3FromCmsBody",
@@ -2826,7 +2826,7 @@
         "url": "${MSME_BASE_URL}/central_commerce/categories/tree/list",
         "method": "POST",
         "timeout": {
-          "request": 5000,
+          "request": 10000,
           "socket": 1000
         },
         "reqTransform": "web.transformers.extractBrandCategoryIdsv3FromCmsBody",
@@ -2846,7 +2846,7 @@
         "url": "${MSME_BASE_URL}/central_commerce/catalogue/product-details",
         "method": "POST",
         "timeout": {
-          "request": 5000,
+          "request": 10000,
           "socket": 1000
         },
         "reqTransform": "web.transformers.transformWebHomePageTopItemsMMIDRequestV3FromCmsBody",
@@ -5970,6 +5970,117 @@
         }
       ],
       "requiredParams": ["offset", "limit", "type"]
+    }
+  },
+  {
+    "path": "/xp-mi/public/v1/web-credit-page",
+    "method": "POST",
+    "routeHandler": "AGGREGATE",
+    "aggregationType": "PARALLEL",
+    "isCacheRequired": false,
+    "targets": [
+      {
+        "name": "credit-landing-page",
+        "url": "${CMS_MSME_URL}/web-credit-landing-page",
+        "method": "GET",
+        "timeout": {
+          "request": "${TIMEOUTS.REQUEST}",
+          "socket": "${TIMEOUTS.SOCKET}"
+        },
+        "reqTransform": "cms.transformers.extractLandingParams",
+        "resTransform": "cms.transformers.replaceUriPrefix"
+      },
+      {
+        "name": "credit-faqs",
+        "url": "${CMS_MSME_URL}/faqss",
+        "method": "GET",
+        "timeout": {
+          "request": "${TIMEOUTS.REQUEST}",
+          "socket": "${TIMEOUTS.SOCKET}"
+        },
+        "reqTransform": "cms.transformers.extractFaqsParams",
+        "resTransform": "cms.transformers.replaceUriPrefix"
+      }
+    ]
+  },
+  {
+    "path": "/xp-mi/public/v1/customer/credit-instrument",
+    "method": "GET",
+    "routeHandler": "TRANSFORM",
+    "isCacheRequired": false,
+    "target": {
+      "name": "credit-instrument",
+      "url": "${MSME_BASE_URL}/customer/credit-instrument",
+      "method": "GET",
+      "timeout": {
+        "request": "${TIMEOUTS.REQUEST}",
+        "socket": "${TIMEOUTS.SOCKET}"
+      },
+      "headersToPass": [
+        {
+          "source": "authorization",
+          "destination": "access_token"
+        }
+      ]
+    }
+  },
+  {
+    "path": "/xp-mi/public/v1/web-credit-banner-configs",
+    "method": "POST",
+    "routeHandler": "TRANSFORM",
+    "isCacheRequired": false,
+    "target": {
+      "name": "webCreditBannerConfigs",
+      "url": "${CMS_MSME_URL}/web-credit-banner-configs",
+      "method": "GET",
+      "timeout": {
+        "request": "${TIMEOUTS.REQUEST}",
+        "socket": "${TIMEOUTS.SOCKET}"
+      },
+      "reqTransform": "general.transformers.moveBodyToQueryParams",
+      "resTransform": "cms.transformers.replaceUriPrefix"
+    }
+  },
+  {
+    "path": "/xp-mi/public/v1/customer/credit_lead/eligible",
+    "method": "GET",
+    "routeHandler": "TRANSFORM",
+    "isCacheRequired": false,
+    "target": {
+      "name": "credit-lead-eligible",
+      "url": "${MSME_BASE_URL}/central_commerce/customer/credit_lead/eligible",
+      "method": "GET",
+      "timeout": {
+        "request": "${TIMEOUTS.REQUEST}",
+        "socket": "${TIMEOUTS.SOCKET}"
+      },
+      "headersToPass": [
+        {
+          "source": "authorization",
+          "destination": "access_token"
+        }
+      ]
+    }
+  },
+  {
+    "path": "/xp-mi/public/v1/customer/credit_lead/save",
+    "method": "POST",
+    "routeHandler": "TRANSFORM",
+    "isCacheRequired": false,
+    "target": {
+      "name": "credit-lead-save",
+      "url": "${MSME_BASE_URL}/central_commerce/customer/credit_lead/save",
+      "method": "POST",
+      "timeout": {
+        "request": "${TIMEOUTS.REQUEST}",
+        "socket": "${TIMEOUTS.SOCKET}"
+      },
+      "headersToPass": [
+        {
+          "source": "authorization",
+          "destination": "access_token"
+        }
+      ]
     }
   }
 ]
