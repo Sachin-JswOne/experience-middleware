@@ -2786,7 +2786,7 @@
         "url": "${MSME_BASE_URL}/central_commerce/products/listing",
         "method": "POST",
         "timeout": {
-          "request": 10000,
+          "request": 5000,
           "socket": 1000
         },
         "reqTransform": "web.transformers.extractProductListingSlugv3FromCmsBody",
