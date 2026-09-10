@@ -1652,7 +1652,7 @@
       "url": "${MSME_BASE_URL}/v2/cart/add",
       "method": "POST",
       "timeout": {
-        "request": 10000,
+        "request": 20000,
         "socket": 1000
       },
       "headersToPass": [
@@ -1909,8 +1909,8 @@
       "url": "${MSME_BASE_URL}/central_commerce/line-item/price",
       "method": "POST",
       "timeout": {
-        "request": "${TIMEOUTS.REQUEST}",
-        "socket": "${TIMEOUTS.SOCKET}"
+        "request": 10000,
+        "socket": 1000
       },
       "headersToPass": [
         {
