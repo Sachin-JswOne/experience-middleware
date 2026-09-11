@@ -270,6 +270,47 @@ export function mergeWebGlobalResponse(results: AggregatedResponse[]): any {
   }
 }
 
+export function transformWebGlobalHeaderLinksRequest(request: BaseRequest): BaseRequest {
+  if (request.body?.userDevice !== 'mobile') {
+    return {
+      ...request,
+      skip: true,
+    };
+  }
+
+  const queryParams = new URLSearchParams();
+
+  queryParams.set('populate[navbarLinks][populate][page_names]', '*');
+
+  queryParams.set('populate[navbarLinks][populate][icon][fields][0]', 'url');
+
+  request.url.search = queryParams.toString();
+
+  return {
+    ...request,
+    body: undefined,
+  };
+}
+export function mergeWebGlobalFinalResponse(results: AggregatedResponse[]): any {
+  const webGlobalContentResult = results.find((r) => r.target === 'webGlobalContent');
+
+  const headerLinksResult = results.find((r) => r.target === 'headerLinks');
+
+  if (!webGlobalContentResult?.success) {
+    return {
+      error: 'Web Global Content fetch failed',
+    };
+  }
+
+  const response = webGlobalContentResult.data;
+
+  if (headerLinksResult?.success && headerLinksResult.data) {
+    response.data.navbarLinks = headerLinksResult.data.data;
+  }
+
+  return response;
+}
+
 // This is responsible for adding the feature flag query params to the request
 export function addFeatureFlagQueryParams(request: BaseRequest): BaseRequest {
   const transformedRequest: BaseRequest = {

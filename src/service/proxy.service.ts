@@ -1,4 +1,4 @@
-﻿﻿/* eslint-disable no-useless-catch */
+﻿/* eslint-disable no-useless-catch */
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 import { Injectable, Logger } from '@nestjs/common';
 import { trace, context, SpanStatusCode } from '@opentelemetry/api';
@@ -495,6 +495,13 @@ export class ProxyService {
             (target as any).requiredPathParams,
             prevResponses,
           );
+
+          if (transformedRequestBody?.skip) {
+            this.logger.log(
+              `[DOWNSTREAM REQUEST SKIPPED] target=${target.name || target.url} route=${req.path}`,
+            );
+            return null;
+          }
 
           maskedHeaders = {
             ...transformedRequestBody.headers,

@@ -8,4 +8,5 @@ export interface BaseRequest {
   body?: any;
   params?: { [key: string]: any };
   responseHeaders?: Record<string, any>;
+  skip?: boolean;
 }
