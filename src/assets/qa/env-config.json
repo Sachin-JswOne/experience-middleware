@@ -26,5 +26,6 @@
   "OMS_CLIENT_ID_VIJAI": "CLIEX1",
   "X_API_KEY_FOR_PROFILE": "CommerceServiceWeb-v1-9xblf2tjw6h5y7k3vd0qpoamz48srnycluej8dgw9mf12vhz5tocqk7xpyl3b6fd",
   "TMS_AUTH_TOKEN_ORDER_LISTING": "Zoho.Connector.Yrt664kT",
-  "ERP_BASE_URL": "https://qa-ssr.msme.jswone.in"
+  "ERP_BASE_URL": "https://qa-ssr.msme.jswone.in",
+  "WHATSAPP_CART_X_API_KEY": "CART-SERVICE-v1-4iy665w9f64u0h87wpoevhi5zflxy8cwa7y09rjvhu24sinjlcmlq8bdfmdz5hh6"
 }

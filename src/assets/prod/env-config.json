@@ -22,5 +22,6 @@
   "TMS_AUTH_TOKEN_ORDER_LISTING": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJPbmxpbmUgSldUIEJ1aWxkZXIiLCJpYXQiOjE3NTI0ODI2NzksImV4cCI6MjUzMzg3NTU3ODc5LCJhdWQiOiJyZXRhaWxzLWFwcCIsInN1YiI6InJldGFpbHNAanN3b25lLmluIiwiR2l2ZW5OYW1lIjoiUmV0YWlscyIsIkVtYWlsIjoicmV0YWlsc0Bqc3dvbmUuaW4iLCJSb2xlIjoiQURNSU4ifQ.NlGWFVVxEMtCVqz4tyMFX-R_qLoOjg_7alWl1MVcmnI",
   "OMS_AUTH_FETCH_CREDIT_INFO_VIJAI": "SalesForce.Connector.$2b$12$h2GjJBKa9JyCUQZmvzZOouxzKWI4DIC0T9yBBOdXKb9NUj5pMCppG",
   "OMS_CLIENT_ID_VIJAI": "CLIEX1",
-  "X_API_KEY_FOR_PROFILE": "CommerceServiceWeb-v1-9xblf2tjw6h5y7k3vd0qpoamz48srnycluej8dgw9mf12vhz5tocqk7xpyl3b6fd"
+  "X_API_KEY_FOR_PROFILE": "CommerceServiceWeb-v1-9xblf2tjw6h5y7k3vd0qpoamz48srnycluej8dgw9mf12vhz5tocqk7xpyl3b6fd",
+  "WHATSAPP_CART_X_API_KEY": "CART-SERVICE-v1-4iy665w9f64u0h87wpoevhi5zflxy8cwa7y09rjvhu24sinjlcmlq8bdfmdz5hh6"
 }
