@@ -1154,6 +1154,42 @@
     "path": "/xp-mi/public/v1/web-global",
     "method": "POST",
     "routeHandler": "AGGREGATE",
+    "aggregationType": "PARALLEL",
+    "targets": [
+      {
+        "name": "webGlobalContent",
+        "url": "${EXPERIENCE_MIDDLEWARE_URL}/xp-mi/public/v1/web-global-content",
+        "method": "POST"
+      },
+      {
+        "name": "headerLinks",
+        "url": "${EXPERIENCE_MIDDLEWARE_URL}/xp-mi/public/v1/web-global-header-links",
+        "method": "POST"
+      }
+    ],
+    "resTransform": "category.transformers.mergeWebGlobalFinalResponse"
+  },
+  {
+    "path": "/xp-mi/public/v1/web-global-header-links",
+    "method": "POST",
+    "routeHandler": "TRANSFORM",
+    "isCacheRequired": false,
+    "target": {
+      "name": "headerLinks",
+      "url": "${CMS_MSME_URL}/web-header-link",
+      "method": "GET",
+      "timeout": {
+        "request": "${TIMEOUTS.REQUEST}",
+        "socket": "${TIMEOUTS.SOCKET}"
+      },
+      "reqTransform": "category.transformers.transformWebGlobalHeaderLinksRequest",
+      "resTransform": "cms.transformers.replaceUriPrefix"
+    }
+  },
+  {
+    "path": "/xp-mi/public/v1/web-global-content",
+    "method": "POST",
+    "routeHandler": "AGGREGATE",
     "aggregationType": "SEQUENTIAL",
     "targets": [
       {
@@ -1182,17 +1218,6 @@
           "request": 5000,
           "socket": 1000
         }
-      },
-      {
-        "name": "cmsFeatureFlag",
-        "url": "${CMS_MSME_URL}/ccp-feature-flags",
-        "method": "GET",
-        "timeout": {
-          "request": "${TIMEOUTS.REQUEST}",
-          "socket": "${TIMEOUTS.SOCKET}"
-        },
-        "reqTransform": "category.transformers.addFeatureFlagQueryParams",
-        "resTransform": "cms.transformers.replaceUriPrefix"
       }
     ],
     "resTransform": "category.transformers.mergeWebGlobalResponse"
