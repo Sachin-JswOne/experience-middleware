@@ -7,6 +7,7 @@ import { CustomError } from 'src/utils/CustomError';
 import * as generalTransformers from './general.transformers';
 import { moveBodyToQueryParams } from './general.transformers';
 import * as qs from 'qs';
+import { MOBILE } from 'src/config/app.config';
 
 // Responsible for extracting the category ids from provided array of objects
 function extractIds(items: any[]): string[] {
@@ -285,6 +286,48 @@ export function mergeWebGlobalResponse(results: AggregatedResponse[]): any {
     return appGlobalData;
   }
   return appGlobalData;
+}
+
+export function transformWebGlobalHeaderLinksRequest(request: BaseRequest): BaseRequest {
+  if (request.body?.userDevice !== MOBILE) {
+    return {
+      ...request,
+      skip: true,
+    };
+  }
+
+  const queryParams = new URLSearchParams();
+
+  queryParams.set('populate[navbarLinks][populate][page_names]', '*');
+
+  queryParams.set('populate[navbarLinks][populate][icon][fields][0]', 'url');
+
+  request.url.search = queryParams.toString();
+
+  return {
+    ...request,
+    body: undefined,
+  };
+}
+
+export function mergeWebGlobalFinalResponse(results: AggregatedResponse[]): any {
+  const webGlobalContentResult = results.find((r) => r.target === 'webGlobalContent');
+
+  const headerLinksResult = results.find((r) => r.target === 'headerLinks');
+
+  if (!webGlobalContentResult?.success) {
+    return {
+      error: 'Web Global Content fetch failed',
+    };
+  }
+
+  const response = webGlobalContentResult.data;
+
+  if (headerLinksResult?.success && headerLinksResult.data) {
+    response.data.navbarLinks = headerLinksResult.data.data;
+  }
+
+  return response;
 }
 
 // This is responsible for adding the feature flag query params to the request
