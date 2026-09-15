@@ -6163,6 +6163,50 @@
     }
   },
   {
+    "path": "/xp-mi/public/v1/order-service/shipment/order-number/:orderNumber",
+    "method": "GET",
+    "routeHandler": "TRANSFORM",
+    "isCacheRequired": false,
+    "target": {
+      "name": "web-order-shipment-order-number",
+      "url": "${MSME_BASE_URL}/order-service/shipment/order-number/:orderNumber",
+      "method": "GET",
+      "timeout": {
+        "request": "${TIMEOUTS.REQUEST}",
+        "socket": "${TIMEOUTS.SOCKET}"
+      },
+      "headersToPass": [
+        {
+          "source": "access_token",
+          "destination": "access_token"
+        }
+      ],
+      "requiredParams": ["*"]
+    }
+  },
+  {
+    "path": "/xp-mi/public/v1/order-service/shipment/download-all",
+    "method": "GET",
+    "routeHandler": "TRANSFORM",
+    "isCacheRequired": false,
+    "target": {
+      "name": "web-order-shipment-download-all",
+      "url": "${MSME_BASE_URL}/order-service/shipment/download-all",
+      "method": "GET",
+      "timeout": {
+        "request": "${TIMEOUTS.REQUEST}",
+        "socket": "${TIMEOUTS.SOCKET}"
+      },
+      "headersToPass": [
+        {
+          "source": "access_token",
+          "destination": "access_token"
+        }
+      ],
+      "requiredParams": ["*"]
+    }
+  },
+  {
     "path": "/xp-mi/public/v1/order-service/purchase-order/fetch/by-order",
     "method": "GET",
     "routeHandler": "TRANSFORM",
