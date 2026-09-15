@@ -2060,8 +2060,8 @@
     "targets": [
       {
         "name": "programmatic-seo-page",
-        "url": "${MSME_BASE_URL}/central_commerce/api/v1/seo/programmatic-pages/placeholder-slug",
-        "method": "GET",
+        "url": "${MSME_BASE_URL}/central_commerce/api/v1/seo/programmatic-pages",
+        "method": "POST",
         "timeout": {
           "request": 5000,
           "socket": 1000
@@ -3566,8 +3566,8 @@
       "url": "${CMS_MSME_URL}/jsw-product-page-v-2s",
       "method": "GET",
       "timeout": {
-        "request": "${TIMEOUTS.REQUEST}",
-        "socket": "${TIMEOUTS.SOCKET}"
+        "request": 20000,
+        "socket": 5000
       },
       "reqTransform": "general.transformers.moveBodyToQueryParams"
     }
@@ -3582,8 +3582,8 @@
       "url": "${CMS_MSME_URL}/layout-landing-pages",
       "method": "GET",
       "timeout": {
-        "request": "${TIMEOUTS.REQUEST}",
-        "socket": "${TIMEOUTS.SOCKET}"
+        "request": 20000,
+        "socket": 5000
       },
       "reqTransform": "general.transformers.moveBodyToQueryParams"
     }
