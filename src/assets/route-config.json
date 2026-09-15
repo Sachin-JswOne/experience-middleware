@@ -1154,6 +1154,42 @@
     "path": "/xp-mi/public/v1/web-global",
     "method": "POST",
     "routeHandler": "AGGREGATE",
+    "aggregationType": "PARALLEL",
+    "targets": [
+      {
+        "name": "webGlobalContent",
+        "url": "${EXPERIENCE_MIDDLEWARE_URL}/xp-mi/public/v1/web-global-content",
+        "method": "POST"
+      },
+      {
+        "name": "headerLinks",
+        "url": "${EXPERIENCE_MIDDLEWARE_URL}/xp-mi/public/v1/web-global-header-links",
+        "method": "POST"
+      }
+    ],
+    "resTransform": "category.transformers.mergeWebGlobalFinalResponse"
+  },
+  {
+    "path": "/xp-mi/public/v1/web-global-header-links",
+    "method": "POST",
+    "routeHandler": "TRANSFORM",
+    "isCacheRequired": false,
+    "target": {
+      "name": "headerLinks",
+      "url": "${CMS_MSME_URL}/web-header-link",
+      "method": "GET",
+      "timeout": {
+        "request": "${TIMEOUTS.REQUEST}",
+        "socket": "${TIMEOUTS.SOCKET}"
+      },
+      "reqTransform": "category.transformers.transformWebGlobalHeaderLinksRequest",
+      "resTransform": "cms.transformers.replaceUriPrefix"
+    }
+  },
+  {
+    "path": "/xp-mi/public/v1/web-global-content",
+    "method": "POST",
+    "routeHandler": "AGGREGATE",
     "aggregationType": "SEQUENTIAL",
     "targets": [
       {
@@ -1182,17 +1218,6 @@
           "request": 5000,
           "socket": 1000
         }
-      },
-      {
-        "name": "cmsFeatureFlag",
-        "url": "${CMS_MSME_URL}/ccp-feature-flags",
-        "method": "GET",
-        "timeout": {
-          "request": "${TIMEOUTS.REQUEST}",
-          "socket": "${TIMEOUTS.SOCKET}"
-        },
-        "reqTransform": "category.transformers.addFeatureFlagQueryParams",
-        "resTransform": "cms.transformers.replaceUriPrefix"
       }
     ],
     "resTransform": "category.transformers.mergeWebGlobalResponse"
@@ -2060,8 +2085,8 @@
     "targets": [
       {
         "name": "programmatic-seo-page",
-        "url": "${MSME_BASE_URL}/central_commerce/api/v1/seo/programmatic-pages/placeholder-slug",
-        "method": "GET",
+        "url": "${MSME_BASE_URL}/central_commerce/api/v1/seo/programmatic-pages",
+        "method": "POST",
         "timeout": {
           "request": 5000,
           "socket": 1000
@@ -2786,7 +2811,7 @@
         "url": "${MSME_BASE_URL}/central_commerce/products/listing",
         "method": "POST",
         "timeout": {
-          "request": 5000,
+          "request": 10000,
           "socket": 1000
         },
         "reqTransform": "web.transformers.extractProductListingSlugv3FromCmsBody",
@@ -2866,7 +2891,7 @@
         "url": "${MSME_BASE_URL}/central_commerce/recent-viewed/remove",
         "method": "GET",
         "timeout": {
-          "request": 5000,
+          "request": 10000,
           "socket": 1000
         },
         "reqTransform": "web.transformers.convertOriginalBodyToGetRequestFromParallelPayload",
@@ -2886,7 +2911,7 @@
         "url": "${MSME_BASE_URL}/central_commerce/catalogue/product-details",
         "method": "POST",
         "timeout": {
-          "request": 5000,
+          "request": 10000,
           "socket": 1000
         },
         "reqTransform": "web.transformers.transformRecentlyViewedMMIDsRequestFromParallelPayload",
@@ -3566,8 +3591,8 @@
       "url": "${CMS_MSME_URL}/jsw-product-page-v-2s",
       "method": "GET",
       "timeout": {
-        "request": "${TIMEOUTS.REQUEST}",
-        "socket": "${TIMEOUTS.SOCKET}"
+        "request": 20000,
+        "socket": 5000
       },
       "reqTransform": "general.transformers.moveBodyToQueryParams"
     }
@@ -3582,8 +3607,8 @@
       "url": "${CMS_MSME_URL}/layout-landing-pages",
       "method": "GET",
       "timeout": {
-        "request": "${TIMEOUTS.REQUEST}",
-        "socket": "${TIMEOUTS.SOCKET}"
+        "request": 20000,
+        "socket": 5000
       },
       "reqTransform": "general.transformers.moveBodyToQueryParams"
     }
@@ -6081,6 +6106,135 @@
           "destination": "access_token"
         }
       ]
+    }
+  },
+  {
+    "path": "/xp-mi/public/v1/order-service/order/order-details",
+    "method": "GET",
+    "routeHandler": "TRANSFORM",
+    "isCacheRequired": false,
+    "target": {
+      "name": "web-order-details",
+      "url": "${MSME_BASE_URL}/order-service/order/order-details",
+      "method": "GET",
+      "timeout": {
+        "request": 10000,
+        "socket": 1000
+      },
+      "headersToPass": [
+        {
+          "source": "authorization",
+          "destination": "access_token"
+        },
+        {
+          "source": "access_token",
+          "destination": "access_token"
+        }
+      ],
+      "requiredParams": ["orderNumber"]
+    }
+  },
+  {
+    "path": "/xp-mi/public/v1/order-service/order/payment-summary",
+    "method": "GET",
+    "routeHandler": "TRANSFORM",
+    "isCacheRequired": false,
+    "target": {
+      "name": "web-order-payment-summary",
+      "url": "${MSME_BASE_URL}/order-service/order/payment-summary",
+      "method": "GET",
+      "timeout": {
+        "request": 10000,
+        "socket": 1000
+      },
+      "headersToPass": [
+        {
+          "source": "authorization",
+          "destination": "access_token"
+        },
+        {
+          "source": "access_token",
+          "destination": "access_token"
+        }
+      ],
+      "requiredParams": ["orderNumber"]
+    }
+  },
+  {
+    "path": "/xp-mi/public/v1/order-service/shipment/list/order-number/:orderNumber",
+    "method": "GET",
+    "routeHandler": "TRANSFORM",
+    "isCacheRequired": false,
+    "target": {
+      "name": "web-order-shipment-list",
+      "url": "${MSME_BASE_URL}/order-service/shipment/list/order-number/:orderNumber",
+      "method": "GET",
+      "timeout": {
+        "request": 10000,
+        "socket": 1000
+      },
+      "headersToPass": [
+        {
+          "source": "authorization",
+          "destination": "access_token"
+        },
+        {
+          "source": "access_token",
+          "destination": "access_token"
+        }
+      ]
+    }
+  },
+  {
+    "path": "/xp-mi/public/v1/order-service/purchase-order/fetch/by-order",
+    "method": "GET",
+    "routeHandler": "TRANSFORM",
+    "isCacheRequired": false,
+    "target": {
+      "name": "web-order-po-fetch",
+      "url": "${MSME_BASE_URL}/order-service/purchase-order/fetch/by-order",
+      "method": "GET",
+      "timeout": {
+        "request": 10000,
+        "socket": 1000
+      },
+      "headersToPass": [
+        {
+          "source": "authorization",
+          "destination": "access_token"
+        },
+        {
+          "source": "access_token",
+          "destination": "access_token"
+        }
+      ],
+      "requiredParams": ["orderNumber"]
+    }
+  },
+  {
+    "path": "/xp-mi/public/v1/order-service/order-summary/fetch/by-reference",
+    "method": "GET",
+    "routeHandler": "TRANSFORM",
+    "isCacheRequired": false,
+    "target": {
+      "name": "web-order-summary-pdf",
+      "url": "${MSME_BASE_URL}/order-service/order-summary/fetch/by-reference",
+      "method": "GET",
+      "timeout": {
+        "request": 15000,
+        "socket": 1000
+      },
+      "headersToPass": [
+        {
+          "source": "authorization",
+          "destination": "access_token"
+        },
+        {
+          "source": "access_token",
+          "destination": "access_token"
+        }
+      ],
+      "requiredParams": ["referenceType", "referenceId", "fileType"]
     }
   }
 ]

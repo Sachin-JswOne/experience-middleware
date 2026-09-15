@@ -442,6 +442,13 @@ export class ProxyService {
             prevResponses,
           );
 
+          if (transformedRequestBody?.skip) {
+            this.logger.log(
+              `[DOWNSTREAM REQUEST SKIPPED] target=${target.name || target.url} route=${req.path}`,
+            );
+            return null;
+          }
+
           maskedHeaders = {
             ...transformedRequestBody.headers,
             authorization: transformedRequestBody.headers?.authorization
