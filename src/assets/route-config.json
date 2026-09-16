@@ -6339,5 +6339,45 @@
       "requiredParams": ["*"],
       "stopOnError": true
     }
+  },
+  {
+    "path": "/xp-mi/public/v1/whatsapp/category/product-types",
+    "method": "GET",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "whatsapp-category-product-types",
+      "url": "${CATALOGUE_CENTRAL_URL}/catalogue_search/api/v1/external/category/product-types",
+      "method": "GET",
+      "timeout": {
+        "request": 15000,
+        "socket": "${TIMEOUTS.SOCKET}"
+      },
+      "staticHeaders": {
+        "x-api-key": "${CATALOGUE_CENTRAL_X_API_KEY}",
+        "clientId": "${CATALOGUE_CENTRAL_CLIENT_ID}"
+      },
+      "requiredParams": ["*"],
+      "stopOnError": true
+    }
+  },
+  {
+    "path": "/xp-mi/public/v1/whatsapp/products/listing",
+    "method": "POST",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "whatsapp-products-listing",
+      "url": "${MSME_BASE_URL}/central_commerce/whatsapp/v1/products/listing",
+      "method": "POST",
+      "timeout": {
+        "request": 15000,
+        "socket": "${TIMEOUTS.SOCKET}"
+      },
+      "staticHeaders": {
+        "content-type": "application/json",
+        "x-api-key": "${X_API_KEY_FOR_PROFILE}"
+      },
+      "requiredParams": ["*"],
+      "stopOnError": true
+    }
   }
 ]
