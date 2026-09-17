@@ -712,7 +712,7 @@
     "routeHandler": "TRANSFORM",
     "target": {
       "name": "app-verify-mobile-number-with-otp",
-      "url": "${MSME_BASE_URL}/otp/verify",
+      "url": "${MSME_BASE_URL}/auth/api/v1/construct/otp/verify",
       "method": "POST",
       "staticHeaders": {
         "X-API-KEY": "${X_API_KEY_FOR_LOGIN}"
@@ -2801,7 +2801,7 @@
         "url": "${MSME_BASE_URL}/central_commerce/products/listing",
         "method": "POST",
         "timeout": {
-          "request": 5000,
+          "request": 10000,
           "socket": 1000
         },
         "reqTransform": "web.transformers.extractProductListingSlugv3FromCmsBody",
@@ -2821,7 +2821,7 @@
         "url": "${MSME_BASE_URL}/central_commerce/categories/tree/list",
         "method": "POST",
         "timeout": {
-          "request": 5000,
+          "request": 10000,
           "socket": 1000
         },
         "reqTransform": "web.transformers.extractCentralCatalogueCategoryIdsv3FromCmsBody",
@@ -2841,7 +2841,7 @@
         "url": "${MSME_BASE_URL}/central_commerce/categories/tree/list",
         "method": "POST",
         "timeout": {
-          "request": 5000,
+          "request": 10000,
           "socket": 1000
         },
         "reqTransform": "web.transformers.extractBrandCategoryIdsv3FromCmsBody",
@@ -2861,7 +2861,7 @@
         "url": "${MSME_BASE_URL}/central_commerce/catalogue/product-details",
         "method": "POST",
         "timeout": {
-          "request": 5000,
+          "request": 10000,
           "socket": 1000
         },
         "reqTransform": "web.transformers.transformWebHomePageTopItemsMMIDRequestV3FromCmsBody",
@@ -2881,7 +2881,7 @@
         "url": "${MSME_BASE_URL}/central_commerce/recent-viewed/remove",
         "method": "GET",
         "timeout": {
-          "request": 5000,
+          "request": 10000,
           "socket": 1000
         },
         "reqTransform": "web.transformers.convertOriginalBodyToGetRequestFromParallelPayload",
@@ -2901,7 +2901,7 @@
         "url": "${MSME_BASE_URL}/central_commerce/catalogue/product-details",
         "method": "POST",
         "timeout": {
-          "request": 5000,
+          "request": 10000,
           "socket": 1000
         },
         "reqTransform": "web.transformers.transformRecentlyViewedMMIDsRequestFromParallelPayload",
@@ -5529,25 +5529,6 @@
     }
   },
   {
-    "path": "/xp-mi/public/v1/register-user-validation",
-    "routeHandler": "TRANSFORM",
-    "method": "POST",
-    "isCacheRequired": false,
-    "target": {
-      "name": "register-user-validation",
-      "url": "${MSME_BASE_URL}/customer/validate/registration-details",
-      "method": "POST",
-      "timeout": {
-        "request": 20000,
-        "socket": 1000
-      },
-      "staticHeaders": {
-        "Content-Type": "application/json"
-      },
-      "reqTransform": "appRegistration.transformers.transformRegisterUserValidationRequest"
-    }
-  },
-  {
     "path": "/xp-mi/public/v1/vijai/user-detail",
     "method": "GET",
     "routeHandler": "TRANSFORM",
@@ -5760,14 +5741,16 @@
     "isCacheRequired": false,
     "target": {
       "name": "moengage-hubspot-event",
-      "url": "https://api-03.moengage.com/v1/event/4311B84VU6UTCNRSAT5JZ3RV_DEBUG",
+      "url": "${MOENGAGE_DATA_API_URL}",
       "method": "POST",
       "timeout": {
         "request": 20000,
         "socket": 1000
       },
       "staticHeaders": {
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+        "Authorization": "${MOENGAGE_HUBSPOT_AUTH}"
       },
       "reqTransform": "moengage.transformers.hubspotEventToMoengage"
     }
@@ -5940,7 +5923,7 @@
       "url": "${MSME_BASE_URL}/customer/payment/v2/summary",
       "method": "GET",
       "timeout": {
-        "request": "${TIMEOUTS.REQUEST}",
+        "request": 10000,
         "socket": "${TIMEOUTS.SOCKET}"
       },
       "headersToPass": [
@@ -5953,6 +5936,117 @@
     }
   },
   {
+    "path": "/xp-mi/public/v1/customer/dashboard-summary",
+    "method": "POST",
+    "routeHandler": "AGGREGATE",
+    "aggregationType": "PARALLEL",
+    "isCacheRequired": false,
+    "continueOnUnauthorized": true,
+    "targets": [
+      {
+        "name": "orderSummary",
+        "url": "${MSME_BASE_URL}/central_commerce/customer/dashboard",
+        "method": "GET",
+        "timeout": {
+          "request": 10000,
+          "socket": "${TIMEOUTS.SOCKET}"
+        },
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "access_token"
+          },
+          {
+            "source": "access_token",
+            "destination": "access_token"
+          }
+        ],
+        "reqTransform": "dashboard.transformers.transformOrderSummaryRequest"
+      },
+      {
+        "name": "credit",
+        "url": "${MSME_BASE_URL}/customer/credit-lead-generation/eligible",
+        "method": "GET",
+        "timeout": {
+          "request": 10000,
+          "socket": "${TIMEOUTS.SOCKET}"
+        },
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "access_token"
+          },
+          {
+            "source": "access_token",
+            "destination": "access_token"
+          }
+        ],
+        "reqTransform": "dashboard.transformers.transformCreditEligibilityRequest"
+      },
+      {
+        "name": "ledger",
+        "url": "${MSME_BASE_URL}/order-service/order/ledger/v2/details",
+        "method": "GET",
+        "timeout": {
+          "request": 10000,
+          "socket": "${TIMEOUTS.SOCKET}"
+        },
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "access_token"
+          },
+          {
+            "source": "access_token",
+            "destination": "access_token"
+          }
+        ],
+        "reqTransform": "dashboard.transformers.transformLedgerRequest"
+      },
+      {
+        "name": "paymentsDueJODL",
+        "url": "${MSME_BASE_URL}/customer/payment/v2/payment-due",
+        "method": "GET",
+        "timeout": {
+          "request": 10000,
+          "socket": "${TIMEOUTS.SOCKET}"
+        },
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "access_token"
+          },
+          {
+            "source": "access_token",
+            "destination": "access_token"
+          }
+        ],
+        "reqTransform": "dashboard.transformers.transformPaymentsDueJodlRequest"
+      },
+      {
+        "name": "paymentsDueJOPL",
+        "url": "${MSME_BASE_URL}/customer/payment/v2/payment-due",
+        "method": "GET",
+        "timeout": {
+          "request": 10000,
+          "socket": "${TIMEOUTS.SOCKET}"
+        },
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "access_token"
+          },
+          {
+            "source": "access_token",
+            "destination": "access_token"
+          }
+        ],
+        "reqTransform": "dashboard.transformers.transformPaymentsDueJoplRequest"
+      }
+    ],
+    "resTransform": "dashboard.transformers.mergeCustomerDashboard"
+  },
+  {
     "path": "/xp-mi/public/v1/customer/payment/v2/payment-due",
     "method": "POST",
     "routeHandler": "TRANSFORM",
@@ -5962,7 +6056,7 @@
       "url": "${MSME_BASE_URL}/customer/payment/v2/payment-due",
       "method": "GET",
       "timeout": {
-        "request": "${TIMEOUTS.REQUEST}",
+        "request": 10000,
         "socket": "${TIMEOUTS.SOCKET}"
       },
       "headersToPass": [
@@ -5984,7 +6078,7 @@
       "url": "${MSME_BASE_URL}/order-service/order/ledger/v2/details",
       "method": "GET",
       "timeout": {
-        "request": "${TIMEOUTS.REQUEST}",
+        "request": 10000,
         "socket": "${TIMEOUTS.SOCKET}"
       },
       "headersToPass": [
@@ -6006,7 +6100,7 @@
       "url": "${MSME_BASE_URL}/customer/ledger/v2/transaction",
       "method": "GET",
       "timeout": {
-        "request": "${TIMEOUTS.REQUEST}",
+        "request": 10000,
         "socket": "${TIMEOUTS.SOCKET}"
       },
       "headersToPass": [
@@ -6028,7 +6122,7 @@
       "url": "${MSME_BASE_URL}/customer/ledger/v2/download-ledger-summary-details",
       "method": "GET",
       "timeout": {
-        "request": "${TIMEOUTS.REQUEST}",
+        "request": 30000,
         "socket": "${TIMEOUTS.SOCKET}"
       },
       "headersToPass": [
@@ -6050,7 +6144,7 @@
       "url": "${MSME_BASE_URL}/customer/ledger/v2/download-ledger-transaction-document",
       "method": "GET",
       "timeout": {
-        "request": "${TIMEOUTS.REQUEST}",
+        "request": 30000,
         "socket": "${TIMEOUTS.SOCKET}"
       },
       "headersToPass": [
@@ -6072,7 +6166,7 @@
       "url": "${MSME_BASE_URL}/customer/ledger/v2/creditDetails",
       "method": "GET",
       "timeout": {
-        "request": "${TIMEOUTS.REQUEST}",
+        "request": 10000,
         "socket": "${TIMEOUTS.SOCKET}"
       },
       "headersToPass": [

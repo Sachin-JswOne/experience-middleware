@@ -1,5 +1,4 @@
 import { BaseRequest } from 'src/models/base-request.model';
-import { MOENGAGE_HUBSPOT } from 'src/config/moengage.config';
 import { CustomError } from 'src/utils/CustomError';
 
 /**
@@ -38,6 +37,11 @@ const CUSTOMER_ID_KEYS = ['customer_id', 'email', 'u_em'];
 // Flat fields that may carry the event timestamp (first valid one wins).
 const TIMESTAMP_KEYS = ['modified_time', 'user_time', 'current_time', 'timestamp'];
 
+// India Standard Time is a fixed UTC+05:30 — no daylight saving to account for.
+const IST_OFFSET_MINUTES = 330;
+// Same offset in seconds (19800), the unit MoEngage's `user_timezone_offset` wants.
+const IST_OFFSET_SECONDS = IST_OFFSET_MINUTES * 60;
+
 // Flat fields never echoed into attributes (identity / envelope / timestamps).
 const RESERVED_KEYS = new Set([
   ...CUSTOMER_ID_KEYS,
@@ -66,6 +70,23 @@ function resolveIsoTimestamp(body: Record<string, any>): string {
   const raw = firstNonEmpty(body, TIMESTAMP_KEYS);
   const iso = raw === undefined ? null : toIso(raw);
   return iso ?? new Date().toISOString();
+}
+
+/**
+ * Same instant as `iso`, as IST wall-clock with NO "Z" suffix
+ * (e.g. "2026-08-04T21:08:11.000").
+ *
+ * This is what `user_time` wants: MoEngage treats it as the user's LOCAL time and
+ * renders it verbatim as "Event Time", without converting. Sending UTC there is what
+ * made Event Time read 03:38 pm while every other timestamp read 09:08 pm. Format
+ * per MoEngage support (Jahnavi): IST value, no Z, paired with
+ * `user_timezone_offset` and a UTC `current_time`.
+ */
+function toIstLocal(iso: string): string {
+  const ms = Date.parse(iso);
+  if (Number.isNaN(ms)) return iso;
+  // India has no DST, so a fixed +05:30 is always correct. Drop only the "Z".
+  return new Date(ms + IST_OFFSET_MINUTES * 60_000).toISOString().slice(0, 23);
 }
 
 function toIso(raw: any): string | null {
@@ -101,33 +122,38 @@ function buildMoengageEventRequest(request: BaseRequest, action: string): BaseRe
   const customerId = firstNonEmpty(body, CUSTOMER_ID_KEYS);
   const isoTime = resolveIsoTimestamp(body);
 
+  const attributes = buildAttributes(body);
+  // Sent as plain UTC on purpose. MoEngage IGNORES an explicit offset on datetime
+  // attributes — it reads the literal wall-clock as UTC and then renders it in the
+  // workspace timezone. Sending "...+05:30" therefore double-shifts (21:08 IST was
+  // displayed as 02:38 next day); sending UTC makes the dashboard show IST correctly.
+  attributes.modified_time = isoTime;
+
   const moengageBody = {
     type: 'event',
     customer_id: customerId !== undefined ? String(customerId).trim() : '',
     actions: [
       {
         action,
-        attributes: buildAttributes(body),
+        attributes,
         // Reserved MoEngage field: must be one of ANDROID/iOS/web/TV/unknown.
         platform: 'web',
-        user_time: isoTime, // local time of the event (ISO-8601)
-        current_time: isoTime, // UTC time of the event (ISO-8601)
+        // MoEngage's documented split: user_time = the user's LOCAL time (rendered
+        // verbatim as "Event Time"), current_time = the same instant in UTC, and
+        // user_timezone_offset tells them which zone the local value is in. Sending
+        // IST local makes Event Time agree with modified_time and Event Received Time.
+        user_time: toIstLocal(isoTime),
+        current_time: isoTime,
+        user_timezone_offset: IST_OFFSET_SECONDS,
       },
     ],
   };
 
-  // The Data API URL carries the workspace id in its path (no query string), so
-  // we simply point the request at it. (The proxy clears the route-config target
-  // URL's query before this transform runs, which is fine — there is none here.)
-  const url = new URL(MOENGAGE_HUBSPOT.dataApiUrl);
-
-  const headers: Record<string, any> = {
-    'content-type': 'application/json',
-    accept: 'application/json',
-  };
-  if (MOENGAGE_HUBSPOT.authHeader) headers.authorization = MOENGAGE_HUBSPOT.authHeader;
-
-  return { ...request, url, body: moengageBody, headers };
+  // URL (`${MOENGAGE_DATA_API_URL}`, workspace id in the path) and the Basic auth
+  // header (`${MOENGAGE_HUBSPOT_AUTH}`) come from the route's target config, which
+  // resolves them per environment from `assets/{env}/env-config.json`. Only the
+  // body shape is this transformer's concern.
+  return { ...request, body: moengageBody };
 }
 
 /**
