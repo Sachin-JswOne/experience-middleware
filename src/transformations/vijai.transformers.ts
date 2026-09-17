@@ -1,5 +1,6 @@
 import { BaseRequest } from 'src/models/base-request.model';
 import 'dotenv/config';
+import { STOCK_LOW_THRESHOLD } from 'src/config/app.config';
 
 export function transformAccessTokenRequest(request: BaseRequest): BaseRequest {
   if (
@@ -235,4 +236,226 @@ export function transformVijaiResolveRecordTypeRequest(request: any) {
   };
   finalTransformedRequest.url.searchParams.set('layoutTypes', 'Compact');
   return finalTransformedRequest;
+}
+
+export function transformVijaiStockSignalsRequest(request: any) {
+  const finalTransformedRequest: BaseRequest = {
+    ...request,
+    body: null,
+  };
+  const ownerId = request.url.searchParams.get('ownerId');
+  request.url.searchParams.set('ownerId', ownerId);
+  return finalTransformedRequest;
+}
+
+export function transformVijaiStockSignalsResponse(response: any) {
+  const data = response.data;
+
+  const distributors = data.filter(
+    item => item.accountType === "Distributor"
+  );
+
+  const retailers = data.filter(
+    item => item.accountType === "Retailer PB"
+  );
+
+  let transformedData = {
+    distributors: distributors,
+    retailers: retailers
+  };
+
+  let finalTransformedData = processStockSignals(transformedData);
+  return finalTransformedData;
+}
+
+/**
+ * Signal definitions
+ *
+ * Stock low:
+ *   currentStock > 0 && currentStock < 5
+ *
+ * Retailer - No stock this month:
+ *   currentStock === 0
+ *
+ * Distributor - No purchase:
+ *   totalPurchases === 0
+ *
+ * Retailer - Stock not moving:
+ *   currentStock > 0 && secondarySales === 0
+ *
+ * Distributor - Stock not moving:
+ *   currentStock > 0 &&
+ *   (soldToRetailers + soldAtSites) === 0
+ *
+ * Retailer - Influencer gap:
+ *   soldViaInfluencers === 0
+ */
+function getSignals(
+    account: Account,
+    type: AccountType
+): Signal[] {
+
+    const currentStock = account.currentStock ?? 0;
+    const totalPurchases = account.totalPurchases ?? 0;
+    const secondarySales = account.secondarySales ?? 0;
+    const soldToRetailers = account.soldToRetailers ?? 0;
+    const soldAtSites = account.soldAtSites ?? 0;
+    const soldViaInfluencers = account.soldViaInfluencers ?? 0;
+
+    const signals: Signal[] = [];
+
+    if (
+        currentStock > 0 && currentStock < STOCK_LOW_THRESHOLD
+    ) {
+        signals.push({
+            tag: "Stock low",
+            severity: "red"
+        });
+    }
+
+    if (type === "retailer" && currentStock === 0) {
+        signals.push({
+            tag: "No stock this month",
+            severity: "red"
+        });
+    }
+
+    if (type === "distributor" && totalPurchases === 0) {
+        signals.push({
+            tag: "No purchase",
+            severity: "red"
+        });
+    }
+
+    if (type === "retailer") {
+        if (
+            currentStock > 0 && secondarySales === 0
+        ) {
+            signals.push({
+                tag: "Stock not moving",
+                severity: "orange"
+            });
+        }
+    }
+
+    if (type === "distributor") {
+        const distributorSales = soldToRetailers + soldAtSites;
+        if (
+            currentStock > 0 && distributorSales === 0
+        ) {
+            signals.push({
+                tag: "Stock not moving",
+                severity: "orange"
+            });
+        }
+    }
+
+    if (
+        type === "retailer" && soldViaInfluencers === 0
+    ) {
+        signals.push({
+            tag: "Influencer gap",
+            severity: "grey"
+        });
+    }
+
+    return signals;
+}
+
+
+/**
+ * Add signals to every account in an array.
+ */
+function addSignalsToAccounts(accounts, type) {
+    return accounts.map(account => ({
+        accountId: account.accountId,
+        accountName: account.accountName,
+        accountType: account.accountType,
+        signals: getSignals(account, type)
+    }));
+}
+
+
+/**
+ * Build a summary of signals.
+ */
+function getSignalSummary(
+    accounts: Account[]
+): Record<string, SignalSummary> {
+
+    return accounts.reduce<Record<string, SignalSummary>>(
+        (summary, account) => {
+
+            (account.signals ?? []).forEach(signal => {
+
+                if (!summary[signal.tag]) {
+                    summary[signal.tag] = {
+                        count: 0,
+                        severity: signal.severity,
+                        accounts: []
+                    };
+                }
+
+                summary[signal.tag].count++;
+
+                summary[signal.tag].accounts.push({
+                    accountId: account.accountId,
+                    accountName: account.accountName,
+                    accountType: account.accountType
+                });
+            });
+            return summary;
+        },
+        {}
+    );
+}
+
+
+/**
+ * Convert summary object to an array.
+ *
+ * Useful for rendering cards/list in the UI.
+ */
+function getSignalSummaryArray(
+    summary: Record<string, SignalSummary>
+) {
+    return Object.entries(summary).map(
+        ([tag, data]) => ({
+            tag,
+            count: data.count,
+            severity: data.severity,
+        })
+    );
+}
+
+
+/**
+ * Main function.
+ *
+ * Takes the complete API response and returns
+ * tagged distributors, tagged retailers and summaries.
+ */
+function processStockSignals(response: {
+    distributors: Account[];
+    retailers: Account[];
+}) {
+
+    const distributors = addSignalsToAccounts(
+        response.distributors ?? [],
+        "distributor"
+    );
+
+    const retailers = addSignalsToAccounts(
+        response.retailers ?? [],
+        "retailer"
+    );
+
+    const retailerSummary =
+        getSignalSummary(retailers);
+
+    return {
+        distributors,
+        retailerSignalList:
+            getSignalSummaryArray(retailerSummary)
+    };
 }

@@ -258,3 +258,5 @@ export const country = 'IN';
 export const USER_TYPE = 'R';
 
 export const CONSTRUCT = 'construct';
+
+export const STOCK_LOW_THRESHOLD = 5;
