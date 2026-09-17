@@ -16,7 +16,7 @@ export function transformInvoiceAndDocuments(response: any): {
     if (!response || typeof response !== 'object') {
       return { listOfDocuments: [] };
     }
-    const invoiceDocumentsResponse = response?.data?.data;
+    const invoiceDocumentsResponse = response;
 
     if (
       invoiceDocumentsResponse &&
@@ -42,6 +42,7 @@ export function getListOfDocuments(invoiceDocumentsResponse) {
     const documents = transformDocuments(orderShipment);
 
     return {
+      invoiceNumber: orderShipment.invoiceNumber || '',
       shipmentNumber: orderShipment.shipmentNumber || '',
       dispatchedOn: formatDate(orderShipment.dispatchedOn) || '',
       documents: documents,
@@ -52,7 +53,7 @@ export function getListOfDocuments(invoiceDocumentsResponse) {
 }
 
 export function transformDocuments(orderShipment) {
-  const documentTypes = ['invoice', 'testCertificate', 'other'];
+  const documentTypes = ['invoices', 'testCertificates', 'weightmentSlips', 'lorryReceipt', 'other'];
 
   return documentTypes.map((type) => transformDocumentType(orderShipment, type));
 }

@@ -27,6 +27,9 @@ export interface BaseRouteConfig {
   path: string;
   method: string;
   routeHandler: RouteHandler;
+  isCacheRequired?: boolean;
+  cacheProvider?: 'AUTO' | 'VALKEY' | 'LOCAL' | 'NONE';
+  cacheTTLSeconds?: number;
 }
 
 export interface TransformRouteConfig extends BaseRouteConfig {

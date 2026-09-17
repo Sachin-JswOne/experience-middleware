@@ -523,7 +523,7 @@ export function mergeAppHomePageResponseV4(aggregatedResponses: AggregatedRespon
       inTransit = true;
     }
   }
-  if (page?.link_banner_component?.inTransit) {
+  if (page?.link_banner_component) {
     page.link_banner_component.inTransit = inTransit;
   }
 
@@ -597,7 +597,9 @@ export function mergeAppHomePageResponseV4(aggregatedResponses: AggregatedRespon
   const finalSortedResponse = mergedWrapper.data.map(item =>
     sortResponseByOrder(item)
   );
+
   mergedWrapper.data = finalSortedResponse;
+
   return mergedWrapper;
 }
 

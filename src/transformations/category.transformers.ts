@@ -124,71 +124,58 @@ export function transformCcaRequest(
 export function mergeCategoryResponses(results: AggregatedResponse[]): any {
   const strapiResult = results.find((r) => r.target === 'strapi-footer');
   const centralCatalogueResult = results.find((r) => r.target === 'cca-categories');
+
   const isMobile = strapiResult?.data?.data?.footer !== undefined;
   const device = isMobile ? 'mobile' : 'desktop';
-  const featureFlagResult = results.find((r) => r.target === 'cmsFeatureFlag');
-  const featureFlags = featureFlagResult?.success ? featureFlagResult.data.data : [];
-  // Find the specific flag for 'central_catalogue_global'
 
-  const centralCatalogueFlag = featureFlags.find(
-    (flag: any) => flag?.name === 'central_catalogue_global',
-  );
+  const centralCatalogueSubMenus =
+    centralCatalogueResult?.data?.data?.navigation?.[0]?.subMenu || [];
 
-  const isCentralCatalogueEnabled = centralCatalogueFlag?.isActive === true;
-  // ... existing error handling ...
-  const centralCatalogueSubMenus = centralCatalogueResult?.data?.data?.navigation[0]?.subMenu || [];
   if (device === 'mobile') {
-    // Process mobile footer (global-footer structure)
-    const mobileFooter = strapiResult?.data.data.footer[0] || {};
-    if (mobileFooter.footerSections) {
-      const buyOnlineSection = mobileFooter.footerSections.find(
-        (s: any) => s.heading === 'Buy online',
-      );
-      if (
-        !isCentralCatalogueEnabled ||
-        !centralCatalogueSubMenus ||
-        !centralCatalogueSubMenus.length
-      ) {
-        return mobileFooter;
-      }
-      buyOnlineSection.links = centralCatalogueSubMenus.map((item) => {
-        return {
-          ...item,
-          label: item.name,
-          url: item.slug,
-        };
-      });
+    const mobileFooter = strapiResult?.data?.data?.footer?.[0] || {};
+
+    if (!mobileFooter.footerSections) {
       return mobileFooter;
     }
 
-    return mobileFooter;
-  } else {
-    // Process desktop footer (existing jsw-footer-navigations structure)
-    const desktopFooter = strapiResult?.data?.data || [];
-    if (Array.isArray(desktopFooter) && desktopFooter.length > 0) {
-      const buyOnlineMenu = desktopFooter[0].menuItems.find(
-        (item: any) => item.sectionTitle === 'Buy online',
-      );
+    const buyOnlineSection = mobileFooter.footerSections.find(
+      (s: any) => s.heading === 'Buy online',
+    );
 
-      if (
-        !isCentralCatalogueEnabled ||
-        !centralCatalogueSubMenus ||
-        !centralCatalogueSubMenus.length
-      ) {
-        return desktopFooter;
-      }
-      buyOnlineMenu.tertiaryLinks = centralCatalogueSubMenus.map((item) => {
-        return {
-          ...item,
-          linkText: item.name,
-          linkHref: item.slug,
-        };
-      });
-      return desktopFooter;
+    if (!buyOnlineSection || !centralCatalogueSubMenus.length) {
+      return mobileFooter;
     }
 
+    buyOnlineSection.links = centralCatalogueSubMenus.map((item: any) => ({
+      ...item,
+      label: item.name,
+      url: item.slug,
+    }));
+
+    return mobileFooter;
+  }
+
+  const desktopFooter = strapiResult?.data?.data || [];
+
+  if (!Array.isArray(desktopFooter) || desktopFooter.length === 0) {
     return desktopFooter;
   }
+
+  const buyOnlineMenu = desktopFooter[0]?.menuItems?.find(
+    (item: any) => item.sectionTitle === 'Buy online',
+  );
+
+  if (!buyOnlineMenu || !centralCatalogueSubMenus.length) {
+    return desktopFooter;
+  }
+
+  buyOnlineMenu.tertiaryLinks = centralCatalogueSubMenus.map((item: any) => ({
+    ...item,
+    linkText: item.name,
+    linkHref: item.slug,
+  }));
+
+  return desktopFooter;
 }
 
 // This is responsible for creating the request for central catalogue API based on the strapi response for mobile mweb
@@ -238,54 +225,50 @@ export function mergeWebGlobalResponse(results: AggregatedResponse[]): any {
   const strapiResult = results.find((r) => r.target === 'webGlobalPage');
   const centralCatalogueResult = results.find((r) => r.target === 'cca-categories');
 
-  const featureFlagResult = results.find((r) => r.target === 'cmsFeatureFlag');
-  const featureFlags = featureFlagResult?.success ? featureFlagResult.data.data : [];
-  // Find the specific flag for 'central_catalogue_global'
-  const centralCatalogueFlag = featureFlags.find(
-    (flag: any) => flag?.name === 'central_catalogue_global',
-  );
-  const isCentralCatalogueEnabled = centralCatalogueFlag?.isActive === true;
   if (!strapiResult || !strapiResult.success) {
     return { error: 'Strapi fetch failed' };
   }
-  // If CCA failed or has no data, return Strapi data as is (fallback)
+
+  const appGlobalData = strapiResult.data;
+
   if (!centralCatalogueResult || !centralCatalogueResult.success) {
     Logger.warn('CCA fetch failed, returning original Strapi data');
-    return strapiResult.data;
+    return appGlobalData;
   }
-  const appGlobalData = strapiResult.data; // This is the full response object
+
   const centralCatalogueSubMenus =
     centralCatalogueResult?.data?.data?.navigation?.[0]?.subMenu || [];
+
+  if (!centralCatalogueSubMenus.length) {
+    return appGlobalData;
+  }
+
   try {
     const footerData = appGlobalData?.data?.footer || [];
+
     const globalFooter = footerData.find(
       (item: any) => item?.__component === 'global.global-footer',
     );
-    if (globalFooter && globalFooter.footerSections) {
-      const buyOnlineSection = globalFooter.footerSections.find(
-        (s: any) => s?.heading === 'Buy online',
-      );
-      if (
-        !isCentralCatalogueEnabled ||
-        !centralCatalogueSubMenus ||
-        !centralCatalogueSubMenus.length
-      ) {
-        return appGlobalData;
-      }
-      buyOnlineSection.links = centralCatalogueSubMenus.map((item) => {
-        return {
-          ...item,
-          label: item.name,
-          url: item.slug,
-        };
-      });
+
+    const buyOnlineSection = globalFooter?.footerSections?.find(
+      (s: any) => s?.heading === 'Buy online',
+    );
+
+    if (!buyOnlineSection) {
       return appGlobalData;
     }
+
+    buyOnlineSection.links = centralCatalogueSubMenus.map((item: any) => ({
+      ...item,
+      label: item.name,
+      url: item.slug,
+    }));
+
+    return appGlobalData;
   } catch (error) {
     Logger.error('Error merging web-global response:', error);
     return appGlobalData;
   }
-  return appGlobalData;
 }
 
 export function transformWebGlobalHeaderLinksRequest(request: BaseRequest): BaseRequest {
@@ -381,31 +364,29 @@ export function transformMainMenuCcaRequest(
 export function mergeMainMenuResponses(results: AggregatedResponse[]): any {
   const strapiResult = results.find((r) => r.target === 'header-main-menu');
   const centralCatalogueResult = results.find((r) => r.target === 'cca-header-categories');
-  const featureFlagResult = results.find((r) => r.target === 'cmsFeatureFlag');
 
-  const featureFlags = featureFlagResult?.success ? featureFlagResult.data.data : [];
-  const centralCatalogueFlag = featureFlags.find(
-    (flag: any) => flag?.name === 'central_catalogue_global',
-  );
-  const isCentralCatalogueEnabled = centralCatalogueFlag?.isActive === true;
-
-  // if strapi is not able to fetch data then return error
   if (!strapiResult || !strapiResult.success) {
     return { error: 'Strapi fetch failed' };
   }
+
   const strapiMainMenuData = strapiResult?.data?.data || strapiResult?.data || [];
+  const mainMenuNavigationStrapi = strapiMainMenuData?.[0]?.navigation || [];
 
-  // if feature flag is not enabled or cca is not able to fetch data then return strapi data
-  if (!isCentralCatalogueEnabled || !centralCatalogueResult || !centralCatalogueResult.success) {
-    return strapiMainMenuData[0].navigation;
+  if (!centralCatalogueResult || !centralCatalogueResult.success) {
+    return mainMenuNavigationStrapi;
   }
-  const mainMenuNavigationStrapi = strapiMainMenuData[0].navigation;
-  const centralCatalogueNavigation =
-    centralCatalogueResult?.data?.data?.navigation[0]?.subMenu || [];
 
-  // taking the blogs and offers from strapi and adding it to ccaNavigation
-  mainMenuNavigationStrapi.forEach((item) => {
-    if (item?.name.toLowerCase() === 'blogs' || item?.name.toLowerCase() === 'offers') {
+  const centralCatalogueNavigation =
+    centralCatalogueResult?.data?.data?.navigation?.[0]?.subMenu || [];
+
+  if (!centralCatalogueNavigation.length) {
+    return mainMenuNavigationStrapi;
+  }
+
+  mainMenuNavigationStrapi.forEach((item: any) => {
+    const name = item?.name?.toLowerCase();
+
+    if (name === 'blogs' || name === 'offers') {
       centralCatalogueNavigation.push(item);
     }
   });
@@ -557,37 +538,6 @@ export function transformV2UomConvertRequest(request: BaseRequest): BaseRequest 
       ...request.headers,
     },
   };
-}
-
-export function selectUomConvertResponse(aggregatedResponses: AggregatedResponse[]): any {
-  const responses = aggregatedResponses.reduce(
-    (acc, response) => {
-      acc[response.target] = response;
-      return acc;
-    },
-    {} as Record<string, AggregatedResponse>,
-  );
-
-  const featureFlags = responses['cmsFeatureFlag']?.data?.data ?? [];
-  const isCentralCatalogueEnabled =
-    Array.isArray(featureFlags) &&
-    featureFlags.some((f: any) => f?.name === 'central_catalogue_global' && f?.isActive === true);
-  const preferredResponse = isCentralCatalogueEnabled
-    ? responses['uom-convert-v2']
-    : responses['uom-convert-legacy'];
-
-  if (!preferredResponse) {
-    throw new CustomError('Preferred UOM convert response not found', 500);
-  }
-
-  if (!preferredResponse.success) {
-    const err = new CustomError(preferredResponse.error || 'UOM convert failed', 500) as any;
-    err.httpStatusCode = preferredResponse.httpStatus || 500;
-    err.downstreamResponse = preferredResponse.downstreamResponse;
-    throw err;
-  }
-
-  return preferredResponse.data;
 }
 
 function getNormalizedPagination(body: any) {

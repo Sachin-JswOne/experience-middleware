@@ -41,6 +41,15 @@ export function convertOriginalBodyToGetRequestFromParallelPayload(
   });
 }
 
+export function transformWebHomePageBuyAgainRequestV3(
+  request: BaseRequest,
+): BaseRequest {
+  return {
+    ...request,
+    body: getParallelHelperOriginalBody(request) ?? {},
+  };
+}
+
 function buildSyntheticHomepageCmsPrevResponses(cmsResponse: any): AggregatedResponse[] {
   return [
     {
@@ -615,7 +624,7 @@ export function mergeWebHomePageResponsesV3(aggregatedResponses: AggregatedRespo
    */
   if (buyAgainAgg?.success) {
     const rawData = buyAgainAgg.data?.data ?? buyAgainAgg.data ?? {};
-    const { listOfBuyAgainProducts, variantList, skuSize } = rawData;
+    const { listOfBuyAgainProducts, variantList, skuSize, filterConditions } = rawData;
 
     const products =
       listOfBuyAgainProducts ?? variantList ?? (Array.isArray(rawData) ? rawData : []);
@@ -624,6 +633,8 @@ export function mergeWebHomePageResponsesV3(aggregatedResponses: AggregatedRespo
       page.buy_again_component.listOfBuyAgainProducts = products;
       if (variantList) page.buy_again_component.variantList = variantList;
       if (skuSize != null) page.buy_again_component.skuSize = skuSize;
+      if (filterConditions) page.buy_again_component.filterConditions = filterConditions;
+
     }
   } else if (buyAgainAgg && !buyAgainAgg.success) {
     Logger.warn(
@@ -1001,5 +1012,39 @@ export function mergeWebIndustriesWithSegments(aggregatedResponses: AggregatedRe
           segmentId: segmentMap.get(normalize(industry.name)) ?? null,
         }))
       : industries,
+  };
+}
+
+export function transformBuyAgainRequestFromParallelPayload(
+  request: BaseRequest,
+): BaseRequest {
+  const originalBody = getParallelHelperOriginalBody(request);
+  console.log('originalBody', originalBody);
+  return {
+    ...request,
+    body: {
+      offSet: originalBody?.offSet ?? 0,
+      limit: originalBody?.limit ?? 50,
+      ...(originalBody?.filterConditions && {
+        filterConditions: originalBody.filterConditions,
+      }),
+    },
+  };
+}
+
+export function transformBuyAgainRequestPayload(
+  request: BaseRequest,
+): BaseRequest {
+  const originalBody = request.body;
+  console.log('originalBody', originalBody);
+  return {
+    ...request,
+    body: {
+      offSet: originalBody?.offSet ?? 0,
+      limit: originalBody?.limit ?? 50,
+      ...(originalBody?.filterConditions && {
+        filterConditions: originalBody.filterConditions,
+      }),
+    },
   };
 }
