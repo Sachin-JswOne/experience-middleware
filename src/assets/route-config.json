@@ -6082,5 +6082,29 @@
         }
       ]
     }
+  },
+  {
+    "path": "/xp-mi/public/v1/vijai/user/stockSignals",
+    "method": "GET",
+    "routeHandler": "TRANSFORM",
+    "isCacheRequired": false,
+    "target": {
+      "name": "vijai-stock-signals",
+      "url": "${SF_BASE_URI}/services/apexrest/v1/AccountStock",
+      "method": "GET",
+      "timeout": {
+        "request": "${TIMEOUTS.REQUEST}",
+        "socket": 5000
+      },
+      "headersToPass": [
+        {
+          "source": "Authorization",
+          "destination": "Authorization"
+        }
+      ],
+      "requiredParams": ["*"],
+      "reqTransform": "vijai.transformers.transformVijaiStockSignalsRequest",
+      "resTransform": "vijai.transformers.transformVijaiStockSignalsResponse"
+    }
   }
 ]
