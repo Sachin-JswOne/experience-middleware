@@ -3,6 +3,7 @@ import { AggregatedResponse } from 'src/models/aggregated-response.model';
 import { BaseRequest } from 'src/models/base-request.model';
 import { CustomError } from 'src/utils/CustomError';
 import { safeDebug } from 'src/utils/common-functions.util';
+import { getQueryFromContext } from 'src/utils/request-context.util';
 import { moveBodyToQueryParams } from './general.transformers';
 
 /**
@@ -25,6 +26,23 @@ const ENTITY_NAMES: Record<string, string> = {
   JODL: 'JSW One Distribution Limited',
   JOPL: 'JSW One Platforms Limited',
 };
+
+export type DashboardSectionKey = 'orderSummary' | 'credit' | 'ledger' | 'paymentsDue';
+
+/** Canonical section order; also the order keys appear in the merged response. */
+const DASHBOARD_SECTIONS: DashboardSectionKey[] = [
+  'orderSummary',
+  'credit',
+  'ledger',
+  'paymentsDue',
+];
+
+/**
+ * Query param that narrows the dashboard to a subset of sections, e.g.
+ * `?sections=credit,ledger`. Repeating the param works too. Unselected sections
+ * are neither fetched nor returned; omitting the param returns everything.
+ */
+const SECTIONS_PARAM = 'sections';
 
 /**
  * The payments-due API is scoped to a single legal entity via a mandatory
@@ -64,11 +82,12 @@ interface DashboardSection<T> {
   httpStatus?: number;
 }
 
+/** Only the sections asked for are present; every section when `sections` is omitted. */
 export interface CustomerDashboardResponse {
-  orderSummary: DashboardSection<OrderSummary>;
-  credit: DashboardSection<Credit>;
-  ledger: DashboardSection<Ledger>;
-  paymentsDue: DashboardSection<PaymentsDue>;
+  orderSummary?: DashboardSection<OrderSummary>;
+  credit?: DashboardSection<Credit>;
+  ledger?: DashboardSection<Ledger>;
+  paymentsDue?: DashboardSection<PaymentsDue>;
 }
 
 interface OrderSummary {
@@ -105,6 +124,73 @@ interface PaymentsDue {
   entities: PaymentsDueEntity[];
 }
 
+interface SectionSelection {
+  selected: DashboardSectionKey[];
+  unknown: string[];
+}
+
+/**
+ * Reads the `sections` selection off the inbound query. Request transformers run
+ * against a rebuilt downstream request that no longer carries the caller's query
+ * string, and the response transformer never sees the request at all, so both
+ * read it from the request context instead.
+ */
+function requestedSections(): SectionSelection {
+  const raw = getQueryFromContext()[SECTIONS_PARAM];
+  const tokens = (Array.isArray(raw) ? raw : [raw])
+    .flatMap((value) => String(value ?? '').split(','))
+    .map((token) => token.trim())
+    .filter(Boolean);
+
+  if (tokens.length === 0) {
+    return { selected: [...DASHBOARD_SECTIONS], unknown: [] };
+  }
+
+  const selected: DashboardSectionKey[] = [];
+  const unknown: string[] = [];
+
+  for (const token of tokens) {
+    const match = DASHBOARD_SECTIONS.find(
+      (section) => section.toLowerCase() === token.toLowerCase(),
+    );
+    if (!match) {
+      unknown.push(token);
+    } else if (!selected.includes(match)) {
+      selected.push(match);
+    }
+  }
+
+  return { selected, unknown };
+}
+
+/**
+ * Suppresses a target whose section was not asked for: a request carrying `skip`
+ * makes ProxyService drop the downstream call entirely. An unrecognised section
+ * name skips every target — `mergeCustomerDashboard` then rejects the request
+ * with a 400 rather than any downstream traffic being spent on it.
+ */
+function skipUnlessRequested(
+  request: BaseRequest,
+  section: DashboardSectionKey,
+): BaseRequest | null {
+  const { selected, unknown } = requestedSections();
+
+  if (unknown.length === 0 && selected.includes(section)) {
+    return null;
+  }
+
+  safeDebug(Logger, () => `Customer Dashboard → skipping unrequested section: ${section}`);
+  return { ...request, skip: true };
+}
+
+export function transformOrderSummaryRequest(request: BaseRequest): BaseRequest {
+  return skipUnlessRequested(request, 'orderSummary') ?? moveBodyToQueryParams(request);
+}
+
+export function transformLedgerRequest(request: BaseRequest): BaseRequest {
+  return skipUnlessRequested(request, 'ledger') ?? moveBodyToQueryParams(request);
+}
+
 /**
  * The credit-eligibility API takes the GSTIN as a path segment while the other
  * dashboard targets take it as a query param, so it is lifted out of the request
@@ -112,6 +198,11 @@ interface PaymentsDue {
  * of the dashboard still renders.
  */
 export function transformCreditEligibilityRequest(request: BaseRequest): BaseRequest {
+  const skipped = skipUnlessRequested(request, 'credit');
+  if (skipped) {
+    return skipped;
+  }
+
   const gstin = request.body?.gstin ?? request.url.searchParams.get('gstin');
 
   if (!gstin) {
@@ -135,6 +226,11 @@ export function transformCreditEligibilityRequest(request: BaseRequest): BaseReq
  * decides which entity it represents.
  */
 function scopeToApplication(request: BaseRequest, applicationName: string): BaseRequest {
+  const skipped = skipUnlessRequested(request, 'paymentsDue');
+  if (skipped) {
+    return skipped;
+  }
+
   const transformedRequest = moveBodyToQueryParams(request);
   transformedRequest.url.searchParams.set('applicationName', applicationName);
   return transformedRequest;
@@ -169,12 +265,43 @@ export function mergeCustomerDashboard(
       )}`,
   );
 
-  return {
-    orderSummary: buildSection('orderSummary', responses['orderSummary'], mapOrderSummary),
-    credit: buildSection('credit', responses['credit'], mapCredit),
-    ledger: buildSection('ledger', responses['ledger'], mapLedger),
-    paymentsDue: buildPaymentsDueSection(responses),
-  };
+  const { selected, unknown } = requestedSections();
+
+  if (unknown.length > 0) {
+    throw new CustomError(
+      `Unknown ${SECTIONS_PARAM} value(s): ${unknown.join(', ')}. Valid values: ${DASHBOARD_SECTIONS.join(', ')}`,
+      400,
+    );
+  }
+
+  const response: CustomerDashboardResponse = {};
+
+  for (const section of DASHBOARD_SECTIONS) {
+    if (!selected.includes(section)) {
+      continue;
+    }
+
+    switch (section) {
+      case 'orderSummary':
+        response.orderSummary = buildSection(
+          'orderSummary',
+          responses.orderSummary,
+          mapOrderSummary,
+        );
+        break;
+      case 'credit':
+        response.credit = buildSection('credit', responses.credit, mapCredit);
+        break;
+      case 'ledger':
+        response.ledger = buildSection('ledger', responses.ledger, mapLedger);
+        break;
+      case 'paymentsDue':
+        response.paymentsDue = buildPaymentsDueSection(responses);
+        break;
+    }
+  }
+
+  return response;
 }
 
 function buildSection<T>(

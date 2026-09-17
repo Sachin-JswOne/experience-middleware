@@ -1,10 +1,17 @@
 import {
   mergeCustomerDashboard,
   transformCreditEligibilityRequest,
+  transformLedgerRequest,
+  transformOrderSummaryRequest,
   transformPaymentsDueJodlRequest,
   transformPaymentsDueJoplRequest,
 } from '../dashboard.transformers';
 import { AggregatedResponse } from 'src/models/aggregated-response.model';
+import { requestContext } from 'src/utils/request-context.util';
+
+/** Runs `fn` as if the inbound request carried `query`. */
+const withQuery = <T>(query: Record<string, any>, fn: () => T): T =>
+  requestContext.run({ query }, fn);
 
 const ok = (target: string, data: any): AggregatedResponse => ({ target, success: true, data });
 
@@ -73,8 +80,8 @@ describe('mergeCustomerDashboard', () => {
       data: { isCreditEligible: true, amount: 260500 },
     });
     // Falls back to the well-known entity name when the downstream sends only a code.
-    expect(result.ledger.data?.entities[1].name).toBe('JSW One Platforms Limited');
-    expect(result.paymentsDue.data?.entities[0]).toEqual({
+    expect(result.ledger?.data?.entities[1].name).toBe('JSW One Platforms Limited');
+    expect(result.paymentsDue?.data?.entities[0]).toEqual({
       code: 'JODL',
       name: 'JSW One Distribution Limited',
       buckets: {
@@ -98,16 +105,16 @@ describe('mergeCustomerDashboard', () => {
     ]);
 
     expect(result.credit).toEqual({ success: false, error: 'Unauthorized', httpStatus: 401 });
-    expect(result.orderSummary.success).toBe(true);
-    expect(result.ledger.success).toBe(true);
-    expect(result.paymentsDue.success).toBe(true);
+    expect(result.orderSummary?.success).toBe(true);
+    expect(result.ledger?.success).toBe(true);
+    expect(result.paymentsDue?.success).toBe(true);
   });
 
   it('marks a section unsuccessful when its target is missing from the aggregate', () => {
     const result = mergeCustomerDashboard([ok('orderSummary', orderSummaryPayload)]);
 
     expect(result.ledger).toEqual({ success: false, error: 'No response from ledger' });
-    expect(result.paymentsDue.success).toBe(false);
+    expect(result.paymentsDue?.success).toBe(false);
   });
 
   it('marks a section unsuccessful when the downstream envelope reports failure', () => {
@@ -126,13 +133,13 @@ describe('mergeCustomerDashboard', () => {
       }),
     ]);
 
-    expect(result.orderSummary.data?.invoiceDetails.hasActiveOrder).toBe(false);
+    expect(result.orderSummary?.data?.invoiceDetails.hasActiveOrder).toBe(false);
   });
 
   it('defaults missing amounts and counts to zero rather than undefined', () => {
     const result = mergeCustomerDashboard([ok('orderSummary', { data: {}, success: true })]);
 
-    expect(result.orderSummary.data).toEqual({
+    expect(result.orderSummary?.data).toEqual({
       shipmentDetails: { inTransit: 0, nextDeliveryDate: null },
       orderDetails: { active: 0, deliveredThisMonth: 0 },
       invoiceDetails: { invoicedAmount: 0, invoiceCount: 0, hasActiveOrder: false },
@@ -147,7 +154,7 @@ describe('mergeCustomerDashboard', () => {
       }),
     ]);
 
-    expect(result.ledger.data?.entities[0].amount).toBe(2260500);
+    expect(result.ledger?.data?.entities[0].amount).toBe(2260500);
   });
 
   it('buckets each entity-scoped payments-due list under its own target', () => {
@@ -163,7 +170,7 @@ describe('mergeCustomerDashboard', () => {
       ok('paymentsDueJOPL', { dueList: [] }),
     ]);
 
-    const [jodl, jopl] = result.paymentsDue.data!.entities;
+    const [jodl, jopl] = result.paymentsDue!.data!.entities;
     expect(jodl).toEqual({
       code: 'JODL',
       name: 'JSW One Distribution Limited',
@@ -193,8 +200,8 @@ describe('mergeCustomerDashboard', () => {
       failed('paymentsDueJOPL', 400, 'Missing required request parameter: applicationName'),
     ]);
 
-    expect(result.paymentsDue.success).toBe(true);
-    expect(result.paymentsDue.data?.entities.map((e) => e.code)).toEqual(['JODL']);
+    expect(result.paymentsDue?.success).toBe(true);
+    expect(result.paymentsDue?.data?.entities.map((e) => e.code)).toEqual(['JODL']);
   });
 
   it('fails the payments-due section only when every entity call fails', () => {
@@ -277,5 +284,96 @@ describe('transformCreditEligibilityRequest', () => {
     };
 
     expect(() => transformCreditEligibilityRequest(request)).toThrow('gstin is required');
+  });
+});
+
+describe('sections query param', () => {
+  const allTargets = (): AggregatedResponse[] => [
+    ok('orderSummary', orderSummaryPayload),
+    ok('credit', { isCreditEligible: true, amount: 260500 }),
+    ok('ledger', { updatedOn: '2026-08-20', entities: [] }),
+    ok('paymentsDueJODL', { entities: [] }),
+    ok('paymentsDueJOPL', { entities: [] }),
+  ];
+
+  const request = () => ({
+    url: new URL('https://host/customer/dashboard'),
+    headers: {},
+    body: { gstin: '27AADCL2102L1ZQ' },
+  });
+
+  it('returns every section when the param is absent', () => {
+    const result = withQuery({}, () => mergeCustomerDashboard(allTargets()));
+
+    expect(Object.keys(result)).toEqual(['orderSummary', 'credit', 'ledger', 'paymentsDue']);
+  });
+
+  it('returns only the requested sections, in canonical order', () => {
+    const result = withQuery({ sections: 'paymentsDue,credit' }, () =>
+      mergeCustomerDashboard(allTargets()),
+    );
+
+    expect(Object.keys(result)).toEqual(['credit', 'paymentsDue']);
+    expect(result.credit?.data).toEqual({ isCreditEligible: true, amount: 260500 });
+  });
+
+  it('accepts a repeated param and ignores case', () => {
+    const result = withQuery({ sections: ['LEDGER', 'ordersummary'] }, () =>
+      mergeCustomerDashboard(allTargets()),
+    );
+
+    expect(Object.keys(result)).toEqual(['orderSummary', 'ledger']);
+  });
+
+  it('rejects an unknown section with a 400', () => {
+    expect(() =>
+      withQuery({ sections: 'credit,invoices' }, () => mergeCustomerDashboard(allTargets())),
+    ).toThrow(/Unknown sections value\(s\): invoices/);
+
+    try {
+      withQuery({ sections: 'invoices' }, () => mergeCustomerDashboard(allTargets()));
+    } catch (error: any) {
+      expect(error.httpStatusCode).toBe(400);
+    }
+  });
+
+  it('skips the downstream call for every unrequested section', () => {
+    const selection = { sections: 'credit' };
+
+    expect(withQuery(selection, () => transformOrderSummaryRequest(request())).skip).toBe(true);
+    expect(withQuery(selection, () => transformLedgerRequest(request())).skip).toBe(true);
+    expect(withQuery(selection, () => transformPaymentsDueJodlRequest(request())).skip).toBe(true);
+    expect(withQuery(selection, () => transformPaymentsDueJoplRequest(request())).skip).toBe(true);
+
+    const credit = withQuery(selection, () => transformCreditEligibilityRequest(request()));
+    expect(credit.skip).toBeUndefined();
+    expect(credit.url.pathname).toBe('/customer/dashboard/27AADCL2102L1ZQ');
+  });
+
+  it('skips a requested section that would otherwise fail validation only when unselected', () => {
+    // credit unselected: no gstin needed, the call is simply skipped
+    const skipped = withQuery({ sections: 'ledger' }, () =>
+      transformCreditEligibilityRequest({ ...request(), body: {} }),
+    );
+
+    expect(skipped.skip).toBe(true);
+  });
+
+  it('skips every downstream call when the selection is invalid', () => {
+    const selection = { sections: 'invoices' };
+
+    expect(withQuery(selection, () => transformOrderSummaryRequest(request())).skip).toBe(true);
+    expect(withQuery(selection, () => transformCreditEligibilityRequest(request())).skip).toBe(
+      true,
+    );
+  });
+
+  it('still applies the normal transform when the section is selected', () => {
+    const transformed = withQuery({ sections: 'orderSummary,paymentsDue' }, () =>
+      transformOrderSummaryRequest(request()),
+    );
+
+    expect(transformed.skip).toBeUndefined();
+    expect(transformed.url.searchParams.get('gstin')).toBe('27AADCL2102L1ZQ');
   });
 });

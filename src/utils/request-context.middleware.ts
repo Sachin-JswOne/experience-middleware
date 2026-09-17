@@ -14,6 +14,7 @@ export class RequestContextMiddleware implements NestMiddleware {
     const context = {
       sfId,
       ctId,
+      query: (req.query ?? {}) as Record<string, any>,
     };
 
     requestContext.run(context, () => {

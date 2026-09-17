@@ -5866,7 +5866,7 @@
             "destination": "access_token"
           }
         ],
-        "reqTransform": "general.transformers.moveBodyToQueryParams"
+        "reqTransform": "dashboard.transformers.transformOrderSummaryRequest"
       },
       {
         "name": "credit",
@@ -5906,7 +5906,7 @@
             "destination": "access_token"
           }
         ],
-        "reqTransform": "general.transformers.moveBodyToQueryParams"
+        "reqTransform": "dashboard.transformers.transformLedgerRequest"
       },
       {
         "name": "paymentsDueJODL",
