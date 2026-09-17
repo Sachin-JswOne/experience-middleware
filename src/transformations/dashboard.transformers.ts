@@ -3,6 +3,7 @@ import { AggregatedResponse } from 'src/models/aggregated-response.model';
 import { BaseRequest } from 'src/models/base-request.model';
 import { CustomError } from 'src/utils/CustomError';
 import { safeDebug } from 'src/utils/common-functions.util';
+import { moveBodyToQueryParams } from './general.transformers';
 
 /**
  * Customer dashboard aggregate.
@@ -24,6 +25,18 @@ const ENTITY_NAMES: Record<string, string> = {
   JODL: 'JSW One Distribution Limited',
   JOPL: 'JSW One Platforms Limited',
 };
+
+/**
+ * The payments-due API is scoped to a single legal entity via a mandatory
+ * `applicationName` query param, so the dashboard calls it once per entity and
+ * the two responses are folded back into one `paymentsDue` section. Target names
+ * must match the corresponding entries in route-config.json; list order is the
+ * order the entities appear in the merged response.
+ */
+const PAYMENTS_DUE_TARGETS: { target: string; code: string }[] = [
+  { target: 'paymentsDueJODL', code: 'JODL' },
+  { target: 'paymentsDueJOPL', code: 'JOPL' },
+];
 
 type BucketKey = 'overdue' | 'dueToday' | 'orderConfirmation' | 'materialDispatch';
 
@@ -115,6 +128,26 @@ export function transformCreditEligibilityRequest(request: BaseRequest): BaseReq
   return transformedRequest;
 }
 
+/**
+ * Scopes a payments-due call to one legal entity. Body params are moved onto the
+ * query string as for the other dashboard targets, then `applicationName` is
+ * forced — the caller cannot override it, since the target it is attached to
+ * decides which entity it represents.
+ */
+function scopeToApplication(request: BaseRequest, applicationName: string): BaseRequest {
+  const transformedRequest = moveBodyToQueryParams(request);
+  transformedRequest.url.searchParams.set('applicationName', applicationName);
+  return transformedRequest;
+}
+
+export function transformPaymentsDueJodlRequest(request: BaseRequest): BaseRequest {
+  return scopeToApplication(request, 'JODL');
+}
+
+export function transformPaymentsDueJoplRequest(request: BaseRequest): BaseRequest {
+  return scopeToApplication(request, 'JOPL');
+}
+
 export function mergeCustomerDashboard(
   aggregatedResponses: AggregatedResponse[],
 ): CustomerDashboardResponse {
@@ -140,7 +173,7 @@ export function mergeCustomerDashboard(
     orderSummary: buildSection('orderSummary', responses['orderSummary'], mapOrderSummary),
     credit: buildSection('credit', responses['credit'], mapCredit),
     ledger: buildSection('ledger', responses['ledger'], mapLedger),
-    paymentsDue: buildSection('paymentsDue', responses['paymentsDue'], mapPaymentsDue),
+    paymentsDue: buildPaymentsDueSection(responses),
   };
 }
 
@@ -239,14 +272,55 @@ function mapLedger(payload: any): Ledger {
   };
 }
 
-function mapPaymentsDue(payload: any): PaymentsDue {
+/**
+ * Folds the per-entity payments-due calls back into a single section. Each target
+ * contributes exactly one entity, so a failure drops only that entity; the section
+ * fails only when every entity call failed.
+ */
+function buildPaymentsDueSection(
+  responses: Record<string, AggregatedResponse>,
+): DashboardSection<PaymentsDue> {
+  const entities: PaymentsDueEntity[] = [];
+  const failures: DashboardSection<PaymentsDueEntity>[] = [];
+
+  for (const { target, code } of PAYMENTS_DUE_TARGETS) {
+    const section = buildSection(target, responses[target], (payload) =>
+      mapPaymentsDueEntity(payload, code),
+    );
+
+    if (section.success && section.data) {
+      entities.push(section.data);
+    } else {
+      failures.push(section);
+    }
+  }
+
+  if (entities.length === 0) {
+    const [firstFailure] = failures;
+    return {
+      success: false,
+      error: firstFailure?.error ?? 'No response from paymentsDue',
+      httpStatus: firstFailure?.httpStatus,
+    };
+  }
+
+  return { success: true, data: { entities } };
+}
+
+/**
+ * Maps one entity-scoped payments-due response. The entity code comes from the
+ * target that produced the payload, not from the rows, so an entity with no dues
+ * still renders as a zeroed row.
+ */
+function mapPaymentsDueEntity(payload: any, code: string): PaymentsDueEntity {
   const rows = toArray(payload?.entities ?? payload?.paymentDueList ?? payload?.dueList ?? payload);
-  const byEntity = new Map<string, PaymentsDueEntity>();
+  const entity = emptyPaymentsDueEntity(code, ENTITY_NAMES[code] ?? code);
 
   for (const row of rows) {
-    const code = entityCode(row);
-    const entity = byEntity.get(code) ?? emptyPaymentsDueEntity(code, entityName(row, code));
-    byEntity.set(code, entity);
+    const name = row?.name ?? row?.entityDisplayName;
+    if (name) {
+      entity.name = name;
+    }
 
     // Already bucketed by the downstream — merge as-is instead of re-deriving.
     if (row?.buckets && typeof row.buckets === 'object') {
@@ -277,7 +351,7 @@ function mapPaymentsDue(payload: any): PaymentsDue {
     }
   }
 
-  return { entities: [...byEntity.values()] };
+  return entity;
 }
 
 function emptyPaymentsDueEntity(code: string, name: string): PaymentsDueEntity {

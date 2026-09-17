@@ -1,6 +1,8 @@
 import {
   mergeCustomerDashboard,
   transformCreditEligibilityRequest,
+  transformPaymentsDueJodlRequest,
+  transformPaymentsDueJoplRequest,
 } from '../dashboard.transformers';
 import { AggregatedResponse } from 'src/models/aggregated-response.model';
 
@@ -42,10 +44,9 @@ describe('mergeCustomerDashboard', () => {
           { code: 'JOPL', amount: 2260500 },
         ],
       }),
-      ok('paymentsDue', {
+      ok('paymentsDueJODL', {
         entities: [
           {
-            code: 'JODL',
             buckets: {
               overdue: 1200000,
               dueToday: 500000,
@@ -73,7 +74,18 @@ describe('mergeCustomerDashboard', () => {
     });
     // Falls back to the well-known entity name when the downstream sends only a code.
     expect(result.ledger.data?.entities[1].name).toBe('JSW One Platforms Limited');
-    expect(result.paymentsDue.data?.entities[0].buckets.overdue).toBe(1200000);
+    expect(result.paymentsDue.data?.entities[0]).toEqual({
+      code: 'JODL',
+      name: 'JSW One Distribution Limited',
+      buckets: {
+        overdue: 1200000,
+        dueToday: 500000,
+        orderConfirmation: 500000,
+        materialDispatch: 60500,
+      },
+      dueInDaysAmount: 300000,
+      dueLaterAmount: 150000,
+    });
   });
 
   it('marks only the failing section when a target returns 401', () => {
@@ -81,7 +93,8 @@ describe('mergeCustomerDashboard', () => {
       ok('orderSummary', orderSummaryPayload),
       failed('credit', 401, 'Unauthorized'),
       ok('ledger', { updatedOn: '2026-08-20', entities: [] }),
-      ok('paymentsDue', { entities: [] }),
+      ok('paymentsDueJODL', { entities: [] }),
+      ok('paymentsDueJOPL', { entities: [] }),
     ]);
 
     expect(result.credit).toEqual({ success: false, error: 'Unauthorized', httpStatus: 401 });
@@ -137,17 +150,17 @@ describe('mergeCustomerDashboard', () => {
     expect(result.ledger.data?.entities[0].amount).toBe(2260500);
   });
 
-  it('groups a flat payments-due list into per-entity buckets', () => {
+  it('buckets each entity-scoped payments-due list under its own target', () => {
     const result = mergeCustomerDashboard([
-      ok('paymentsDue', {
+      ok('paymentsDueJODL', {
         dueList: [
-          { entityCode: 'JODL', dueStatus: 'OVERDUE', amount: 1200000, dueDate: iso(-5) },
-          { entityCode: 'JODL', dueStatus: 'Due Today', amount: 500000, dueDate: iso(0) },
-          { entityCode: 'JODL', dueStatus: 'Material Dispatch', amount: 60500, dueDate: iso(2) },
-          { entityCode: 'JODL', dueStatus: 'ORDER_CONFIRMATION', amount: 500000, dueDate: iso(10) },
-          { entityCode: 'JOPL', dueStatus: 'OVERDUE', amount: 0, dueDate: iso(-1) },
+          { dueStatus: 'OVERDUE', amount: 1200000, dueDate: iso(-5) },
+          { dueStatus: 'Due Today', amount: 500000, dueDate: iso(0) },
+          { dueStatus: 'Material Dispatch', amount: 60500, dueDate: iso(2) },
+          { dueStatus: 'ORDER_CONFIRMATION', amount: 500000, dueDate: iso(10) },
         ],
       }),
+      ok('paymentsDueJOPL', { dueList: [] }),
     ]);
 
     const [jodl, jopl] = result.paymentsDue.data!.entities;
@@ -164,7 +177,68 @@ describe('mergeCustomerDashboard', () => {
       dueInDaysAmount: 60500,
       dueLaterAmount: 500000,
     });
-    expect(jopl.code).toBe('JOPL');
+    // An entity with no dues still renders as a zeroed row.
+    expect(jopl).toEqual({
+      code: 'JOPL',
+      name: 'JSW One Platforms Limited',
+      buckets: { overdue: 0, dueToday: 0, orderConfirmation: 0, materialDispatch: 0 },
+      dueInDaysAmount: 0,
+      dueLaterAmount: 0,
+    });
+  });
+
+  it('keeps the payments-due section alive when only one entity call fails', () => {
+    const result = mergeCustomerDashboard([
+      ok('paymentsDueJODL', { entities: [] }),
+      failed('paymentsDueJOPL', 400, 'Missing required request parameter: applicationName'),
+    ]);
+
+    expect(result.paymentsDue.success).toBe(true);
+    expect(result.paymentsDue.data?.entities.map((e) => e.code)).toEqual(['JODL']);
+  });
+
+  it('fails the payments-due section only when every entity call fails', () => {
+    const result = mergeCustomerDashboard([
+      failed('paymentsDueJODL', 400, 'Bad Request'),
+      failed('paymentsDueJOPL', 400, 'Bad Request'),
+    ]);
+
+    expect(result.paymentsDue).toEqual({
+      success: false,
+      error: 'Bad Request',
+      httpStatus: 400,
+    });
+  });
+});
+
+describe('payments-due request transformers', () => {
+  const request = () => ({
+    url: new URL('https://host/customer/payment/v2/payment-due'),
+    headers: {},
+    body: { gstin: '27AADCL2102L1ZQ' },
+  });
+
+  it('scopes the call to JODL and moves body params onto the query string', () => {
+    const transformed = transformPaymentsDueJodlRequest(request());
+
+    expect(transformed.url.searchParams.get('applicationName')).toBe('JODL');
+    expect(transformed.url.searchParams.get('gstin')).toBe('27AADCL2102L1ZQ');
+    expect(transformed.body).toBeNull();
+  });
+
+  it('scopes the call to JOPL', () => {
+    expect(transformPaymentsDueJoplRequest(request()).url.searchParams.get('applicationName')).toBe(
+      'JOPL',
+    );
+  });
+
+  it('ignores a caller-supplied applicationName', () => {
+    const req = request();
+    req.url.searchParams.set('applicationName', 'SOMETHING_ELSE');
+
+    expect(transformPaymentsDueJodlRequest(req).url.searchParams.get('applicationName')).toBe(
+      'JODL',
+    );
   });
 });
 
