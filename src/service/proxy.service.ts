@@ -328,7 +328,7 @@ export class ProxyService {
             isAggregatedResponse(r) && (r.httpStatus === 401 || r.httpStatus === 403),
         );
 
-        if (unauthorized) {
+        if (unauthorized && !route.continueOnUnauthorized) {
           const error: any = new CustomError(
             `Authorization error from target: ${unauthorized.target}`,
             500,
@@ -336,6 +336,12 @@ export class ProxyService {
           error.httpStatusCode = unauthorized.httpStatus;
           error.downstreamResponse = unauthorized.downstreamResponse;
           throw error;
+        }
+
+        if (unauthorized) {
+          this.logger.warn(
+            `[AGGREGATE] target=${unauthorized.target} route=${route.path} returned ${unauthorized.httpStatus}; continuing with remaining targets`,
+          );
         }
 
         span.setAttribute('proxy.parallel.results', normalizedResults.length);

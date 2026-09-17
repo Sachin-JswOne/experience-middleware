@@ -5841,6 +5841,97 @@
     }
   },
   {
+    "path": "/xp-mi/public/v1/customer/dashboard-summary",
+    "method": "POST",
+    "routeHandler": "AGGREGATE",
+    "aggregationType": "PARALLEL",
+    "isCacheRequired": false,
+    "continueOnUnauthorized": true,
+    "targets": [
+      {
+        "name": "orderSummary",
+        "url": "${MSME_BASE_URL}/central_commerce/customer/dashboard",
+        "method": "GET",
+        "timeout": {
+          "request": 10000,
+          "socket": "${TIMEOUTS.SOCKET}"
+        },
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "access_token"
+          },
+          {
+            "source": "access_token",
+            "destination": "access_token"
+          }
+        ],
+        "reqTransform": "general.transformers.moveBodyToQueryParams"
+      },
+      {
+        "name": "credit",
+        "url": "${MSME_BASE_URL}/customer/credit-lead-generation/eligible",
+        "method": "GET",
+        "timeout": {
+          "request": 10000,
+          "socket": "${TIMEOUTS.SOCKET}"
+        },
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "access_token"
+          },
+          {
+            "source": "access_token",
+            "destination": "access_token"
+          }
+        ],
+        "reqTransform": "dashboard.transformers.transformCreditEligibilityRequest"
+      },
+      {
+        "name": "ledger",
+        "url": "${MSME_BASE_URL}/order-service/order/ledger/v2/details",
+        "method": "GET",
+        "timeout": {
+          "request": 10000,
+          "socket": "${TIMEOUTS.SOCKET}"
+        },
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "access_token"
+          },
+          {
+            "source": "access_token",
+            "destination": "access_token"
+          }
+        ],
+        "reqTransform": "general.transformers.moveBodyToQueryParams"
+      },
+      {
+        "name": "paymentsDue",
+        "url": "${MSME_BASE_URL}/customer/payment/v2/payment-due",
+        "method": "GET",
+        "timeout": {
+          "request": 10000,
+          "socket": "${TIMEOUTS.SOCKET}"
+        },
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "access_token"
+          },
+          {
+            "source": "access_token",
+            "destination": "access_token"
+          }
+        ],
+        "reqTransform": "general.transformers.moveBodyToQueryParams"
+      }
+    ],
+    "resTransform": "dashboard.transformers.mergeCustomerDashboard"
+  },
+  {
     "path": "/xp-mi/public/v1/customer/payment/v2/payment-due",
     "method": "POST",
     "routeHandler": "TRANSFORM",
