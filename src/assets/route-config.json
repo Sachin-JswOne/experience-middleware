@@ -6420,7 +6420,8 @@
           "source": "access_token",
           "destination": "access_token"
         }
-      ]
+      ],
+      "requiredParams": ["*"]
     }
   },
   {
