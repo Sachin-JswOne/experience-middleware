@@ -1,6 +1,6 @@
 type AccountType = "distributor" | "retailer";
 
-type SignalSeverity = "red" | "orange" | "grey";
+type SignalSeverity = "red" | "orange" | "grey" | "nocolor";
 
 interface Signal {
     tag: string;
@@ -20,6 +20,10 @@ interface Account {
     accountName: string;
     accountId: string;
     signals?: Signal[];
+    totalOpportunities: number | null;
+    successOpportunities: number | null;
+    newOpportunities: number | null;
+    lostOpportunities: number | null;
 }
 
 interface SignalAccount {

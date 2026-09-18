@@ -150,7 +150,7 @@ ORDER BY CheckIn_CMV__Check_in_Date_Time__c DESC`
 
   if (isAccountList === 'true' && ownerId) {
     soql =
-      `Select Account_tag__c, Registered__c, Account_History_String__c, Opportunity_History_String__c, Last_Opportunity_Create_Date__c, AccountNumber,GST__c, PAN__c, Id, Name, Nodal_Bank_Account__c,isJodl__c, Pay_to__c, JSW_NodalBankVAN__c, JSW_NonNodalBankVAN__c,Non_Nodal_Bank_Account__c, Segment__c, Sub_Segment__c, RecordType.Name, Customer_Type_Account__c, Account_Status__c, Business_Division__c, Auto_State__c, Auto_Taluka__c, Account_Status__c,(SELECT Id, Name, Designation_multiselect__c, MobilePhone, Email from Contacts), (Select id, name, Project_Address__c, pin_code__c, auto_state__c, auto_district__c, City__c,RecordType.Name,Google_maps_coordinates__c from MSME_Construct_Sites__r)
+      `Select Account_tag__c, Registered__c, Account_History_String__c, Opportunity_History_String__c, Last_Opportunity_Create_Date__c, AccountNumber,GST__c, PAN__c, Id, Name, Nodal_Bank_Account__c,isJodl__c, Pay_to__c, JSW_NodalBankVAN__c, JSW_NonNodalBankVAN__c,Non_Nodal_Bank_Account__c, Segment__c, Sub_Segment__c, RecordType.Name, Customer_Type_Account__c, Account_Status__c, Business_Division__c, Auto_State__c, Auto_Taluka__c,(SELECT Id, Name, Designation_multiselect__c, MobilePhone, Email from Contacts), (Select id, name, Project_Address__c, pin_code__c, auto_state__c, auto_district__c, City__c,RecordType.Name,Google_maps_coordinates__c from MSME_Construct_Sites__r)
 FROM Account
 WHERE OwnerId = '${ownerId}'`
         .replace(/\s+/g, ' ')
@@ -289,6 +289,12 @@ export function transformVijaiStockSignalsResponse(response: any) {
  *
  * Retailer - Influencer gap:
  *   soldViaInfluencers === 0
+ * 
+ * Distributor - No opp:
+ *  totalOpportunities = 0
+ * 
+ * Distributor - No pipeline:
+ *  totalOpportunities - successOpportunities - newOpportunities - lostOpportunities === 0
  */
 function getSignals(
     account: Account,
@@ -301,6 +307,10 @@ function getSignals(
     const soldToRetailers = account.soldToRetailers ?? 0;
     const soldAtSites = account.soldAtSites ?? 0;
     const soldViaInfluencers = account.soldViaInfluencers ?? 0;
+    const totalOpportunities = account.totalOpportunities ?? 0;
+    const successOpportunities = account.successOpportunities ?? 0;
+    const newOpportunities = account.newOpportunities ?? 0;
+    const lostOpportunities = account.lostOpportunities ?? 0;
 
     const signals: Signal[] = [];
 
@@ -323,7 +333,7 @@ function getSignals(
     if (type === "distributor" && totalPurchases === 0) {
         signals.push({
             tag: "No purchase",
-            severity: "red"
+            severity: "nocolor"
         });
     }
 
@@ -356,6 +366,20 @@ function getSignals(
         signals.push({
             tag: "Influencer gap",
             severity: "grey"
+        });
+    }
+
+    if(type === "distributor" && totalOpportunities === 0) {
+        signals.push({
+          tag: "no opp",
+          severity: "nocolor"
+        });
+    }
+
+    if(type === "distributor" && (totalOpportunities - successOpportunities - newOpportunities - lostOpportunities) === 0) {
+        signals.push({
+          tag: "no pipeline",
+          severity: "nocolor"
         });
     }
 
