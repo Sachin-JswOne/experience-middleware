@@ -434,7 +434,7 @@
     "routeHandler": "TRANSFORM",
     "target": {
       "name": "appInvoiceAndDocuments",
-      "url": "${ERP_BASE_URI}/fetch-order-invoice-docs",
+      "url": "${ERP_INVOICE_DOC_BASE_URL}/oms/shipment/getInvoiceDocumentByOrderNumbers",
       "method": "GET",
       "timeout": {
         "request": "${TIMEOUTS.REQUEST}",
@@ -442,8 +442,7 @@
       },
       "requiredParams": ["orderNumber"],
       "staticHeaders": {
-        "Authorization": "${X_API_KEY_FOR_ORDER_LISTING}",
-        "client_id": "${ERP_CLIENT_ID}"
+        "Authorization": "${ERP_INVOICE_DOC_AUTHORIZATION}"
       },
       "resTransform": "invoiceAndDocuments.transformers.transformInvoiceAndDocuments"
     }
@@ -526,7 +525,7 @@
       },
       {
         "name": "app-invoice-and-documents",
-        "url": "${ERP_BASE_URI}/fetch-order-invoice-docs",
+        "url": "${ERP_INVOICE_DOC_BASE_URL}/oms/shipment/getInvoiceDocumentByOrderNumber",
         "method": "GET",
         "timeout": {
           "request": "${TIMEOUTS.REQUEST}",
@@ -534,8 +533,7 @@
         },
         "requiredParams": ["orderNumber"],
         "staticHeaders": {
-          "Authorization": "${X_API_KEY_FOR_ORDER_LISTING}",
-          "client_id": "${ERP_CLIENT_ID}"
+        "Authorization": "${ERP_INVOICE_DOC_AUTHORIZATION}"
         }
       }
     ],
