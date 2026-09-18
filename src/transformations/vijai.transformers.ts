@@ -1,5 +1,6 @@
 import { BaseRequest } from 'src/models/base-request.model';
 import 'dotenv/config';
+import { STOCK_LOW_THRESHOLD } from 'src/config/app.config';
 
 export function transformAccessTokenRequest(request: BaseRequest): BaseRequest {
   if (
@@ -149,7 +150,7 @@ ORDER BY CheckIn_CMV__Check_in_Date_Time__c DESC`
 
   if (isAccountList === 'true' && ownerId) {
     soql =
-      `Select Account_tag__c, Registered__c, Account_History_String__c, Opportunity_History_String__c, Last_Opportunity_Create_Date__c, AccountNumber,GST__c, PAN__c, Id, Name, Nodal_Bank_Account__c,isJodl__c, Pay_to__c, JSW_NodalBankVAN__c, JSW_NonNodalBankVAN__c,Non_Nodal_Bank_Account__c, Segment__c, Sub_Segment__c, RecordType.Name, Customer_Type_Account__c, Account_Status__c, Business_Division__c, Auto_State__c, Auto_Taluka__c, Account_Status__c,(SELECT Id, Name, Designation_multiselect__c, MobilePhone, Email from Contacts), (Select id, name, Project_Address__c, pin_code__c, auto_state__c, auto_district__c, City__c,RecordType.Name,Google_maps_coordinates__c from MSME_Construct_Sites__r)
+      `Select Account_tag__c, Registered__c, Account_History_String__c, Opportunity_History_String__c, Last_Opportunity_Create_Date__c, AccountNumber,GST__c, PAN__c, Id, Name, Nodal_Bank_Account__c,isJodl__c, Pay_to__c, JSW_NodalBankVAN__c, JSW_NonNodalBankVAN__c,Non_Nodal_Bank_Account__c, Segment__c, Sub_Segment__c, RecordType.Name, Customer_Type_Account__c, Account_Status__c, Business_Division__c, Auto_State__c, Auto_Taluka__c,(SELECT Id, Name, Designation_multiselect__c, MobilePhone, Email from Contacts), (Select id, name, Project_Address__c, pin_code__c, auto_state__c, auto_district__c, City__c,RecordType.Name,Google_maps_coordinates__c from MSME_Construct_Sites__r)
 FROM Account
 WHERE OwnerId = '${ownerId}'`
         .replace(/\s+/g, ' ')
@@ -235,4 +236,250 @@ export function transformVijaiResolveRecordTypeRequest(request: any) {
   };
   finalTransformedRequest.url.searchParams.set('layoutTypes', 'Compact');
   return finalTransformedRequest;
+}
+
+export function transformVijaiStockSignalsRequest(request: any) {
+  const finalTransformedRequest: BaseRequest = {
+    ...request,
+    body: null,
+  };
+  const ownerId = request.url.searchParams.get('ownerId');
+  request.url.searchParams.set('ownerId', ownerId);
+  return finalTransformedRequest;
+}
+
+export function transformVijaiStockSignalsResponse(response: any) {
+  const data = response.data;
+
+  const distributors = data.filter(
+    item => item.accountType === "Distributor"
+  );
+
+  const retailers = data.filter(
+    item => item.accountType === "Retailer PB"
+  );
+
+  let transformedData = {
+    distributors: distributors,
+    retailers: retailers
+  };
+
+  let finalTransformedData = processStockSignals(transformedData);
+  return finalTransformedData;
+}
+
+/**
+ * Signal definitions
+ *
+ * Stock low:
+ *   currentStock > 0 && currentStock < 5
+ *
+ * Retailer - No stock this month:
+ *   currentStock === 0
+ *
+ * Distributor - No purchase:
+ *   totalPurchases === 0
+ *
+ * Retailer - Stock not moving:
+ *   currentStock > 0 && secondarySales === 0
+ *
+ * Distributor - Stock not moving:
+ *   currentStock > 0 &&
+ *   (soldToRetailers + soldAtSites) === 0
+ *
+ * Retailer - Influencer gap:
+ *   soldViaInfluencers === 0
+ * 
+ * Distributor - No opp:
+ *  totalOpportunities = 0
+ * 
+ * Distributor - No pipeline:
+ *  totalOpportunities - successOpportunities - newOpportunities - lostOpportunities === 0
+ */
+function getSignals(
+    account: Account,
+    type: AccountType
+): Signal[] {
+
+    const currentStock = account.currentStock ?? 0;
+    const totalPurchases = account.totalPurchases ?? 0;
+    const secondarySales = account.secondarySales ?? 0;
+    const soldToRetailers = account.soldToRetailers ?? 0;
+    const soldAtSites = account.soldAtSites ?? 0;
+    const soldViaInfluencers = account.soldViaInfluencers ?? 0;
+    const totalOpportunities = account.totalOpportunities ?? 0;
+    const successOpportunities = account.successOpportunities ?? 0;
+    const newOpportunities = account.newOpportunities ?? 0;
+    const lostOpportunities = account.lostOpportunities ?? 0;
+
+    const signals: Signal[] = [];
+
+    if (
+        currentStock > 0 && currentStock < STOCK_LOW_THRESHOLD
+    ) {
+        signals.push({
+            tag: "Stock low",
+            severity: "red"
+        });
+    }
+
+    if (type === "retailer" && currentStock === 0) {
+        signals.push({
+            tag: "No stock this month",
+            severity: "red"
+        });
+    }
+
+    if (type === "distributor" && totalPurchases === 0) {
+        signals.push({
+            tag: "No purchase",
+            severity: "nocolor"
+        });
+    }
+
+    if (type === "retailer") {
+        if (
+            currentStock > 0 && secondarySales === 0
+        ) {
+            signals.push({
+                tag: "Stock not moving",
+                severity: "orange"
+            });
+        }
+    }
+
+    if (type === "distributor") {
+        const distributorSales = soldToRetailers + soldAtSites;
+        if (
+            currentStock > 0 && distributorSales === 0
+        ) {
+            signals.push({
+                tag: "Stock not moving",
+                severity: "orange"
+            });
+        }
+    }
+
+    if (
+        type === "retailer" && soldViaInfluencers === 0
+    ) {
+        signals.push({
+            tag: "Influencer gap",
+            severity: "grey"
+        });
+    }
+
+    if(type === "distributor" && totalOpportunities === 0) {
+        signals.push({
+          tag: "no opp",
+          severity: "nocolor"
+        });
+    }
+
+    if(type === "distributor" && (totalOpportunities - successOpportunities - newOpportunities - lostOpportunities) === 0) {
+        signals.push({
+          tag: "no pipeline",
+          severity: "nocolor"
+        });
+    }
+
+    return signals;
+}
+
+
+/**
+ * Add signals to every account in an array.
+ */
+function addSignalsToAccounts(accounts, type) {
+    return accounts.map(account => ({
+        accountId: account.accountId,
+        accountName: account.accountName,
+        accountType: account.accountType,
+        signals: getSignals(account, type)
+    }));
+}
+
+
+/**
+ * Build a summary of signals.
+ */
+function getSignalSummary(
+    accounts: Account[]
+): Record<string, SignalSummary> {
+
+    return accounts.reduce<Record<string, SignalSummary>>(
+        (summary, account) => {
+
+            (account.signals ?? []).forEach(signal => {
+
+                if (!summary[signal.tag]) {
+                    summary[signal.tag] = {
+                        count: 0,
+                        severity: signal.severity,
+                        accounts: []
+                    };
+                }
+
+                summary[signal.tag].count++;
+
+                summary[signal.tag].accounts.push({
+                    accountId: account.accountId,
+                    accountName: account.accountName,
+                    accountType: account.accountType
+                });
+            });
+            return summary;
+        },
+        {}
+    );
+}
+
+
+/**
+ * Convert summary object to an array.
+ *
+ * Useful for rendering cards/list in the UI.
+ */
+function getSignalSummaryArray(
+    summary: Record<string, SignalSummary>
+) {
+    return Object.entries(summary).map(
+        ([tag, data]) => ({
+            tag,
+            count: data.count,
+            severity: data.severity,
+        })
+    );
+}
+
+
+/**
+ * Main function.
+ *
+ * Takes the complete API response and returns
+ * tagged distributors, tagged retailers and summaries.
+ */
+function processStockSignals(response: {
+    distributors: Account[];
+    retailers: Account[];
+}) {
+
+    const distributors = addSignalsToAccounts(
+        response.distributors ?? [],
+        "distributor"
+    );
+
+    const retailers = addSignalsToAccounts(
+        response.retailers ?? [],
+        "retailer"
+    );
+
+    const retailerSummary =
+        getSignalSummary(retailers);
+
+    return {
+        distributors,
+        retailerSignalList:
+            getSignalSummaryArray(retailerSummary)
+    };
 }
