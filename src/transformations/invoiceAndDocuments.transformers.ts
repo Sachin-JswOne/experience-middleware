@@ -42,6 +42,7 @@ export function getListOfDocuments(invoiceDocumentsResponse) {
     const documents = transformDocuments(orderShipment);
 
     return {
+      invoiceNumber: orderShipment.invoiceNumber || '',
       shipmentNumber: orderShipment.shipmentNumber || '',
       dispatchedOn: formatDate(orderShipment.dispatchedOn) || '',
       documents: documents,
