@@ -56,6 +56,19 @@ const PAYMENTS_DUE_TARGETS: { target: string; code: string }[] = [
   { target: 'paymentsDueJOPL', code: 'JOPL' },
 ];
 
+/**
+ * The ledger API keys its response by payment transaction type
+ * (`{ NODAL: {...}, NON_NODAL: {...} }`) while the dashboard reports against the
+ * legal entity that owns the balance, so each key is resolved to its entity.
+ */
+const LEDGER_ENTITY_BY_TRANSACTION_TYPE: Record<string, string> = {
+  NODAL: 'JOPL',
+  NON_NODAL: 'JODL',
+};
+
+/** Order ledger entities appear in the merged response; matches PAYMENTS_DUE_TARGETS. */
+const LEDGER_ENTITY_ORDER: string[] = ['JODL', 'JOPL'];
+
 type BucketKey = 'overdue' | 'dueToday' | 'orderConfirmation' | 'materialDispatch';
 
 /**
@@ -97,14 +110,30 @@ interface OrderSummary {
 }
 
 interface Credit {
+  /**
+   * The customer can still apply for credit. A customer who already holds credit
+   * is no longer eligible, so this flag only carries meaning when `amount` is 0.
+   */
   isCreditEligible: boolean;
+  /** Spendable credit across every limit; 0 for a customer who holds none. */
   amount: number;
+}
+
+/** The two independent states the lead-generation API reports. */
+interface CreditEligibility {
+  canApply: boolean;
+  hasExistingCredit: boolean;
 }
 
 interface LedgerEntity {
   code: string;
   name: string;
+  /** Gross ledger balance, amounts blocked against open orders included. */
   amount: number;
+  /** Spendable balance: `amount` less `blockedAmount`. */
+  usableAmount: number;
+  /** Total currently blocked against open orders. */
+  blockedAmount: number;
 }
 
 interface Ledger {
@@ -220,6 +249,15 @@ export function transformCreditEligibilityRequest(request: BaseRequest): BaseReq
 }
 
 /**
+ * Second half of the credit card: the credit-limits list the spendable amount is
+ * summed from. It is fetched in parallel with the eligibility call and discarded
+ * when eligibility says no, so it shares the `credit` section's skip flag.
+ */
+export function transformCreditDetailsRequest(request: BaseRequest): BaseRequest {
+  return skipUnlessRequested(request, 'credit') ?? moveBodyToQueryParams(request);
+}
+
+/**
  * Scopes a payments-due call to one legal entity. Body params are moved onto the
  * query string as for the other dashboard targets, then `applicationName` is
  * forced — the caller cannot override it, since the target it is attached to
@@ -290,7 +328,7 @@ export function mergeCustomerDashboard(
         );
         break;
       case 'credit':
-        response.credit = buildSection('credit', responses.credit, mapCredit);
+        response.credit = buildCreditSection(responses);
         break;
       case 'ledger':
         response.ledger = buildSection('ledger', responses.ledger, mapLedger);
@@ -376,27 +414,137 @@ function mapOrderSummary(payload: any): OrderSummary {
   };
 }
 
-function mapCredit(payload: any): Credit {
+/**
+ * The credit card is fed by two calls, and the customer is in exactly one of two
+ * states. Either they hold credit — the credit-limits list carries the amount and
+ * they are no longer eligible to apply — or they do not, and only the eligibility
+ * flag matters. The limits list is consulted only in the first state, so a customer
+ * who can merely apply never has their card failed by a list of limits they do not
+ * yet have.
+ */
+function buildCreditSection(
+  responses: Record<string, AggregatedResponse>,
+): DashboardSection<Credit> {
+  const eligibility = buildSection('credit', responses.credit, mapCreditEligibility);
+
+  if (!eligibility.success || !eligibility.data) {
+    return { success: false, error: eligibility.error, httpStatus: eligibility.httpStatus };
+  }
+
+  const { canApply, hasExistingCredit } = eligibility.data;
+
+  if (!hasExistingCredit) {
+    return { success: true, data: { isCreditEligible: canApply, amount: 0 } };
+  }
+
+  const details = buildSection('creditDetails', responses.creditDetails, sumUsableCredit);
+
+  if (!details.success) {
+    return { success: false, error: details.error, httpStatus: details.httpStatus };
+  }
+
+  // Holding credit ends eligibility, so the flag is forced off rather than trusted
+  // from the payload; the amount is what the card reads in this state.
+  return { success: true, data: { isCreditEligible: false, amount: details.data ?? 0 } };
+}
+
+/**
+ * `isCreditLeadGenerationEligible` answers "can this customer apply?", which the
+ * API turns off once a lead exists — so it is not a signal that the customer has
+ * credit. An existing lead carrying a `creditAmount` is; that amount is a display
+ * range (`"₹25 Lakhs to ₹50 Lakhs"`), so it is read as a flag, never as a number.
+ */
+function mapCreditEligibility(payload: any): CreditEligibility {
   return {
-    isCreditEligible: Boolean(payload?.isCreditEligible ?? payload?.eligible ?? false),
-    amount: toNumber(payload?.amount ?? payload?.eligibleAmount ?? payload?.creditLimit),
+    canApply: Boolean(
+      payload?.isCreditLeadGenerationEligible ?? payload?.isCreditEligible ?? payload?.eligible,
+    ),
+    hasExistingCredit: Boolean(payload?.customerCreditLead?.creditAmount),
   };
 }
 
-function mapLedger(payload: any): Ledger {
-  const rows = toArray(payload?.entities ?? payload?.ledgerDetails ?? payload);
+/**
+ * Totals the spendable balance across the customer's credit limits. Limits flagged
+ * as not visible to the customer are left out — they are not part of the number the
+ * dashboard is showing them. Rounded because each amount is read in hundredths and
+ * the additions otherwise drift.
+ */
+function sumUsableCredit(payload: any): number {
+  const total = toArray(payload?.creditLimits ?? payload).reduce((sum: number, row: any) => {
+    if (row?.visibleToCustomer === false) {
+      return sum;
+    }
+    return sum + toNumber(row?.creditUsable ?? row?.usableLedgerBalance);
+  }, 0);
 
-  return {
-    updatedOn: payload?.updatedOn ?? payload?.lastUpdatedOn ?? payload?.asOnDate ?? null,
-    entities: rows.map((row: any) => {
-      const code = entityCode(row);
-      return {
-        code,
-        name: entityName(row, code),
-        amount: toNumber(row?.amount ?? row?.balance ?? row?.ledgerBalance ?? row?.totalAmount),
-      };
-    }),
-  };
+  return Math.round(total * 100) / 100;
+}
+
+function mapLedger(payload: any): Ledger {
+  const rows = ledgerRows(payload);
+
+  const entities = rows.map((row: any) => {
+    const code = entityCode(row);
+    const amount = toNumber(row?.amount ?? row?.balance ?? row?.ledgerBalance ?? row?.totalAmount);
+    const blockedAmount = toNumber(row?.totalOrderBlockAmount ?? row?.blockedAmount);
+    const usable = row?.usableLedgerBalance ?? row?.usableAmount;
+
+    return {
+      code,
+      name: entityName(row, code),
+      amount,
+      // Derived when the downstream sends only the gross balance; rounded because
+      // the subtraction reintroduces float noise the source amounts do not carry.
+      usableAmount:
+        usable === undefined || usable === null
+          ? Math.round((amount - blockedAmount) * 100) / 100
+          : toNumber(usable),
+      blockedAmount,
+    };
+  });
+
+  entities.sort((a, b) => ledgerEntityRank(a.code) - ledgerEntityRank(b.code));
+
+  return { updatedOn: ledgerUpdatedOn(payload, rows), entities };
+}
+
+/** Prefers an envelope-level date, falling back to the first row that carries one. */
+function ledgerUpdatedOn(payload: any, rows: any[]): string | null {
+  for (const source of [payload, ...rows]) {
+    const date = source?.updatedOn ?? source?.lastUpdatedOn ?? source?.asOnDate;
+    if (date) {
+      return String(date);
+    }
+  }
+  return null;
+}
+
+/**
+ * Normalises the two ledger payload shapes into rows. The live API returns an
+ * object keyed by payment transaction type; array-shaped payloads (`entities` /
+ * `ledgerDetails`, or a bare array) carry the entity code on the row itself.
+ */
+function ledgerRows(payload: any): any[] {
+  const listed = toArray(payload?.entities ?? payload?.ledgerDetails ?? payload);
+  if (listed.length > 0 || !payload || typeof payload !== 'object') {
+    return listed;
+  }
+
+  return Object.entries(payload as Record<string, unknown>)
+    .filter(
+      ([key, value]) =>
+        key in LEDGER_ENTITY_BY_TRANSACTION_TYPE && Boolean(value) && typeof value === 'object',
+    )
+    .map(([key, value]) => ({
+      ...(value as Record<string, any>),
+      code: LEDGER_ENTITY_BY_TRANSACTION_TYPE[key],
+    }));
+}
+
+/** Unknown codes sort after the known entities, keeping their relative order. */
+function ledgerEntityRank(code: string): number {
+  const index = LEDGER_ENTITY_ORDER.indexOf(code);
+  return index === -1 ? LEDGER_ENTITY_ORDER.length : index;
 }
 
 /**
@@ -521,7 +669,10 @@ function daysUntil(date: unknown): number | null {
 
 /**
  * Amounts arrive either as plain numbers or as the platform `AmountDetails`
- * object (`{ centAmount, precision }`). Normalises both to a plain number.
+ * object. Within that object the two amount fields scale differently:
+ * `centAmount` is always in hundredths, while `precisionAmount` scales by the
+ * accompanying `precision`. `centAmount` is preferred because it needs no
+ * sibling field to be read correctly.
  */
 function toNumber(value: any): number {
   if (typeof value === 'number') {
@@ -531,9 +682,13 @@ function toNumber(value: any): number {
     const parsed = Number(value);
     return Number.isFinite(parsed) ? parsed : 0;
   }
-  if (value && typeof value === 'object' && 'centAmount' in value) {
-    const precision = toNumber(value.precision);
-    return toNumber(value.centAmount) / Math.pow(10, precision);
+  if (value && typeof value === 'object') {
+    if ('centAmount' in value) {
+      return toNumber(value.centAmount) / 100;
+    }
+    if ('precisionAmount' in value) {
+      return toNumber(value.precisionAmount) / Math.pow(10, toNumber(value.precision));
+    }
   }
   return 0;
 }

@@ -5984,6 +5984,26 @@
         "reqTransform": "dashboard.transformers.transformCreditEligibilityRequest"
       },
       {
+        "name": "creditDetails",
+        "url": "${MSME_BASE_URL}/customer/ledger/v2/creditDetails",
+        "method": "GET",
+        "timeout": {
+          "request": 10000,
+          "socket": "${TIMEOUTS.SOCKET}"
+        },
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "access_token"
+          },
+          {
+            "source": "access_token",
+            "destination": "access_token"
+          }
+        ],
+        "reqTransform": "dashboard.transformers.transformCreditDetailsRequest"
+      },
+      {
         "name": "ledger",
         "url": "${MSME_BASE_URL}/order-service/order/ledger/v2/details",
         "method": "GET",
