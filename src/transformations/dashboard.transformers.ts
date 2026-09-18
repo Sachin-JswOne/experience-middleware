@@ -3,6 +3,7 @@ import { AggregatedResponse } from 'src/models/aggregated-response.model';
 import { BaseRequest } from 'src/models/base-request.model';
 import { CustomError } from 'src/utils/CustomError';
 import { safeDebug } from 'src/utils/common-functions.util';
+import { daysUntil, normalizeStatus, roundAmount, toArray, toNumber } from 'src/utils/data.util';
 import { getQueryFromContext } from 'src/utils/request-context.util';
 import { moveBodyToQueryParams } from './general.transformers';
 
@@ -86,6 +87,16 @@ const BUCKET_BY_STATUS: Record<string, BucketKey> = {
   ORDER_CONFIRMED: 'orderConfirmation',
   MATERIAL_DISPATCH: 'materialDispatch',
   DISPATCH: 'materialDispatch',
+};
+
+/**
+ * A payment tied to a stage of the order lands in that stage's bucket whatever its
+ * due date; only the remaining document types (advance invoices and the like) are
+ * bucketed by how overdue they are.
+ */
+const BUCKET_BY_DOCUMENT_TYPE: Record<string, BucketKey> = {
+  FOR_ORDER_CONFIRMATION: 'orderConfirmation',
+  FOR_ORDER_DISPATCH: 'materialDispatch',
 };
 
 interface DashboardSection<T> {
@@ -470,14 +481,15 @@ function mapCreditEligibility(payload: any): CreditEligibility {
  * the additions otherwise drift.
  */
 function sumUsableCredit(payload: any): number {
-  const total = toArray(payload?.creditLimits ?? payload).reduce((sum: number, row: any) => {
-    if (row?.visibleToCustomer === false) {
-      return sum;
-    }
-    return sum + toNumber(row?.creditUsable ?? row?.usableLedgerBalance);
-  }, 0);
+  const total: number = toArray(payload?.creditLimits ?? payload).reduce(
+    (sum: number, row: any) =>
+      row?.visibleToCustomer === false
+        ? sum
+        : sum + toNumber(row?.creditUsable ?? row?.usableLedgerBalance),
+    0,
+  );
 
-  return Math.round(total * 100) / 100;
+  return roundAmount(total);
 }
 
 function mapLedger(payload: any): Ledger {
@@ -497,7 +509,7 @@ function mapLedger(payload: any): Ledger {
       // the subtraction reintroduces float noise the source amounts do not carry.
       usableAmount:
         usable === undefined || usable === null
-          ? Math.round((amount - blockedAmount) * 100) / 100
+          ? roundAmount(amount - blockedAmount)
           : toNumber(usable),
       blockedAmount,
     };
@@ -588,7 +600,13 @@ function buildPaymentsDueSection(
  * still renders as a zeroed row.
  */
 function mapPaymentsDueEntity(payload: any, code: string): PaymentsDueEntity {
-  const rows = toArray(payload?.entities ?? payload?.paymentDueList ?? payload?.dueList ?? payload);
+  const rows = toArray(
+    payload?.entities ??
+      payload?.customerPaymentDue ??
+      payload?.paymentDueList ??
+      payload?.dueList ??
+      payload,
+  );
   const entity = emptyPaymentsDueEntity(code, ENTITY_NAMES[code] ?? code);
 
   for (const row of rows) {
@@ -610,7 +628,7 @@ function mapPaymentsDueEntity(payload: any, code: string): PaymentsDueEntity {
     const amount = toNumber(
       row?.amount ?? row?.dueAmount ?? row?.pendingAmount ?? row?.totalDueAmount,
     );
-    const bucket = BUCKET_BY_STATUS[normalizeStatus(row?.dueStatus ?? row?.status ?? row?.stage)];
+    const bucket = bucketForRow(row);
     if (bucket) {
       entity.buckets[bucket] += amount;
     }
@@ -626,7 +644,56 @@ function mapPaymentsDueEntity(payload: any, code: string): PaymentsDueEntity {
     }
   }
 
+  for (const key of Object.keys(entity.buckets) as BucketKey[]) {
+    entity.buckets[key] = roundAmount(entity.buckets[key]);
+  }
+  entity.dueInDaysAmount = roundAmount(entity.dueInDaysAmount);
+  entity.dueLaterAmount = roundAmount(entity.dueLaterAmount);
+
   return entity;
+}
+
+/**
+ * Picks the strip bucket for one due row. The document type wins where it names an
+ * order stage; everything else falls through to how overdue the payment is, read
+ * from an explicit due status when the downstream sends one and from `overdueDays`
+ * otherwise. A future-dated row of any other type lands in no bucket — it is still
+ * counted in the due-in-days / due-later totals.
+ */
+function bucketForRow(row: any): BucketKey | undefined {
+  const byDocumentType = BUCKET_BY_DOCUMENT_TYPE[normalizeStatus(row?.documentType)];
+  if (byDocumentType) {
+    return byDocumentType;
+  }
+
+  const byStatus = dueStatusBucket(row?.dueStatus ?? row?.status ?? row?.stage);
+  if (byStatus) {
+    return byStatus;
+  }
+
+  const overdueDays = row?.overdueDays;
+  if (typeof overdueDays !== 'number' || !Number.isFinite(overdueDays)) {
+    return undefined;
+  }
+  if (overdueDays >= 1) {
+    return 'overdue';
+  }
+  return overdueDays === 0 ? 'dueToday' : undefined;
+}
+
+/** Matches whole status values first, then the `Overdue by >=1 days` style prefixes. */
+function dueStatusBucket(status: any): BucketKey | undefined {
+  const normalized = normalizeStatus(status);
+  if (!normalized) {
+    return undefined;
+  }
+  if (BUCKET_BY_STATUS[normalized]) {
+    return BUCKET_BY_STATUS[normalized];
+  }
+  if (normalized.startsWith('OVERDUE')) {
+    return 'overdue';
+  }
+  return normalized.startsWith('DUE_TODAY') ? 'dueToday' : undefined;
 }
 
 function emptyPaymentsDueEntity(code: string, name: string): PaymentsDueEntity {
@@ -645,54 +712,4 @@ function entityCode(row: any): string {
 
 function entityName(row: any, code: string): string {
   return row?.name ?? row?.entityDisplayName ?? ENTITY_NAMES[code] ?? code;
-}
-
-function normalizeStatus(status: any): string {
-  return String(status ?? '')
-    .trim()
-    .toUpperCase()
-    .replace(/[^A-Z0-9]+/g, '_');
-}
-
-/** Whole days from today (UTC) to `date`; 0 is today, negative is in the past. */
-function daysUntil(date: unknown): number | null {
-  if (typeof date !== 'string' && typeof date !== 'number' && !(date instanceof Date)) {
-    return null;
-  }
-  const due = new Date(date);
-  if (Number.isNaN(due.getTime())) {
-    return null;
-  }
-  const startOfDay = (d: Date) => Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
-  return Math.round((startOfDay(due) - startOfDay(new Date())) / 86_400_000);
-}
-
-/**
- * Amounts arrive either as plain numbers or as the platform `AmountDetails`
- * object. Within that object the two amount fields scale differently:
- * `centAmount` is always in hundredths, while `precisionAmount` scales by the
- * accompanying `precision`. `centAmount` is preferred because it needs no
- * sibling field to be read correctly.
- */
-function toNumber(value: any): number {
-  if (typeof value === 'number') {
-    return Number.isFinite(value) ? value : 0;
-  }
-  if (typeof value === 'string') {
-    const parsed = Number(value);
-    return Number.isFinite(parsed) ? parsed : 0;
-  }
-  if (value && typeof value === 'object') {
-    if ('centAmount' in value) {
-      return toNumber(value.centAmount) / 100;
-    }
-    if ('precisionAmount' in value) {
-      return toNumber(value.precisionAmount) / Math.pow(10, toNumber(value.precision));
-    }
-  }
-  return 0;
-}
-
-function toArray(value: any): any[] {
-  return Array.isArray(value) ? value : [];
 }

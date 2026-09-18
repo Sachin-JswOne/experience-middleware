@@ -79,6 +79,40 @@ const creditDetailsPayload = {
   success: true,
 };
 
+/** A Java `LocalDate` array, `[year, 1-based month, day]`, relative to today. */
+const localDate = (daysFromToday: number): number[] => {
+  const d = new Date();
+  d.setUTCDate(d.getUTCDate() + daysFromToday);
+  return [d.getUTCFullYear(), d.getUTCMonth() + 1, d.getUTCDate()];
+};
+
+const due = (documentType: string, centAmount: number, extra: Record<string, any> = {}) => ({
+  documentType,
+  documentNumber: 'JOO-A9B80HMEW',
+  orderNumber: 'JOO-A9B80HMEW',
+  dueAmount: amount(centAmount),
+  ...extra,
+});
+
+/** The live payments-due payload: order-stage rows plus one advance invoice. */
+const paymentsDuePayload = {
+  totalDue: amount(121423134),
+  customerPaymentDue: [
+    due('For order confirmation', 283200, { dueDate: [2025, 4, 2], overdueDays: 534 }),
+    due('For order confirmation', 56904, { dueDate: [2025, 7, 4], overdueDays: 441 }),
+    due('For order dispatch', 227617, { dueDate: [2025, 7, 4], overdueDays: 441 }),
+    due('For order confirmation', 2360, { dueDate: [2025, 8, 23], overdueDays: 391 }),
+    due('For order dispatch', 9440, { dueDate: [2025, 8, 23], overdueDays: 391 }),
+    due('For order confirmation', 28584, { dueDate: [2025, 8, 28], overdueDays: 386 }),
+    due('For order dispatch', 120000093, { dueDate: [2025, 8, 28], overdueDays: 386 }),
+    due('For order confirmation', 28348, { dueDate: [2025, 8, 29], overdueDays: 385 }),
+    due('For order dispatch', 113393, { dueDate: [2025, 8, 29], overdueDays: 385 }),
+    due('For order confirmation', 473195, { dueDate: [2025, 10, 29], overdueDays: 324 }),
+    due('Advance invoice', 200000, { dueDate: [2026, 8, 29], overdueDays: 20 }),
+    due('For order dispatch', 0, { dueDate: [2026, 9, 9], overdueDays: 9 }),
+  ],
+};
+
 const iso = (daysFromToday: number): string => {
   const d = new Date();
   d.setUTCDate(d.getUTCDate() + daysFromToday);
@@ -342,6 +376,70 @@ describe('mergeCustomerDashboard', () => {
       amount: 2260500,
       usableAmount: 2200000,
       blockedAmount: 60500,
+    });
+  });
+
+  it('buckets the live payments-due payload by document type', () => {
+    const result = mergeCustomerDashboard([ok('paymentsDueJODL', paymentsDuePayload)]);
+
+    expect(result.paymentsDue?.data?.entities[0]).toEqual({
+      code: 'JODL',
+      name: 'JSW One Distribution Limited',
+      buckets: {
+        // Only the advance invoice is bucketed by age; the rest go by order stage.
+        overdue: 2000,
+        dueToday: 0,
+        orderConfirmation: 8725.91,
+        materialDispatch: 1203505.43,
+      },
+      // Every row is already past its due date.
+      dueInDaysAmount: 0,
+      dueLaterAmount: 0,
+    });
+  });
+
+  it('totals the buckets to the amount the downstream reports as due', () => {
+    const result = mergeCustomerDashboard([ok('paymentsDueJODL', paymentsDuePayload)]);
+    const { buckets } = result.paymentsDue!.data!.entities[0];
+
+    // Matches the payload's own totalDue of 12,14,231.34; summed here, so approximate.
+    expect(Object.values(buckets).reduce((sum, value) => sum + value, 0)).toBeCloseTo(
+      1214231.34,
+      2,
+    );
+  });
+
+  it('buckets a non-stage document type by how overdue it is', () => {
+    const result = mergeCustomerDashboard([
+      ok('paymentsDueJODL', {
+        customerPaymentDue: [
+          due('Advance invoice', 100000, { dueDate: localDate(0), overdueDays: 0 }),
+          due('Tax invoice', 250000, { dueDate: localDate(-4), overdueDays: 4 }),
+          // Future-dated: in no bucket, but still counted in the due-in-days total.
+          due('Tax invoice', 50000, { dueDate: localDate(2), overdueDays: -2 }),
+        ],
+      }),
+    ]);
+
+    expect(result.paymentsDue?.data?.entities[0]).toMatchObject({
+      buckets: { overdue: 2500, dueToday: 1000, orderConfirmation: 0, materialDispatch: 0 },
+      dueInDaysAmount: 500,
+      dueLaterAmount: 0,
+    });
+  });
+
+  it('reads an explicit due status when the downstream sends one', () => {
+    const result = mergeCustomerDashboard([
+      ok('paymentsDueJODL', {
+        customerPaymentDue: [
+          due('Advance invoice', 100000, { dueStatus: 'Overdue by >=1 days' }),
+          due('Advance invoice', 250000, { dueStatus: 'Due today' }),
+        ],
+      }),
+    ]);
+
+    expect(result.paymentsDue?.data?.entities[0]).toMatchObject({
+      buckets: { overdue: 1000, dueToday: 2500, orderConfirmation: 0, materialDispatch: 0 },
     });
   });
 
