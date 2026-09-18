@@ -24,6 +24,7 @@ interface Account {
     successOpportunities: number | null;
     newOpportunities: number | null;
     lostOpportunities: number | null;
+    accountTag?: string;
 }
 
 interface SignalAccount {

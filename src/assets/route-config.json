@@ -434,7 +434,7 @@
     "routeHandler": "TRANSFORM",
     "target": {
       "name": "appInvoiceAndDocuments",
-      "url": "${ERP_INVOICE_DOC_BASE_URL}/oms/shipment/getInvoiceDocumentByOrderNumber",
+      "url": "${OMS_URL}/oms/shipment/getInvoiceDocumentByOrderNumber",
       "method": "GET",
       "timeout": {
         "request": "${TIMEOUTS.REQUEST}",
@@ -525,7 +525,7 @@
       },
       {
         "name": "app-invoice-and-documents",
-        "url": "${ERP_INVOICE_DOC_BASE_URL}/oms/shipment/getInvoiceDocumentByOrderNumber",
+        "url": "${OMS_URL}/oms/shipment/getInvoiceDocumentByOrderNumber",
         "method": "GET",
         "timeout": {
           "request": "${TIMEOUTS.REQUEST}",
