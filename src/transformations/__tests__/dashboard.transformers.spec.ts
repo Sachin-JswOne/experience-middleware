@@ -1,5 +1,6 @@
 import {
   mergeCustomerDashboard,
+  transformCreditDetailsRequest,
   transformCreditEligibilityRequest,
   transformLedgerRequest,
   transformOrderSummaryRequest,
@@ -33,6 +34,51 @@ const orderSummaryPayload = {
   success: true,
 };
 
+/** Platform AmountDetails object; `centAmount` is in hundredths of a rupee. */
+const amount = (centAmount: number) => ({
+  centAmount,
+  currency: 'INR',
+  precisionAmount: centAmount * 1000,
+  precision: 5,
+});
+
+/** Lead-generation payload for a customer who already holds credit. */
+const hasCreditLead = {
+  customerCreditLead: {
+    gst: '27AADCL2102L1ZQ',
+    creditAmount: '₹25 Lakhs to ₹50 Lakhs',
+    createdAt: '30-01-2026 10:34',
+    sfCustomerId: '001Ik000008lN7GIAU',
+    creditLeadSubmitted: true,
+  },
+  message: 'Customer Credit lead is present',
+  isCreditLeadGenerationEligible: false,
+};
+
+/** Lead-generation payload for a customer who can apply but holds no credit yet. */
+const canApplyForCredit = {
+  customerCreditLead: null,
+  message: 'Customer is eligible for credit lead generation',
+  isCreditLeadGenerationEligible: true,
+};
+
+/** One row of the credit-limits list, in the shape the creditDetails API returns. */
+const creditLimit = (creditUsable: number, extra: Record<string, any> = {}) => ({
+  creditProduct: 'BNPL',
+  creditSanctioned: amount(creditUsable * 2),
+  creditUsable: amount(creditUsable),
+  visibleToCustomer: true,
+  ...extra,
+});
+
+/** Two limits totalling 2,60,500.00 usable credit. */
+const creditDetailsPayload = {
+  status: 'OK',
+  data: [creditLimit(20000000), creditLimit(6050000)],
+  error: null,
+  success: true,
+};
+
 const iso = (daysFromToday: number): string => {
   const d = new Date();
   d.setUTCDate(d.getUTCDate() + daysFromToday);
@@ -43,7 +89,8 @@ describe('mergeCustomerDashboard', () => {
   it('maps all four sections when every target succeeds', () => {
     const result = mergeCustomerDashboard([
       ok('orderSummary', orderSummaryPayload),
-      ok('credit', { isCreditEligible: true, amount: 260500 }),
+      ok('credit', hasCreditLead),
+      ok('creditDetails', creditDetailsPayload),
       ok('ledger', {
         updatedOn: '2026-08-20',
         entities: [
@@ -77,7 +124,8 @@ describe('mergeCustomerDashboard', () => {
     });
     expect(result.credit).toEqual({
       success: true,
-      data: { isCreditEligible: true, amount: 260500 },
+      // Holding credit ends eligibility, so the flag reads false beside a real amount.
+      data: { isCreditEligible: false, amount: 260500 },
     });
     // Falls back to the well-known entity name when the downstream sends only a code.
     expect(result.ledger?.data?.entities[1].name).toBe('JSW One Platforms Limited');
@@ -99,6 +147,7 @@ describe('mergeCustomerDashboard', () => {
     const result = mergeCustomerDashboard([
       ok('orderSummary', orderSummaryPayload),
       failed('credit', 401, 'Unauthorized'),
+      ok('creditDetails', creditDetailsPayload),
       ok('ledger', { updatedOn: '2026-08-20', entities: [] }),
       ok('paymentsDueJODL', { entities: [] }),
       ok('paymentsDueJOPL', { entities: [] }),
@@ -115,6 +164,71 @@ describe('mergeCustomerDashboard', () => {
 
     expect(result.ledger).toEqual({ success: false, error: 'No response from ledger' });
     expect(result.paymentsDue?.success).toBe(false);
+  });
+
+  it('sums the usable credit across every limit when the customer holds credit', () => {
+    const result = mergeCustomerDashboard([
+      ok('credit', hasCreditLead),
+      ok('creditDetails', {
+        status: 'OK',
+        data: [
+          creditLimit(1221341400, { creditProduct: 'Letter of credit' }),
+          creditLimit(62839987),
+        ],
+        error: null,
+        success: true,
+      }),
+    ]);
+
+    // 1,22,13,414.00 + 6,28,399.87
+    expect(result.credit).toEqual({
+      success: true,
+      data: { isCreditEligible: false, amount: 12841813.87 },
+    });
+  });
+
+  it('reports an applicable customer as eligible with no amount', () => {
+    // No creditDetails response at all: a customer who can only apply must not
+    // have their card failed by a limits call they have no limits for.
+    const result = mergeCustomerDashboard([ok('credit', canApplyForCredit)]);
+
+    expect(result.credit).toEqual({
+      success: true,
+      data: { isCreditEligible: true, amount: 0 },
+    });
+  });
+
+  it('reports a customer who can neither apply nor holds credit', () => {
+    const result = mergeCustomerDashboard([
+      ok('credit', { customerCreditLead: null, isCreditLeadGenerationEligible: false }),
+    ]);
+
+    expect(result.credit?.data).toEqual({ isCreditEligible: false, amount: 0 });
+  });
+
+  it('leaves limits hidden from the customer out of the credit total', () => {
+    const result = mergeCustomerDashboard([
+      ok('credit', hasCreditLead),
+      ok('creditDetails', {
+        data: [creditLimit(20000000), creditLimit(6050000, { visibleToCustomer: false })],
+        success: true,
+      }),
+    ]);
+
+    expect(result.credit?.data).toEqual({ isCreditEligible: false, amount: 200000 });
+  });
+
+  it('fails the credit section when the limits call fails for a customer with credit', () => {
+    const result = mergeCustomerDashboard([
+      ok('credit', hasCreditLead),
+      failed('creditDetails', 502, 'Bad Gateway'),
+    ]);
+
+    expect(result.credit).toEqual({
+      success: false,
+      error: 'Bad Gateway',
+      httpStatus: 502,
+    });
   });
 
   it('marks a section unsuccessful when the downstream envelope reports failure', () => {
@@ -155,6 +269,80 @@ describe('mergeCustomerDashboard', () => {
     ]);
 
     expect(result.ledger?.data?.entities[0].amount).toBe(2260500);
+  });
+
+  it('reads centAmount in hundredths regardless of the precision field', () => {
+    const result = mergeCustomerDashboard([
+      ok('ledger', {
+        updatedOn: '2026-08-20',
+        entities: [
+          {
+            code: 'JODL',
+            amount: {
+              centAmount: 70084013,
+              currency: 'INR',
+              displayAmount: '7,00,840.13',
+              precisionAmount: 70084013000,
+              precision: 5,
+            },
+          },
+        ],
+      }),
+    ]);
+
+    expect(result.ledger?.data?.entities[0].amount).toBe(700840.13);
+  });
+
+  it('maps the transaction-type-keyed ledger payload onto legal entities', () => {
+    const result = mergeCustomerDashboard([
+      ok('ledger', {
+        NODAL: {
+          totalOrderBlockAmount: amount(106637297),
+          usableLedgerBalance: amount(9993428990102),
+          ledgerBalance: amount(9993535627399),
+        },
+        NON_NODAL: {
+          totalOrderBlockAmount: amount(70084013),
+          usableLedgerBalance: amount(9993465543386),
+          ledgerBalance: amount(9993535627399),
+        },
+      }),
+    ]);
+
+    // NON_NODAL is JODL and sorts first, matching the payments-due entity order.
+    expect(result.ledger?.data?.entities).toEqual([
+      {
+        code: 'JODL',
+        name: 'JSW One Distribution Limited',
+        amount: 99935356273.99,
+        usableAmount: 99934655433.86,
+        blockedAmount: 700840.13,
+      },
+      {
+        code: 'JOPL',
+        name: 'JSW One Platforms Limited',
+        amount: 99935356273.99,
+        usableAmount: 99934289901.02,
+        blockedAmount: 1066372.97,
+      },
+    ]);
+  });
+
+  it('derives the usable balance when the downstream sends only the gross one', () => {
+    const result = mergeCustomerDashboard([
+      ok('ledger', {
+        updatedOn: '2026-08-20',
+        entities: [{ code: 'JOPL', ledgerBalance: 2260500, totalOrderBlockAmount: 60500 }],
+      }),
+    ]);
+
+    expect(result.ledger?.data?.entities[0]).toEqual({
+      code: 'JOPL',
+      name: 'JSW One Platforms Limited',
+      amount: 2260500,
+      usableAmount: 2200000,
+      blockedAmount: 60500,
+    });
   });
 
   it('buckets each entity-scoped payments-due list under its own target', () => {
@@ -287,10 +475,32 @@ describe('transformCreditEligibilityRequest', () => {
   });
 });
 
+describe('transformCreditDetailsRequest', () => {
+  const request = () => ({
+    url: new URL('https://host/customer/ledger/v2/creditDetails'),
+    headers: {},
+    body: { gstin: '27AADCL2102L1ZQ' },
+  });
+
+  it('moves body params onto the query string', () => {
+    const transformed = transformCreditDetailsRequest(request());
+
+    expect(transformed.url.searchParams.get('gstin')).toBe('27AADCL2102L1ZQ');
+    expect(transformed.body).toBeNull();
+  });
+
+  it('is skipped along with the rest of the credit section', () => {
+    expect(
+      withQuery({ sections: 'ledger' }, () => transformCreditDetailsRequest(request())).skip,
+    ).toBe(true);
+  });
+});
+
 describe('sections query param', () => {
   const allTargets = (): AggregatedResponse[] => [
     ok('orderSummary', orderSummaryPayload),
-    ok('credit', { isCreditEligible: true, amount: 260500 }),
+    ok('credit', hasCreditLead),
+    ok('creditDetails', creditDetailsPayload),
     ok('ledger', { updatedOn: '2026-08-20', entities: [] }),
     ok('paymentsDueJODL', { entities: [] }),
     ok('paymentsDueJOPL', { entities: [] }),
@@ -314,7 +524,7 @@ describe('sections query param', () => {
     );
 
     expect(Object.keys(result)).toEqual(['credit', 'paymentsDue']);
-    expect(result.credit?.data).toEqual({ isCreditEligible: true, amount: 260500 });
+    expect(result.credit?.data).toEqual({ isCreditEligible: false, amount: 260500 });
   });
 
   it('accepts a repeated param and ignores case', () => {
