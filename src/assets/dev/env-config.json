@@ -27,6 +27,8 @@
   "X_API_KEY_FOR_PROFILE": "CommerceServiceWeb-v1-9xblf2tjw6h5y7k3vd0qpoamz48srnycluej8dgw9mf12vhz5tocqk7xpyl3b6fd",
   "TMS_AUTH_TOKEN_ORDER_LISTING": "",
   "ERP_BASE_URL": "https://qa-ssr.msme.jswone.in",
+  "MOENGAGE_DATA_API_URL": "https://api-03.moengage.com/v1/event/4311B84VU6UTCNRSAT5JZ3RV_DEBUG",
+  "MOENGAGE_HUBSPOT_AUTH": "Basic NDMxMUI4NFZVNlVUQ05SU0FUNUpaM1JWX0RFQlVHOkxMYjFAVzN5WHJjSjZzS1VRSGpQUXF0Xw==",
   "WHATSAPP_CART_X_API_KEY": "CART-SERVICE-v1-4iy665w9f64u0h87wpoevhi5zflxy8cwa7y09rjvhu24sinjlcmlq8bdfmdz5hh6",
   "CATALOGUE_CENTRAL_URL": "https://catalogue-central.qa.jsw1msme.in",
   "CATALOGUE_CENTRAL_X_API_KEY": "ba963454-bd2d-486f-802b-741e9f2ce0d8",

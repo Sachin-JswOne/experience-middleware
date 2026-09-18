@@ -119,7 +119,6 @@ export function raiseBrowseTopicsQueryParams(request: BaseRequest): BaseRequest 
     body: request.body?.browseTopicsQuery ?? {},
   });
 }
-
 export function raiseBrowseFaqsQueryParams(request: BaseRequest): BaseRequest {
   const browseFaqsQuery = request.body?.browseFaqsQuery ?? {};
   const defaultPopulate = {
@@ -139,9 +138,7 @@ export function raiseBrowseFaqsQueryParams(request: BaseRequest): BaseRequest {
   };
 }
 
-export function mergeRaiseIssueHelpResponse(
-  aggregatedResponses: AggregatedResponse[],
-): any {
+export function mergeRaiseIssueHelpResponse(aggregatedResponses: AggregatedResponse[]): any {
   const responses = aggregatedResponses.reduce(
     (acc, response) => {
       acc[response.target] = response;

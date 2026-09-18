@@ -1,7 +1,6 @@
 import { Logger } from '@nestjs/common';
 import { safeDebug } from 'src/utils/common-functions.util';
 import { AxiosResponse } from 'axios';
-import * as jwt from 'jsonwebtoken';
 import { CustomError } from 'src/utils/CustomError';
 import { AggregatedResponse } from 'src/models/aggregated-response.model';
 
@@ -72,17 +71,15 @@ export function getPaymentDueDetails(
 }
 
 export function transformOrdersPendingPaymentsRequest(request): any {
-
   const gstin = request.url.searchParams.get('gstin');
-  console.log("gstin", gstin)
+
   request.url.searchParams.set('gstin', gstin);
-  console.log("request", request)
   return request;
 }
 
 export function transformAccountDetailsRequest(request) {
   const gstin = request.url.searchParams.get('gstin');
- 
+
   request.url.searchParams.set('gstin', gstin);
   return request;
 }

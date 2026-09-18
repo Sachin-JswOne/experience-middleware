@@ -41,6 +41,8 @@ export interface AggregateRouteConfig extends BaseRouteConfig {
   routeHandler: RouteHandler.AGGREGATE;
   aggregationType: AggregatorType;
   aggregator?: string;
+  // When true, a 401/403 from one target fails only that target instead of the whole aggregate.
+  continueOnUnauthorized?: boolean;
   targets: TargetConfig[];
   resTransform?: string;
 }

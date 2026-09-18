@@ -7,6 +7,7 @@ import { CustomError } from 'src/utils/CustomError';
 import * as generalTransformers from './general.transformers';
 import { moveBodyToQueryParams } from './general.transformers';
 import * as qs from 'qs';
+import { MOBILE } from 'src/config/app.config';
 
 // Responsible for extracting the category ids from provided array of objects
 function extractIds(items: any[]): string[] {
@@ -271,7 +272,7 @@ export function mergeWebGlobalResponse(results: AggregatedResponse[]): any {
 }
 
 export function transformWebGlobalHeaderLinksRequest(request: BaseRequest): BaseRequest {
-  if (request.body?.userDevice !== 'mobile') {
+  if (request.body?.userDevice !== MOBILE) {
     return {
       ...request,
       skip: true,
@@ -291,6 +292,7 @@ export function transformWebGlobalHeaderLinksRequest(request: BaseRequest): Base
     body: undefined,
   };
 }
+
 export function mergeWebGlobalFinalResponse(results: AggregatedResponse[]): any {
   const webGlobalContentResult = results.find((r) => r.target === 'webGlobalContent');
 
