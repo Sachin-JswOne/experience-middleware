@@ -295,6 +295,9 @@ export function transformVijaiStockSignalsResponse(response: any) {
  * 
  * Distributor - No pipeline:
  *  totalOpportunities - successOpportunities - newOpportunities - lostOpportunities === 0
+ * 
+ * Retailer - Superstar not billed:
+ *  accountTag = "superstar"
  */
 function getSignals(
     account: Account,
@@ -311,6 +314,7 @@ function getSignals(
     const successOpportunities = account.successOpportunities ?? 0;
     const newOpportunities = account.newOpportunities ?? 0;
     const lostOpportunities = account.lostOpportunities ?? 0;
+    const accountTag = account.accountTag ?? '';
 
     const signals: Signal[] = [];
 
@@ -380,6 +384,13 @@ function getSignals(
         signals.push({
           tag: "no pipeline",
           severity: "nocolor"
+        });
+    }
+
+    if(type === "retailer" && accountTag.toLocaleLowerCase().includes("super star")) {
+        signals.push({
+          tag: "Superstar not billed",
+          severity: "red"
         });
     }
 
