@@ -6062,6 +6062,17 @@
           }
         ],
         "reqTransform": "dashboard.transformers.transformPaymentsDueJoplRequest"
+      },
+      {
+        "name": "creditBanner",
+        "url": "${CMS_MSME_URL}/web-credit-banner-configs",
+        "method": "GET",
+        "timeout": {
+          "request": "${TIMEOUTS.REQUEST}",
+          "socket": "${TIMEOUTS.SOCKET}"
+        },
+        "reqTransform": "dashboard.transformers.transformBannerRequest",
+        "resTransform": "cms.transformers.replaceUriPrefix"
       }
     ],
     "resTransform": "dashboard.transformers.mergeCustomerDashboard"

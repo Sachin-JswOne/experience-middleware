@@ -28,7 +28,7 @@ const ENTITY_NAMES: Record<string, string> = {
   JOPL: 'JSW One Platforms Limited',
 };
 
-export type DashboardSectionKey = 'orderSummary' | 'credit' | 'ledger' | 'paymentsDue';
+export type DashboardSectionKey = 'orderSummary' | 'credit' | 'ledger' | 'paymentsDue' | 'creditBanner';
 
 /** Canonical section order; also the order keys appear in the merged response. */
 const DASHBOARD_SECTIONS: DashboardSectionKey[] = [
@@ -36,6 +36,7 @@ const DASHBOARD_SECTIONS: DashboardSectionKey[] = [
   'credit',
   'ledger',
   'paymentsDue',
+  'creditBanner',
 ];
 
 /**
@@ -112,6 +113,7 @@ export interface CustomerDashboardResponse {
   credit?: DashboardSection<Credit>;
   ledger?: DashboardSection<Ledger>;
   paymentsDue?: DashboardSection<PaymentsDue>;
+  creditBanner?: DashboardSection<any>;
 }
 
 interface OrderSummary {
@@ -284,7 +286,14 @@ function scopeToApplication(request: BaseRequest, applicationName: string): Base
   transformedRequest.url.searchParams.set('applicationName', applicationName);
   return transformedRequest;
 }
+export function transformBannerRequest(request: BaseRequest): BaseRequest {
+  const transformedRequest: BaseRequest = {
+    ...request,
+    body: request.body?.creditBanner,
+  };
 
+  return moveBodyToQueryParams(transformedRequest);
+}
 export function transformPaymentsDueJodlRequest(request: BaseRequest): BaseRequest {
   return scopeToApplication(request, 'JODL');
 }
@@ -346,6 +355,13 @@ export function mergeCustomerDashboard(
         break;
       case 'paymentsDue':
         response.paymentsDue = buildPaymentsDueSection(responses);
+        break;
+      case 'creditBanner':
+        response.creditBanner = buildSection(
+          'creditBanner',
+          responses.creditBanner,
+          (payload) => payload,
+        );
         break;
     }
   }
