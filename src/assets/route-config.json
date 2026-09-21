@@ -6247,8 +6247,8 @@
       "url": "${MSME_BASE_URL}/data-sync/ship-to/gst",
       "method": "GET",
       "timeout": {
-        "request": "${TIMEOUTS.REQUEST}",
-        "socket": "${TIMEOUTS.SOCKET}"
+        "request": 10000,
+        "socket": 1000
       },
       "headersToPass": [
         {
@@ -6273,8 +6273,8 @@
       "url": "${MSME_BASE_URL}/data-sync/ship-to/address",
       "method": "GET",
       "timeout": {
-        "request": "${TIMEOUTS.REQUEST}",
-        "socket": "${TIMEOUTS.SOCKET}"
+        "request": 10000,
+        "socket": 1000
       },
       "headersToPass": [
         {
