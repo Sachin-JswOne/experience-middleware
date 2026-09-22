@@ -386,7 +386,12 @@ export function mergeMainMenuResponses(results: AggregatedResponse[]): any {
   mainMenuNavigationStrapi.forEach((item: any) => {
     const name = item?.name?.toLowerCase();
 
-    if (name === 'blogs' || name === 'offers') {
+    if (
+      name === 'blogs' ||
+      name === 'offers' ||
+      name === 'jsw one corporate' ||
+      name === 'my business'
+    ) {
       centralCatalogueNavigation.push(item);
     }
   });
