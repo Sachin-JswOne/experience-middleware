@@ -32,5 +32,8 @@
   "WHATSAPP_CART_X_API_KEY": "CART-SERVICE-v1-4iy665w9f64u0h87wpoevhi5zflxy8cwa7y09rjvhu24sinjlcmlq8bdfmdz5hh6",
   "CATALOGUE_CENTRAL_URL": "https://catalogue-central.qa.jsw1msme.in",
   "CATALOGUE_CENTRAL_X_API_KEY": "ba963454-bd2d-486f-802b-741e9f2ce0d8",
-  "CATALOGUE_CENTRAL_CLIENT_ID": "4c3dc88e-dbb2-4b3a-982e-52c7fb0f33a3"
+  "CATALOGUE_CENTRAL_CLIENT_ID": "4c3dc88e-dbb2-4b3a-982e-52c7fb0f33a3",
+  "OFFER_DOCUMENT_CONSENT_URL": "https://qa-ssr.msme.jswone.in/central_commerce/drhp/v1/consent",
+  "OFFER_DOCUMENT_CONSENT_API_KEY": "REPLACE_ME_OFFER_DOCUMENT_CONSENT_API_KEY",
+  "CMS_OFFER_DOCUMENTS_API_KEY": "REPLACE_ME_CMS_OFFER_DOCUMENTS_API_KEY"
 }

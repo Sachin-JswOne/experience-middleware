@@ -1305,6 +1305,139 @@
     }
   },
   {
+    "path": "/xp-mi/public/v1/offer-document-disclaimer",
+    "method": "GET",
+    "routeHandler": "TRANSFORM",
+    "isCacheRequired": false,
+    "target": {
+      "name": "offerDocumentDisclaimer",
+      "url": "${CMS_MSME_URL}/web-offer-document/disclaimer",
+      "method": "GET",
+      "timeout": {
+        "request": "${TIMEOUTS.REQUEST}",
+        "socket": "${TIMEOUTS.SOCKET}"
+      },
+      "requiredParams": [
+        "slug"
+      ],
+      "resTransform": "cms.transformers.replaceUriPrefix"
+    }
+  },
+  {
+    "path": "/xp-mi/public/v1/offer-documents",
+    "method": "POST",
+    "routeHandler": "AGGREGATE",
+    "aggregationType": "SEQUENTIAL",
+    "isCacheRequired": false,
+    "targets": [
+      {
+        "name": "offer-document-consent-status",
+        "url": "${MSME_BASE_URL}/central_commerce/customer/v1/profile",
+        "method": "GET",
+        "stopOnError": true,
+        "timeout": {
+          "request": 10000,
+          "socket": 1000
+        },
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "access_token"
+          },
+          {
+            "source": "access_token",
+            "destination": "access_token"
+          }
+        ],
+        "staticHeaders": {
+          "Accept": "application/json"
+        },
+        "reqTransform": "general.transformers.convertToGetRequest"
+      },
+      {
+        "name": "offer-documents",
+        "url": "${CMS_MSME_URL}/web-offer-document/documents",
+        "method": "POST",
+        "stopOnError": true,
+        "timeout": {
+          "request": 10000,
+          "socket": 1000
+        },
+        "staticHeaders": {
+          "content-type": "application/json",
+          "x-api-key": "${CMS_OFFER_DOCUMENTS_API_KEY}"
+        },
+        "reqTransform": "offer-document.transformers.transformConsentedOfferDocumentsRequest",
+        "resTransform": "cms.transformers.replaceUriPrefix"
+      }
+    ],
+    "resTransform": "offer-document.transformers.pickConsentedOfferDocumentsResponse"
+  },
+  {
+    "path": "/xp-mi/public/v1/offer-document-consent",
+    "method": "POST",
+    "routeHandler": "AGGREGATE",
+    "aggregationType": "SEQUENTIAL",
+    "isCacheRequired": false,
+    "targets": [
+      {
+        "name": "offer-document-consent-store",
+        "url": "${OFFER_DOCUMENT_CONSENT_URL}",
+        "method": "POST",
+        "stopOnError": true,
+        "timeout": {
+          "request": 10000,
+          "socket": 1000
+        },
+        "staticHeaders": {
+          "accept": "application/json, text/plain, */*",
+          "content-type": "application/json",
+          "X-API-KEY": "${OFFER_DOCUMENT_CONSENT_API_KEY}"
+        },
+        "headersToPass": [
+          {
+            "source": "x-forwarded-for",
+            "destination": "x-forwarded-for"
+          },
+          {
+            "source": "x-real-ip",
+            "destination": "x-real-ip"
+          },
+          {
+            "source": "user-agent",
+            "destination": "user-agent"
+          },
+          {
+            "source": "authorization",
+            "destination": "authorization"
+          },
+          {
+            "source": "access_token",
+            "destination": "access_token"
+          }
+        ],
+        "reqTransform": "offer-document.transformers.transformOfferDocumentConsentRequest"
+      },
+      {
+        "name": "offer-documents",
+        "url": "${CMS_MSME_URL}/web-offer-document/documents",
+        "method": "POST",
+        "stopOnError": true,
+        "timeout": {
+          "request": 10000,
+          "socket": 1000
+        },
+        "staticHeaders": {
+          "content-type": "application/json",
+          "x-api-key": "${CMS_OFFER_DOCUMENTS_API_KEY}"
+        },
+        "reqTransform": "offer-document.transformers.transformOfferDocumentsRequest",
+        "resTransform": "cms.transformers.replaceUriPrefix"
+      }
+    ],
+    "resTransform": "offer-document.transformers.pickOfferDocumentsResponse"
+  },
+  {
     "path": "/xp-mi/public/v1/web-header-links",
     "method": "POST",
     "routeHandler": "TRANSFORM",
