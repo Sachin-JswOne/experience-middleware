@@ -64,6 +64,7 @@ export function transformVijaiUserListRequest(request: any) {
     body: null,
   };
   const ownerId = request.url.searchParams.get('id');
+  const accountId = request.url.searchParams.get('accountId');
   const isVisitList = request.url.searchParams.get('isVisitList');
   const isOpportunityList = request.url.searchParams.get('isOpportunityList');
   const isAccountList = request.url.searchParams.get('isAccountList');
@@ -73,6 +74,7 @@ export function transformVijaiUserListRequest(request: any) {
   const accountIds = request.url.searchParams.get('accountIds');
   const developerName = request.url.searchParams.get('developerName');
   const nextRecordsUrl = request.url.searchParams.get('nextRecordsUrl');
+  const isMarketPotential = request.url.searchParams.get('isMarketPotential');
 
   let soql = '';
 
@@ -121,7 +123,32 @@ ORDER BY CheckIn_CMV__Check_in_Date_Time__c DESC`
         ORDER BY CreatedDate DESC`
         .replace(/\s+/g, ' ')
         .trim();
-    } else {
+    } else if (developerName === 'Private_Brand') {
+      soql = `SELECT Id, Name, StageName, RecordType.DeveloperName, CreatedDate, 
+       Credit_limit_requested__c, Credit_tenure_request_days__c, 
+       Category_Team_Owner__r.Name, Credit_sales_SPOC__r.Name, Risk_SPOC__r.Name,
+       Sales_SPOC__r.Name, JOTS_Owner__r.Name, Opportunity_History_String__c, Total_revised_quantity__c,
+       Success_Marked_Time__c,
+       (SELECT Id, Name, Attributes_to_Display__c, Attributes__c,
+               Final_Distributor_Quote__c, SKU_Subtotal__c,
+               Primary_Revised_Quantity__c
+        FROM Enquiry_Line_items__r), 
+       (SELECT Id, Stage_name__c, Cumulative_stage_age__c, 
+        Current_stage_age__c, Opportunity__c, Stage_entry_time__c, 
+        Stage_exit_time__c, Current_age__c FROM JSW_Ageing__r)
+       Total_revised_quantity__c,
+       Sum_of_SKU_subtotal_Final_Quote__c,
+       Total_Order_Value__c,
+       Delivery_address__r.Address_City_State_Pincode_Formula__c,
+       Account.Billing_Address__r.Address_City_State_Pincode_Formula__c
+        FROM Opportunity
+        WHERE (OwnerId = '${ownerId}' OR Sales_SPOC__c = '${ownerId}')
+        AND RecordType.DeveloperName = '${developerName}'
+        ORDER BY CreatedDate DESC`
+        .replace(/\s+/g, ' ')
+        .trim();
+    }
+    else {
       soql = `SELECT Id, Name, StageName, RecordType.DeveloperName, CreatedDate, 
        Credit_limit_requested__c, Credit_tenure_request_days__c, 
        Category_Team_Owner__r.Name, Credit_sales_SPOC__r.Name, Risk_SPOC__r.Name,
@@ -196,6 +223,13 @@ ORDER BY CreatedDate DESC`
     WHERE Id IN (
     ${accountIds}
     )`;
+  }
+
+  if (isMarketPotential === 'true' && accountId) {
+    soql = `SELECT Id, Category__c, Sub_Category__c, Sales__c, Category_Uom__c, 
+    (SELECT Id, Name, Brand_monthly_potential__c, Related_Category_Information__c FROM Brands__r) 
+    FROM Related_Category_Information__c 
+    WHERE Account__c = '${accountId}'`;
   }
 
   if (nextRecordsUrl) {
