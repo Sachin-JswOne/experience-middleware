@@ -133,11 +133,11 @@ function resolveIdentity(headers: Record<string, any> | undefined): ConsentIdent
       sfCustomerId: payload.sfCustomerId ?? null,
       userId: payload.userId ?? null,
     };
-  } catch {
+  } catch (error) {
     logger.warn(
-      '[offer-document] Token present but not verifiable here; forwarding it for central commerce to judge and recording no identity',
+      `[offer-document] Token present but not verifiable here; forwarding it for central commerce to judge and recording no identity: ${error.message}`,
     );
-    return { isLoggedIn: false, sfCustomerId: null, userId: null };
+    return { isLoggedIn: !!token, sfCustomerId: null, userId: null };
   }
 }
 
@@ -158,6 +158,12 @@ function buildConsentAuthHeaders(headers: Record<string, any>): Record<string, a
   const token = headerValue(headers, 'authorization') || headerValue(headers, 'access_token') || '';
   const bareToken = token.startsWith('Bearer ') ? token.slice(7) : token;
 
+  // Central commerce reads `Authorization` before `access_token` and unconditionally strips
+  // a 7-character scheme prefix from whatever it finds there, so a bare token left on this
+  // header arrives with its first seven characters cut off and fails to parse (a 401
+  // reading `Unable to read JSON value: <binary>`). Clearing both headers first means the
+  // token is re-added below on `access_token` only, and a caller with no token keeps a
+  // clean guest request rather than an empty credential header CCS would reject.
   delete authHeaders.authorization;
   delete authHeaders.Authorization;
   delete authHeaders.access_token;
