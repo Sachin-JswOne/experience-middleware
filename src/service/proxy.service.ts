@@ -22,8 +22,8 @@ import { inspect } from 'util';
 import { CustomError } from 'src/utils/CustomError';
 import { match } from 'path-to-regexp';
 import { isTargetMocked, loadMockResponse } from '../utils/mock.util';
-import { CacheService } from '../cache/cache.service';
-import { CacheProvider } from 'src/cache/cache-provider.type';
+// import { CacheService } from '../cache/cache.service';
+// import { CacheProvider } from 'src/cache/cache-provider.type';
 import axios from 'axios';
 
 @Injectable()
