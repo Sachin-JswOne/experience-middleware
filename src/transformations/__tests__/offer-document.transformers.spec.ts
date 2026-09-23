@@ -185,7 +185,7 @@ describe('offer-document.transformers', () => {
       expect(result.headers['X-API-KEY']).toBeUndefined();
     });
 
-    it('falls back to guest and drops the token when it cannot be verified', () => {
+    it('still drops the guest key for a token it cannot verify, and records no identity', () => {
       const forgedToken = jwt.sign({ sfCustomerId: 'SF-NOT-MINE' }, 'some-other-secret');
       const request = buildRequest({
         headers: { authorization: forgedToken, 'X-API-KEY': 'guest-key' },
@@ -193,10 +193,25 @@ describe('offer-document.transformers', () => {
 
       const result = transformOfferDocumentConsentRequest(request);
 
+      // Presenting a token makes you a token caller — central commerce judges it, and a
+      // bad one must not be quietly downgraded to an anonymous guest write.
+      expect(result.headers.access_token).toBe(forgedToken);
+      expect(result.headers['X-API-KEY']).toBeUndefined();
+      // The claims are still unverified, so nothing is stamped on the record.
       expect(result.body.otherInfo.user.isLoggedIn).toBe(false);
       expect(result.body.otherInfo.user.sfCustomerId).toBeNull();
-      expect(result.headers.access_token).toBeUndefined();
-      expect(result.headers['X-API-KEY']).toBe('guest-key');
+    });
+
+    it('drops the guest key for a bare access_token header too', () => {
+      const token = jwt.sign({ sfCustomerId: 'SF-2' }, JWT_SECRET as string);
+      const request = buildRequest({
+        headers: { access_token: token, 'X-API-KEY': 'guest-key' },
+      });
+
+      const result = transformOfferDocumentConsentRequest(request);
+
+      expect(result.headers.access_token).toBe(token);
+      expect(result.headers['X-API-KEY']).toBeUndefined();
     });
 
     it.each([

@@ -104,9 +104,10 @@ function resolveClientIp(request: BaseRequest): string | null {
 }
 
 /**
- * Identity is optional enrichment on an otherwise anonymous consent, so a missing or
- * expired token must not fail the request — but an unverified token must never be
- * trusted either, or anyone could stamp someone else's customer id on their consent.
+ * Identity recorded on the consent, which is enrichment rather than authorization — that
+ * is central commerce's job. An unverified token must never be trusted here, or anyone
+ * could stamp someone else's customer id on their own consent, so a token that does not
+ * verify contributes no identity even though it is still forwarded.
  */
 function resolveIdentity(headers: Record<string, any> | undefined): ConsentIdentity {
   const authHeader = headerValue(headers, 'authorization') || headerValue(headers, 'access_token');
@@ -133,23 +134,25 @@ function resolveIdentity(headers: Record<string, any> | undefined): ConsentIdent
       userId: payload.userId ?? null,
     };
   } catch {
-    logger.warn('[offer-document] Token present but not verifiable; recording consent as guest');
+    logger.warn(
+      '[offer-document] Token present but not verifiable here; forwarding it for central commerce to judge and recording no identity',
+    );
     return { isLoggedIn: false, sfCustomerId: null, userId: null };
   }
 }
 
 /**
- * Central commerce authenticates a logged-in visitor by their own token and a guest by
- * the shared API key, so exactly one of the two travels downstream. Central commerce
- * takes the token as `access_token`, matching the customer profile route.
+ * Exactly one credential reaches central commerce.
  *
- * A token that did not verify is treated as a guest: the bogus token is dropped rather
- * than forwarded, so central commerce never has to judge it.
+ * A caller who presents a token is a token caller, full stop: the token goes downstream as
+ * `access_token` (bare, matching the customer profile route) and the shared guest key is
+ * removed. Whether that token is any good is central commerce's judgement, not this
+ * service's — a stale one earns a 401 the visitor can act on, which beats silently
+ * recording them as an anonymous guest.
+ *
+ * Only a caller with no token at all is relayed as a guest under `X-API-KEY`.
  */
-function buildConsentAuthHeaders(
-  headers: Record<string, any>,
-  identity: ConsentIdentity,
-): Record<string, any> {
+function buildConsentAuthHeaders(headers: Record<string, any>): Record<string, any> {
   const authHeaders = { ...headers };
 
   const token = headerValue(headers, 'authorization') || headerValue(headers, 'access_token') || '';
@@ -159,9 +162,8 @@ function buildConsentAuthHeaders(
   delete authHeaders.Authorization;
   delete authHeaders.access_token;
 
-  if (identity.isLoggedIn) {
+  if (bareToken) {
     authHeaders.access_token = bareToken;
-    // The user's own token is the credential; the guest key must not ride along with it.
     delete authHeaders['X-API-KEY'];
     delete authHeaders['x-api-key'];
   }
@@ -268,7 +270,7 @@ export function transformOfferDocumentConsentRequest(request: BaseRequest): Base
   const client = body.client ?? {};
   const sessionId = typeof body.sessionId === 'string' ? body.sessionId : null;
 
-  const authHeaders = buildConsentAuthHeaders(headers, identity);
+  const authHeaders = buildConsentAuthHeaders(headers);
 
   // CCS keys a guest consent on the session id, so sending the one the visitor already has
   // makes a re-submission update their row instead of piling up new ones.
