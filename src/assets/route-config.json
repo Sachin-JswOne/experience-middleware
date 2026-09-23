@@ -1305,6 +1305,171 @@
     }
   },
   {
+    "path": "/xp-mi/public/v1/offer-document-disclaimer",
+    "method": "GET",
+    "routeHandler": "TRANSFORM",
+    "isCacheRequired": false,
+    "target": {
+      "name": "offerDocumentDisclaimer",
+      "url": "${CMS_MSME_URL}/web-offer-document/disclaimer",
+      "method": "GET",
+      "timeout": {
+        "request": "${TIMEOUTS.REQUEST}",
+        "socket": "${TIMEOUTS.SOCKET}"
+      },
+      "requiredParams": ["slug"],
+      "resTransform": "cms.transformers.replaceUriPrefix"
+    }
+  },
+  {
+    "path": "/xp-mi/public/v1/offer-documents",
+    "method": "POST",
+    "routeHandler": "AGGREGATE",
+    "aggregationType": "SEQUENTIAL",
+    "isCacheRequired": false,
+    "targets": [
+      {
+        "name": "offer-document-consent-status",
+        "url": "${MSME_BASE_URL}/central_commerce/drhp/v1/consent",
+        "method": "GET",
+        "stopOnError": true,
+        "timeout": {
+          "request": 10000,
+          "socket": 1000
+        },
+        "headersToPass": [
+          {
+            "source": "authorization",
+            "destination": "access_token"
+          },
+          {
+            "source": "access_token",
+            "destination": "access_token"
+          }
+        ],
+        "staticHeaders": {
+          "Accept": "application/json"
+        },
+        "mock": {
+          "file": "offer-document/consent-status-${MOCK_PROFILE_VARIANT}.json"
+        },
+        "reqTransform": "general.transformers.convertToGetRequest"
+      },
+      {
+        "name": "offer-documents",
+        "url": "${CMS_MSME_URL}/web-offer-document/documents",
+        "method": "POST",
+        "stopOnError": true,
+        "timeout": {
+          "request": 10000,
+          "socket": 1000
+        },
+        "staticHeaders": {
+          "content-type": "application/json",
+          "x-api-key": "${CMS_OFFER_DOCUMENTS_API_KEY}"
+        },
+        "reqTransform": "offer-document.transformers.transformConsentedOfferDocumentsRequest",
+        "resTransform": "cms.transformers.replaceUriPrefix"
+      }
+    ],
+    "resTransform": "offer-document.transformers.pickConsentedOfferDocumentsResponse"
+  },
+  {
+    "path": "/xp-mi/public/v1/offer-document-consent",
+    "method": "POST",
+    "routeHandler": "AGGREGATE",
+    "aggregationType": "SEQUENTIAL",
+    "isCacheRequired": false,
+    "targets": [
+      {
+        "name": "offer-document-consent-store",
+        "url": "${MSME_BASE_URL}/central_commerce/drhp/v1/consent",
+        "method": "POST",
+        "stopOnError": true,
+        "timeout": {
+          "request": 10000,
+          "socket": 1000
+        },
+        "staticHeaders": {
+          "accept": "application/json, text/plain, */*",
+          "content-type": "application/json",
+          "X-API-KEY": "${X_API_KEY_FOR_PROFILE}"
+        },
+        "headersToPass": [
+          {
+            "source": "x-forwarded-for",
+            "destination": "x-forwarded-for"
+          },
+          {
+            "source": "x-real-ip",
+            "destination": "x-real-ip"
+          },
+          {
+            "source": "user-agent",
+            "destination": "user-agent"
+          },
+          {
+            "source": "authorization",
+            "destination": "authorization"
+          },
+          {
+            "source": "access_token",
+            "destination": "access_token"
+          },
+          {
+            "source": "jsw_session_id",
+            "destination": "jsw_session_id"
+          },
+          {
+            "source": "x-client-geo-location",
+            "destination": "x-client-geo-location"
+          },
+          {
+            "source": "x-client-city",
+            "destination": "x-client-city"
+          },
+          {
+            "source": "x-client-region",
+            "destination": "x-client-region"
+          },
+          {
+            "source": "x-client-region-subdivision",
+            "destination": "x-client-region-subdivision"
+          },
+          {
+            "source": "x-country-code",
+            "destination": "x-country-code"
+          },
+          {
+            "source": "cf-ipcountry",
+            "destination": "cf-ipcountry"
+          }
+        ],
+        "mock": {
+          "file": "offer-document/${MOCK_CONSENT_VARIANT}.json"
+        },
+        "reqTransform": "offer-document.transformers.transformOfferDocumentConsentRequest"
+      },
+      {
+        "name": "offer-documents",
+        "url": "${CMS_MSME_URL}/web-offer-document/documents",
+        "method": "POST",
+        "stopOnError": true,
+        "timeout": {
+          "request": 10000,
+          "socket": 1000
+        },
+        "staticHeaders": {
+          "content-type": "application/json",
+          "x-api-key": "${CMS_OFFER_DOCUMENTS_API_KEY}"
+        },
+        "reqTransform": "offer-document.transformers.transformOfferDocumentsRequest",
+        "resTransform": "cms.transformers.replaceUriPrefix"
+      }
+    ],
+    "resTransform": "offer-document.transformers.pickOfferDocumentsResponse"
+  },
+  {
     "path": "/xp-mi/public/v1/web-header-links",
     "method": "POST",
     "routeHandler": "TRANSFORM",

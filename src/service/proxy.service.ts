@@ -23,6 +23,7 @@ import { CustomError } from 'src/utils/CustomError';
 import { match } from 'path-to-regexp';
 import { CacheService } from '../cache/cache.service';
 import { CacheProvider } from 'src/cache/cache-provider.type';
+import { isTargetMocked, loadMockResponse } from '../utils/mock.util';
 import axios from 'axios';
 import { createHash } from 'crypto';
 
@@ -526,6 +527,21 @@ export class ProxyService {
 
           const buildMs = this.nowMs() - buildStart;
 
+          // Mocked targets stop here: the request was still built and validated by the
+          // reqTransform above, so only the network call is replaced.
+          if (isTargetMocked(target)) {
+            span.setAttribute('proxy.target.mocked', true);
+            const mockResult = await loadMockResponse(target);
+
+            const mockedData = target.resTransform
+              ? await applyTransform(target.resTransform, mockResult.data)
+              : mockResult.data;
+
+            span.setAttribute('http.status_code', mockResult.status);
+
+            return mockedData;
+          }
+
           const clientCreateStart = this.nowMs();
           const client = await createHttpClient(
             target.timeout?.request || 5000,
@@ -720,6 +736,10 @@ export class ProxyService {
       body: req.body,
       headers: this.getHeadersToPass(req.headers, headersToPass, staticHeaders),
       params: allowedParams,
+      // Not a header, so `headersToPass` cannot filter it away: transformers that must
+      // record a caller IP have something to fall back on when the request did not arrive
+      // through a proxy.
+      clientIp: req.ip || req.socket?.remoteAddress || null,
     };
 
     if (requestTransform) {
