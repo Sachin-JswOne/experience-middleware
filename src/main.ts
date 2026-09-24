@@ -1,10 +1,12 @@
 ﻿import './instrumentation';
+import { Logger } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { TraceContextInterceptor } from './common/trace-context.interceptor';
 import { AllExceptionsFilter } from './filters/http-exception.filter';
 import { WinstonModule } from 'nest-winston';
 import { winstonConfig } from './logger/winston.config';
+import { describeMockMode } from './config/mock.config';
 import * as express from 'express';
 
 async function bootstrap() {
@@ -49,6 +51,10 @@ async function bootstrap() {
     credentials: true,
     optionsSuccessStatus: 204,
   });
+
+  // Say it out loud at boot: a mocked service returning canned data must never be
+  // mistaken for a working one.
+  Logger.warn(describeMockMode(), 'Bootstrap');
 
   await app.listen(process.env.PORT ?? 3000);
 }

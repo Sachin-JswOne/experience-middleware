@@ -1,0 +1,8 @@
+{
+  "status": "INTERNAL_SERVER_ERROR",
+  "success": false,
+  "data": null,
+  "error": {
+    "message": "Consent could not be persisted"
+  }
+}
