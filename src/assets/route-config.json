@@ -6940,5 +6940,93 @@
       "requiredParams": ["*"],
       "stopOnError": true
     }
+  },
+  {
+    "path": "/xp-mi/public/v1/vijai/user/myTerritoryDistributor",
+    "method": "GET",
+    "routeHandler":"AGGREGATE",
+    "aggregationType":"PARALLEL",
+    "isCacheRequired": false,
+    "targets":[
+      {
+         "name": "vijai-stock-signals",
+      "url": "${SF_BASE_URI}/services/apexrest/v1/AccountStock",
+      "method": "GET",
+      "timeout": {
+        "request": "${TIMEOUTS.REQUEST}",
+        "socket": 5000
+      },
+      "headersToPass": [
+        {
+          "source": "Authorization",
+          "destination": "Authorization"
+        }
+      ],
+      "requiredParams": ["*"],
+      "reqTransform": "vijai.transformers.transformVijaiStockSignalsRequest"
+      },
+      {
+          "name": "vijai-visit-list",
+          "url": "${SF_BASE_URI}/services/data/v59.0/query",
+      "method": "GET",
+      "timeout": {
+        "request": "${TIMEOUTS.REQUEST}",
+        "socket": 5000
+      },
+      "headersToPass": [
+        {
+          "source": "Authorization",
+          "destination": "Authorization"
+        }
+      ],
+      "reqTransform": "vijai.transformers.transformVijaiVisitListRequest",
+      "requiredParams": ["*"]
+      }
+    ],
+    "resTransform": "vijai.transformers.transformVijaiMyTerritoryDistributorResponse"
+  },
+  {
+    "path": "/xp-mi/public/v1/vijai/user/myTerritoryDealers",
+    "method": "GET",
+    "routeHandler":"AGGREGATE",
+    "aggregationType":"PARALLEL",
+    "isCacheRequired": false,
+    "targets":[
+      {
+         "name": "vijai-stock-signals",
+      "url": "${SF_BASE_URI}/services/apexrest/v1/AccountStock",
+      "method": "GET",
+      "timeout": {
+        "request": "${TIMEOUTS.REQUEST}",
+        "socket": 5000
+      },
+      "headersToPass": [
+        {
+          "source": "Authorization",
+          "destination": "Authorization"
+        }
+      ],
+      "requiredParams": ["*"],
+      "reqTransform": "vijai.transformers.transformVijaiStockSignalsRequest"
+      },
+      {
+          "name": "vijai-visit-list",
+          "url": "${SF_BASE_URI}/services/data/v59.0/query",
+      "method": "GET",
+      "timeout": {
+        "request": "${TIMEOUTS.REQUEST}",
+        "socket": 5000
+      },
+      "headersToPass": [
+        {
+          "source": "Authorization",
+          "destination": "Authorization"
+        }
+      ],
+      "reqTransform": "vijai.transformers.transformVijaiVisitListRequest",
+      "requiredParams": ["*"]
+      }
+    ],
+    "resTransform": "vijai.transformers.transformVijaiMyTerritoryDealersResponse"
   }
 ]

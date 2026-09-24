@@ -1,6 +1,7 @@
 import { BaseRequest } from 'src/models/base-request.model';
 import 'dotenv/config';
 import { STOCK_LOW_THRESHOLD } from 'src/config/app.config';
+import { AggregatedResponse } from 'src/models/aggregated-response.model';
 
 export function transformAccessTokenRequest(request: BaseRequest): BaseRequest {
   if (
@@ -147,8 +148,7 @@ ORDER BY CheckIn_CMV__Check_in_Date_Time__c DESC`
         ORDER BY CreatedDate DESC`
         .replace(/\s+/g, ' ')
         .trim();
-    }
-    else {
+    } else {
       soql = `SELECT Id, Name, StageName, RecordType.DeveloperName, CreatedDate, 
        Credit_limit_requested__c, Credit_tenure_request_days__c, 
        Category_Team_Owner__r.Name, Credit_sales_SPOC__r.Name, Risk_SPOC__r.Name,
@@ -285,20 +285,16 @@ export function transformVijaiStockSignalsRequest(request: any) {
 export function transformVijaiStockSignalsResponse(response: any) {
   const data = response.data;
 
-  const distributors = data.filter(
-    item => item.accountType === "Distributor"
-  );
+  const distributors = data.filter((item) => item.accountType === 'Distributor');
 
-  const retailers = data.filter(
-    item => item.accountType === "Retailer PB"
-  );
+  const retailers = data.filter((item) => item.accountType === 'Retailer PB');
 
-  let transformedData = {
+  const transformedData = {
     distributors: distributors,
-    retailers: retailers
+    retailers: retailers,
   };
 
-  let finalTransformedData = processStockSignals(transformedData);
+  const finalTransformedData = processStockSignals(transformedData);
   return finalTransformedData;
 }
 
@@ -323,180 +319,155 @@ export function transformVijaiStockSignalsResponse(response: any) {
  *
  * Retailer - Influencer gap:
  *   soldViaInfluencers === 0
- * 
+ *
  * Distributor - No opp:
  *  totalOpportunities = 0
- * 
+ *
  * Distributor - No pipeline:
  *  totalOpportunities - successOpportunities - newOpportunities - lostOpportunities === 0
- * 
+ *
  * Retailer - Superstar not billed:
  *  accountTag = "superstar"
  */
-function getSignals(
-    account: Account,
-    type: AccountType
-): Signal[] {
+function getSignals(account: Account, type: AccountType): Signal[] {
+  const currentStock = account.currentStock ?? 0;
+  const totalPurchases = account.totalPurchases ?? 0;
+  const secondarySales = account.secondarySales ?? 0;
+  const soldToRetailers = account.soldToRetailers ?? 0;
+  const soldAtSites = account.soldAtSites ?? 0;
+  const soldViaInfluencers = account.soldViaInfluencers ?? 0;
+  const totalOpportunities = account.totalOpportunities ?? 0;
+  const successOpportunities = account.successOpportunities ?? 0;
+  const newOpportunities = account.newOpportunities ?? 0;
+  const lostOpportunities = account.lostOpportunities ?? 0;
+  const accountTag = account.accountTag ?? '';
 
-    const currentStock = account.currentStock ?? 0;
-    const totalPurchases = account.totalPurchases ?? 0;
-    const secondarySales = account.secondarySales ?? 0;
-    const soldToRetailers = account.soldToRetailers ?? 0;
-    const soldAtSites = account.soldAtSites ?? 0;
-    const soldViaInfluencers = account.soldViaInfluencers ?? 0;
-    const totalOpportunities = account.totalOpportunities ?? 0;
-    const successOpportunities = account.successOpportunities ?? 0;
-    const newOpportunities = account.newOpportunities ?? 0;
-    const lostOpportunities = account.lostOpportunities ?? 0;
-    const accountTag = account.accountTag ?? '';
+  const signals: Signal[] = [];
 
-    const signals: Signal[] = [];
+  if (currentStock > 0 && currentStock < STOCK_LOW_THRESHOLD) {
+    signals.push({
+      tag: 'Stock low',
+      severity: 'red',
+    });
+  }
 
-    if (
-        currentStock > 0 && currentStock < STOCK_LOW_THRESHOLD
-    ) {
-        signals.push({
-            tag: "Stock low",
-            severity: "red"
-        });
+  if (type === 'retailer' && currentStock === 0) {
+    signals.push({
+      tag: 'No stock this month',
+      severity: 'red',
+    });
+  }
+
+  if (type === 'distributor' && totalPurchases === 0) {
+    signals.push({
+      tag: 'No purchase',
+      severity: 'nocolor',
+    });
+  }
+
+  if (type === 'retailer') {
+    if (currentStock > 0 && secondarySales === 0) {
+      signals.push({
+        tag: 'Stock not moving',
+        severity: 'orange',
+      });
     }
+  }
 
-    if (type === "retailer" && currentStock === 0) {
-        signals.push({
-            tag: "No stock this month",
-            severity: "red"
-        });
+  if (type === 'distributor') {
+    const distributorSales = soldToRetailers + soldAtSites;
+    if (currentStock > 0 && distributorSales === 0) {
+      signals.push({
+        tag: 'Stock not moving',
+        severity: 'orange',
+      });
     }
+  }
 
-    if (type === "distributor" && totalPurchases === 0) {
-        signals.push({
-            tag: "No purchase",
-            severity: "nocolor"
-        });
-    }
+  if (type === 'retailer' && soldViaInfluencers === 0) {
+    signals.push({
+      tag: 'Influencer gap',
+      severity: 'grey',
+    });
+  }
 
-    if (type === "retailer") {
-        if (
-            currentStock > 0 && secondarySales === 0
-        ) {
-            signals.push({
-                tag: "Stock not moving",
-                severity: "orange"
-            });
-        }
-    }
+  if (type === 'distributor' && totalOpportunities === 0) {
+    signals.push({
+      tag: 'no opp',
+      severity: 'nocolor',
+    });
+  }
 
-    if (type === "distributor") {
-        const distributorSales = soldToRetailers + soldAtSites;
-        if (
-            currentStock > 0 && distributorSales === 0
-        ) {
-            signals.push({
-                tag: "Stock not moving",
-                severity: "orange"
-            });
-        }
-    }
+  if (
+    type === 'distributor' &&
+    totalOpportunities - successOpportunities - newOpportunities - lostOpportunities === 0
+  ) {
+    signals.push({
+      tag: 'no pipeline',
+      severity: 'nocolor',
+    });
+  }
 
-    if (
-        type === "retailer" && soldViaInfluencers === 0
-    ) {
-        signals.push({
-            tag: "Influencer gap",
-            severity: "grey"
-        });
-    }
+  if (type === 'retailer' && accountTag.toLocaleLowerCase().includes('super star')) {
+    signals.push({
+      tag: 'Superstar not billed',
+      severity: 'red',
+    });
+  }
 
-    if(type === "distributor" && totalOpportunities === 0) {
-        signals.push({
-          tag: "no opp",
-          severity: "nocolor"
-        });
-    }
-
-    if(type === "distributor" && (totalOpportunities - successOpportunities - newOpportunities - lostOpportunities) === 0) {
-        signals.push({
-          tag: "no pipeline",
-          severity: "nocolor"
-        });
-    }
-
-    if(type === "retailer" && accountTag.toLocaleLowerCase().includes("super star")) {
-        signals.push({
-          tag: "Superstar not billed",
-          severity: "red"
-        });
-    }
-
-    return signals;
+  return signals;
 }
-
 
 /**
  * Add signals to every account in an array.
  */
 function addSignalsToAccounts(accounts, type) {
-    return accounts.map(account => ({
-        accountId: account.accountId,
-        accountName: account.accountName,
-        accountType: account.accountType,
-        signals: getSignals(account, type)
-    }));
+  return accounts.map((account) => ({
+    accountId: account.accountId,
+    accountName: account.accountName,
+    accountType: account.accountType,
+    signals: getSignals(account, type),
+  }));
 }
-
 
 /**
  * Build a summary of signals.
  */
-function getSignalSummary(
-    accounts: Account[]
-): Record<string, SignalSummary> {
+function getSignalSummary(accounts: Account[]): Record<string, SignalSummary> {
+  return accounts.reduce<Record<string, SignalSummary>>((summary, account) => {
+    (account.signals ?? []).forEach((signal) => {
+      if (!summary[signal.tag]) {
+        summary[signal.tag] = {
+          count: 0,
+          severity: signal.severity,
+          accounts: [],
+        };
+      }
 
-    return accounts.reduce<Record<string, SignalSummary>>(
-        (summary, account) => {
+      summary[signal.tag].count++;
 
-            (account.signals ?? []).forEach(signal => {
-
-                if (!summary[signal.tag]) {
-                    summary[signal.tag] = {
-                        count: 0,
-                        severity: signal.severity,
-                        accounts: []
-                    };
-                }
-
-                summary[signal.tag].count++;
-
-                summary[signal.tag].accounts.push({
-                    accountId: account.accountId,
-                    accountName: account.accountName,
-                    accountType: account.accountType
-                });
-            });
-            return summary;
-        },
-        {}
-    );
+      summary[signal.tag].accounts.push({
+        accountId: account.accountId,
+        accountName: account.accountName,
+        accountType: account.accountType,
+      });
+    });
+    return summary;
+  }, {});
 }
-
 
 /**
  * Convert summary object to an array.
  *
  * Useful for rendering cards/list in the UI.
  */
-function getSignalSummaryArray(
-    summary: Record<string, SignalSummary>
-) {
-    return Object.entries(summary).map(
-        ([tag, data]) => ({
-            tag,
-            count: data.count,
-            severity: data.severity,
-        })
-    );
+function getSignalSummaryArray(summary: Record<string, SignalSummary>) {
+  return Object.entries(summary).map(([tag, data]) => ({
+    tag,
+    count: data.count,
+    severity: data.severity,
+  }));
 }
-
 
 /**
  * Main function.
@@ -504,27 +475,198 @@ function getSignalSummaryArray(
  * Takes the complete API response and returns
  * tagged distributors, tagged retailers and summaries.
  */
-function processStockSignals(response: {
-    distributors: Account[];
-    retailers: Account[];
-}) {
+function processStockSignals(response: { distributors: Account[]; retailers: Account[] }) {
+  const distributors = addSignalsToAccounts(response.distributors ?? [], 'distributor');
 
-    const distributors = addSignalsToAccounts(
-        response.distributors ?? [],
-        "distributor"
+  const retailers = addSignalsToAccounts(response.retailers ?? [], 'retailer');
+
+  const retailerSummary = getSignalSummary(retailers);
+
+  return {
+    distributors,
+    retailerSignalList: getSignalSummaryArray(retailerSummary),
+  };
+}
+
+export function transformVijaiVisitListRequest(request) {
+  const ownerId = request.url.searchParams.get('ownerId');
+  const nextRecordsUrl = request.url.searchParams.get('nextRecordsUrl');
+  const finalTransformedRequest: BaseRequest = {
+    ...request,
+    body: null,
+  };
+
+  const soql = `SELECT Id, Name, Visit_Stage__c, Planned_Visit__c,
+       CheckIn_CMV__Account__c, CheckIn_CMV__Account__r.Name,
+       CheckIn_CMV__Check_in_Date_Time__c,
+       CheckIn_CMV__Check_in_Coordinates__c,
+       CheckIn_CMV__Check_in_Comments__c,
+       CheckIn_CMV__Check_out_Date_Time__c,
+       CheckIn_CMV__Check_out_Coordinates__c,
+       CheckIn_CMV__Check_out_Comments__c,
+       Met_with_Contact__c, Met_with_Contact__r.LastName,
+       Site__c, CreatedDate, Site__r.name, Site__r.Google_Maps_Coordinates__c,
+       Site__r.Project_Address__c, Site__r.pin_code__c, Site__r.auto_state__c,
+       Site__r.auto_district__c, Site__r.City__c,Site__r.RecordType.Name, Status__c
+       FROM CheckIn_CMV__Visit__c
+       WHERE OwnerId = '${ownerId}'
+       ORDER BY CheckIn_CMV__Check_in_Date_Time__c DESC`
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  if (nextRecordsUrl) {
+    finalTransformedRequest.url.pathname = `/services/data/v59.0/query/${nextRecordsUrl}`;
+    finalTransformedRequest.url.search = '';
+  } else {
+    finalTransformedRequest.url.pathname = '/services/data/v59.0/query';
+    finalTransformedRequest.url.search = `?q=${soql}`;
+  }
+  return finalTransformedRequest;
+}
+
+export function transformVijaiMyTerritoryDistributorResponse(
+  aggregatedResponses: AggregatedResponse[],
+) {
+  const responses = aggregatedResponses.reduce(
+    (acc, response) => {
+      acc[response.target] = response;
+      return acc;
+    },
+    {} as Record<string, AggregatedResponse>,
+  );
+  const accountStockResponse = responses['vijai-stock-signals'].data.data;
+  const visitListResponse = responses['vijai-visit-list'].data?.records ?? [];
+
+  let distributors = accountStockResponse.filter((item) => item.accountType === 'Distributor');
+
+  distributors = distributors.map((account) => ({
+    ...account,
+    signals: getSignals(account, 'distributor'),
+  }));
+
+  const accountIds = new Set(distributors.map((account) => account.accountId));
+
+  const latestVisitMap = new Map<string, string>();
+
+  visitListResponse.forEach((visit) => {
+    const accountId = visit.CheckIn_CMV__Account__c;
+    const checkoutDate = visit.CheckIn_CMV__Check_out_Date_Time__c;
+
+    if (!accountId || !checkoutDate || !accountIds.has(accountId)) {
+      return;
+    }
+
+    const existingDate = latestVisitMap.get(accountId);
+
+    if (!existingDate || new Date(checkoutDate).getTime() > new Date(existingDate).getTime()) {
+      latestVisitMap.set(accountId, checkoutDate);
+    }
+  });
+
+  const accountsWithLastVisit = distributors.map((account) => {
+    const lastVisitDate = latestVisitMap.get(account.accountId);
+
+    if (!lastVisitDate) {
+      return {
+        ...account,
+        lastVisit: null,
+      };
+    }
+
+    const daysAgo = Math.floor(
+      (Date.now() - new Date(lastVisitDate).getTime()) / (1000 * 60 * 60 * 24),
     );
-
-    const retailers = addSignalsToAccounts(
-        response.retailers ?? [],
-        "retailer"
-    );
-
-    const retailerSummary =
-        getSignalSummary(retailers);
 
     return {
-        distributors,
-        retailerSignalList:
-            getSignalSummaryArray(retailerSummary)
+      ...account,
+      lastVisitDate,
+      lastVisit: `${daysAgo}d ago`,
     };
+  });
+
+  const finalResponse = accountsWithLastVisit.map((account) => ({
+    distributorName: account.accountName || null,
+
+    stockSignal: account.signals || null,
+
+    stock: account.currentStock || null,
+
+    opening: account.openingStock || null,
+
+    purchasedMT: account.totalPurchases || null,
+
+    soldMTD: (account.soldToRetailers || 0) + (account.soldAtSites || 0),
+
+    lastVisit: account.lastVisit || null,
+
+    lastOrder: null, // invoice date from BQ
+  }));
+
+  return finalResponse;
+}
+
+export function transformVijaiMyTerritoryDealersResponse(
+  aggregatedResponses: AggregatedResponse[],
+) {
+  const responses = aggregatedResponses.reduce(
+    (acc, response) => {
+      acc[response.target] = response;
+      return acc;
+    },
+    {} as Record<string, AggregatedResponse>,
+  );
+  const accountStockResponse = responses['vijai-stock-signals'].data.data;
+  const visitListResponse = responses['vijai-visit-list'].data?.records ?? [];
+
+  let dealers = accountStockResponse.filter((item) => item.accountType === 'Retailer PB');
+
+  const accountIds = new Set(dealers.map((account) => account.accountId));
+
+  const latestVisitMap = new Map<string, string>();
+
+  visitListResponse.forEach((visit) => {
+    const accountId = visit.CheckIn_CMV__Account__c;
+    const checkoutDate = visit.CheckIn_CMV__Check_out_Date_Time__c;
+
+    if (!accountId || !checkoutDate || !accountIds.has(accountId)) {
+      return;
+    }
+
+    const existingDate = latestVisitMap.get(accountId);
+
+    if (!existingDate || new Date(checkoutDate).getTime() > new Date(existingDate).getTime()) {
+      latestVisitMap.set(accountId, checkoutDate);
+    }
+  });
+
+  const accountsWithLastVisit = dealers.map((account) => {
+    const lastVisitDate = latestVisitMap.get(account.accountId);
+
+    if (!lastVisitDate) {
+      return {
+        ...account,
+        lastVisit: null,
+      };
+    }
+
+    const daysAgo = Math.floor(
+      (Date.now() - new Date(lastVisitDate).getTime()) / (1000 * 60 * 60 * 24),
+    );
+
+    return {
+      ...account,
+      lastVisitDate,
+      lastVisit: `${daysAgo}d ago`,
+    };
+  });
+
+  const finalResponse = accountsWithLastVisit.map((account) => ({
+    dealerName: account.accountName || null,
+    stock: account.currentStock || null,
+    secondary: account.secondarySales || null,
+    lastVisit: account.lastVisit || null,
+    lastBilled: null, // invoice date from BQ
+  }));
+
+  return finalResponse;
 }
