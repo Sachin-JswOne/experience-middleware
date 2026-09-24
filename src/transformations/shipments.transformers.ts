@@ -43,7 +43,7 @@ export function mergeInvoiceAndShipmentsResponse(aggregatedResponses: Aggregated
       throw new CustomError('No shipment found', HttpStatus.NOT_FOUND);
     }
 
-    const invoiceDocumentsResponse = invoiceAndDocumentsResponse?.data?.data?.data;
+    const invoiceDocumentsResponse = invoiceAndDocumentsResponse?.data;
 
     let listOfDocuments: any[] = [];
 
