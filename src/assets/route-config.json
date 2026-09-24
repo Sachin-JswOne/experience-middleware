@@ -434,7 +434,7 @@
     "routeHandler": "TRANSFORM",
     "target": {
       "name": "appInvoiceAndDocuments",
-      "url": "${OMS_URL}/oms/shipment/getInvoiceDocumentByOrderNumber",
+      "url": "${OMS_URL}/oms/shipment/getInvoiceDocumentByOrderNumbers",
       "method": "GET",
       "timeout": {
         "request": "${TIMEOUTS.REQUEST}",
@@ -533,7 +533,7 @@
         },
         "requiredParams": ["orderNumber"],
         "staticHeaders": {
-          "Authorization": "${ERP_INVOICE_DOC_AUTHORIZATION}"
+        "Authorization": "${ERP_INVOICE_DOC_AUTHORIZATION}"
         }
       }
     ],
