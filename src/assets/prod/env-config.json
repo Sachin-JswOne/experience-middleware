@@ -31,9 +31,9 @@
   "SF_SALES_APP_REDIRECT_URI": "com.jswone.vijai://oauth/callback",
   "WHATSAPP_CART_X_API_KEY": "CART-SERVICE-v1-8mmaqdoz1iobqbx89jdrdw2xr0xuw49fv87upa0b6hfe69433ex44fopxw822tjw",
   "CATALOGUE_CENTRAL_URL": "https://catalogue-central.jsw1msme.com",
-  "CATALOGUE_CENTRAL_X_API_KEY": "SET_VIA_ENV_VAR_CATALOGUE_CENTRAL_X_API_KEY",
+  "CATALOGUE_CENTRAL_X_API_KEY": "917521bc-70b5-4d41-a91d-e685f4d023a7",
   "CATALOGUE_CENTRAL_CLIENT_ID": "1fc28f2d-a39d-4aac-8bef-64d2b7c7fa6a1fc28f2d-a39d-4aac-8bef-64d2b7c7fa6a",
-  "CMS_OFFER_DOCUMENTS_API_KEY": "917521bc-70b5-4d41-a91d-e685f4d023a7",
+  "CMS_OFFER_DOCUMENTS_API_KEY": "05f7f80bda12629b341861bde",
   "MOCK_CONSENT_VARIANT": "consent-store",
   "MOCK_PROFILE_VARIANT": "consented"
 }
