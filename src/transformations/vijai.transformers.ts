@@ -618,7 +618,7 @@ export function transformVijaiMyTerritoryDealersResponse(
   const accountStockResponse = responses['vijai-stock-signals'].data.data;
   const visitListResponse = responses['vijai-visit-list'].data?.records ?? [];
 
-  let dealers = accountStockResponse.filter((item) => item.accountType === 'Retailer PB');
+  const dealers = accountStockResponse.filter((item) => item.accountType === 'Retailer PB');
 
   const accountIds = new Set(dealers.map((account) => account.accountId));
 
@@ -626,16 +626,16 @@ export function transformVijaiMyTerritoryDealersResponse(
 
   visitListResponse.forEach((visit) => {
     const accountId = visit.CheckIn_CMV__Account__c;
-    const checkoutDate = visit.CheckIn_CMV__Check_out_Date_Time__c;
+    const checkInDate = visit.CheckIn_CMV__Check_in_Date_Time__c;
 
-    if (!accountId || !checkoutDate || !accountIds.has(accountId)) {
+    if (!accountId || !checkInDate || !accountIds.has(accountId)) {
       return;
     }
 
     const existingDate = latestVisitMap.get(accountId);
 
-    if (!existingDate || new Date(checkoutDate).getTime() > new Date(existingDate).getTime()) {
-      latestVisitMap.set(accountId, checkoutDate);
+    if (!existingDate || new Date(checkInDate).getTime() > new Date(existingDate).getTime()) {
+      latestVisitMap.set(accountId, checkInDate);
     }
   });
 
