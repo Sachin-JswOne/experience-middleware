@@ -261,6 +261,7 @@ export function transformWhatsappCustomerDetails(response: any): any {
     customerName,
     customerType: customerDetails?.customerType ?? null,
     state,
+    roles: customerDetails?.roles ?? [],
   };
 }
 

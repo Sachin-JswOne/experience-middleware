@@ -1,0 +1,11 @@
+{
+  "status": "OK",
+  "success": true,
+  "error": null,
+  "data": {
+    "id": 4211,
+    "disclaimerVersion": "DRHP-V1",
+    "sessionId": "0199a7c4-3f10-7c2a-9d51-6f0f2b8a1c77",
+    "acceptedAt": "2026-09-22T10:00:00"
+  }
+}
