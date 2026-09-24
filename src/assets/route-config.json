@@ -6401,6 +6401,300 @@
     }
   },
   {
+    "path": "/xp-mi/public/v1/whatsapp/cart/add",
+    "method": "POST",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "whatsapp-cart-add",
+      "url": "${MSME_BASE_URL}/cart/v1/whatsapp/add",
+      "method": "POST",
+      "timeout": {
+        "request": 15000,
+        "socket": "${TIMEOUTS.SOCKET}"
+      },
+      "headersToPass": [
+        {
+          "source": "x-whatsapp-phone",
+          "destination": "X-WHATSAPP-PHONE"
+        }
+      ],
+      "staticHeaders": {
+        "content-type": "application/json",
+        "x-api-key": "${WHATSAPP_CART_X_API_KEY}"
+      },
+      "requiredParams": ["*"],
+      "stopOnError": true
+    }
+  },
+  {
+    "path": "/xp-mi/public/v1/whatsapp/cart/get",
+    "method": "GET",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "whatsapp-cart-get",
+      "url": "${MSME_BASE_URL}/cart/v1/whatsapp/get",
+      "method": "GET",
+      "timeout": {
+        "request": 15000,
+        "socket": "${TIMEOUTS.SOCKET}"
+      },
+      "headersToPass": [
+        {
+          "source": "x-whatsapp-phone",
+          "destination": "X-WHATSAPP-PHONE"
+        }
+      ],
+      "staticHeaders": {
+        "x-api-key": "${WHATSAPP_CART_X_API_KEY}"
+      },
+      "requiredParams": ["*"],
+      "stopOnError": true
+    }
+  },
+  {
+    "path": "/xp-mi/public/v1/whatsapp/cart/size",
+    "method": "GET",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "whatsapp-cart-size",
+      "url": "${MSME_BASE_URL}/cart/v1/whatsapp/size",
+      "method": "GET",
+      "timeout": {
+        "request": 15000,
+        "socket": "${TIMEOUTS.SOCKET}"
+      },
+      "headersToPass": [
+        {
+          "source": "x-whatsapp-phone",
+          "destination": "X-WHATSAPP-PHONE"
+        }
+      ],
+      "staticHeaders": {
+        "x-api-key": "${WHATSAPP_CART_X_API_KEY}"
+      },
+      "requiredParams": ["*"],
+      "stopOnError": true
+    }
+  },
+  {
+    "path": "/xp-mi/public/v1/whatsapp/cart/update-line-item",
+    "method": "PUT",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "whatsapp-cart-update-line-item",
+      "url": "${MSME_BASE_URL}/cart/v1/whatsapp/update-line-item",
+      "method": "PUT",
+      "timeout": {
+        "request": 15000,
+        "socket": "${TIMEOUTS.SOCKET}"
+      },
+      "headersToPass": [
+        {
+          "source": "x-whatsapp-phone",
+          "destination": "X-WHATSAPP-PHONE"
+        }
+      ],
+      "staticHeaders": {
+        "content-type": "application/json",
+        "x-api-key": "${WHATSAPP_CART_X_API_KEY}"
+      },
+      "requiredParams": ["*"],
+      "stopOnError": true
+    }
+  },
+  {
+    "path": "/xp-mi/public/v1/whatsapp/cart/update-shipping-info",
+    "method": "PUT",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "whatsapp-cart-update-shipping-info",
+      "url": "${MSME_BASE_URL}/cart/v1/whatsapp/update-shipping-info",
+      "method": "PUT",
+      "timeout": {
+        "request": 15000,
+        "socket": "${TIMEOUTS.SOCKET}"
+      },
+      "headersToPass": [
+        {
+          "source": "x-whatsapp-phone",
+          "destination": "X-WHATSAPP-PHONE"
+        }
+      ],
+      "staticHeaders": {
+        "content-type": "application/json",
+        "x-api-key": "${WHATSAPP_CART_X_API_KEY}"
+      },
+      "requiredParams": ["*"],
+      "stopOnError": true
+    }
+  },
+  {
+    "path": "/xp-mi/public/v1/whatsapp/cart/update-shipping-address",
+    "method": "PUT",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "whatsapp-cart-update-shipping-address",
+      "url": "${MSME_BASE_URL}/cart/v1/whatsapp/update-shipping-address",
+      "method": "PUT",
+      "timeout": {
+        "request": 15000,
+        "socket": "${TIMEOUTS.SOCKET}"
+      },
+      "headersToPass": [
+        {
+          "source": "x-whatsapp-phone",
+          "destination": "X-WHATSAPP-PHONE"
+        }
+      ],
+      "staticHeaders": {
+        "content-type": "application/json",
+        "x-api-key": "${WHATSAPP_CART_X_API_KEY}"
+      },
+      "requiredParams": ["*"],
+      "stopOnError": true
+    }
+  },
+  {
+    "path": "/xp-mi/public/v1/whatsapp/cart/delete-items",
+    "method": "POST",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "whatsapp-cart-delete-items",
+      "url": "${MSME_BASE_URL}/cart/v1/whatsapp/delete-items",
+      "method": "POST",
+      "timeout": {
+        "request": 15000,
+        "socket": "${TIMEOUTS.SOCKET}"
+      },
+      "headersToPass": [
+        {
+          "source": "x-whatsapp-phone",
+          "destination": "X-WHATSAPP-PHONE"
+        }
+      ],
+      "staticHeaders": {
+        "content-type": "application/json",
+        "x-api-key": "${WHATSAPP_CART_X_API_KEY}"
+      },
+      "requiredParams": ["*"],
+      "stopOnError": true
+    }
+  },
+  {
+    "path": "/xp-mi/public/v1/whatsapp/cart/checkout",
+    "method": "POST",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "whatsapp-cart-checkout",
+      "url": "${MSME_BASE_URL}/cart/v1/whatsapp/checkout",
+      "method": "POST",
+      "timeout": {
+        "request": 15000,
+        "socket": "${TIMEOUTS.SOCKET}"
+      },
+      "headersToPass": [
+        {
+          "source": "x-whatsapp-phone",
+          "destination": "X-WHATSAPP-PHONE"
+        }
+      ],
+      "staticHeaders": {
+        "content-type": "application/json",
+        "x-api-key": "${WHATSAPP_CART_X_API_KEY}"
+      },
+      "requiredParams": ["*"],
+      "stopOnError": true
+    }
+  },
+  {
+    "path": "/xp-mi/public/v1/whatsapp/cart/delete",
+    "method": "DELETE",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "whatsapp-cart-delete",
+      "url": "${MSME_BASE_URL}/cart/v1/whatsapp/delete",
+      "method": "DELETE",
+      "timeout": {
+        "request": 15000,
+        "socket": "${TIMEOUTS.SOCKET}"
+      },
+      "headersToPass": [
+        {
+          "source": "x-whatsapp-phone",
+          "destination": "X-WHATSAPP-PHONE"
+        }
+      ],
+      "staticHeaders": {
+        "x-api-key": "${WHATSAPP_CART_X_API_KEY}"
+      },
+      "requiredParams": ["*"],
+      "stopOnError": true
+    }
+  },
+  {
+    "path": "/xp-mi/public/v1/whatsapp/cart/update-payment-instrument",
+    "method": "PUT",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "whatsapp-cart-update-payment-instrument",
+      "url": "${MSME_BASE_URL}/cart/v1/whatsapp/update-payment-instrument",
+      "method": "PUT",
+      "timeout": {
+        "request": 15000,
+        "socket": "${TIMEOUTS.SOCKET}"
+      },
+      "headersToPass": [
+        {
+          "source": "x-whatsapp-phone",
+          "destination": "X-WHATSAPP-PHONE"
+        }
+      ],
+      "staticHeaders": {
+        "content-type": "application/json",
+        "x-api-key": "${WHATSAPP_CART_X_API_KEY}"
+      },
+      "requiredParams": ["*"],
+      "stopOnError": true
+    }
+  },
+  {
+    "path": "/xp-mi/public/v1/whatsapp/category/product-types",
+    "method": "GET",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "whatsapp-category-product-types",
+      "url": "${CATALOGUE_CENTRAL_URL}/catalogue_search/api/v1/external/category/product-types",
+      "method": "GET",
+      "timeout": {
+        "request": 15000,
+        "socket": "${TIMEOUTS.SOCKET}"
+      },
+      "staticHeaders": {
+        "x-api-key": "${CATALOGUE_CENTRAL_X_API_KEY}",
+        "clientId": "${CATALOGUE_CENTRAL_CLIENT_ID}"
+      },
+      "requiredParams": ["*"],
+      "stopOnError": true
+    }
+  },
+  {
+    "path": "/xp-mi/public/v1/whatsapp/products/listing",
+    "method": "POST",
+    "routeHandler": "TRANSFORM",
+    "target": {
+      "name": "whatsapp-products-listing",
+      "url": "${MSME_BASE_URL}/central_commerce/whatsapp/v1/products/listing",
+      "method": "POST",
+      "timeout": {
+        "request": 15000,
+        "socket": "${TIMEOUTS.SOCKET}"
+      },
+      "staticHeaders": {
+        "content-type": "application/json",
+        "x-api-key": "${X_API_KEY_FOR_PROFILE}"
+      },
+      "requiredParams": ["*"],
+      "stopOnError": true
     "path": "/xp-mi/public/v1/data-sync/ship-to/gst",
     "method": "GET",
     "routeHandler": "TRANSFORM",
