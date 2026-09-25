@@ -2,6 +2,9 @@ import { BaseRequest } from 'src/models/base-request.model';
 import 'dotenv/config';
 import { STOCK_LOW_THRESHOLD } from 'src/config/app.config';
 import { AggregatedResponse } from 'src/models/aggregated-response.model';
+import { Logger } from '@nestjs/common';
+import { HttpStatusCode } from 'axios';
+import { CustomError } from 'src/utils/CustomError';
 
 export function transformAccessTokenRequest(request: BaseRequest): BaseRequest {
   if (
@@ -670,3 +673,268 @@ export function transformVijaiMyTerritoryDealersResponse(
 
   return finalResponse;
 }
+
+export function preVisitBriefRetailerRequest(request, prevResponses: AggregatedResponse[]) {
+  const accountId = request.url.searchParams.get('accountId');
+
+  const oppIds =
+    prevResponses
+      .find((response) => response.target === 'vijai-opp-list')
+      ?.data?.records?.map((opp) => opp.Id)
+      .filter(Boolean) || [];
+
+  const visitListSoql = `SELECT Id, Name, Visit_Stage__c, Planned_Visit__c,
+       CheckIn_CMV__Account__c, CheckIn_CMV__Account__r.Name,
+       CheckIn_CMV__Check_in_Date_Time__c,
+       CheckIn_CMV__Check_out_Date_Time__c,
+       CheckIn_CMV__Check_out_Comments__c,
+       Meeting_outcome__c, 
+       Met_with_Contact__r.Name,
+       Met_with_Contact__r.LastName, Status__c
+      FROM CheckIn_CMV__Visit__c
+      WHERE CheckIn_CMV__Account__c = '${accountId}' and CheckIn_CMV__Check_in_Date_Time__c = THIS_MONTH
+      ORDER BY CheckIn_CMV__Check_in_Date_Time__c DESC`;
+
+  const orderListSoql =
+    `SELECT Id,  Delivery_Status__c, CreatedDate, LastModifiedDate, OpportunityId
+    FROM Order
+    WHERE OpportunityId IN (${oppIds.map((id) => `'${id}'`).join(',')})
+    ORDER BY CreatedDate DESC`
+      .replace(/\s+/g, ' ')
+      .trim();
+
+  const marketPotentialSoql = `SELECT Id, Category__c, Sub_Category__c, Sales__c, Category_Uom__c, Account__c,
+    (SELECT Id, Name, Brand_monthly_potential__c, Related_Category_Information__c FROM Brands__r) 
+    FROM Related_Category_Information__c 
+    WHERE Account__c = '${accountId}'`;
+
+  const finalTransformedRequest = {
+    ...request,
+    body: {
+      allOrNone: true,
+      compositeRequest: [
+        {
+          method: 'GET',
+          url: `/services/data/v65.0/query/?q=${encodeURIComponent(visitListSoql)}`,
+          referenceId: 'visitListSoql',
+        },
+        {
+          method: 'GET',
+          url: `/services/data/v65.0/query/?q=${encodeURIComponent(orderListSoql)}`,
+          referenceId: 'orderListSoql',
+        },
+        {
+          method: 'GET',
+          url: `/services/data/v65.0/query/?q=${encodeURIComponent(marketPotentialSoql)}`,
+          referenceId: 'marketPotentialSoql',
+        },
+      ],
+    },
+  };
+
+  return finalTransformedRequest;
+}
+
+export function transformPreVisitBriefOppListRequest(request) {
+  const accountId = request.url.searchParams.get('accountId');
+  const opportunityListSoql = `SELECT Id, Name, StageName, RecordType.DeveloperName,  
+        Total_revised_quantity__c,
+       (SELECT Id, Name, Attributes_to_Display__c, Attributes__c,
+               Final_Distributor_Quote__c, SKU_Subtotal__c,
+               Primary_Revised_Quantity__c
+        FROM Enquiry_Line_items__r), 
+       (SELECT Id, Stage_name__c, Cumulative_stage_age__c, 
+        Current_stage_age__c, Opportunity__c, Stage_entry_time__c, 
+        Stage_exit_time__c, Current_age__c FROM JSW_Ageing__r)
+        Total_revised_quantity__c,
+        AccountId, Retailer__c
+        FROM Opportunity
+        WHERE (Retailer__c = '${accountId}') AND createdDate = THIS_MONTH
+        AND RecordType.DeveloperName = 'Private_Brand'
+        ORDER BY CreatedDate DESC`
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  const finalTransformedRequest: BaseRequest = {
+    ...request,
+    body: null,
+  };
+
+  finalTransformedRequest.url.pathname = '/services/data/v59.0/query';
+  finalTransformedRequest.url.search = `?q=${opportunityListSoql}`;
+  return finalTransformedRequest;
+}
+
+export function transformPreVisitBriefRetailerResponse(aggregatedResponses: AggregatedResponse[]) {
+  try {
+    const responses = aggregatedResponses.reduce(
+      (acc, response) => {
+        acc[response.target] = response;
+        return acc;
+      },
+      {} as Record<string, AggregatedResponse>,
+    );
+
+    const oppListResponse = responses['vijai-opp-list'];
+    const stockSignalResponse = responses['vijai-stock-signals'];
+    const listResponse = responses['vijai-visit-list'];
+
+    //Handled the case when any of the response is missing or not successful or data is null
+    if (oppListResponse?.success !== true || oppListResponse?.data === null) {
+      Logger.error('Missing expected responses in oppListResponse');
+      throw new CustomError(
+        'Missing expected responses in oppListResponse',
+        HttpStatusCode.BadRequest,
+      );
+    }
+    if (stockSignalResponse?.success !== true || stockSignalResponse?.data === null) {
+      Logger.error('Missing expected responses in stockSignalResponse');
+      throw new CustomError(
+        'Missing expected responses in stockSignalResponse',
+        HttpStatusCode.BadRequest,
+      );
+    }
+    if (listResponse?.success !== true || listResponse?.data === null) {
+      Logger.error('Missing expected responses in listResponse');
+      throw new CustomError(
+        'Missing expected responses in listResponse',
+        HttpStatusCode.BadRequest,
+      );
+    }
+
+    const oppRecords = oppListResponse?.data?.records || [];
+    const stockSignalRecords = stockSignalResponse?.data?.data || [];
+    const visitRecords =
+      listResponse?.data?.compositeResponse.find((item) => item.referenceId === 'visitListSoql')
+        ?.body?.records || [];
+    const orderRecords =
+      listResponse?.data?.compositeResponse.find((item) => item.referenceId === 'orderListSoql')
+        ?.body?.records || [];
+    const marketPotentialRecords =
+      listResponse?.data?.compositeResponse.find(
+        (item) => item.referenceId === 'marketPotentialSoql',
+      )?.body?.records || [];
+
+    //Extract market potential data for the given accountId
+    const marketPotentialRecord = marketPotentialRecords.find(
+      (record) => record.Category__c === 'Building Material' && record.Sub_Category__c === 'TMT',
+    );
+    const accountId = marketPotentialRecord?.Account__c;
+    const brandMonthlyPotential =
+      marketPotentialRecord?.Brands__r?.records?.map((brand) => ({
+        brandName: brand.Name,
+        monthlyPotential: brand.Brand_monthly_potential__c,
+        percentage: (brand.Brand_monthly_potential__c / marketPotentialRecord.Sales__c) * 100 || 0,
+      })) || [];
+    const marketPotential = {
+      Total: marketPotentialRecord.Sales__c || 0,
+      UOM: marketPotentialRecord.Category_Uom__c || '',
+      BrandMonthlyPotential: brandMonthlyPotential,
+    };
+
+    //Extract stock signal data for the given accountId
+    const stockSignalRecord = stockSignalRecords.find((record) => record.accountId === accountId);
+    const businessSnapshot = {
+      Stock: stockSignalRecord?.currentStock || 0,
+      SecondaryMTD: stockSignalRecord?.secondarySales || 0,
+    };
+
+    //Extract orders for the given accountId
+    const enquiryItemsByOpportunity = oppRecords.reduce(
+      (acc, opp) => {
+        acc[opp.Id] =
+          opp.Enquiry_Line_items__r?.records?.map((item) => ({
+            name: item.Name,
+            primaryRevisedQuantity: item.Primary_Revised_Quantity__c,
+          })) || [];
+        return acc;
+      },
+      {} as Record<string, { name: string; primaryRevisedQuantity: number | null }[]>,
+    );
+
+    const ordersWithEnquiryItems = orderRecords.map((order) => ({
+      OrderStatus: order.Delivery_Status__c || '',
+      enquiryLineItems: enquiryItemsByOpportunity[order.OpportunityId] || [],
+    }));
+    const lastOrder = {
+      totalNoOfOrders: orderRecords.length,
+      orderAge: getOrderAge(orderRecords[0].CreatedDate),
+      ordersWithEnquiryItems,
+    };
+
+    //Extract opportunities in pipeline
+    const pipeLineOpportunity =
+      oppRecords.filter((opp) => !['New', 'Lost', 'Success'].includes(opp.StageName)) || [];
+
+    const finalPipeLineItem = pipeLineOpportunity.map((opp) => ({
+      Name: opp.Name,
+      Quantity: opp.Total_revised_quantity__c,
+      StageName: opp.StageName,
+      oppportunityAge: opp.JSW_Ageing__r?.records?.find(
+        (record) => record.Stage_name__c === opp.StageName,
+      )?.Stage_entry_time__c
+        ? getOrderAge(
+            opp.JSW_Ageing__r?.records?.find((record) => record.Stage_name__c === opp.StageName)
+              ?.Stage_entry_time__c,
+          )
+        : '',
+    }));
+    const openPipeline = {
+      totalPipelineItem: pipeLineOpportunity.length,
+      PipeLineItem: finalPipeLineItem,
+    };
+
+    //Extract last visit for the accountId
+    const lastVisit = visitRecords.map((visit) => ({
+      visitAge: visit.CheckIn_CMV__Check_in_Date_Time__c
+        ? getOrderAge(visit.CheckIn_CMV__Check_in_Date_Time__c)
+        : '',
+      Visited: visit.CheckIn_CMV__Check_in_Date_Time__c
+        ? formatVisitedDate(visit.CheckIn_CMV__Check_in_Date_Time__c)
+        : '',
+      Owner: visit.Met_with_Contact__r?.Name ?? null,
+      Outcomes: visit.Meeting_outcome__c,
+      MeetingNotes: visit.CheckIn_CMV__Check_out_Comments__c,
+    }));
+
+    return { businessSnapshot, marketPotential, lastOrder, openPipeline, lastVisit };
+  } catch (error) {
+    Logger.error('Error in transformPreVisitBriefRetailerResponse', error);
+    throw new CustomError(
+      'Error in transformPreVisitBriefRetailerResponse : ' +
+        (error instanceof Error ? error.message : String(error)),
+      HttpStatusCode.InternalServerError,
+    );
+  }
+}
+
+function getOrderAge(createdDate: string): string {
+  const normalizedDate = createdDate.replace(/([+-]\d{2})(\d{2})$/, '$1:$2');
+  const created = new Date(normalizedDate);
+  const now = new Date();
+  const diffMs = now.getTime() - created.getTime();
+  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+  const diffDays = Math.floor(diffHours / 24);
+
+  if (diffHours < 24) {
+    return `${diffHours} hr${diffHours !== 1 ? 's' : ''} ago`;
+  }
+  return `${diffDays} day${diffDays !== 1 ? 's' : ''} ago`;
+}
+
+const formatVisitedDate = (dateString?: string): string | null => {
+  if (!dateString) {
+    return null;
+  }
+
+  const date = new Date(dateString.replace(/([+-]\d{2})(\d{2})$/, '$1:$2'));
+
+  if (isNaN(date.getTime())) {
+    return null;
+  }
+
+  return date.toLocaleDateString('en-GB', {
+    day: 'numeric',
+    month: 'short',
+  });
+};
