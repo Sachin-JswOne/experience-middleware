@@ -6695,6 +6695,9 @@
       },
       "requiredParams": ["*"],
       "stopOnError": true
+    }
+  },
+  {
     "path": "/xp-mi/public/v1/data-sync/ship-to/gst",
     "method": "GET",
     "routeHandler": "TRANSFORM",
