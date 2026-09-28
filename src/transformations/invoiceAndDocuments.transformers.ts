@@ -69,8 +69,6 @@ export function transformDocumentType(orderShipment, type: string) {
   }
   if (orderShipment.pbOrder) {
     if (name === 'Invoices') name = 'Invoice';
-    fileName = '';
-    signedUrl = '';
   }
   return {
     name: name,
