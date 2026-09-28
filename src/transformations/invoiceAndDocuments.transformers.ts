@@ -59,7 +59,7 @@ export function transformDocuments(orderShipment) {
 }
 
 export function transformDocumentType(orderShipment, type: string) {
-  const name = toTitleCase(type);
+  let name = toTitleCase(type);
   let fileName = '';
   let signedUrl = '';
 
