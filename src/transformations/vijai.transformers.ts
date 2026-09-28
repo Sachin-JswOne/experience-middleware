@@ -146,8 +146,7 @@ ORDER BY CheckIn_CMV__Check_in_Date_Time__c DESC`
         ORDER BY CreatedDate DESC`
         .replace(/\s+/g, ' ')
         .trim();
-    }
-    else {
+    } else {
       soql = `SELECT Id, Name, StageName, RecordType.DeveloperName, CreatedDate, 
        Credit_limit_requested__c, Credit_tenure_request_days__c, 
        Category_Team_Owner__r.Name, Credit_sales_SPOC__r.Name, Risk_SPOC__r.Name,
