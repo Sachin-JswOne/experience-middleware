@@ -65,7 +65,7 @@ export function transformDocuments(orderShipment) {
 }
 
 export function transformDocumentType(orderShipment, type: string) {
-  const name = toTitleCase(type);
+  let name = toTitleCase(type);
   let fileName = '';
   let signedUrl = '';
 
@@ -74,6 +74,7 @@ export function transformDocumentType(orderShipment, type: string) {
     signedUrl = orderShipment[type][0].signedUrl;
   }
   if (orderShipment.pbOrder) {
+    if (name === 'Invoices') name = 'Invoice';
     fileName = '';
     signedUrl = '';
   }
