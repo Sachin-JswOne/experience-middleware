@@ -7089,5 +7089,66 @@
       }
     ],
     "resTransform": "vijai.transformers.transformPreVisitBriefRetailerResponse"
+  },
+  {
+    "path": "/xp-mi/public/v1/vijai/user/preVisitBriefDistributor",
+    "method": "POST",
+    "routeHandler": "AGGREGATE",
+    "aggregationType": "SEQUENTIAL_THEN_PARALLEL",
+    "isCacheRequired": false,
+    "targets": [
+      {
+        "name": "vijai-opp-list",
+        "url": "${SF_BASE_URI}/services/data/v59.0/query",
+        "method": "GET",
+        "timeout": {
+          "request": "${TIMEOUTS.REQUEST}",
+          "socket": 5000
+        },
+        "headersToPass": [
+          {
+            "source": "Authorization",
+            "destination": "Authorization"
+          }
+        ],
+        "reqTransform": "vijai.transformers.transformPreVisitBriefOppListRequest",
+        "requiredParams": ["*"]
+      },
+      {
+        "name": "vijai-stock-signals",
+        "url": "${SF_BASE_URI}/services/apexrest/v1/AccountStock",
+        "method": "GET",
+        "timeout": {
+          "request": "${TIMEOUTS.REQUEST}",
+          "socket": 5000
+        },
+        "headersToPass": [
+          {
+            "source": "Authorization",
+            "destination": "Authorization"
+          }
+        ],
+        "requiredParams": ["*"],
+        "reqTransform": "vijai.transformers.transformVijaiStockSignalsRequest"
+      },
+      {
+        "name": "vijai-visit-list",
+        "url": "${SF_BASE_URI}/services/data/v65.0/composite",
+        "method": "POST",
+        "timeout": {
+          "request": "${TIMEOUTS.REQUEST}",
+          "socket": 5000
+        },
+        "headersToPass": [
+          {
+            "source": "Authorization",
+            "destination": "Authorization"
+          }
+        ],
+        "reqTransform": "vijai.transformers.preVisitBriefRetailerRequest",
+        "requiredParams": ["*"]
+      }
+    ],
+    "resTransform": "vijai.transformers.transformPreVisitBriefDistributorResponse"
   }
 ]

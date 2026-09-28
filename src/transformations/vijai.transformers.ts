@@ -908,6 +908,158 @@ export function transformPreVisitBriefRetailerResponse(aggregatedResponses: Aggr
   }
 }
 
+export function transformPreVisitBriefDistributorResponse(
+  aggregatedResponses: AggregatedResponse[],
+) {
+  try {
+    const responses = aggregatedResponses.reduce(
+      (acc, response) => {
+        acc[response.target] = response;
+        return acc;
+      },
+      {} as Record<string, AggregatedResponse>,
+    );
+
+    const oppListResponse = responses['vijai-opp-list'];
+    const stockSignalResponse = responses['vijai-stock-signals'];
+    const listResponse = responses['vijai-visit-list'];
+
+    //Handled the case when any of the response is missing or not successful or data is null
+    if (oppListResponse?.success !== true || oppListResponse?.data === null) {
+      Logger.error('Missing expected responses in oppListResponse');
+      throw new CustomError(
+        'Missing expected responses in oppListResponse',
+        HttpStatusCode.BadRequest,
+      );
+    }
+    if (stockSignalResponse?.success !== true || stockSignalResponse?.data === null) {
+      Logger.error('Missing expected responses in stockSignalResponse');
+      throw new CustomError(
+        'Missing expected responses in stockSignalResponse',
+        HttpStatusCode.BadRequest,
+      );
+    }
+    if (listResponse?.success !== true || listResponse?.data === null) {
+      Logger.error('Missing expected responses in listResponse');
+      throw new CustomError(
+        'Missing expected responses in listResponse',
+        HttpStatusCode.BadRequest,
+      );
+    }
+
+    const oppRecords = oppListResponse?.data?.records || [];
+    const stockSignalRecords = stockSignalResponse?.data?.data || [];
+    const visitRecords =
+      listResponse?.data?.compositeResponse.find((item) => item.referenceId === 'visitListSoql')
+        ?.body?.records || [];
+    const orderRecords =
+      listResponse?.data?.compositeResponse.find((item) => item.referenceId === 'orderListSoql')
+        ?.body?.records || [];
+    const marketPotentialRecords =
+      listResponse?.data?.compositeResponse.find(
+        (item) => item.referenceId === 'marketPotentialSoql',
+      )?.body?.records || [];
+
+    //Extract market potential data for the given accountId
+    const marketPotentialRecord = marketPotentialRecords.find(
+      (record) => record.Category__c === 'Building Material' && record.Sub_Category__c === 'TMT',
+    );
+    const accountId = marketPotentialRecord?.Account__c;
+    const brandMonthlyPotential =
+      marketPotentialRecord?.Brands__r?.records?.map((brand) => ({
+        brandName: brand.Name,
+        monthlyPotential: brand.Brand_monthly_potential__c,
+        percentage: (brand.Brand_monthly_potential__c / marketPotentialRecord.Sales__c) * 100 || 0,
+      })) || [];
+    const marketPotential = {
+      Total: marketPotentialRecord.Sales__c || 0,
+      UOM: marketPotentialRecord.Category_Uom__c || '',
+      BrandMonthlyPotential: brandMonthlyPotential,
+    };
+
+    //Extract stock signal data for the given accountId
+    let stockSignalRecord = stockSignalRecords.find((record) => record.accountId === accountId);
+    stockSignalRecord = {
+      ...stockSignalRecord,
+      signals: getSignals(stockSignalRecord, 'distributor'),
+    };
+    console.log(stockSignalRecord);
+    const businessSnapshot = {
+      Stock: stockSignalRecord?.currentStock || 0,
+      PurchasedMTD: stockSignalRecord?.secondarySales || 0,
+      signals: stockSignalRecord?.signals || '',
+      MOUTarget: '',
+    };
+
+    //Extract orders for the given accountId
+    const enquiryItemsByOpportunity = oppRecords.reduce(
+      (acc, opp) => {
+        acc[opp.Id] =
+          opp.Enquiry_Line_items__r?.records?.map((item) => ({
+            name: item.Name,
+            primaryRevisedQuantity: item.Primary_Revised_Quantity__c,
+          })) || [];
+        return acc;
+      },
+      {} as Record<string, { name: string; primaryRevisedQuantity: number | null }[]>,
+    );
+
+    const ordersWithEnquiryItems = orderRecords.map((order) => ({
+      OrderStatus: order.Delivery_Status__c || '',
+      enquiryLineItems: enquiryItemsByOpportunity[order.OpportunityId] || [],
+    }));
+    const lastOrder = {
+      totalNoOfOrders: orderRecords.length,
+      orderAge: getOrderAge(orderRecords[0].CreatedDate),
+      ordersWithEnquiryItems,
+    };
+
+    //Extract opportunities in pipeline
+    const pipeLineOpportunity =
+      oppRecords.filter((opp) => !['New', 'Lost', 'Success'].includes(opp.StageName)) || [];
+
+    const finalPipeLineItem = pipeLineOpportunity.map((opp) => ({
+      Name: opp.Name,
+      Quantity: opp.Total_revised_quantity__c,
+      StageName: opp.StageName,
+      oppportunityAge: opp.JSW_Ageing__r?.records?.find(
+        (record) => record.Stage_name__c === opp.StageName,
+      )?.Stage_entry_time__c
+        ? getOrderAge(
+            opp.JSW_Ageing__r?.records?.find((record) => record.Stage_name__c === opp.StageName)
+              ?.Stage_entry_time__c,
+          )
+        : '',
+    }));
+    const openPipeline = {
+      totalPipelineItem: pipeLineOpportunity.length,
+      PipeLineItem: finalPipeLineItem,
+    };
+
+    //Extract last visit for the accountId
+    const lastVisit = visitRecords.map((visit) => ({
+      visitAge: visit.CheckIn_CMV__Check_in_Date_Time__c
+        ? getOrderAge(visit.CheckIn_CMV__Check_in_Date_Time__c)
+        : '',
+      Visited: visit.CheckIn_CMV__Check_in_Date_Time__c
+        ? formatVisitedDate(visit.CheckIn_CMV__Check_in_Date_Time__c)
+        : '',
+      Owner: visit.Met_with_Contact__r?.Name ?? null,
+      Outcomes: visit.Meeting_outcome__c,
+      MeetingNotes: visit.CheckIn_CMV__Check_out_Comments__c,
+    }));
+
+    return { businessSnapshot, marketPotential, lastOrder, openPipeline, lastVisit };
+  } catch (error) {
+    Logger.error('Error in transformPreVisitBriefRetailerResponse', error);
+    throw new CustomError(
+      'Error in transformPreVisitBriefRetailerResponse : ' +
+        (error instanceof Error ? error.message : String(error)),
+      HttpStatusCode.InternalServerError,
+    );
+  }
+}
+
 function getOrderAge(createdDate: string): string {
   const normalizedDate = createdDate.replace(/([+-]\d{2})(\d{2})$/, '$1:$2');
   const created = new Date(normalizedDate);
