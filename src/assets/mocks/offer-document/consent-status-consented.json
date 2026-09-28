@@ -1,0 +1,9 @@
+{
+  "status": "OK",
+  "success": true,
+  "error": null,
+  "data": {
+    "isDRHPSubmitted": true,
+    "disclaimerVersion": "DRHP-V1"
+  }
+}
