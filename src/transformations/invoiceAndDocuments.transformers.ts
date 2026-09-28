@@ -53,7 +53,13 @@ export function getListOfDocuments(invoiceDocumentsResponse) {
 }
 
 export function transformDocuments(orderShipment) {
-  const documentTypes = ['invoices', 'testCertificates', 'weightmentSlips', 'lorryReceipt', 'other'];
+  const documentTypes = [
+    'invoices',
+    'testCertificates',
+    'weightmentSlips',
+    'lorryReceipt',
+    'other',
+  ];
 
   return documentTypes.map((type) => transformDocumentType(orderShipment, type));
 }
@@ -66,6 +72,10 @@ export function transformDocumentType(orderShipment, type: string) {
   if (orderShipment[type]?.length) {
     fileName = orderShipment[type][0].fileName; //Erp team currently sending random file name, hence we are doing [0] instead of finding by filename.
     signedUrl = orderShipment[type][0].signedUrl;
+  }
+  if (orderShipment.pbOrder) {
+    fileName = '';
+    signedUrl = '';
   }
   return {
     name: name,
