@@ -682,7 +682,6 @@ export function preVisitBriefRetailerRequest(request, prevResponses: AggregatedR
       .find((response) => response.target === 'vijai-opp-list')
       ?.data?.records?.map((opp) => opp.Id)
       .filter(Boolean) || [];
-  console.log('Opp id:', oppIds);
   const visitListSoql = `SELECT Id, Name, Visit_Stage__c, Planned_Visit__c,
        CheckIn_CMV__Account__c, CheckIn_CMV__Account__r.Name,
        CheckIn_CMV__Check_in_Date_Time__c,
