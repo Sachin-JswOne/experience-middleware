@@ -67,10 +67,8 @@ export function transformDocumentType(orderShipment, type: string) {
     fileName = orderShipment[type][0].fileName; //Erp team currently sending random file name, hence we are doing [0] instead of finding by filename.
     signedUrl = orderShipment[type][0].signedUrl;
   }
-  if (orderShipment.pbOrder) {
-    if (name === 'Invoices') name = 'Invoice';
-    fileName = '';
-    signedUrl = '';
+  if (orderShipment.pbOrder && name === 'Invoices') {
+    name = 'Invoice';
   }
   return {
     name: name,
