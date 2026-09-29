@@ -189,7 +189,7 @@ WHERE OwnerId = '${ownerId}'`
 
   if (isEventList === 'true' && ownerId) {
     soql = `SELECT Id, Subject, ActivityDate, StartDateTime, EndDateTime, Location,
-       AccountId, Account.Name, WhoId, Description
+       AccountId, Account.Name, WhoId, Description, Account.RecordType.Name
 FROM Event
 WHERE OwnerId = '${ownerId}'
   AND StartDateTime = THIS_MONTH
