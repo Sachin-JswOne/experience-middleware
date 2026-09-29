@@ -709,7 +709,7 @@ export function preVisitBriefRetailerRequest(request, prevResponses: AggregatedR
 
   const casesSoql = `SELECT Id, Subject, Description, CreatedDate 
     FROM Case 
-    WHERE JSW_One_Customer__c = '${accountId}' AND Status != 'Closed'`;
+    WHERE AccountId = '${accountId}' AND Status != 'Closed'`;
 
   const finalTransformedRequest = {
     ...request,
