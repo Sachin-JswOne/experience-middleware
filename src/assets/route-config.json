@@ -7068,7 +7068,7 @@
           }
         ],
         "requiredParams": ["*"],
-        "reqTransform": "vijai.transformers.transformVijaiStockSignalsRequest"
+        "reqTransform": "vijai.transformers.transformVijaiStockSignalsRequestBasedOnAccountId"
       },
       {
         "name": "vijai-visit-list",
@@ -7129,7 +7129,7 @@
           }
         ],
         "requiredParams": ["*"],
-        "reqTransform": "vijai.transformers.transformVijaiStockSignalsRequest"
+        "reqTransform": "vijai.transformers.transformVijaiStockSignalsRequestBasedOnAccountId"
       },
       {
         "name": "vijai-visit-list",

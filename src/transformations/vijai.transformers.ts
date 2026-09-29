@@ -664,10 +664,10 @@ export function transformVijaiMyTerritoryDealersResponse(
   });
 
   const finalResponse = accountsWithLastVisit.map((account) => ({
-    dealerName: account.accountName || null,
-    stock: account.currentStock || null,
-    secondary: account.secondarySales || null,
-    lastVisit: account.lastVisit || null,
+    dealerName: account?.accountName || null,
+    stock: account?.currentStock || null,
+    secondary: account?.secondarySales || null,
+    lastVisit: account?.lastVisit || null,
     lastBilled: null, // invoice date from BQ
   }));
 
@@ -682,7 +682,7 @@ export function preVisitBriefRetailerRequest(request, prevResponses: AggregatedR
       .find((response) => response.target === 'vijai-opp-list')
       ?.data?.records?.map((opp) => opp.Id)
       .filter(Boolean) || [];
-
+  console.log('Opp id:', oppIds);
   const visitListSoql = `SELECT Id, Name, Visit_Stage__c, Planned_Visit__c,
        CheckIn_CMV__Account__c, CheckIn_CMV__Account__r.Name,
        CheckIn_CMV__Check_in_Date_Time__c,
@@ -702,11 +702,14 @@ export function preVisitBriefRetailerRequest(request, prevResponses: AggregatedR
     ORDER BY CreatedDate DESC`
       .replace(/\s+/g, ' ')
       .trim();
-
   const marketPotentialSoql = `SELECT Id, Category__c, Sub_Category__c, Sales__c, Category_Uom__c, Account__c,
     (SELECT Id, Name, Brand_monthly_potential__c, Related_Category_Information__c FROM Brands__r) 
     FROM Related_Category_Information__c 
     WHERE Account__c = '${accountId}'`;
+
+  const casesSoql = `SELECT Id, Subject, Description, CreatedDate 
+    FROM Case 
+    WHERE JSW_One_Customer__c = '${accountId}' AND Status != 'Closed'`;
 
   const finalTransformedRequest = {
     ...request,
@@ -718,15 +721,24 @@ export function preVisitBriefRetailerRequest(request, prevResponses: AggregatedR
           url: `/services/data/v65.0/query/?q=${encodeURIComponent(visitListSoql)}`,
           referenceId: 'visitListSoql',
         },
-        {
-          method: 'GET',
-          url: `/services/data/v65.0/query/?q=${encodeURIComponent(orderListSoql)}`,
-          referenceId: 'orderListSoql',
-        },
+        ...(oppIds.length > 0
+          ? [
+              {
+                method: 'GET',
+                url: `/services/data/v65.0/query/?q=${encodeURIComponent(orderListSoql)}`,
+                referenceId: 'orderListSoql',
+              },
+            ]
+          : []),
         {
           method: 'GET',
           url: `/services/data/v65.0/query/?q=${encodeURIComponent(marketPotentialSoql)}`,
           referenceId: 'marketPotentialSoql',
+        },
+        {
+          method: 'GET',
+          url: `/services/data/v65.0/query/?q=${encodeURIComponent(casesSoql)}`,
+          referenceId: 'casesSoql',
         },
       ],
     },
@@ -814,29 +826,39 @@ export function transformPreVisitBriefRetailerResponse(aggregatedResponses: Aggr
       listResponse?.data?.compositeResponse.find(
         (item) => item.referenceId === 'marketPotentialSoql',
       )?.body?.records || [];
+    const casesRecords =
+      listResponse?.data?.compositeResponse.find((item) => item.referenceId === 'casesSoql')?.body
+        ?.records || [];
 
     //Extract market potential data for the given accountId
     const marketPotentialRecord = marketPotentialRecords.find(
       (record) => record.Category__c === 'Building Material' && record.Sub_Category__c === 'TMT',
     );
-    const accountId = marketPotentialRecord?.Account__c;
     const brandMonthlyPotential =
       marketPotentialRecord?.Brands__r?.records?.map((brand) => ({
-        brandName: brand.Name,
-        monthlyPotential: brand.Brand_monthly_potential__c,
-        percentage: (brand.Brand_monthly_potential__c / marketPotentialRecord.Sales__c) * 100 || 0,
+        brandName: brand?.Name,
+        monthlyPotential: brand?.Brand_monthly_potential__c,
+        percentage:
+          (brand?.Brand_monthly_potential__c / marketPotentialRecord?.Sales__c) * 100 || 0,
       })) || [];
     const marketPotential = {
-      Total: marketPotentialRecord.Sales__c || 0,
-      UOM: marketPotentialRecord.Category_Uom__c || '',
+      Total: marketPotentialRecord?.Sales__c || 0,
+      UOM: marketPotentialRecord?.Category_Uom__c || '',
       BrandMonthlyPotential: brandMonthlyPotential,
     };
 
     //Extract stock signal data for the given accountId
-    const stockSignalRecord = stockSignalRecords.find((record) => record.accountId === accountId);
+    let stockSignalRecord = stockSignalRecords[0] ?? [];
+    stockSignalRecord = {
+      ...stockSignalRecord,
+      signals: getSignals(stockSignalRecord, 'retailer'),
+    };
     const businessSnapshot = {
       Stock: stockSignalRecord?.currentStock || 0,
+      percentageOfLastReceived: '',
       SecondaryMTD: stockSignalRecord?.secondarySales || 0,
+      signals: stockSignalRecord?.signals || '',
+      distributors: stockSignalRecord?.distributors || '',
     };
 
     //Extract orders for the given accountId
@@ -857,8 +879,8 @@ export function transformPreVisitBriefRetailerResponse(aggregatedResponses: Aggr
       enquiryLineItems: enquiryItemsByOpportunity[order.OpportunityId] || [],
     }));
     const lastOrder = {
-      totalNoOfOrders: orderRecords.length,
-      orderAge: getOrderAge(orderRecords[0].CreatedDate),
+      totalNoOfOrders: orderRecords?.length,
+      orderAge: getOrderAge(orderRecords[0]?.CreatedDate),
       ordersWithEnquiryItems,
     };
 
@@ -870,7 +892,7 @@ export function transformPreVisitBriefRetailerResponse(aggregatedResponses: Aggr
       Name: opp.Name,
       Quantity: opp.Total_revised_quantity__c,
       StageName: opp.StageName,
-      oppportunityAge: opp.JSW_Ageing__r?.records?.find(
+      opportunityAge: opp.JSW_Ageing__r?.records?.find(
         (record) => record.Stage_name__c === opp.StageName,
       )?.Stage_entry_time__c
         ? getOrderAge(
@@ -897,7 +919,17 @@ export function transformPreVisitBriefRetailerResponse(aggregatedResponses: Aggr
       MeetingNotes: visit.CheckIn_CMV__Check_out_Comments__c,
     }));
 
-    return { businessSnapshot, marketPotential, lastOrder, openPipeline, lastVisit };
+    //Extract cases for given accountId
+    const caseRecord = casesRecords.map((caseRecord) => ({
+      Subject: caseRecord.Subject,
+      Description: caseRecord.Description,
+      CreatedDate: getOrderAge(caseRecord.CreatedDate),
+    }));
+    const cases = {
+      totalNumberOfCases: casesRecords.length,
+      cases: caseRecord,
+    };
+    return { businessSnapshot, marketPotential, lastOrder, openPipeline, lastVisit, cases };
   } catch (error) {
     Logger.error('Error in transformPreVisitBriefRetailerResponse', error);
     throw new CustomError(
@@ -959,6 +991,9 @@ export function transformPreVisitBriefDistributorResponse(
       listResponse?.data?.compositeResponse.find(
         (item) => item.referenceId === 'marketPotentialSoql',
       )?.body?.records || [];
+    const casesRecords =
+      listResponse?.data?.compositeResponse.find((item) => item.referenceId === 'casesSoql')?.body
+        ?.records || [];
 
     //Extract market potential data for the given accountId
     const marketPotentialRecord = marketPotentialRecords.find(
@@ -983,7 +1018,6 @@ export function transformPreVisitBriefDistributorResponse(
       ...stockSignalRecord,
       signals: getSignals(stockSignalRecord, 'distributor'),
     };
-    console.log(stockSignalRecord);
     const businessSnapshot = {
       Stock: stockSignalRecord?.currentStock || 0,
       PurchasedMTD: stockSignalRecord?.secondarySales || 0,
@@ -1005,12 +1039,12 @@ export function transformPreVisitBriefDistributorResponse(
     );
 
     const ordersWithEnquiryItems = orderRecords.map((order) => ({
-      OrderStatus: order.Delivery_Status__c || '',
-      enquiryLineItems: enquiryItemsByOpportunity[order.OpportunityId] || [],
+      OrderStatus: order?.Delivery_Status__c || '',
+      enquiryLineItems: enquiryItemsByOpportunity[order?.OpportunityId] || [],
     }));
     const lastOrder = {
-      totalNoOfOrders: orderRecords.length,
-      orderAge: getOrderAge(orderRecords[0].CreatedDate),
+      totalNoOfOrders: orderRecords?.length,
+      orderAge: getOrderAge(orderRecords[0]?.CreatedDate),
       ordersWithEnquiryItems,
     };
 
@@ -1019,37 +1053,47 @@ export function transformPreVisitBriefDistributorResponse(
       oppRecords.filter((opp) => !['New', 'Lost', 'Success'].includes(opp.StageName)) || [];
 
     const finalPipeLineItem = pipeLineOpportunity.map((opp) => ({
-      Name: opp.Name,
-      Quantity: opp.Total_revised_quantity__c,
-      StageName: opp.StageName,
-      oppportunityAge: opp.JSW_Ageing__r?.records?.find(
-        (record) => record.Stage_name__c === opp.StageName,
+      Name: opp?.Name,
+      Quantity: opp?.Total_revised_quantity__c,
+      StageName: opp?.StageName,
+      opportunityAge: opp?.JSW_Ageing__r?.records?.find(
+        (record) => record?.Stage_name__c === opp?.StageName,
       )?.Stage_entry_time__c
         ? getOrderAge(
-            opp.JSW_Ageing__r?.records?.find((record) => record.Stage_name__c === opp.StageName)
+            opp?.JSW_Ageing__r?.records?.find((record) => record?.Stage_name__c === opp?.StageName)
               ?.Stage_entry_time__c,
           )
         : '',
     }));
     const openPipeline = {
-      totalPipelineItem: pipeLineOpportunity.length,
+      totalPipelineItem: pipeLineOpportunity?.length,
       PipeLineItem: finalPipeLineItem,
     };
 
     //Extract last visit for the accountId
     const lastVisit = visitRecords.map((visit) => ({
-      visitAge: visit.CheckIn_CMV__Check_in_Date_Time__c
-        ? getOrderAge(visit.CheckIn_CMV__Check_in_Date_Time__c)
+      visitAge: visit?.CheckIn_CMV__Check_in_Date_Time__c
+        ? getOrderAge(visit?.CheckIn_CMV__Check_in_Date_Time__c)
         : '',
-      Visited: visit.CheckIn_CMV__Check_in_Date_Time__c
-        ? formatVisitedDate(visit.CheckIn_CMV__Check_in_Date_Time__c)
+      Visited: visit?.CheckIn_CMV__Check_in_Date_Time__c
+        ? formatVisitedDate(visit?.CheckIn_CMV__Check_in_Date_Time__c)
         : '',
-      Owner: visit.Met_with_Contact__r?.Name ?? null,
-      Outcomes: visit.Meeting_outcome__c,
-      MeetingNotes: visit.CheckIn_CMV__Check_out_Comments__c,
+      Owner: visit?.Met_with_Contact__r?.Name ?? null,
+      Outcomes: visit?.Meeting_outcome__c,
+      MeetingNotes: visit?.CheckIn_CMV__Check_out_Comments__c,
     }));
 
-    return { businessSnapshot, marketPotential, lastOrder, openPipeline, lastVisit };
+    //Extract cases for given accountId
+    const caseRecord = casesRecords.map((caseRecord) => ({
+      Subject: caseRecord?.Subject,
+      Description: caseRecord?.Description,
+      CreatedDate: getOrderAge(caseRecord?.CreatedDate),
+    }));
+    const cases = {
+      totalNumberOfCases: casesRecords.length,
+      cases: caseRecord,
+    };
+    return { businessSnapshot, marketPotential, lastOrder, openPipeline, lastVisit, cases };
   } catch (error) {
     Logger.error('Error in transformPreVisitBriefRetailerResponse', error);
     throw new CustomError(
@@ -1061,7 +1105,7 @@ export function transformPreVisitBriefDistributorResponse(
 }
 
 function getOrderAge(createdDate: string): string {
-  const normalizedDate = createdDate.replace(/([+-]\d{2})(\d{2})$/, '$1:$2');
+  const normalizedDate = createdDate?.replace(/([+-]\d{2})(\d{2})$/, '$1:$2');
   const created = new Date(normalizedDate);
   const now = new Date();
   const diffMs = now.getTime() - created.getTime();
@@ -1090,3 +1134,13 @@ const formatVisitedDate = (dateString?: string): string | null => {
     month: 'short',
   });
 };
+
+export function transformVijaiStockSignalsRequestBasedOnAccountId(request: any) {
+  const finalTransformedRequest: BaseRequest = {
+    ...request,
+    body: null,
+  };
+  const accountId = request.url.searchParams.get('accountId');
+  request.url.searchParams.set('accountId', accountId);
+  return finalTransformedRequest;
+}
