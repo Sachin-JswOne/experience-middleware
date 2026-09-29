@@ -856,7 +856,7 @@ export function transformPreVisitBriefRetailerResponse(aggregatedResponses: Aggr
     const businessSnapshot = {
       Stock: stockSignalRecord?.currentStock || 0,
       percentageOfLastReceived:
-        (stockSignalRecord?.openingStock / stockSignalRecord?.currentStock) * 100 || '',
+        (stockSignalRecord?.currentStock / stockSignalRecord?.openingStock) * 100 || '',
       SecondaryMTD: stockSignalRecord?.secondarySales || 0,
       signals: stockSignalRecord?.signals || '',
       distributors: stockSignalRecord?.distributors || '',
@@ -1022,7 +1022,7 @@ export function transformPreVisitBriefDistributorResponse(
     const businessSnapshot = {
       Stock: stockSignalRecord?.currentStock || 0,
       percentageOfLastReceived:
-        (stockSignalRecord?.openingStock / stockSignalRecord?.currentStock) * 100 || '',
+        (stockSignalRecord?.currentStock / stockSignalRecord?.openingStock) * 100 || '',
       PurchasedMTD: stockSignalRecord?.totalPurchases || 0,
       signals: stockSignalRecord?.signals || '',
       MOUTarget: '',
