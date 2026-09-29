@@ -664,11 +664,12 @@ export function transformVijaiMyTerritoryDealersResponse(
   });
 
   const finalResponse = accountsWithLastVisit.map((account) => ({
-    dealerName: account?.accountName || null,
-    stock: account?.currentStock || null,
-    secondary: account?.secondarySales || null,
-    lastVisit: account?.lastVisit || null,
-    lastBilled: null, // invoice date from BQ
+    dealerName: account?.accountName || '',
+    stock: account?.currentStock || '',
+    secondary: account?.secondarySales || '',
+    lastVisit: account?.lastVisit || '',
+    distributors: account?.distributors || [],
+    lastBilled: '', // invoice date from BQ
   }));
 
   return finalResponse;
@@ -854,7 +855,8 @@ export function transformPreVisitBriefRetailerResponse(aggregatedResponses: Aggr
     };
     const businessSnapshot = {
       Stock: stockSignalRecord?.currentStock || 0,
-      percentageOfLastReceived: '',
+      percentageOfLastReceived:
+        (stockSignalRecord?.openingStock / stockSignalRecord?.currentStock) * 100 || '',
       SecondaryMTD: stockSignalRecord?.secondarySales || 0,
       signals: stockSignalRecord?.signals || '',
       distributors: stockSignalRecord?.distributors || '',
@@ -1019,7 +1021,9 @@ export function transformPreVisitBriefDistributorResponse(
     };
     const businessSnapshot = {
       Stock: stockSignalRecord?.currentStock || 0,
-      PurchasedMTD: stockSignalRecord?.secondarySales || 0,
+      percentageOfLastReceived:
+        (stockSignalRecord?.openingStock / stockSignalRecord?.currentStock) * 100 || '',
+      PurchasedMTD: stockSignalRecord?.totalPurchases || 0,
       signals: stockSignalRecord?.signals || '',
       MOUTarget: '',
     };
